@@ -10,7 +10,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         private const string modGUID = "org.bepinex.plugins.thelegendofbumbowindfall";
         private const string modName = "The Legend of Bum-bo: Windfall";
-        private const string modVersion = "0.0.1.0";
+        private const string modVersion = "0.0.2.0";
         private readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
         void Awake()
         {
@@ -20,6 +20,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             EntityFixes.Awake();
             CollectibleFixes.Awake();
             InterfaceFixes.Awake();
+            InterfaceContent.Awake();
             OtherChanges.Awake();
         }
     }
