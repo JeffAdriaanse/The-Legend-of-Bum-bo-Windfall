@@ -16,6 +16,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Adding box collider to enemy on BaseInit
+        //TODO: Prevent enemy hitboxes from blocking choose lane hitboxes
         [HarmonyPostfix, HarmonyPatch(typeof(Enemy), "BaseInit")]
         static void Enemy_BaseInit(Enemy __instance)
         {
@@ -101,253 +102,312 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Vector3 worldPosition = Camera.main.ScreenToWorldPoint(mousePos);
 
                 //Grab enemy name
-                string enemyName = selectedEnemy.enemyName.ToString() == "None" ? "" : selectedEnemy.enemyName.ToString();
+                string newEnemyName = selectedEnemy.enemyName.ToString() == "None" ? "" : selectedEnemy.enemyName.ToString();
                 //Grab boss name if boss
                 Boss selectedBoss = selectedEnemy.GetComponent<Boss>();
-                if (enemyName == "" && selectedBoss)
+                if (newEnemyName == "" && selectedBoss)
                 {
-                    enemyName = selectedBoss.bossName.ToString();
+                    newEnemyName = selectedBoss.bossName.ToString();
                     if (selectedEnemy.GetComponent<BygoneGhostBoss>())
                     {
-                        enemyName = "Bygone";
+                        newEnemyName = "Bygone";
                     }
                 }
                 //Translate enemy name
-                if (enemyName != "")
+                if (newEnemyName != "")
                 {
-                    switch (enemyName)
+                    switch (newEnemyName)
                     {
                         case "Shit":
-                            enemyName = "Poop";
+                            newEnemyName = "Poop";
                             break;
 
                         case "Stone":
-                            enemyName = "Rock";
+                            newEnemyName = "Rock";
                             break;
 
                         case "Arsemouth":
-                            enemyName = "Tall Boy";
+                            newEnemyName = "Tall Boy";
                             break;
 
                         case "Butthead":
-                            enemyName = "Squat";
+                            newEnemyName = "Squat";
                             break;
 
                         case "Hopper":
-                            enemyName = "Leaper";
+                            newEnemyName = "Leaper";
                             break;
 
                         case "Tado":
-                            enemyName = "Tato Kid";
+                            newEnemyName = "Tato Kid";
                             break;
 
                         case "WillOWisp":
-                            enemyName = "Whisp";
+                            newEnemyName = "Whisp";
                             break;
 
                         case "DigDig":
-                            enemyName = "Dig Dig";
+                            newEnemyName = "Dig Dig";
                             break;
 
                         case "Longit":
-                            enemyName = "Longits";
+                            newEnemyName = "Longits";
                             break;
 
                         case "Imposter":
-                            if (selectedEnemy.GetComponent<BlueBoneyEnemy>())
+                            if (selectedEnemy.enemyName == EnemyName.BlueBoney)
                             {
-                                enemyName = "Skully B.";
+                                newEnemyName = "Skully B.";
                             }
-                            else if (selectedEnemy.GetComponent<PurpleBoneyEnemy>())
+                            else if (selectedEnemy.enemyName == EnemyName.PurpleBoney)
                             {
-                                enemyName = "Skully P.";
+                                newEnemyName = "Skully P.";
                             }
-                            else if (selectedEnemy.GetComponent<IsaacsEnemy>())
+                            else if (selectedEnemy.enemyName == EnemyName.Isaacs)
                             {
-                                enemyName = "Isaac";
+                                newEnemyName = "Isaac";
                             }
-                            else if (selectedEnemy.GetComponent<MaskedImposterEnemy>())
+                            else if (selectedEnemy.enemyName == EnemyName.MaskedImposter)
                             {
-                                enemyName = "Mask";
+                                newEnemyName = "Mask";
                             }
                             else
                             {
-                                enemyName = "Imposter";
+                                newEnemyName = "Imposter";
                             }
                             break;
 
                         case "BoomFly":
-                            enemyName = "Boom Fly";
+                            newEnemyName = "Boom Fly";
                             break;
 
                         case "GreenBlobby":
-                            enemyName = "Green Blobby";
+                            newEnemyName = "Green Blobby";
                             break;
 
                         case "Tader":
-                            enemyName = "Daddy Tato";
+                            newEnemyName = "Daddy Tato";
                             break;
 
                         case "CornyDip":
-                            enemyName = "Corn Dip";
+                            newEnemyName = "Corn Dip";
                             break;
 
                         case "PeepEye":
-                            enemyName = "Peeper Eye";
+                            newEnemyName = "Peeper Eye";
                             break;
 
                         case "Tutorial":
-                            enemyName = "Tutorial Keeper";
+                            newEnemyName = "Tutorial Keeper";
                             break;
 
                         case "MegaPoofer":
-                            enemyName = "Mega Poofer";
+                            newEnemyName = "Mega Poofer";
                             break;
 
                         case "RedBlobby":
-                            enemyName = "Red Blobby";
+                            newEnemyName = "Red Blobby";
                             break;
 
                         case "BlackBlobby":
-                            enemyName = "Black Blobby";
+                            newEnemyName = "Black Blobby";
                             break;
 
                         case "MirrorHauntLeft":
-                            enemyName = "Mirror";
+                            newEnemyName = "Mirror";
                             break;
 
                         case "MirrorHauntRight":
-                            enemyName = "Mirror";
+                            newEnemyName = "Mirror";
                             break;
 
                         case "Hanger":
-                            enemyName = "Keeper";
+                            newEnemyName = "Keeper";
                             break;
 
                         case "MeatGolem":
-                            enemyName = "Meat Golum";
+                            newEnemyName = "Meat Golum";
                             break;
 
                         case "FloatingCultist":
-                            enemyName = "Floater";
+                            newEnemyName = "Floater";
                             break;
 
                         case "WalkingCultist":
-                            enemyName = "Cultist";
+                            newEnemyName = "Cultist";
                             break;
 
                         case "Leechling":
-                            enemyName = "Suck";
+                            newEnemyName = "Suck";
                             break;
 
                         case "RedCultist":
-                            enemyName = "Red Floater";
+                            newEnemyName = "Red Floater";
                             break;
 
                         case "Flipper":
                             if (selectedEnemy.attackImmunity == Enemy.AttackImmunity.ReduceSpellDamage)
                             {
-                                enemyName = "Jib";
+                                newEnemyName = "Jib";
                             }
                             else
                             {
-                                enemyName = "Nib";
+                                newEnemyName = "Nib";
                             }
                             break;
 
                         case "GreenBlib":
-                            enemyName = "Green Blib";
+                            newEnemyName = "Green Blib";
                             break;
 
                         case "ManaWisp":
-                            enemyName = "Mana Wisp";
+                            newEnemyName = "Mana Wisp";
                             break;
 
                         case "TaintedPeepEye":
-                            enemyName = "Tainted Peeper Eye";
+                            newEnemyName = "Tainted Peeper Eye";
                             break;
                         //Translate boss name
                         case "ShyGal":
-                            enemyName = "Shy Gal";
+                            newEnemyName = "Shy Gal";
                             break;
 
                         case "TaintedDusk":
-                            enemyName = "Tainted Dusk";
+                            newEnemyName = "Tainted Dusk";
                             break;
 
                         case "TaintedPeeper":
-                            enemyName = "Tainted Peeper";
+                            newEnemyName = "Tainted Peeper";
                             break;
 
                         case "TaintedShyGal":
-                            enemyName = "Tainted Shy Gal";
+                            newEnemyName = "Tainted Shy Gal";
                             break;
                     }
                 }
 
                 //Grab enemy turns count
-                string enemyTurns = selectedEnemy.turns == 0 ? "" : "\nMoves: " + selectedEnemy.turns;
+                string enemyTurns = selectedEnemy.turns == 0 ? "" : selectedEnemy.turns.ToString();
+                //Override enemy turns count in certain cases
+                if (selectedEnemy.turns > 0 && __instance.app.model.characterSheet.bumboRoundModifiers.skipEnemyTurns > 0)
+                {
+                    //If player has used the Pause spell, the enemy is paused and will not use actions
+                    enemyTurns = "Paused";
+                }
+                else if (selectedEnemy.turns > 1 && __instance.app.model.characterSheet.bumboRoundModifiers.slow == true)
+                {
+                    //If player has used the Stop Watch spell, the enemy is slowed and will use at most one action
+                    enemyTurns = "1";
+                }
 
-                //Record enemy previous conditions & next action
-                EnemyReaction.ReactionCause oldConditions = selectedEnemy.conditions;
-                EnemyReaction oldAction = selectedEnemy.nextAction;
-                //Update enemy next action
-                selectedEnemy.PlanNextMove();
+                //Add Moves text
+                if (enemyTurns != null && enemyTurns != "")
+                {
+                    enemyTurns = "\nActions: " + enemyTurns;
+                }
+
                 //Grab next enemy action
-                string enemyNextAction = selectedEnemy.nextAction == null ? "" : selectedEnemy.nextAction.ResultingCondition().ToString();
-                //Revert enemy state
-                selectedEnemy.conditions = oldConditions;
-                selectedEnemy.nextAction = oldAction;
+                string enemyNextAction = null;
+                if (selectedEnemy.nextAction != null)
+                {
+                    enemyNextAction = selectedEnemy.nextAction.ResultingCondition().ToString();
+                }
 
-                //Override action name
+                //If next enemy action has not yet been determined, calculate it in advance instead
+                if (enemyNextAction == null)
+                {
+                    //Record enemy previous conditions & next action
+                    EnemyReaction.ReactionCause oldConditions = selectedEnemy.conditions;
+                    EnemyReaction oldAction = selectedEnemy.nextAction;
+
+                    //Update enemy next action
+                    selectedEnemy.PlanNextMove();
+
+                    //Grab next enemy action
+                    enemyNextAction = selectedEnemy.nextAction == null ? "" : selectedEnemy.nextAction.ResultingCondition().ToString();
+
+                    //Revert enemy state
+                    selectedEnemy.conditions = oldConditions;
+                    selectedEnemy.nextAction = oldAction;
+                }
+
+                //Override action name in certain cases
                 if (selectedEnemy.primed)
                 {
+                    //If enemy is primed, it must be attacking next
                     enemyNextAction = "Attacking";
                 }
-                //Translate action name
-                if (enemyNextAction == "Moving")
+                if (!selectedBoss && enemyNextAction == "Attacking" && !selectedEnemy.primed)
                 {
-                    enemyNextAction = "Move";
-                }
-                if (enemyNextAction == "Primed")
-                {
+                    //If enemy is not primed, it usually won't be attacking next (bosses excluded)
+                    //Default to prime instead (most likely option)
                     enemyNextAction = "Prime";
                 }
-                if (enemyNextAction == "Attacking")
+                if (selectedEnemy.enemyName == EnemyName.Curser && enemyNextAction == "Attacking")
                 {
-                    if (enemyName == "Tainted Peeper" || enemyName == "Red Floater")
-                    {
-                        enemyNextAction = "Double Attack";
-                    }
-                    else
-                    {
-                        enemyNextAction = "Attack";
-                    }
+                    //Curser 'attack' actions are really just spell casts
+                    enemyNextAction = "Spelled";
                 }
-                if (enemyNextAction == "Spelled" || enemyNextAction == "SpellCasting")
+                if (selectedEnemy.enemyName == EnemyName.Larry && enemyNextAction == "Moving" || enemyNextAction == "Primed")
                 {
-                    enemyNextAction = "Cast Spell";
-                }
-                if (enemyNextAction == "Spawned")
-                {
-                    enemyNextAction = "Spawn Enemy";
-                }
-                if (enemyNextAction == "HasStatusFog")
-                {
-                    enemyNextAction = "Create Fog";
-                }
-                if (enemyNextAction == "Nothing")
-                {
+                    //Larry move and prime actions are determined randomly; consequently, its action cannot be forseen
                     enemyNextAction = "";
                 }
+
+                //Translate action name
+                if (enemyNextAction != null && enemyNextAction != "")
+                {
+                    switch (enemyNextAction)
+                    {
+                        case "Moving":
+                            enemyNextAction = "Move";
+                            break;
+
+                        case "Primed":
+                            enemyNextAction = "Prime";
+                            break;
+
+                        case "Attacking":
+                            if (newEnemyName == "Tainted Peeper" || newEnemyName == "Red Floater")
+                            {
+                                enemyNextAction = "Double Attack";
+                            }
+                            else
+                            {
+                                enemyNextAction = "Attack";
+                            }
+                            break;
+
+                        case "Spelled":
+                            enemyNextAction = "Cast Spell";
+                            break;
+
+                        case "Spellcasting":
+                            enemyNextAction = "Cast Spell";
+                            break;
+
+                        case "Spawned":
+                            enemyNextAction = "Spawn Enemy";
+                            break;
+
+                        case "HasStatusFog":
+                            enemyNextAction = "Create Fog";
+                            break;
+
+                        case "Nothing":
+                            enemyNextAction = "";
+                            break;
+                    }
+                }
+
                 //Add Next Action text
-                if (enemyNextAction != "")
+                if (enemyNextAction != null && enemyNextAction != "")
                 {
                     enemyNextAction = "\nNext Action: " + enemyNextAction;
                 }
 
                 //Display tooltip
-                __instance.app.view.toolTip.Show(enemyName + enemyTurns + enemyNextAction, ToolTip.Anchor.BottomLeft);
+                __instance.app.view.toolTip.Show(newEnemyName + enemyTurns + enemyNextAction, ToolTip.Anchor.BottomLeft);
                 __instance.app.view.toolTip.transform.position = worldPosition;
                 __instance.app.view.toolTip.transform.rotation = Quaternion.Euler(51f, 180f, 0);
             }

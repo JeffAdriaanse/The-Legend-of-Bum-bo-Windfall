@@ -4,6 +4,7 @@ using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
+using DG.Tweening;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -207,5 +208,78 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
         //***************************************************
+
+        //Patch: Reworks Attack Fly Spell sequence to account for changes to enemy states between fly attacks
+        [HarmonyPrefix, HarmonyPatch(typeof(AttackFlySpell), "EndOfMonsterRound")]
+        static bool AttackFlySpell_EndOfMonsterRound(AttackFlySpell __instance, bool[] ___enemies_to_bother)
+        {
+            GameObject flyCounter;
+            if (GameObject.Find("Attack Fly Counter"))
+            {
+                flyCounter = GameObject.Find("Attack Fly Counter");
+            }
+            else
+            {
+                flyCounter = new GameObject("Attack Fly Counter");
+                flyCounter.transform.position = new Vector3(0, 0, 0);
+            }
+            GameObject fly = __instance.app.view.spellAttackView.attackFly;
+            Sequence sequence = DOTween.Sequence();
+            bool isFinalLane = false;
+            int currentLane = -1;
+            for (int laneCounter = 0; laneCounter < 3; laneCounter++)
+            {
+                if (flyCounter.transform.position.x == laneCounter)
+                {
+                    if (___enemies_to_bother[laneCounter])
+                    {
+                        currentLane = laneCounter;
+                    }
+                    break;
+                }
+            }
+
+            flyCounter.transform.position += new Vector3(1, 0, 0);
+            if (flyCounter.transform.position.x > 2)
+            {
+                flyCounter.transform.position = new Vector3(0, 0, 0);
+                isFinalLane = true;
+            }
+
+            //Lane 0
+            if (currentLane != -1)
+            {
+                Transform transform = __instance.app.controller.ClosestEnemy(currentLane);
+                if (transform != null && (transform.GetComponent<Enemy>().alive || transform.GetComponent<Enemy>().enemyName == EnemyName.Shit))
+                {
+                    Enemy enemy = transform.GetComponent<Enemy>();
+                    TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                    {
+                        //Fly is reset manually because ResetFly method is private
+                        fly.SetActive(true);
+                        float num = (enemy.enemyType != Enemy.EnemyType.Ground) ? 1f : 0.25f;
+                        fly.transform.position = new Vector3((currentLane - 1f) * 1.25f, num, -6f);
+                    }), 0.1f), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveZ(fly.transform, enemy.transform.position.z - 0.25f, 0.25f, false), Ease.InQuad)), delegate ()
+                    {
+                        //Enemy is hurt manually because HurtEnemies method is private
+                        enemy.Hurt(1f, Enemy.AttackImmunity.ReduceSpellDamage, null, enemy.position.x);
+                    }), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveZ(fly.transform, -6f, 0.5f, false), Ease.OutQuad));
+                }
+            }
+            TweenSettingsExtensions.OnComplete<Sequence>(sequence, delegate ()
+            {
+                if (!isFinalLane)
+                {
+                    __instance.EndOfMonsterRound();
+                }
+                else
+                {
+                    fly.SetActive(false);
+                    __instance.app.controller.eventsController.EndEvent();
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Reworked Attack Fly Spell sequence");
+                }
+            });
+            return false;
+        }
     }
 }
