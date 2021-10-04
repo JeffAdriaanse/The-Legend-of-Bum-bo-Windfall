@@ -64,14 +64,20 @@
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>Libs\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>Libs\UnityEngine.UI.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CollectibleChanges.cs" />
     <Compile Include="CollectibleFixes.cs" />
     <Compile Include="EntityFixes.cs" />
     <Compile Include="InterfaceContent.cs" />
     <Compile Include="InterfaceFixes.cs" />
     <Compile Include="OtherChanges.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SaveChanges.cs" />
+    <Compile Include="TypoFixes.cs" />
     <Compile Include="Windfall.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

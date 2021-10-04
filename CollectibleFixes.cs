@@ -281,5 +281,264 @@ namespace The_Legend_of_Bum_bo_Windfall
             });
             return false;
         }
+
+        //Patch: Prevents Fish Hook from granting red mana
+        [HarmonyPrefix, HarmonyPatch(typeof(FishHookSpell), "Reward")]
+        static bool FishHookSpell_Reward(FishHookSpell __instance)
+        {
+            short[] array = new short[6];
+            int num = UnityEngine.Random.Range(0, 5);
+            if (num > 0)
+            {
+                num++;
+            }
+            array[num] = 1;
+            __instance.app.view.stolenManaView.gameObject.SetActive(true);
+            __instance.app.view.stolenManaView.SetManaStolen(1, (Block.BlockType)num);
+            __instance.app.controller.UpdateMana(array, false);
+            __instance.app.controller.ShowManaGain();
+            __instance.app.Notify("reward.spell", null, new object[0]);
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Fish Hook from granting red mana");
+            return false;
+        }
+
+        //Patch: Prevents Tweezers from granting red mana
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "GainRandomManaFromAttack")]
+        static bool TrinketController_GainRandomManaFromAttack(TrinketController __instance)
+        {
+            float num = 0f;
+            short num2 = 0;
+            while ((int)num2 < __instance.app.model.characterSheet.trinkets.Count)
+            {
+                num += __instance.app.controller.GetTrinket((int)num2).ChanceOfGainingRandomManaFromAttack();
+                num2 += 1;
+            }
+            num *= (float)__instance.EffectMultiplier();
+            if (UnityEngine.Random.Range(0f, 1f) < num)
+            {
+                short[] array = new short[6];
+                int num3 = UnityEngine.Random.Range(0, 5);
+                if (num3 > 0)
+                {
+                    num3++;
+                }
+                array[num3] = 1;
+                __instance.app.view.stolenManaView.gameObject.SetActive(true);
+                __instance.app.view.stolenManaView.SetManaStolen(1, (Block.BlockType)num3);
+                __instance.app.controller.UpdateMana(array, false);
+                __instance.app.controller.ShowManaGain();
+                __instance.app.controller.SetActiveSpells(true, true);
+
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing tweezers from granting red mana");
+            }
+            return false;
+        }
+
+        //Patch: Fixes Experimental giving red heart containers to Bum-bo the Dead and Bum-bo the Lost
+        [HarmonyPrefix, HarmonyPatch(typeof(ExperimentalTrinket), "Use")]
+        static bool ExperimentalTrinket_Use(ExperimentalTrinket __instance, int _index)
+        {
+            Debug.Log("[Bum-bo Update Mod] Changing Experimental result");
+
+            __instance.uses--;
+            if (__instance.uses <= 0)
+            {
+                __instance.app.model.characterSheet.trinkets.RemoveAt(_index);
+            }
+            __instance.app.controller.UpdateTrinkets();
+            __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+
+            int num;
+            if (__instance.app.model.characterSheet.bumboType.ToString() == "TheLost")
+            {
+                num = UnityEngine.Random.Range(0, 4);
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Lost");
+            }
+            else
+            {
+                num = UnityEngine.Random.Range(0, 5);
+            }
+            switch (num)
+            {
+                case 1:
+                    __instance.app.model.characterSheet.addPuzzleDamage(1);
+                    __instance.app.controller.GUINotification("Gained Puzzle Damage!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                case 2:
+                    __instance.app.model.characterSheet.addItemDamage(1);
+                    __instance.app.controller.GUINotification("Gained Item Damage!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                case 3:
+                    __instance.app.model.characterSheet.addDex(1);
+                    __instance.app.controller.GUINotification("Gained Dexterity!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                case 4:
+                    if (__instance.app.model.characterSheet.bumboType.ToString() == "TheDead")
+                    {
+                        __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 1f);
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Dead; granting soul heart instead");
+                    }
+                    else
+                    {
+                        __instance.app.model.characterSheet.addHitPoints(1);
+                    }
+                    __instance.app.controller.GUINotification("Gained Hit Points!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                default:
+                    __instance.app.model.characterSheet.addLuck(1);
+                    __instance.app.controller.GUINotification("Gained Luck!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+            }
+            __instance.app.controller.AddCurse(1);
+            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
+            __instance.app.controller.UpdateStats();
+            return false;
+        }
+
+        //Patch: Paper Straw now interacts with ghost tiles
+        [HarmonyPrefix, HarmonyPatch(typeof(PaperStrawSpell), "CastSpell")]
+        static bool PaperStrawSpell_CastSpell(PaperStrawSpell __instance)
+        {
+            if (!__instance.CostOverride)
+            {
+                for (short i = 0; i < 6; i += 1)
+                {
+                    if (__instance.Cost[(int)i] + __instance.CostModifier[(int)i] > __instance.app.model.mana[(int)i])
+                    {
+                        return true;
+                    }
+                }
+            }
+            List<int> list = new List<int>
+            {
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            };
+            for (int i = 0; i < __instance.app.view.puzzle.width; i++)
+            {
+                for (int j = 0; j < __instance.app.view.puzzle.height; j++)
+                {
+                    List<int> list2;
+                    int block_type;
+                    (list2 = list)[block_type = (int)__instance.app.view.puzzle.blocks[i, j].GetComponent<Block>().block_type] = list2[block_type] + 1;
+                }
+            }
+            int num = 0;
+            short num2 = 0;
+            for (int k = 0; k < list.Count; k++)
+            {
+                if (list[k] > (int)num2)
+                {
+                    num = k;
+                    num2 = (short)list[k];
+                }
+            }
+            if (num == 8)
+            {
+                for (int l = 0; l < __instance.app.model.characterSheet.spells.Count; l++)
+                {
+                    __instance.app.model.characterSheet.spells[l].ChargeSpell();
+                    __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixed Paper Straw not interacting with ghost tiles");
+
+                }
+            }
+            return true;
+        }
+
+        ////Patch: Paper Straw now interacts with ghost tiles
+        //[HarmonyPatch(typeof(PaperStrawSpell), "CastSpell")]
+        //static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
+        //{
+        //    var code = new List<CodeInstruction>(instructions);
+
+        //    int insertionIndex = -1;
+        //    for (int i = 0; i < code.Count - 1; i++)
+        //    {
+        //        //Checking for a specific order of IL codes
+        //        if (code[i].opcode == OpCodes.Br && code[i - 1].opcode == OpCodes.Callvirt && code[i - 1].operand == AccessTools.Method(typeof(BumboApplication), nameof(BumboApplication.Notify)))
+        //        {
+        //            //Insertion index
+        //            insertionIndex = i;
+        //            break;
+        //        }
+        //    }
+        //    LocalBuilder localInt = il.DeclareLocal(typeof(int));
+        //    var instructionsToInsert = new List<CodeInstruction>();
+
+        //    CodeInstruction firstInstruction = new CodeInstruction(OpCodes.Ldloc_1);
+
+        //    code[insertionIndex + 1].MoveLabelsTo(firstInstruction);
+
+        //    instructionsToInsert.Add(firstInstruction);
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldc_I4_8));
+
+        //    //Add label for line after insertion index
+        //    Label afterInsertion = il.DefineLabel();
+        //    code[insertionIndex + 1].labels.Add(afterInsertion);
+
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Bne_Un_S, afterInsertion));
+
+        //    Label label1 = il.DefineLabel();
+
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldc_I4_0));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Stloc_S, localInt));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Br_S, label1)); //Label directed
+
+        //    Label label2 = il.DefineLabel();
+
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldarg_0).WithLabels(new[] { label2 }));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SpellElement), "get_app")));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboApplication), nameof(BumboApplication.model))));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboModel), nameof(BumboModel.characterSheet))));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(CharacterSheet), nameof(CharacterSheet.spells))));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldloc_S, localInt));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(List<SpellElement>), "get_Item")));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(SpellElement), nameof(SpellElement.ChargeSpell))));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldloc_S, localInt));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldc_I4_1));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Add));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Stloc_S, localInt));
+
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldloc_S, localInt).WithLabels(new[] { label1 }));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldarg_0));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SpellElement), "get_app")));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboApplication), nameof(BumboApplication.model))));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboModel), nameof(BumboModel.characterSheet))));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(CharacterSheet), nameof(CharacterSheet.spells))));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(List<SpellElement>), "get_Count")));
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Blt_S, label2)); //Label directed
+
+        //    Label label3 = il.DefineLabel();
+
+        //    for (int i = 1; i < code.Count - 1; i++)
+        //    {
+        //        //Checking for a specific order of IL codes
+        //        if (code[i].opcode == OpCodes.Ldarg_0 && code[i - 1].opcode == OpCodes.Callvirt && code[i - 1].operand == AccessTools.Method(typeof(BumboController), nameof(BumboController.ShowManaGain)))
+        //        {
+        //            //Add label
+        //            code[i].labels.Add(label3);
+        //            break;
+        //        }
+        //    }
+
+        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Br_S, label3)); //Label directed
+
+        //    if (insertionIndex != -1)
+        //    {
+        //        code.InsertRange(insertionIndex, instructionsToInsert);
+        //    }
+
+        //    Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixed Paper Straw not interacting with ghost tiles");
+        //    return code;
+        //}
     }
 }

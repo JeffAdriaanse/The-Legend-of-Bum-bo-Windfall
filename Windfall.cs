@@ -19,8 +19,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying harmony patch");
             EntityFixes.Awake();
             CollectibleFixes.Awake();
+            CollectibleChanges.Awake();
             InterfaceFixes.Awake();
             InterfaceContent.Awake();
+            TypoFixes.Awake();
+            SaveChanges.Awake();
             OtherChanges.Awake();
         }
     }
