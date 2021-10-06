@@ -115,7 +115,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__result.ToString() == "NewRoundEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
             {
                 __result = new MonsterCounterEvent(new NewRoundEvent());
-                Console.WriteLine("[Bum-bo Update Mod] Changing AttackFlyEvent return event to MonsterCounterEvent");
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing AttackFlyEvent return event to MonsterCounterEvent");
             }
         }
 
@@ -126,7 +126,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__result.ToString() == "NextComboEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
             {
                 __result = new MonsterCounterEvent(new NextComboEvent());
-                Console.WriteLine("[Bum-bo Update Mod] Changing BoneMegaAttackEvent return event to MonsterCounterEvent");
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing BoneMegaAttackEvent return event to MonsterCounterEvent");
             }
         }
 
@@ -137,7 +137,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__result.ToString() == "NextComboEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
             {
                 __result = new MonsterCounterEvent(new NextComboEvent());
-                Console.WriteLine("[Bum-bo Update Mod] Changing ToothMegaAttackEvent return event to MonsterCounterEvent");
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing ToothMegaAttackEvent return event to MonsterCounterEvent");
             }
         }
         //***************************************************

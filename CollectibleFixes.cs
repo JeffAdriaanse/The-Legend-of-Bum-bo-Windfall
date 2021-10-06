@@ -339,7 +339,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(ExperimentalTrinket), "Use")]
         static bool ExperimentalTrinket_Use(ExperimentalTrinket __instance, int _index)
         {
-            Debug.Log("[Bum-bo Update Mod] Changing Experimental result");
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Experimental result");
 
             __instance.uses--;
             if (__instance.uses <= 0)
@@ -540,5 +540,813 @@ namespace The_Legend_of_Bum_bo_Windfall
         //    Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixed Paper Straw not interacting with ghost tiles");
         //    return code;
         //}
+
+        //Patch: Improves performance of Empty Hidden Trinket
+        [HarmonyPrefix, HarmonyPatch(typeof(EmptyHiddenTrinket), "StartRoom")]
+        static bool EmptyHiddenTrinket_StartRoom(EmptyHiddenTrinket __instance)
+        {
+            List<List<SpellName>> list = new List<List<SpellName>>();
+            //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
+            list.Add(new List<SpellName>(FastSpellRetrieval.AttackSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.DefenseSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.PuzzleSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.UseSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.OtherSpells));
+
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            {
+                //Remove spells for Bum-bo the Lost
+                foreach (List<SpellName> spellList in list)
+                {
+                    List<SpellName> bannedSpells = new List<SpellName>()
+                    {
+                        SpellName.TheRelic,
+                        SpellName.CatPaw,
+                        SpellName.PrayerCard
+                    };
+                    spellList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
+                }
+            }
+
+            List<SpellElement.SpellCategory> list2 = new List<SpellElement.SpellCategory>();
+            for (int j = 0; j < __instance.app.model.characterSheet.spells.Count; j++)
+            {
+                list2.Add(__instance.app.model.characterSheet.spells[j].Category);
+            }
+
+            __instance.app.model.characterSheet.spells.Clear();
+
+            for (int l = 0; l < list2.Count; l++)
+            {
+                SpellElement spellElement = __instance.app.model.spellModel.spells[list[list2[l] - SpellElement.SpellCategory.Attack][UnityEngine.Random.Range(0, list[list2[l] - SpellElement.SpellCategory.Attack].Count)]];
+                spellElement = __instance.app.controller.SetSpellCost(spellElement);
+                __instance.app.model.characterSheet.spells.Add(spellElement);
+                __instance.app.controller.SetSpell(l, __instance.app.model.characterSheet.spells[l]);
+            }
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of Empty Hidden Trinket");
+            return false;
+        }
+
+        //Patch: Improves performance of Rainbow Bag
+        [HarmonyPrefix, HarmonyPatch(typeof(RainbowBagTrinket), "StartRoom")]
+        static bool RainbowBagTrinket_StartRoom(RainbowBagTrinket __instance)
+        {
+            List<List<SpellName>> list = new List<List<SpellName>>();
+            //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
+            list.Add(new List<SpellName>(FastSpellRetrieval.AttackSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.DefenseSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.PuzzleSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.UseSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.OtherSpells));
+
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            {
+                //Remove spells for Bum-bo the Lost
+                foreach (List<SpellName> spellList in list)
+                {
+                    List<SpellName> bannedSpells = new List<SpellName>()
+                    {
+                        SpellName.TheRelic,
+                        SpellName.CatPaw,
+                        SpellName.PrayerCard
+                    };
+                    spellList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
+                }
+            }
+
+            List<SpellElement.SpellCategory> list2 = new List<SpellElement.SpellCategory>();
+            for (int j = 0; j < __instance.app.model.characterSheet.spells.Count; j++)
+            {
+                list2.Add(__instance.app.model.characterSheet.spells[j].Category);
+            }
+
+            __instance.app.model.characterSheet.spells.Clear();
+
+            for (int l = 0; l < list2.Count; l++)
+            {
+                SpellElement spellElement = __instance.app.model.spellModel.spells[list[list2[l] - SpellElement.SpellCategory.Attack][UnityEngine.Random.Range(0, list[list2[l] - SpellElement.SpellCategory.Attack].Count)]];
+                spellElement = __instance.app.controller.SetSpellCost(spellElement);
+                __instance.app.model.characterSheet.spells.Add(spellElement);
+                __instance.app.controller.SetSpell(l, __instance.app.model.characterSheet.spells[l]);
+            }
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of Rainbow Bag");
+            return false;
+        }
+    }
+}
+
+static class FastSpellRetrieval
+{
+    public static SpellElement.SpellCategory GetSpellCategory(SpellName spell)
+    {
+        SpellElement.SpellCategory category = SpellElement.SpellCategory.None;
+        switch (spell)
+        {
+            case SpellName.Addy:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.AttackFly:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Backstabber:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.BarbedWire:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.BeckoningFinger:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.BeeButt:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.BigRock:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.BigSlurp:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.BlackCandle:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.BlackD12:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.BlenderBlade:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.BlindRage:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.BloodRights:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.BorfBucket:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Box:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.Brimstone:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.BrownBelt:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.BumboShake:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.BumboSmash:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.ButterBean:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.BuzzDown:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.BuzzRight:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.BuzzUp:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.CatHeart:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.CatPaw:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.Chaos:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.CoinRoll:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.ConverterBrown:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.ConverterGreen:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.ConverterGrey:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.ConverterWhite:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.ConverterYellow:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.CraftPaper:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.CrazyStraw:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.CursedRainbow:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.D10:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.D20:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.D4:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.D6:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.D8:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.DarkLotus:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.DeadDove:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.DogTooth:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Ecoli:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Eraser:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Euthanasia:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.ExorcismKit:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.FishHook:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.FlashBulb:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.Flip:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Flush:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.GoldenTick:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.HairBall:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.HatPin:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Juiced:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.KrampusCross:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Lard:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.LeakyBattery:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.Lemon:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Libra:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.LilRock:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.LithiumBattery:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.LooseChange:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.LuckyFoot:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.Magic8Ball:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.MagicMarker:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Mallot:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.MamaFoot:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.MamaShoe:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.MeatHook:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.MegaBattery:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.MegaBean:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Melatonin:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.Metronome:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.MirrorMirror:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.MissingPiece:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.MomsLipstick:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.MomsPad:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.MsBang:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Mushroom:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.NailBoard:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.NavyBean:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Needle:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Number1:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.OldPillow:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.OrangeBelt:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.PaperStraw:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Pause:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.Peace:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.Pentagram:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.Pepper:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.PintoBean:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.Pliers:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.PotatoMasher:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.PrayerCard:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.PriceTag:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.PuzzleFlick:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.Quake:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.RainbowFinger:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.RainbowFlag:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.RedD12:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Refresh:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.Rock:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.RockFriends:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.RoidRage:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.RottenMeat:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.RubberBat:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.SilverChip:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.Skewer:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.SleightOfHand:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.SmokeMachine:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.Snack:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.SnotRocket:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.Stick:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.StopWatch:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.Teleport:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.TheNegative:
+                category = SpellElement.SpellCategory.Attack;
+                break;
+            case SpellName.ThePoop:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.TheRelic:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.TheVirus:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.TimeWalker:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.TinyDice:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.Toothpick:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.TracePaper:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.TrapDoor:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.TrashLid:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.TwentyLbsWeight:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case SpellName.TwentyTwenty:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.WatchBattery:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.WhiteBelt:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.WoodenNickel:
+                category = SpellElement.SpellCategory.Use;
+                break;
+            case SpellName.WoodenSpoon:
+                category = SpellElement.SpellCategory.Other;
+                break;
+            case SpellName.YellowBelt:
+                category = SpellElement.SpellCategory.Defense;
+                break;
+            case SpellName.YumHeart:
+                category = SpellElement.SpellCategory.Use;
+                break;
+        }
+        return category;
+    }
+
+    public static List<SpellName> AttackSpells
+    {
+        get
+        {
+            List<SpellName> list = new List<SpellName>
+            {
+                //SpellName.AttackFly,
+                //SpellName.Backstabber,
+                SpellName.BeeButt,
+                SpellName.BigRock,
+                SpellName.BorfBucket,
+                //SpellName.Brimstone,
+                //SpellName.BumboSmash,
+                SpellName.DogTooth,
+                SpellName.Ecoli,
+                SpellName.ExorcismKit,
+                SpellName.FishHook,
+                SpellName.Flush,
+                SpellName.HairBall,
+                SpellName.HatPin,
+                SpellName.Lemon,
+                SpellName.LilRock,
+                SpellName.MamaFoot,
+                SpellName.MamaShoe,
+                SpellName.MeatHook,
+                SpellName.MegaBean,
+                SpellName.NailBoard,
+                //SpellName.Needle,
+                SpellName.Number1,
+                SpellName.Pliers,
+                SpellName.PuzzleFlick,
+                SpellName.Rock,
+                SpellName.RockFriends,
+                SpellName.RubberBat
+                //SpellName.Stick,
+                //SpellName.TheNegative
+            };
+            Progression progression = ProgressionController.LoadProgression();
+            if (progression.unlocks[9])
+            {
+                list.Add(SpellName.BumboSmash);
+            }
+            if (progression.unlocks[11])
+            {
+                list.Add(SpellName.Needle);
+            }
+            if (progression.unlocks[13])
+            {
+                list.Add(SpellName.Stick);
+            }
+            if (progression.unlocks[17])
+            {
+                list.Add(SpellName.AttackFly);
+            }
+            if (progression.unlocks[21])
+            {
+                list.Add(SpellName.Brimstone);
+            }
+            if (progression.unlocks[32])
+            {
+                list.Add(SpellName.TheNegative);
+            }
+            if (progression.unlocks[33])
+            {
+                list.Add(SpellName.Backstabber);
+            }
+            return list;
+        }
+    }
+
+    public static List<SpellName> DefenseSpells
+    {
+        get
+        {
+            List<SpellName> list = new List<SpellName>
+            {
+                SpellName.BarbedWire,
+                SpellName.BeckoningFinger,
+                SpellName.BrownBelt,
+                //SpellName.CatHeart,
+                SpellName.Euthanasia,
+                SpellName.FlashBulb,
+                SpellName.Lard,
+                SpellName.Melatonin,
+                SpellName.MomsPad,
+                SpellName.OldPillow,
+                SpellName.OrangeBelt,
+                SpellName.Peace,
+                SpellName.Pepper,
+                SpellName.PintoBean,
+                //SpellName.PrayerCard,
+                SpellName.RottenMeat,
+                SpellName.SmokeMachine,
+                SpellName.Snack,
+                SpellName.SnotRocket,
+                SpellName.StopWatch,
+                SpellName.TheVirus,
+                SpellName.TrashLid,
+                SpellName.WhiteBelt,
+                SpellName.YellowBelt
+            };
+            Progression progression = ProgressionController.LoadProgression();
+            if (progression.unlocks[23])
+            {
+                list.Add(SpellName.PrayerCard);
+            }
+            if (progression.unlocks[34])
+            {
+                list.Add(SpellName.CatHeart);
+            }
+            return list;
+        }
+    }
+
+    public static List<SpellName> PuzzleSpells
+    {
+        get
+        {
+            List<SpellName> list = new List<SpellName>
+            {
+                //SpellName.TwentyLbsWeight,
+                SpellName.Magic8Ball,
+                SpellName.BlackD12,
+                //SpellName.BlenderBlade,
+                //SpellName.BumboShake,
+                SpellName.BuzzDown,
+                SpellName.BuzzRight,
+                //SpellName.BuzzUp,
+                SpellName.Chaos,
+                SpellName.CursedRainbow,
+                //SpellName.DeadDove,
+                SpellName.Eraser,
+                SpellName.Flip,
+                //SpellName.KrampusCross,
+                //SpellName.MagicMarker,
+                SpellName.Mallot,
+                SpellName.MirrorMirror,
+                SpellName.MomsLipstick,
+                SpellName.MsBang,
+                SpellName.NavyBean,
+                SpellName.PaperStraw,
+                SpellName.PotatoMasher,
+                SpellName.RainbowFinger,
+                SpellName.RainbowFlag,
+                SpellName.RedD12,
+                SpellName.Skewer,
+                SpellName.TinyDice
+                //SpellName.Toothpick
+            };
+            Progression progression = ProgressionController.LoadProgression();
+            if (progression.unlocks[10])
+            {
+                list.Add(SpellName.BumboShake);
+            }
+            if (progression.unlocks[12])
+            {
+                list.Add(SpellName.Toothpick);
+            }
+            if (progression.unlocks[14])
+            {
+                list.Add(SpellName.BlenderBlade);
+            }
+            if (progression.unlocks[16])
+            {
+                list.Add(SpellName.MagicMarker);
+            }
+            if (progression.unlocks[25])
+            {
+                list.Add(SpellName.KrampusCross);
+            }
+            if (progression.unlocks[35])
+            {
+                list.Add(SpellName.DeadDove);
+            }
+            if (progression.unlocks[36])
+            {
+                list.Add(SpellName.TwentyLbsWeight);
+            }
+            if (progression.unlocks[37])
+            {
+                list.Add(SpellName.BuzzUp);
+            }
+            return list;
+        }
+    }
+    public static List<SpellName> UseSpells
+    {
+        get
+        {
+            List<SpellName> list = new List<SpellName>
+            {
+                SpellName.ButterBean,
+                SpellName.CatPaw,
+                SpellName.CraftPaper,
+                SpellName.D10,
+                //SpellName.D20,
+                SpellName.D4,
+                //SpellName.D6,
+                SpellName.D8,
+                SpellName.DarkLotus,
+                SpellName.GoldenTick,
+                SpellName.LeakyBattery,
+                SpellName.LithiumBattery,
+                SpellName.LooseChange,
+                SpellName.MegaBattery,
+                SpellName.Mushroom,
+                //SpellName.Pause,
+                SpellName.PriceTag,
+                SpellName.Quake,
+                SpellName.SilverChip,
+                SpellName.Teleport,
+                //SpellName.ThePoop,
+                SpellName.TheRelic,
+                SpellName.TracePaper,
+                SpellName.TrapDoor,
+                SpellName.WatchBattery,
+                SpellName.WoodenNickel,
+                SpellName.YumHeart
+            };
+            Progression progression = ProgressionController.LoadProgression();
+            if (progression.unlocks[18])
+            {
+                list.Add(SpellName.ThePoop);
+            }
+            if (progression.unlocks[19])
+            {
+                list.Add(SpellName.D6);
+            }
+            if (progression.unlocks[27])
+            {
+                list.Add(SpellName.D20);
+            }
+            if (progression.unlocks[38])
+            {
+                list.Add(SpellName.Pause);
+            }
+            return list;
+        }
+    }
+    public static List<SpellName> OtherSpells
+    {
+        get
+        {
+            List<SpellName> list = new List<SpellName>
+            {
+                //SpellName.TwentyTwenty,
+                SpellName.Addy,
+                SpellName.BigSlurp,
+                SpellName.BlackCandle,
+                SpellName.BlindRage,
+                SpellName.BloodRights,
+                SpellName.Box,
+                SpellName.CoinRoll,
+                SpellName.ConverterBrown,
+                SpellName.ConverterGreen,
+                SpellName.ConverterGrey,
+                SpellName.ConverterWhite,
+                SpellName.ConverterYellow,
+                SpellName.CrazyStraw,
+                SpellName.Juiced,
+                //SpellName.Libra,
+                SpellName.LuckyFoot,
+                SpellName.Metronome,
+                SpellName.MissingPiece,
+                SpellName.Pentagram,
+                SpellName.Refresh,
+                SpellName.RoidRage,
+                SpellName.SleightOfHand,
+                SpellName.TimeWalker,
+                SpellName.WoodenSpoon
+            };
+            Progression progression = ProgressionController.LoadProgression();
+            if (progression.unlocks[29])
+            {
+                list.Add(SpellName.Libra);
+            }
+            if (progression.unlocks[39])
+            {
+                list.Add(SpellName.TwentyTwenty);
+            }
+
+            //Remove all but one converter spell
+            List<SpellName> convertersFound = new List<SpellName>();
+            for (int spellIndex = 0; spellIndex < list.Count; spellIndex++)
+            {
+                if (list[spellIndex].ToString().Contains("Converter"))
+                {
+                    convertersFound.Add(list[spellIndex]);
+                }
+            }
+            while (convertersFound.Count > 1)
+            {
+                int randomConverterIndex = UnityEngine.Random.Range(0, convertersFound.Count);
+                list.Remove(convertersFound[randomConverterIndex]);
+                convertersFound.RemoveAt(randomConverterIndex);
+            }
+            return list;
+        }
     }
 }

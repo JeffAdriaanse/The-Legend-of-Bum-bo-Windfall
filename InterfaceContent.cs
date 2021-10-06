@@ -305,6 +305,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 newEnemyName = "Tainted Peeper Eye";
                                 break;
                             //Translate boss name
+                            case "Duke":
+                                newEnemyName = "The Duke";
+                                break;
+
                             case "ShyGal":
                                 newEnemyName = "Shy Gal";
                                 break;

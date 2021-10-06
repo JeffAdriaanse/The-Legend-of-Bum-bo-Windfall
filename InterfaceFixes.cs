@@ -48,7 +48,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             if (offsetCounter > 0)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Offsetting position of newly spawned ManaDrainView object; object was offset " + offsetCounter + (offsetCounter == 1 ? "time" : "times"));
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Offsetting position of newly spawned ManaDrainView object; object was offset " + offsetCounter + (offsetCounter == 1 ? " time" : " times"));
             }
         }
 
@@ -177,7 +177,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent")
             {
                 __instance.app.view.optionsController.Open(__instance.app.view.pauseItems, __instance.app.controller.gamblingController.levelMusicView.GetComponent<AudioSource>());
-                Console.WriteLine("[Bum-bo Update Mod] Correcting loacation of audiosource retrieved by options menu; menu was opened in the Wooden Nickel");
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Correcting location of audiosource retrieved by options menu; menu was opened in the Wooden Nickel");
                 return false;
             }
             return true;
@@ -563,5 +563,352 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
         //***************************************************
+
+        //Patch: Fixes spell UI not appearing when quickly buying a trinket/needle after canceling a purchase, which could cause a softlock when buying a trinket
+        //Patch also causes the shop clerk to wave when a trinket is purchased
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketPickupView), "OnMouseDown")]
+        static bool TrinketPickupView_OnMouseDown(TrinketPickupView __instance)
+        {
+            if (!__instance.app.model.paused)
+            {
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" && __instance.app.model.characterSheet.trinkets.Count < 4)
+                {
+                    __instance.Acquire();
+                    __instance.app.controller.eventsController.EndEvent();
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent")
+                {
+                    __instance.app.model.trinketReward = __instance.trinket.trinketName;
+                    __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+                    return false;
+                }
+                if (__instance.clickable)
+                {
+                    if (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent")
+                    {
+                        __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().SetClickable(false);
+                        if (__instance.app.model.characterSheet.trinkets.Count < 4)
+                        {
+                            __instance.Acquire();
+                            return false;
+                        }
+                        __instance.app.model.trinketReward = __instance.trinket.trinketName;
+                        __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+                        return false;
+                    }
+                    else if (__instance.app.view.gamblingView != null && __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent" && !__instance.app.view.sideGUI.activeSelf)
+                    {
+                        if (__instance.app.model.characterSheet.coins >= __instance.AdjustedPrice && (__instance.app.model.characterSheet.trinkets.Count < 4 || __instance.trinket.Category == TrinketElement.TrinketCategory.Prick))
+                        {
+                            if (__instance.app.model.gamblingModel.cameraAt != 2)
+                            {
+                                return false;
+                            }
+                            __instance.app.view.gamblingView.shopClerkView.Wave();
+                            __instance.app.view.gamblingView.shopRegisterView.Pay(__instance.AdjustedPrice);
+                            __instance.app.controller.ModifyCoins(-__instance.AdjustedPrice);
+                            __instance.Acquire();
+                        }
+                        if (__instance.app.model.bumboEvent.GetType().ToString() != "SpellModifyEvent" && __instance.app.model.characterSheet.coins >= __instance.AdjustedPrice && __instance.app.model.characterSheet.trinkets.Count >= 4)
+                        {
+                            if (__instance.app.view.gamblingView != null && __instance.app.model.bumboEvent.GetType().ToString() != "TreasureStartEvent")
+                            {
+                                if (__instance.app.model.gamblingModel.cameraAt != 2)
+                                {
+                                    return false;
+                                }
+                                __instance.app.view.gamblingView.shopClerkView.Wave();
+                                __instance.app.view.gamblingView.shopRegisterView.Pay(__instance.AdjustedPrice);
+                                __instance.app.model.gamblingModel.trinketReward = __instance.trinket.trinketName;
+                                __instance.app.controller.gamblingController.selectedShopIdx = __instance.shopIndex;
+                                __instance.HopAndDisappear();
+                                SoundsView.Instance.PlaySound(SoundsView.eSound.Trinket_Sign_Away, __instance.transform.position, SoundsView.eAudioSlot.Default, false);
+                            }
+                            __instance.app.controller.ModifyCoins(-__instance.AdjustedPrice);
+                            if (__instance.app.view.gamblingView == null)
+                            {
+                                __instance.app.model.trinketReward = __instance.trinket.trinketName;
+                            }
+                            __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+                            return false;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        //***************************************************
+        //************Shop Nav Arrow Clickability************
+        //***************************************************
+        //These patches disable shop navigation arrows when they are disappearing
+
+        [HarmonyPostfix, HarmonyPatch(typeof(GamblingNavigation), "Hide")]
+        static void GamblingNavigation_Hide(GamblingNavigation __instance)
+        {
+            __instance.MakeClickable(false);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(GamblingNavigation), "Show")]
+        static void GamblingNavigation_Show(GamblingNavigation __instance)
+        {
+            __instance.MakeClickable(true);
+        }
+        //***************************************************
+        //***************************************************
+        //***************************************************
+
+        //Patch: Fixes shop navigation arrows not appearing after quickly replacing a trinket while the trinket replacement UI is still opening, potentially resulting in a softlock
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketView), "OnMouseDown")]
+        static bool TrinketView_OnMouseDown(TrinketView __instance)
+        {
+            if (DOTween.IsTweening("ShowingGUI", false))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Adapts EventsController OnNotification to allow for cancel button functionality when replacing a trinket
+        [HarmonyPrefix, HarmonyPatch(typeof(EventsController), "OnNotification")]
+        static bool EventsController_OnNotification(EventsController __instance, string _event_path, object _target, params object[] _data)
+        {
+            //Fixing cancel button in treasure rooms during BumboEvent
+            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "BumboEvent" && __instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
+            {
+                DOTween.KillAll(true);
+                __instance.SetEvent(new TreasureChosenEvent());
+                return false;
+            }
+            if (_event_path == "cancel.spell" && (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GrabBossRewardEvent"))
+            {
+                __instance.EndEvent();
+                return false;
+            }
+            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && __instance.app.view.gamblingView != null)
+            {
+                if (__instance.app.model.gamblingModel.cameraAt == 0)
+                {
+                    __instance.app.controller.eventsController.SetEvent(new TrinketChosenToReplaceEvent(-1));
+                    return false;
+                }
+                __instance.app.controller.HideNotifications(false);
+                __instance.app.controller.gamblingController.CancelPickup();
+                __instance.SetEvent(new SpellModifyDelayEvent(false));
+                return false;
+            }
+            else
+            {
+                if (_event_path == "cancel.spell" && __instance.app.view.gamblingView != null)
+                {
+                    __instance.app.controller.HideNotifications(false);
+                    __instance.app.controller.gamblingController.CancelPickup();
+                    __instance.SetEvent(new SpellModifyDelayEvent(false));
+                }
+                else if (_event_path == "cancel.spell" && __instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
+                {
+                    __instance.app.controller.HideNotifications(false);
+                    __instance.SetEvent(new BumboEvent());
+                    if (!__instance.app.model.iOS)
+                    {
+                        __instance.app.controller.HideGUI();
+                    }
+                    if (!__instance.app.model.iOS)
+                    {
+                        __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
+                    }
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
+                    __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().cancelView.Show(new Vector3(0.6f, -0.526f, -2.337f), true);
+                    Sequence sequence = DOTween.Sequence();
+                    TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.app.view.mainCameraView.transform, new Vector3(0f, 1f, -4.29f), 1f, false), Ease.InOutQuad));
+                    TweenSettingsExtensions.Join(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.app.view.mainCameraView.transform, new Vector3(8.2f, 1.33f, 0f), 1f, 0), Ease.InOutQuad));
+                    TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                    {
+                        __instance.SetEvent(new TreasureStartEvent());
+                    });
+                }
+                else if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
+                {
+                    __instance.SetEvent(new BumboEvent());
+                    __instance.app.controller.HideNotifications(false);
+                    if (!__instance.app.model.iOS)
+                    {
+                        __instance.app.controller.HideGUI();
+                    }
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
+                    __instance.app.view.bossCancelView.Show(new Vector3(-0.011f, 0.94f, -2.004f), true);
+                    __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
+                    __instance.SetEvent(new BossDyingEvent());
+                }
+                else if (_event_path == "cancel.spell")
+                {
+                    if (__instance.app.controller.trinketController.RerollSpellCost())
+                    {
+                        SpellView spellViewUsed = __instance.app.model.spellViewUsed;
+                        int spellIndex = spellViewUsed.spellIndex;
+                        if (!__instance.app.model.characterSheet.spells[spellIndex].IsChargeable)
+                        {
+                            __instance.app.model.characterSheet.spells[spellIndex].Cost = __instance.app.model.spellUsedCost;
+                            __instance.app.controller.SetSpell(spellViewUsed.spellIndex, __instance.app.model.characterSheet.spells[spellIndex]);
+                        }
+                    }
+                    __instance.app.view.clickableColumnViews[1].TurnOffLights();
+                    __instance.app.controller.RemoveTint();
+                    __instance.app.view.bowlingArrowView.Hide();
+                    __instance.app.controller.HideNotifications(false);
+                    short num = 0;
+                    while ((int)num < __instance.app.view.clickableColumnViews.Length)
+                    {
+                        __instance.app.view.clickableColumnViews[(int)num].gameObject.SetActive(false);
+                        num += 1;
+                    }
+                    if (__instance.app.model.costRefundOverride)
+                    {
+                        __instance.app.model.costRefundOverride = false;
+                        __instance.app.controller.UpdateMana(__instance.app.model.costRefundAmount, false);
+                    }
+                    else
+                    {
+                        __instance.app.controller.UpdateMana(__instance.app.model.spellModel.currentSpell.Cost, false);
+                        __instance.app.model.spellModel.currentSpell.FullCharge();
+                    }
+                    float transition_time = 1f * __instance.app.model.enemyAnimationSpeed;
+                    __instance.app.model.spellModel.currentSpell = null;
+                    __instance.app.model.spellModel.spellQueued = false;
+                    __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().ChangeLight(EnemyRoomView.RoomLightScheme.Default, transition_time, true);
+                    __instance.SetEvent(new ResetCameraEvent());
+                }
+                if (_event_path == "acquire.needle" && ((GameObject)_target).GetComponent<NeedleView>().price <= __instance.app.model.characterSheet.coins)
+                {
+                    __instance.app.controller.ModifyCoins(-((GameObject)_target).GetComponent<NeedleView>().price);
+                    __instance.app.controller.needleController.UseNeedle(((GameObject)_target).GetComponent<NeedleView>().needleAppearance);
+                    ((GameObject)_target).GetComponent<NeedleView>().Disappear();
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent")
+                {
+                    __instance.EndEvent();
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "ShopStartEvent" && _event_path == "debug.done.shopping")
+                {
+                    __instance.app.view.boxes.shopRoom.GetComponent<ShopRoomView>().HideShelf();
+                    __instance.EndEvent();
+                    return false;
+                }
+                if (_event_path == "end.turn")
+                {
+                    __instance.EndEvent();
+                    return false;
+                }
+                if ((__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent") && _event_path == "spell.cast")
+                {
+                    if (__instance.app.model.actionPoints == 0)
+                    {
+                        __instance.app.controller.HideEndTurnSign();
+                    }
+                    if (__instance.app.model.iOS)
+                    {
+                        __instance.app.controller.IOSHideGUI();
+                    }
+                    __instance.app.model.spellModel.currentSpellIndex = ((SpellView)_target).spellIndex;
+                    __instance.app.model.spellModel.currentSpell = ((SpellView)_target).SpellObject;
+                    __instance.app.model.spellModel.currentSpell.SetSpellView((SpellView)_target);
+                    __instance.app.model.spellModel.currentSpell.CastSpell();
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() != "NavigationEvent" && _event_path == "navigation.move")
+                {
+                    MonoBehaviour.print("Trying to navigate but we are currently on the event " + __instance.app.model.bumboEvent.GetType().ToString());
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "NavigationEvent" && _event_path == "navigation.move")
+                {
+                    int num2;
+                    int num3;
+                    switch ((NavigationArrowView.Direction)_data[0])
+                    {
+                        case NavigationArrowView.Direction.Up:
+                            num2 = __instance.app.model.mapModel.currentRoom.x;
+                            num3 = __instance.app.model.mapModel.currentRoom.y + 1;
+                            goto IL_AFA;
+                        case NavigationArrowView.Direction.Down:
+                            num2 = __instance.app.model.mapModel.currentRoom.x;
+                            num3 = __instance.app.model.mapModel.currentRoom.y - 1;
+                            goto IL_AFA;
+                        case NavigationArrowView.Direction.Right:
+                            num2 = __instance.app.model.mapModel.currentRoom.x + 1;
+                            num3 = __instance.app.model.mapModel.currentRoom.y;
+                            goto IL_AFA;
+                    }
+                    num2 = __instance.app.model.mapModel.currentRoom.x - 1;
+                    num3 = __instance.app.model.mapModel.currentRoom.y;
+                IL_AFA:
+                    __instance.app.view.navigation.arrowNorth.SetActive(false);
+                    __instance.app.view.navigation.arrowSouth.SetActive(false);
+                    __instance.app.view.navigation.arrowEast.SetActive(false);
+                    __instance.app.view.navigation.arrowWest.SetActive(false);
+                    __instance.app.controller.mapController.SetCurrentRoom(__instance.app.model.mapModel.rooms[num2, num3]);
+                    __instance.SetEvent(new MoveToRoomEvent((NavigationArrowView.Direction)_data[0]));
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" && _event_path == "acquire.spell")
+                {
+                    __instance.EndEvent();
+                }
+                return false;
+            }
+        }
+
+        //Patch: Fixes room lights not illuminating properly when quickly transitioning to a choose lane event or enemy turn event when out of moves
+        [HarmonyPrefix, HarmonyPatch(typeof(EnemyRoomView), "ChangeLight")]
+        static bool EnemyRoomView_ChangeLight(EnemyRoomView __instance, EnemyRoomView.RoomLightScheme _scheme)
+        {
+            if ((__instance.app.model.bumboEvent.GetType().ToString() == "SelectSpellColumn" || __instance.app.model.bumboEvent.GetType().ToString() == "StartMonsterTurnEvent") && _scheme == EnemyRoomView.RoomLightScheme.EndTurn)
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing room light scheme from being changed to EndTurn during SelectSpellColumn or StartMonsterTurnEvent");
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Fixes shop needles/trinkets being unclickable after winning a trinket at the cup game while having no empty trinket slots
+        [HarmonyPrefix, HarmonyPatch(typeof(CupGamble), "ReadyGame")]
+        static bool CupGamble_ReadyGame(CupGamble __instance)
+        {
+            if (__instance.app.model.bumboEvent.GetType().ToString() != "CupGameResultEvent")
+            {
+                __instance.readyToPlay = true;
+                __instance.gameObject.GetComponent<BoxCollider>().enabled = true;
+                __instance.MakeSkullsUnclickable();
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Cup Game from erroneously ending current event");
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Fixes Prick Pusher not tipping hat after a trinket is purchased
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketChosenToReplaceEvent), "Execute")]
+        static void TrinketChosenToReplaceEvent_Execute(TrinketChosenToReplaceEvent __instance)
+        {
+            if (__instance.app.view.gamblingView != null && __instance.app.model.gamblingModel.cameraAt == 2)
+            {
+                __instance.app.view.gamblingView.shopClerkView.TipHat();
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Triggering Prick Pusher tip hat animation on trinket purchase");
+            }
+        }
+
+        //Patch: Fixes Prick Pusher not idling after canceling a purchase
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellModifyDelayEvent), "NextEvent")]
+        static void SpellModifyDelayEvent_NextEvent(SpellModifyDelayEvent __instance, bool ___delay)
+        {
+            if (!___delay)
+            {
+                __instance.app.view.gamblingView.shopClerkView.Idle();
+            }
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Triggering Prick Pusher idle animation on cancel purchase");
+        }
     }
 }
