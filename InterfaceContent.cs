@@ -4,6 +4,7 @@ using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
+using DG.Tweening;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -14,6 +15,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(InterfaceContent));
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Implementing interface related mod content");
         }
+
+        //***************************************************
+        //******************Entity Tooltips******************
+        //***************************************************
 
         //Patch: Adding box collider to enemy on BaseInit
         [HarmonyPostfix, HarmonyPatch(typeof(Enemy), "BaseInit")]
@@ -467,5 +472,782 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.view.toolTip.Hide();
             }
         }
+
+        //***************************************************
+        //***************************************************
+        //***************************************************
+
+        //***************************************************
+        //**********Animation Speed Manipulation*************
+        //***************************************************
+
+        //Patch: Allows player to change animation speed
+        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Update")]
+        static void TitleController_Update(TitleController __instance)
+        {
+            if (Input.GetKeyDown(KeyCode.Minus))
+            {
+                PlayerPrefs.SetFloat("AnimationSpeed", 1f);
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Setting animation speed to normal speed");
+            }
+            else if (Input.GetKeyDown(KeyCode.Equals))
+            {
+                PlayerPrefs.SetFloat("AnimationSpeed", 1.5f);
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Setting animation speed to fast speed");
+            }
+        }
+
+        //Patch: Applies animation speed setting to CupGameResultEvent
+        //Also creates trinket display when winning a trinket while having no empty trinket slots
+        [HarmonyPrefix, HarmonyPatch(typeof(CupGameResultEvent), "Execute")]
+        static bool CupGameResultEvent_Execute(CupGameResultEvent __instance)
+        {
+            Sequence sequence = DOTween.Sequence();
+            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game result animation");
+            float num = UnityEngine.Random.Range(0f, 1f);
+            bool flag = false;
+            if (num > 0.66f)
+            {
+                __instance.app.view.soundsView.PlaySound(SoundsView.eSound.SkullGameLose, SoundsView.eAudioSlot.Default, false);
+                __instance.app.view.gamblingView.cupClerkView.AnimateDisappointed();
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence, 1f), delegate ()
+                {
+                    __instance.app.view.soundsView.PlayBumboSound(SoundsView.eSound.BumboHurt, __instance.app.model.characterSheet.bumboType, -1);
+                }), 1f), delegate ()
+                {
+                    __instance.app.controller.gamblingController.cupGamble.PutDownCups();
+                });
+            }
+            else if (num > 0.33f)
+            {
+                __instance.app.view.soundsView.PlaySound(SoundsView.eSound.SkullGameWin, SoundsView.eAudioSlot.Default, false);
+                __instance.app.view.gamblingView.cupClerkView.AnimateHappy();
+                GameObject reward = null;
+                string notification = string.Empty;
+                int num2 = UnityEngine.Random.Range(0, 2);
+                if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+                {
+                    num2 = 1;
+                }
+                if (num2 != 1)
+                {
+                    reward = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Pickups/Soul Heart Pickup") as GameObject, __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.position, Quaternion.Euler(0.016f, __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.rotation.eulerAngles.y, -0.96f));
+                    reward.transform.localPosition = __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.position;
+                    reward.transform.GetChild(0).localScale = new Vector3(0.75f, 1f, 0.75f);
+                    reward.GetComponent<HeartPickupView>().Init(0, 0);
+                    reward.GetComponent<BoxCollider>().enabled = false;
+                    reward.gameObject.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+                    reward.transform.localScale = new Vector3(1.25f, 0f, 1.25f);
+                    notification = "You Won A Soul Heart!";
+                    Sequence sequence2 = DOTween.Sequence();
+                    TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence2, 1.25f), delegate ()
+                    {
+                        SoundsView.Instance.PlaySound(SoundsView.eSound.SkullGame_Prize, SoundsView.eAudioSlot.Default, false);
+                    }), delegate ()
+                    {
+                        __instance.app.controller.gamblingController.cupGamble.SpawnHearts(10);
+                    });
+                    __instance.app.model.characterSheet.addSoulHearts(1f);
+                    __instance.app.controller.gamblingController.healthController.UpdateHearts(false);
+                }
+                else
+                {
+                    CoinView component = UnityEngine.Object.Instantiate<GameObject>(__instance.app.view.gamblingView.coinView.gameObject, __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.position, Quaternion.Euler(0.016f, __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.rotation.eulerAngles.y, -0.96f)).GetComponent<CoinView>();
+                    component.gameObject.SetActive(true);
+                    component.InitModel();
+                    component.transform.localPosition = __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.position;
+                    component.activeCoinModel.transform.localRotation = Quaternion.Euler(90f, 90f, -90f);
+                    component.transform.localScale = new Vector3(1.25f, 0f, 1.25f);
+                    reward = component.gameObject;
+                    int coin_result = (UnityEngine.Random.Range(0f, 1f) >= 0.5f) ? 6 : 4;
+                    notification = "You Won " + coin_result + " Coins!";
+                    __instance.app.controller.gamblingController.ModifyCoins(coin_result);
+                    Sequence sequence3 = DOTween.Sequence();
+                    TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence3, 1.25f), delegate ()
+                    {
+                        SoundsView.Instance.PlaySound(SoundsView.eSound.SkullGame_Prize, SoundsView.eAudioSlot.Default, false);
+                    }), delegate ()
+                    {
+                        __instance.app.controller.gamblingController.cupGamble.SpawnCoins(coin_result);
+                    });
+                }
+                TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 0.25f), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, Vector3.one, 0.25f), Ease.InOutQuad)), 1f);
+                TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                {
+                    __instance.app.view.soundsView.PlayBumboSound(SoundsView.eSound.BumboHappy, __instance.app.model.characterSheet.bumboType, -1);
+                }), delegate ()
+                {
+                    __instance.app.view.gamblingView.gamblingBangView.Appear(notification);
+                }), 2f), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, new Vector3(1.25f, 0f, 1.25f), 0.15f), Ease.InOutQuad)), delegate ()
+                {
+                    __instance.app.controller.gamblingController.cupGamble.PutDownCups();
+                }), delegate ()
+                {
+                    UnityEngine.Object.Destroy(reward);
+                }), 0.35f);
+            }
+            else
+            {
+                __instance.app.view.soundsView.PlaySound(SoundsView.eSound.SkullGameWin, SoundsView.eAudioSlot.Default, false);
+                __instance.app.view.gamblingView.cupClerkView.AnimateHappy();
+                GameObject reward = null;
+                string notification = string.Empty;
+                reward = __instance.app.controller.gamblingController.cupGamble.SetTrinket(__instance.app.model.gamblingModel.trinketReward, 1);
+                reward.transform.localScale = new Vector3(1f, 0f, 1f);
+                reward.transform.localPosition = __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.position;
+                notification = "You Won A Trinket!";
+                flag = __instance.app.model.characterSheet.trinkets.Count == 4;
+                if (!flag)
+                {
+                    __instance.app.model.characterSheet.trinkets.Add(__instance.app.model.trinketModel.trinkets[__instance.app.model.gamblingModel.trinketReward]);
+                    __instance.app.controller.UpdateTrinkets();
+                }
+                TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 0.25f), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, Vector3.one, 0.25f), Ease.InOutQuad)), 1f);
+                TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                {
+                    __instance.app.view.gamblingView.gamblingBangView.Appear(notification);
+                }), delegate ()
+                {
+                    __instance.app.view.soundsView.PlayBumboSound(SoundsView.eSound.BumboVeryHappy, __instance.app.model.characterSheet.bumboType, -1);
+                }), 2f), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, new Vector3(1.25f, 0f, 1.25f), 0.15f), Ease.InOutQuad)), delegate ()
+                {
+                    __instance.app.controller.gamblingController.cupGamble.PutDownCups();
+                }), delegate ()
+                {
+                    UnityEngine.Object.Destroy(reward);
+                }), 0.35f);
+            }
+            if (flag)
+            {
+                TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                {
+                    __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating trinket reward display");
+                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Pickups/Trinket Pickup") as GameObject);
+                    gameObject.name = "Trinket Display";
+                    gameObject.transform.position = new Vector3(-1.35f, 0.87f, -5.54f);
+                    gameObject.transform.localRotation = Quaternion.Euler(0f, 135f, 0f);
+                    gameObject.transform.localScale = new Vector3(0.75f, 0.75f, 0.75f);
+                    gameObject.GetComponent<TrinketPickupView>().SetTrinket(__instance.app.model.gamblingModel.trinketReward, 0);
+                    gameObject.SetActive(true);
+                    gameObject.GetComponent<BoxCollider>().enabled = false;
+                    GameObject gameObject2 = new GameObject("Trinket Display Light");
+                    gameObject2.AddComponent<Light>();
+                    gameObject2.transform.position = new Vector3(-1.1f, 1.1f, -6f);
+                });
+            }
+            else
+            {
+                __instance.app.controller.gamblingController.shop.UpdatePrices();
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                {
+                    __instance.app.view.gamblingView.cupClerkView.AnimateIdle();
+                }), 0.25f), delegate ()
+                {
+                    __instance.app.view.gamblingView.gamblingCameraView.ShowArrows();
+                }), delegate ()
+                {
+                    __instance.app.controller.gamblingController.cupGamble.ReadyGame();
+                });
+            }
+            return false;
+        }
+
+        //Patch: Applies animation speed setting to CupGameEvent
+        [HarmonyPrefix, HarmonyPatch(typeof(CupGameEvent), "Execute")]
+        static bool CupGameEvent_Execute(CupGameEvent __instance)
+        {
+            __instance.app.view.gamblingView.gamblingCameraView.HideArrows();
+            List<TrinketName> list = new List<TrinketName>();
+            list.AddRange(__instance.app.model.trinketModel.validTrinkets.ToArray());
+            GameObject reward = null;
+            __instance.app.model.gamblingModel.trinketReward = list[UnityEngine.Random.Range(0, list.Count)];
+            reward = __instance.app.controller.gamblingController.cupGamble.SetTrinket(__instance.app.model.gamblingModel.trinketReward, 1);
+            reward.transform.localScale = new Vector3(1f, 0f, 1f);
+            __instance.app.view.gamblingView.cupClerkView.AnimateHappy();
+            Sequence sequence = DOTween.Sequence();
+            TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 0.25f), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, new Vector3(0.8f, 1.25f, 0.8f), 0.25f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, Vector3.one, 0.125f), Ease.InOutQuad));
+            SoundsView.Instance.PlaySound(SoundsView.eSound.SkullGame_Start, SoundsView.eAudioSlot.Default, false);
+            Sequence sequence2 = DOTween.Sequence();
+
+            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            sequence2.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game startup animation");
+
+            TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Append(sequence2, __instance.app.controller.gamblingController.cupGamble.cups[1].GetComponent<SkullCup>().LiftCup()), 1.25f);
+            float num = TweenExtensions.Duration(sequence2, true);
+            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Insert(TweenSettingsExtensions.Insert(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence2, 0.25f), __instance.app.controller.gamblingController.cupGamble.cups[1].GetComponent<SkullCup>().PutDownCup()), num, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, new Vector3(0.8f, 1.25f, 0.8f), 0.25f), Ease.InOutQuad)), num + 0.25f, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(reward.transform, new Vector3(1.25f, 0f, 1.25f), 0.125f), Ease.InOutQuad)), delegate ()
+            {
+                UnityEngine.Object.Destroy(reward);
+            }), delegate ()
+            {
+                __instance.app.view.gamblingView.cupClerkView.AnimateShuffle();
+            });
+
+            return false;
+        }
+
+        //Patch: Applies animation speed setting to CupClerkView AnimateShuffle
+        [HarmonyPostfix, HarmonyPatch(typeof(CupClerkView), "AnimateShuffle")]
+        static void CupClerkView_Shuffle(CupClerkView __instance, ref Sequence ___animation)
+        {
+            ___animation.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game shuffle animation");
+        }
+
+        //Patch: Applies animation speed setting to GamblingBangView Disappear
+        [HarmonyPrefix, HarmonyPatch(typeof(GamblingBangView), "Disappear")]
+        static bool GamblingBangView_Disappear(GamblingBangView __instance)
+        {
+            SoundsView.Instance.PlaySound(SoundsView.eSound.Splash_Sign_Hide, SoundsView.eAudioSlot.Default, false);
+            Sequence sequence = DOTween.Sequence();
+            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 1.5f*(1/PlayerPrefs.GetFloat("AnimationSpeed"))), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.67f, 1f, 1.5f), 0.2f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.5f, 1f, 0.1f), 0.1f), Ease.InOutQuad)), delegate ()
+            {
+                __instance.gameObject.SetActive(false);
+            });
+            return false;
+        }
+
+        //Patch: Applies animation speed setting to stat wheel spin
+        //Also causes stat wheel to avoid increasing maxed stats
+        [HarmonyPrefix, HarmonyPatch(typeof(WheelSpin), "Spin")]
+        static bool WheelSpin_Spin(WheelSpin __instance, bool _pay, ref bool ___isSpinning)
+        {
+            __instance.controller.ModifyCoins(-15);
+            __instance.wheelView.gamblingCameraView.HideArrows();
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stat wheel result to not include maxed stats");
+            bool flag = __instance.app.model.characterSheet.bumboBaseInfo.hitPoints < 6f;
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheDead)
+            {
+                flag = (__instance.app.model.characterSheet.soulHearts < 6f);
+            }
+            bool flag2 = __instance.app.model.characterSheet.bumboBaseInfo.itemDamage < 5;
+            bool flag3 = __instance.app.model.characterSheet.bumboBaseInfo.puzzleDamage < 5;
+            bool flag4 = __instance.app.model.characterSheet.bumboBaseInfo.dexterity < 5;
+            bool flag5 = __instance.app.model.characterSheet.bumboBaseInfo.luck < 5;
+            bool flag6 = false;
+            bool[] array = new bool[__instance.model.wheelSlices.Length];
+            int wheelReward;
+            if (UnityEngine.Random.Range(0f, 1f) < 0.166f && __instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.TheStout)
+            {
+                wheelReward = 0;
+            }
+            else
+            {
+                for (int i = 0; i < __instance.model.wheelSlices.Length; i++)
+                {
+                    if ((__instance.model.wheelSlices[i] == WheelView.WheelSlices.Health && flag) || (__instance.model.wheelSlices[i] == WheelView.WheelSlices.ItemDamage && flag2) || (__instance.model.wheelSlices[i] == WheelView.WheelSlices.PuzzleDamage && flag3) || (__instance.model.wheelSlices[i] == WheelView.WheelSlices.Dexterity && flag4) || (__instance.model.wheelSlices[i] == WheelView.WheelSlices.Luck && flag5))
+                    {
+                        array[i] = true;
+                    }
+                    else
+                    {
+                        array[i] = false;
+                    }
+                }
+                for (int j = 0; j < array.Length; j++)
+                {
+                    if (array[j])
+                    {
+                        flag6 = true;
+                    }
+                }
+                if (!flag6)
+                {
+                    for (int k = 0; k < array.Length; k++)
+                    {
+                        array[k] = true;
+                    }
+                }
+                List<int> list = new List<int>();
+                for (int l = 0; l < array.Length; l++)
+                {
+                    if (array[l])
+                    {
+                        list.Add(l);
+                    }
+                }
+                int index = UnityEngine.Random.Range(0, list.Count);
+                wheelReward = list[index];
+            }
+            ___isSpinning = true;
+            Sequence sequence = __instance.wheelView.Spin(wheelReward, _pay);
+
+            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of wheel spin animation");
+
+            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence, 0.25f), delegate ()
+            {
+                SoundsView.Instance.PlaySound(SoundsView.eSound.Shop_GambleReward, SoundsView.eAudioSlot.Default, false);
+            }), delegate ()
+            {
+                AccessTools.Method(typeof(WheelSpin), "Reward").Invoke(__instance, new object[] { __instance.model.wheelSlices[wheelReward] });
+                //__instance.Reward(__instance.model.wheelSlices[wheelReward]);
+            });
+
+            return false;
+        }
+
+        //Patch: Applies animation speed setting to stat wheel reward
+        [HarmonyPrefix, HarmonyPatch(typeof(WheelSpin), "Reward")]
+        static bool WheelSpin_Reward(WheelSpin __instance, WheelView.WheelSlices _reward)
+        {
+            __instance.app.view.soundsView.PlaySound(SoundsView.eSound.WheelSpinResult, __instance.wheelView.transform.position, SoundsView.eAudioSlot.Default, false);
+            Sequence sequence = DOTween.Sequence();
+
+            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of wheel reward animation");
+
+            TweenSettingsExtensions.Join(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.wheelView.gamblingCameraView.transform, new Vector3(0f, 1f, -5.68f), 1f, false), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.wheelView.gamblingCameraView.transform, Vector3.zero, 1f, 0), Ease.InOutQuad));
+            switch (_reward)
+            {
+                case WheelView.WheelSlices.Dexterity:
+                    if (__instance.app != null)
+                    {
+                        TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                        {
+                            __instance.app.model.characterSheet.addDex(1);
+                        });
+                    }
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.6f, delegate ()
+                    {
+                        __instance.wheelView.gamblingController.UpdateStats();
+                    });
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                    {
+                        __instance.wheelView.gamblingBubbleView.Reward(WheelSpin.WheelResult.Dexterity);
+                    });
+                    __instance.wheelView.Idle();
+                    break;
+                case WheelView.WheelSlices.PuzzleDamage:
+                    if (__instance.app != null)
+                    {
+                        TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                        {
+                            __instance.app.model.characterSheet.addPuzzleDamage(1);
+                        });
+                    }
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.6f, delegate ()
+                    {
+                        __instance.wheelView.gamblingController.UpdateStats();
+                    });
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                    {
+                        __instance.wheelView.gamblingBubbleView.Reward(WheelSpin.WheelResult.PuzzlePower);
+                    });
+                    __instance.wheelView.Idle();
+                    break;
+                case WheelView.WheelSlices.Luck:
+                    if (__instance.app != null)
+                    {
+                        TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                        {
+                            __instance.app.model.characterSheet.addLuck(1);
+                        });
+                    }
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.6f, delegate ()
+                    {
+                        __instance.wheelView.gamblingController.UpdateStats();
+                    });
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                    {
+                        __instance.wheelView.gamblingBubbleView.Reward(WheelSpin.WheelResult.Luck);
+                    });
+                    __instance.wheelView.Idle();
+                    break;
+                case WheelView.WheelSlices.ItemDamage:
+                    if (__instance.app != null)
+                    {
+                        TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                        {
+                            __instance.app.model.characterSheet.addItemDamage(1);
+                        });
+                    }
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.6f, delegate ()
+                    {
+                        __instance.wheelView.gamblingController.UpdateStats();
+                    });
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                    {
+                        __instance.wheelView.gamblingBubbleView.Reward(WheelSpin.WheelResult.ItemPower);
+                    });
+                    __instance.wheelView.Idle();
+                    break;
+                case WheelView.WheelSlices.Health:
+                    if (__instance.app != null)
+                    {
+                        if (__instance.app.model.characterSheet.bumboBaseInfo.bumboType == CharacterSheet.BumboType.TheDead)
+                        {
+                            __instance.app.model.characterSheet.addSoulHearts(1f);
+                            TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                            {
+                                __instance.wheelView.gamblingController.healthController.UpdateHearts(true);
+                            });
+                        }
+                        else
+                        {
+                            __instance.app.model.characterSheet.addHitPoints(1);
+                            float hit_points = __instance.app.model.characterSheet.getHitPoints();
+                            __instance.app.model.characterSheet.hitPoints = __instance.app.model.characterSheet.getHitPoints();
+                            TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                            {
+                                __instance.wheelView.gamblingController.healthController.SetHearts((int)hit_points);
+                            });
+                        }
+                    }
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                    {
+                        __instance.wheelView.gamblingController.UpdateStats();
+                    });
+                    TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                    {
+                        __instance.wheelView.gamblingBubbleView.Reward(WheelSpin.WheelResult.Health);
+                    });
+                    __instance.wheelView.Idle();
+                    break;
+                default:
+                    if (__instance.app != null)
+                    {
+                        TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                        {
+                            __instance.app.model.characterSheet.Spend(-20);
+                        });
+                    }
+                    TweenSettingsExtensions.InsertCallback(TweenSettingsExtensions.InsertCallback(TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+                    {
+                        __instance.wheelView.gamblingBubbleView.CoinReward(20);
+                    }), 0.6f, delegate ()
+                    {
+                        __instance.wheelView.gamblingController.UpdateCoins();
+                    }), 0.6f, delegate ()
+                    {
+                        __instance.SpawnCoins(20);
+                    });
+                    __instance.wheelView.Idle();
+                    break;
+            }
+            TweenSettingsExtensions.OnComplete<Sequence>(TweenSettingsExtensions.InsertCallback(TweenSettingsExtensions.InsertCallback(TweenSettingsExtensions.InsertCallback(sequence, 0.5f, delegate ()
+            {
+                __instance.app.view.soundsView.PlayBumboSound(SoundsView.eSound.BumboLaugh, __instance.app.model.characterSheet.bumboType, -1);
+            }), 1.25f, delegate ()
+            {
+                __instance.wheelView.wheelClerkView.Celebrate();
+            }), 3.375f, delegate ()
+            {
+                __instance.wheelView.gamblingCameraView.ShowArrows();
+            }), delegate ()
+            {
+                AccessTools.Method(typeof(WheelSpin), "MakeWheelClickable").Invoke(__instance, new object[] { });
+            });
+            return false;
+        }
+        //***************************************************
+        //***************************************************
+        //***************************************************
+
+        //***************************************************
+        //***Adding cancel button when replacing a trinket***
+        //***************************************************
+
+        //Patch: Adds cancel button during TrinketReplaceEvent
+        //Also hides other cancel buttons
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketReplaceEvent), "Execute")]
+        static void TrinketReplaceEvent_Execute(TrinketReplaceEvent __instance)
+        {
+            __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Show(CancelView.Where.NextToSpells);
+            __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().cancelView.Hide();
+            __instance.app.view.bossCancelView.Hide();
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Adding cancel button during TrinketReplaceEvent");
+        }
+
+        //Patch: Changes location of cancel button during TrinketReplaceEvent
+        [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "Show", new Type[] { typeof(CancelView.Where) })]
+        static bool CancelView_Show(CancelView __instance, CancelView.Where _where)
+        {
+            TweenExtensions.Complete(__instance.animationSequence, true);
+            __instance.gameObject.SetActive(true);
+            __instance.SetColliderActive(true);
+
+            float num;
+            if (__instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
+            {
+                num = -0.12f;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing location of cancel button during TrinketReplaceEvent");
+            }
+            else
+            {
+                num = -0.44f;
+            }
+
+            __instance.animationSequence = DOTween.Sequence();
+            TweenSettingsExtensions.Append(__instance.animationSequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOLocalMoveY(__instance.transform, num, 0.5f, false), Ease.InOutQuad));
+            if (_where == CancelView.Where.OverSpells)
+            {
+                __instance.transform.localPosition = new Vector3(0.933f, __instance.transform.localPosition.y, __instance.transform.localPosition.z);
+                return false;
+            }
+            __instance.transform.localPosition = new Vector3(0.25f, __instance.transform.localPosition.y, __instance.transform.localPosition.z);
+            return false;
+        }
+
+        //Patch: Adapts EventsController OnNotification to allow for cancel button functionality when replacing a trinket
+        //Also fixes cancel button in treasure rooms not working during BumboEvent
+        [HarmonyPrefix, HarmonyPatch(typeof(EventsController), "OnNotification")]
+        static bool EventsController_OnNotification(EventsController __instance, string _event_path, object _target, params object[] _data)
+        {
+            //Fixing cancel button in treasure rooms during BumboEvent
+            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "BumboEvent" && __instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
+            {
+                DOTween.KillAll(true);
+                __instance.SetEvent(new TreasureChosenEvent());
+                return false;
+            }
+            if (_event_path == "cancel.spell" && (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GrabBossRewardEvent"))
+            {
+                __instance.EndEvent();
+                return false;
+            }
+            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && __instance.app.view.gamblingView != null)
+            {
+                if (__instance.app.model.gamblingModel.cameraAt == 0)
+                {
+                    __instance.app.controller.eventsController.SetEvent(new TrinketChosenToReplaceEvent(-1));
+                    return false;
+                }
+                __instance.app.controller.HideNotifications(false);
+                __instance.app.controller.gamblingController.CancelPickup();
+                __instance.SetEvent(new SpellModifyDelayEvent(false));
+                return false;
+            }
+            else
+            {
+                if (_event_path == "cancel.spell" && __instance.app.view.gamblingView != null)
+                {
+                    __instance.app.controller.HideNotifications(false);
+                    __instance.app.controller.gamblingController.CancelPickup();
+                    __instance.SetEvent(new SpellModifyDelayEvent(false));
+                }
+                else if (_event_path == "cancel.spell" && __instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
+                {
+                    __instance.app.controller.HideNotifications(false);
+                    __instance.SetEvent(new BumboEvent());
+                    if (!__instance.app.model.iOS)
+                    {
+                        __instance.app.controller.HideGUI();
+                    }
+                    if (!__instance.app.model.iOS)
+                    {
+                        __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
+                    }
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
+                    __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().cancelView.Show(new Vector3(0.6f, -0.526f, -2.337f), true);
+                    Sequence sequence = DOTween.Sequence();
+                    TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.app.view.mainCameraView.transform, new Vector3(0f, 1f, -4.29f), 1f, false), Ease.InOutQuad));
+                    TweenSettingsExtensions.Join(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.app.view.mainCameraView.transform, new Vector3(8.2f, 1.33f, 0f), 1f, 0), Ease.InOutQuad));
+                    TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                    {
+                        __instance.SetEvent(new TreasureStartEvent());
+                    });
+                }
+                else if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
+                {
+                    __instance.SetEvent(new BumboEvent());
+                    __instance.app.controller.HideNotifications(false);
+                    if (!__instance.app.model.iOS)
+                    {
+                        __instance.app.controller.HideGUI();
+                    }
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
+                    __instance.app.view.bossCancelView.Show(new Vector3(-0.011f, 0.94f, -2.004f), true);
+                    __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
+                    __instance.SetEvent(new BossDyingEvent());
+                }
+                else if (_event_path == "cancel.spell")
+                {
+                    if (__instance.app.controller.trinketController.RerollSpellCost())
+                    {
+                        SpellView spellViewUsed = __instance.app.model.spellViewUsed;
+                        int spellIndex = spellViewUsed.spellIndex;
+                        if (!__instance.app.model.characterSheet.spells[spellIndex].IsChargeable)
+                        {
+                            __instance.app.model.characterSheet.spells[spellIndex].Cost = __instance.app.model.spellUsedCost;
+                            __instance.app.controller.SetSpell(spellViewUsed.spellIndex, __instance.app.model.characterSheet.spells[spellIndex]);
+                        }
+                    }
+                    __instance.app.view.clickableColumnViews[1].TurnOffLights();
+                    __instance.app.controller.RemoveTint();
+                    __instance.app.view.bowlingArrowView.Hide();
+                    __instance.app.controller.HideNotifications(false);
+                    short num = 0;
+                    while ((int)num < __instance.app.view.clickableColumnViews.Length)
+                    {
+                        __instance.app.view.clickableColumnViews[(int)num].gameObject.SetActive(false);
+                        num += 1;
+                    }
+                    if (__instance.app.model.costRefundOverride)
+                    {
+                        __instance.app.model.costRefundOverride = false;
+                        __instance.app.controller.UpdateMana(__instance.app.model.costRefundAmount, false);
+                    }
+                    else
+                    {
+                        __instance.app.controller.UpdateMana(__instance.app.model.spellModel.currentSpell.Cost, false);
+                        __instance.app.model.spellModel.currentSpell.FullCharge();
+                    }
+                    float transition_time = 1f * __instance.app.model.enemyAnimationSpeed;
+                    __instance.app.model.spellModel.currentSpell = null;
+                    __instance.app.model.spellModel.spellQueued = false;
+                    __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().ChangeLight(EnemyRoomView.RoomLightScheme.Default, transition_time, true);
+                    __instance.SetEvent(new ResetCameraEvent());
+                }
+                if (_event_path == "acquire.needle" && ((GameObject)_target).GetComponent<NeedleView>().price <= __instance.app.model.characterSheet.coins)
+                {
+                    __instance.app.controller.ModifyCoins(-((GameObject)_target).GetComponent<NeedleView>().price);
+                    __instance.app.controller.needleController.UseNeedle(((GameObject)_target).GetComponent<NeedleView>().needleAppearance);
+                    ((GameObject)_target).GetComponent<NeedleView>().Disappear();
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent")
+                {
+                    __instance.EndEvent();
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "ShopStartEvent" && _event_path == "debug.done.shopping")
+                {
+                    __instance.app.view.boxes.shopRoom.GetComponent<ShopRoomView>().HideShelf();
+                    __instance.EndEvent();
+                    return false;
+                }
+                if (_event_path == "end.turn")
+                {
+                    __instance.EndEvent();
+                    return false;
+                }
+                if ((__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent") && _event_path == "spell.cast")
+                {
+                    if (__instance.app.model.actionPoints == 0)
+                    {
+                        __instance.app.controller.HideEndTurnSign();
+                    }
+                    if (__instance.app.model.iOS)
+                    {
+                        __instance.app.controller.IOSHideGUI();
+                    }
+                    __instance.app.model.spellModel.currentSpellIndex = ((SpellView)_target).spellIndex;
+                    __instance.app.model.spellModel.currentSpell = ((SpellView)_target).SpellObject;
+                    __instance.app.model.spellModel.currentSpell.SetSpellView((SpellView)_target);
+                    __instance.app.model.spellModel.currentSpell.CastSpell();
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() != "NavigationEvent" && _event_path == "navigation.move")
+                {
+                    MonoBehaviour.print("Trying to navigate but we are currently on the event " + __instance.app.model.bumboEvent.GetType().ToString());
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "NavigationEvent" && _event_path == "navigation.move")
+                {
+                    int num2;
+                    int num3;
+                    switch ((NavigationArrowView.Direction)_data[0])
+                    {
+                        case NavigationArrowView.Direction.Up:
+                            num2 = __instance.app.model.mapModel.currentRoom.x;
+                            num3 = __instance.app.model.mapModel.currentRoom.y + 1;
+                            goto IL_AFA;
+                        case NavigationArrowView.Direction.Down:
+                            num2 = __instance.app.model.mapModel.currentRoom.x;
+                            num3 = __instance.app.model.mapModel.currentRoom.y - 1;
+                            goto IL_AFA;
+                        case NavigationArrowView.Direction.Right:
+                            num2 = __instance.app.model.mapModel.currentRoom.x + 1;
+                            num3 = __instance.app.model.mapModel.currentRoom.y;
+                            goto IL_AFA;
+                    }
+                    num2 = __instance.app.model.mapModel.currentRoom.x - 1;
+                    num3 = __instance.app.model.mapModel.currentRoom.y;
+                IL_AFA:
+                    __instance.app.view.navigation.arrowNorth.SetActive(false);
+                    __instance.app.view.navigation.arrowSouth.SetActive(false);
+                    __instance.app.view.navigation.arrowEast.SetActive(false);
+                    __instance.app.view.navigation.arrowWest.SetActive(false);
+                    __instance.app.controller.mapController.SetCurrentRoom(__instance.app.model.mapModel.rooms[num2, num3]);
+                    __instance.SetEvent(new MoveToRoomEvent((NavigationArrowView.Direction)_data[0]));
+                    return false;
+                }
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" && _event_path == "acquire.spell")
+                {
+                    __instance.EndEvent();
+                }
+                return false;
+            }
+        }
+
+        //Patch: Removes cancel button when trinket is replaced
+        //Patch also removes trinket display from the cup game
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketChosenToReplaceEvent), "Execute")]
+        static bool TrinketChosenToReplaceEvent_Execute(TrinketChosenToReplaceEvent __instance, int ___trinketIndex)
+        {
+            if (___trinketIndex >= 0)
+            {
+                if (__instance.app.view.gamblingView != null)
+                {
+                    __instance.app.model.characterSheet.trinkets[___trinketIndex] = __instance.app.model.trinketModel.trinkets[__instance.app.model.gamblingModel.trinketReward];
+                }
+                else
+                {
+                    __instance.app.model.characterSheet.trinkets[___trinketIndex] = __instance.app.model.trinketModel.trinkets[__instance.app.model.trinketReward];
+                }
+                __instance.app.controller.UpdateTrinkets();
+            }
+            if (!__instance.app.model.iOS)
+            {
+                __instance.app.controller.HideGUI();
+            }
+            if (!__instance.app.model.iOS)
+            {
+                __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
+            }
+            __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
+            if (__instance.app.view.gamblingView != null)
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing trinket reward display and hiding cancel button");
+                GameObject gameObject = GameObject.Find("Trinket Display");
+                if (gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(gameObject);
+                }
+                GameObject gameObject2 = GameObject.Find("Trinket Display Light");
+                if (gameObject2 != null)
+                {
+                    UnityEngine.Object.Destroy(gameObject2);
+                }
+                __instance.app.controller.gamblingController.shop.UpdatePrices();
+                __instance.app.view.gamblingView.gamblingCameraView.ShowArrows();
+                __instance.app.view.gamblingView.shopClerkView.TipHat();
+                __instance.app.controller.HideNotifications(false);
+                __instance.app.view.gamblingView.cupClerkView.AnimateIdle();
+                if (__instance.app.model.gamblingModel.cameraAt == 0)
+                {
+                    __instance.app.controller.gamblingController.cupGamble.ReadyGame();
+                }
+                TweenExtensions.Kill(__instance.app.model.gamblingModel.lightAnimation, false);
+                __instance.app.model.gamblingModel.lightAnimation = DOTween.Sequence();
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Join(TweenSettingsExtensions.Join(TweenSettingsExtensions.Append(__instance.app.model.gamblingModel.lightAnimation, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOIntensity(__instance.app.view.gamblingView.fillLight, 1f, 0.25f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOIntensity(__instance.app.view.gamblingView.keyLight, 1f, 0.25f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOIntensity(__instance.app.view.gamblingView.resultLight, 0f, 0.25f), Ease.InOutQuad)), delegate ()
+                {
+                    __instance.End();
+                });
+                return false;
+            }
+            __instance.End();
+
+            return false;
+        }
+
+        //***************************************************
+        //***************************************************
+        //***************************************************
     }
 }

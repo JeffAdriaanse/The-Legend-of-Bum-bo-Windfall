@@ -30,5 +30,32 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
+
+        //Patch: Fixes various spell name typos
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spellKA", MethodType.Getter)]
+        static void SpellModel_spellKA(ref Dictionary<SpellName, string> __result)
+        {
+            Dictionary<SpellName, string> returnedDict = new Dictionary<SpellName, string>(__result);
+
+            returnedDict[SpellName.Mallot] = "Mallet";
+            returnedDict[SpellName.TinyDice] = "Tiny Dice";
+            returnedDict[SpellName.SleightOfHand] = "Sleight of Hand";
+            returnedDict[SpellName.ExorcismKit] = "Exorcism Kit";
+
+            __result = returnedDict;
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixing spell name typos");
+        }
+
+        //Patch: Fixes Curved Horn trinket name typo
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "trinketKA", MethodType.Getter)]
+        static void TrinketModel_trinketKA(ref Dictionary<TrinketName, string> __result)
+        {
+            Dictionary<TrinketName, string> returnedDict = new Dictionary<TrinketName, string>(__result);
+
+            returnedDict[TrinketName.CurvedHorn] = "Curved Horn";
+
+            __result = returnedDict;
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixing Curved Horn name typo");
+        }
     }
 }

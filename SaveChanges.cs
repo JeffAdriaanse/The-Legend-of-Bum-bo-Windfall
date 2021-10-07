@@ -19,7 +19,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying save changes");
         }
 
-        //Patch: Overrides save method in order to include trinket uses when saving
+        //Patch: Overrides save method in order to include trinket uses and enemy champion statuses when saving
         [HarmonyPrefix, HarmonyPatch(typeof(SavedStateController), "Save")]
         static bool SavedStateController_Save(SavedStateController __instance, byte[] ___Key)
         {

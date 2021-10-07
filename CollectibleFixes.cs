@@ -448,99 +448,63 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __instance.app.model.characterSheet.spells[l].ChargeSpell();
                     __instance.app.controller.eventsController.SetEvent(new IdleEvent());
                     Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixed Paper Straw not interacting with ghost tiles");
-
                 }
             }
             return true;
         }
 
-        ////Patch: Paper Straw now interacts with ghost tiles
-        //[HarmonyPatch(typeof(PaperStrawSpell), "CastSpell")]
-        //static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
-        //{
-        //    var code = new List<CodeInstruction>(instructions);
+        //Changing all use trinkets such that they can be used on turn end
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketElement), "CanBeUsedOnTurnEnd", MethodType.Getter)]
+        public static void TrinketElement_CanBeUsedOnTurnEnd_Getter(TrinketElement __instance, ref bool __result)
+        {
+            if (__instance.Category == TrinketElement.TrinketCategory.Use)
+            {
+                __result = true;
+            }
+        }
 
-        //    int insertionIndex = -1;
-        //    for (int i = 0; i < code.Count - 1; i++)
-        //    {
-        //        //Checking for a specific order of IL codes
-        //        if (code[i].opcode == OpCodes.Br && code[i - 1].opcode == OpCodes.Callvirt && code[i - 1].operand == AccessTools.Method(typeof(BumboApplication), nameof(BumboApplication.Notify)))
-        //        {
-        //            //Insertion index
-        //            insertionIndex = i;
-        //            break;
-        //        }
-        //    }
-        //    LocalBuilder localInt = il.DeclareLocal(typeof(int));
-        //    var instructionsToInsert = new List<CodeInstruction>();
+        //Patch: Causes the player's turn to end automatically after using an activated trinket while out of moves if they can't do anything
+        [HarmonyPostfix, HarmonyPatch(typeof(UseTrinket), "Use")]
+        static void UseTrinket_Use(UseTrinket __instance)
+        {
+            //Disabled for Boom and Death, since they manually set a new event when used
+            if (__instance.trinketName != TrinketName.Boom && __instance.trinketName != TrinketName.Death)
+            {
+                __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+            }
+        }
 
-        //    CodeInstruction firstInstruction = new CodeInstruction(OpCodes.Ldloc_1);
+        //Patch: Causes the player's turn to end automatically after using Modeling Clay while out of moves if they can't do anything (unlike other use trinkets, Modeling Clay doesn't call the base Use method)
+        [HarmonyPostfix, HarmonyPatch(typeof(ModelingClayTrinket), "Use")]
+        static void ModelingClayTrinket_Use(ModelingClayTrinket __instance)
+        {
+            __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+        }
 
-        //    code[insertionIndex + 1].MoveLabelsTo(firstInstruction);
+        //Patch: Prevents additional Lose Move notification from spawning when using Lard
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "ReduceActionPoints")]
+        static bool BumboController_LoseActionPoints(BumboController __instance)
+        {
+            BumboModel model = __instance.app.model;
+            model.actionPointModifier -= 1;
 
-        //    instructionsToInsert.Add(firstInstruction);
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldc_I4_8));
+            SoundsView.Instance.PlaySound(SoundsView.eSound.Spell_MovementDrain, SoundsView.eAudioSlot.Default, false);
 
-        //    //Add label for line after insertion index
-        //    Label afterInsertion = il.DefineLabel();
-        //    code[insertionIndex + 1].labels.Add(afterInsertion);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing additional Lose Move notification from being spawning when using Lard");
+            return false;
+        }
 
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Bne_Un_S, afterInsertion));
+        //Patch: Fixes the player's stats not updating immediately after using The Devil
+        [HarmonyPostfix, HarmonyPatch(typeof(TheDevilTrinket), "Use")]
+        static void TheDevilTrinket_Use(TheDevilTrinket __instance)
+        {
+            __instance.app.controller.UpdateStats();
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Updating player stats on The Devil use");
+        }
 
-        //    Label label1 = il.DefineLabel();
-
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldc_I4_0));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Stloc_S, localInt));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Br_S, label1)); //Label directed
-
-        //    Label label2 = il.DefineLabel();
-
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldarg_0).WithLabels(new[] { label2 }));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SpellElement), "get_app")));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboApplication), nameof(BumboApplication.model))));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboModel), nameof(BumboModel.characterSheet))));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(CharacterSheet), nameof(CharacterSheet.spells))));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldloc_S, localInt));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(List<SpellElement>), "get_Item")));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(SpellElement), nameof(SpellElement.ChargeSpell))));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldloc_S, localInt));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldc_I4_1));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Add));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Stloc_S, localInt));
-
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldloc_S, localInt).WithLabels(new[] { label1 }));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldarg_0));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SpellElement), "get_app")));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboApplication), nameof(BumboApplication.model))));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BumboModel), nameof(BumboModel.characterSheet))));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(CharacterSheet), nameof(CharacterSheet.spells))));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(List<SpellElement>), "get_Count")));
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Blt_S, label2)); //Label directed
-
-        //    Label label3 = il.DefineLabel();
-
-        //    for (int i = 1; i < code.Count - 1; i++)
-        //    {
-        //        //Checking for a specific order of IL codes
-        //        if (code[i].opcode == OpCodes.Ldarg_0 && code[i - 1].opcode == OpCodes.Callvirt && code[i - 1].operand == AccessTools.Method(typeof(BumboController), nameof(BumboController.ShowManaGain)))
-        //        {
-        //            //Add label
-        //            code[i].labels.Add(label3);
-        //            break;
-        //        }
-        //    }
-
-        //    instructionsToInsert.Add(new CodeInstruction(OpCodes.Br_S, label3)); //Label directed
-
-        //    if (insertionIndex != -1)
-        //    {
-        //        code.InsertRange(insertionIndex, instructionsToInsert);
-        //    }
-
-        //    Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixed Paper Straw not interacting with ghost tiles");
-        //    return code;
-        //}
-
+        //***************************************************
+        //**********Spell Retrieval Performance**************
+        //***************************************************
         //Patch: Improves performance of Empty Hidden Trinket
         [HarmonyPrefix, HarmonyPatch(typeof(EmptyHiddenTrinket), "StartRoom")]
         static bool EmptyHiddenTrinket_StartRoom(EmptyHiddenTrinket __instance)
@@ -634,6 +598,40 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of Rainbow Bag");
             return false;
         }
+
+        //Patch: Improves performance of BumboController SpellsFromCategory (improves spell pickup spawning efficiency)
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SpellsFromCategory")]
+        static bool BumboController_SpellsFromCategory(BumboController __instance, SpellElement.SpellCategory _category, ref List<SpellName> __result)
+        {
+            List<List<SpellName>> list = new List<List<SpellName>>();
+            //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
+            list.Add(new List<SpellName>(FastSpellRetrieval.AttackSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.DefenseSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.PuzzleSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.UseSpells));
+            list.Add(new List<SpellName>(FastSpellRetrieval.OtherSpells));
+
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            {
+                //Remove spells for Bum-bo the Lost
+                foreach (List<SpellName> spellList in list)
+                {
+                    List<SpellName> bannedSpells = new List<SpellName>()
+                    {
+                        SpellName.TheRelic,
+                        SpellName.CatPaw,
+                        SpellName.PrayerCard
+                    };
+                    spellList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
+                }
+            }
+            __result = list[_category - SpellElement.SpellCategory.Attack];
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of BumboController SpellsFromCategory");
+            return false;
+        }
+        //***************************************************
+        //***************************************************
+        //***************************************************
     }
 }
 
