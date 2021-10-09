@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Reflection.Emit;
 using TMPro;
 using DG.Tweening;
+using System.IO;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -755,6 +756,65 @@ namespace The_Legend_of_Bum_bo_Windfall
                 charDescView.ChangeText(CharacterSheet.BumboType.TheBrave);
             }
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Resetting Bum-bo carousel on progress deletion");
+        }
+
+        //Patch: Changes the color of the heart symbol on the cup game sign from red to blue; the cup game provides soul health, not red health
+        [HarmonyPostfix, HarmonyPatch(typeof(CupGamble), "Start")]
+        static void CupGamble_Start(CupGamble __instance)
+        {
+            GameObject cupGameSign = __instance.view.cupGameSignView.gameObject;
+
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+            var texture = assets.LoadAsset<Texture2D>("Cash Register");
+
+            cupGameSign.GetComponent<MeshRenderer>().material.mainTexture = texture;
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing cup game register texture");
+        }
+
+        //Patch: Changes the color of the heart symbol on the stat wheel when playing as Bum-bo the Dead; the wheel provides soul health, not red health
+        [HarmonyPostfix, HarmonyPatch(typeof(WheelView), "Start")]
+        static void WheelView_Start(WheelView __instance)
+        {
+            if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.TheDead)
+            {
+                return;
+            }
+
+            GameObject wheelSliceHeart = __instance.statSlices[5];
+
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+            var texture = assets.LoadAsset<Texture2D>("Wheel");
+
+            wheelSliceHeart.GetComponent<MeshRenderer>().material.mainTexture = texture;
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stat wheel heart texture");
+        }
+
+        //Patch: Changes mesh of use spell icon to fix UV issue
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellView), "Start")]
+        static void SpellView_Start(SpellView __instance)
+        {
+            GameObject useIcon = __instance.spellTypeItem;
+
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+            var iconMesh = assets.LoadAsset<Mesh>("Use_Spell_Icon");
+
+            useIcon.GetComponent<MeshFilter>().mesh = iconMesh;
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mesh of spell container use spell icon");
         }
     }
 }

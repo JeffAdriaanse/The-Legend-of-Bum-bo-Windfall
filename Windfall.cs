@@ -1,6 +1,8 @@
 ﻿using System;
 using BepInEx;
 using HarmonyLib;
+using UnityEngine;
+using System.IO;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -12,8 +14,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         private const string modName = "The Legend of Bum-bo: Windfall";
         private const string modVersion = "0.0.5.5";
         private readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
+
+        public static AssetBundle assetBundle; 
         void Awake()
         {
+            //Load assets
+            LoadAssets();
+
             //Patching with harmony
             harmony.PatchAll();
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying harmony patch");
@@ -25,6 +32,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             TypoFixes.Awake();
             SaveChanges.Awake();
             OtherChanges.Awake();
+        }
+
+        static void LoadAssets()
+        {
+            assetBundle = AssetBundle.LoadFromFile(Directory.GetCurrentDirectory() + "\\Bepinex\\plugins\\The Legend of Bum-bo_Windfall\\windfall");
         }
     }
 }

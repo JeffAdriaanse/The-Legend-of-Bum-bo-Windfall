@@ -5,6 +5,8 @@ using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
 using DG.Tweening;
+using UnityEngine.UI;
+using TMPro;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -1243,6 +1245,112 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             __instance.End();
 
+            return false;
+        }
+
+        //***************************************************
+        //***************************************************
+        //***************************************************
+
+        //***************************************************
+        //*****************Cutscene Menu********************
+        //***************************************************
+
+        //Patch: Add cutscene menu button to main menu
+        //Also removes cutscenes that haven't been unlocked
+        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
+        static void TitleController_Start(TitleController __instance)
+        {
+            GameObject gameObject = UnityEngine.Object.Instantiate(__instance.menuObject.transform.Find("Debug Menu").Find("Cutscenes").gameObject, __instance.mainMenu.transform);
+            gameObject.GetComponent<RectTransform>().SetSiblingIndex(4);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Added cutscene menu button");
+
+            //Reorder endings
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").SetSiblingIndex(4);
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").SetSiblingIndex(6);
+
+            //Remove endings based on game progress
+            Progression progression = ProgressionController.LoadProgression();
+            if (!progression.unlocks[0])
+            {
+                //Remove Nimble ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Nimble Ending").gameObject.SetActive(false);
+            }
+            if (!progression.unlocks[1])
+            {
+                //Remove Stout ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Stout Ending").gameObject.SetActive(false);
+            }
+            if (!progression.unlocks[2])
+            {
+                //Remove Weird ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").gameObject.SetActive(false);
+            }
+            if (!progression.unlocks[5])
+            {
+                //Remove Basement ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Basement").gameObject.SetActive(false);
+            }
+            if (progression.wins < 1)
+            {
+                //Remove Mom ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Mom").gameObject.SetActive(false);
+                //Remove Credits Roll
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").gameObject.SetActive(false);
+            }
+
+            bool removeFinalEnding = false;
+            for (int i = 0; i < 31; i++)
+            {
+                if (!progression.unlocks[i])
+                {
+                    removeFinalEnding = true;
+                }
+            }
+            if (removeFinalEnding)
+            {
+                //Remove Final ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").gameObject.SetActive(false);
+            }
+        }
+
+        //Patch: Update cutscene menu when progress is deleted
+        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "DeleteProgress")]
+        static void TitleController_DeleteProgress(TitleController __instance)
+        {
+            //Remove Nimble ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Nimble Ending").gameObject.SetActive(false);
+            //Remove Stout ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Stout Ending").gameObject.SetActive(false);
+            //Remove Weird ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").gameObject.SetActive(false);
+            //Remove Basement ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Basement").gameObject.SetActive(false);
+            //Remove Mom ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Mom").gameObject.SetActive(false);
+            //Remove Credits Roll
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").gameObject.SetActive(false);
+            //Remove Final ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").gameObject.SetActive(false);
+        }
+
+        //Patch: Cutscene menu from main menu
+        [HarmonyPrefix, HarmonyPatch(typeof(TitleController), "OpenCutsceneMenu")]
+        static bool TitleController_OpenCutsceneMenu(TitleController __instance)
+        {
+            __instance.cutsceneMenu.SetActive(true);
+            __instance.mainMenu.SetActive(false);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Cutscene menu from main menu");
+            return false;
+        }
+
+        //Patch: Main menu from cutscene menu
+        [HarmonyPrefix, HarmonyPatch(typeof(TitleController), "CloseCutsceneMenu")]
+        static bool TitleController_CloseCutsceneMenu(TitleController __instance)
+        {
+            __instance.cutsceneMenu.SetActive(false);
+            __instance.mainMenu.SetActive(true);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Cutscene menu from main menu");
             return false;
         }
 
