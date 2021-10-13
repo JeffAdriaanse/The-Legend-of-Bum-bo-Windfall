@@ -799,7 +799,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stat wheel heart texture");
         }
 
-        //Patch: Changes mesh of use spell icon to fix UV issue
+        //Patch: Changes mesh of use spell icon to fix texture mapping issue
         [HarmonyPostfix, HarmonyPatch(typeof(SpellView), "Start")]
         static void SpellView_Start(SpellView __instance)
         {

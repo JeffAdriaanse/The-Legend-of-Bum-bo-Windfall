@@ -483,29 +483,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         //**********Animation Speed Manipulation*************
         //***************************************************
 
-        //Patch: Allows player to change animation speed
-        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Update")]
-        static void TitleController_Update(TitleController __instance)
-        {
-            if (Input.GetKeyDown(KeyCode.Minus))
-            {
-                PlayerPrefs.SetFloat("AnimationSpeed", 1f);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Setting animation speed to normal speed");
-            }
-            else if (Input.GetKeyDown(KeyCode.Equals))
-            {
-                PlayerPrefs.SetFloat("AnimationSpeed", 1.5f);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Setting animation speed to fast speed");
-            }
-        }
+        static float animationSpeed = 1.5f;
 
         //Patch: Applies animation speed setting to CupGameResultEvent
         //Also creates trinket display when winning a trinket while having no empty trinket slots
+        //Also increases coin rewards
         [HarmonyPrefix, HarmonyPatch(typeof(CupGameResultEvent), "Execute")]
         static bool CupGameResultEvent_Execute(CupGameResultEvent __instance)
         {
             Sequence sequence = DOTween.Sequence();
-            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            sequence.timeScale *= animationSpeed;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game result animation");
             float num = UnityEngine.Random.Range(0f, 1f);
             bool flag = false;
@@ -562,7 +549,29 @@ namespace The_Legend_of_Bum_bo_Windfall
                     component.activeCoinModel.transform.localRotation = Quaternion.Euler(90f, 90f, -90f);
                     component.transform.localScale = new Vector3(1.25f, 0f, 1.25f);
                     reward = component.gameObject;
-                    int coin_result = (UnityEngine.Random.Range(0f, 1f) >= 0.5f) ? 6 : 4;
+
+                    int coin_result;
+
+                    float randomCoinResult = UnityEngine.Random.Range(0f, 1f);
+                    if (randomCoinResult > 0.95f)
+                    {
+                        coin_result = 30;
+                    }
+                    else if (randomCoinResult > 0.85f)
+                    {
+                        coin_result = 15;
+                    }
+                    else if (randomCoinResult > 0.65f)
+                    {
+                        coin_result = 10;
+                    }
+                    else
+                    {
+                        coin_result = 5;
+                    }
+
+                    coin_result += UnityEngine.Random.Range(-2, 3);
+
                     notification = "You Won " + coin_result + " Coins!";
                     __instance.app.controller.gamblingController.ModifyCoins(coin_result);
                     Sequence sequence3 = DOTween.Sequence();
@@ -674,8 +683,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             SoundsView.Instance.PlaySound(SoundsView.eSound.SkullGame_Start, SoundsView.eAudioSlot.Default, false);
             Sequence sequence2 = DOTween.Sequence();
 
-            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
-            sequence2.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            sequence.timeScale *= animationSpeed;
+            sequence2.timeScale *= animationSpeed;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game startup animation");
 
             TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Append(sequence2, __instance.app.controller.gamblingController.cupGamble.cups[1].GetComponent<SkullCup>().LiftCup()), 1.25f);
@@ -695,7 +704,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(CupClerkView), "AnimateShuffle")]
         static void CupClerkView_Shuffle(CupClerkView __instance, ref Sequence ___animation)
         {
-            ___animation.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            ___animation.timeScale *= animationSpeed;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game shuffle animation");
         }
 
@@ -705,7 +714,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             SoundsView.Instance.PlaySound(SoundsView.eSound.Splash_Sign_Hide, SoundsView.eAudioSlot.Default, false);
             Sequence sequence = DOTween.Sequence();
-            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 1.5f*(1/PlayerPrefs.GetFloat("AnimationSpeed"))), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.67f, 1f, 1.5f), 0.2f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.5f, 1f, 0.1f), 0.1f), Ease.InOutQuad)), delegate ()
+            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 1.5f*(1/animationSpeed)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.67f, 1f, 1.5f), 0.2f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.5f, 1f, 0.1f), 0.1f), Ease.InOutQuad)), delegate ()
             {
                 __instance.gameObject.SetActive(false);
             });
@@ -777,7 +786,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             ___isSpinning = true;
             Sequence sequence = __instance.wheelView.Spin(wheelReward, _pay);
 
-            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            sequence.timeScale *= animationSpeed;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of wheel spin animation");
 
             TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence, 0.25f), delegate ()
@@ -786,7 +795,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             }), delegate ()
             {
                 AccessTools.Method(typeof(WheelSpin), "Reward").Invoke(__instance, new object[] { __instance.model.wheelSlices[wheelReward] });
-                //__instance.Reward(__instance.model.wheelSlices[wheelReward]);
             });
 
             return false;
@@ -799,7 +807,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.view.soundsView.PlaySound(SoundsView.eSound.WheelSpinResult, __instance.wheelView.transform.position, SoundsView.eAudioSlot.Default, false);
             Sequence sequence = DOTween.Sequence();
 
-            sequence.timeScale *= PlayerPrefs.GetFloat("AnimationSpeed");
+            sequence.timeScale *= animationSpeed;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of wheel reward animation");
 
             TweenSettingsExtensions.Join(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.wheelView.gamblingCameraView.transform, new Vector3(0f, 1f, -5.68f), 1f, false), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.wheelView.gamblingCameraView.transform, Vector3.zero, 1f, 0), Ease.InOutQuad));
@@ -1269,34 +1277,37 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").SetSiblingIndex(4);
             __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").SetSiblingIndex(6);
 
-            //Remove endings based on game progress
+            //Disable endings based on game progress
             Progression progression = ProgressionController.LoadProgression();
             if (!progression.unlocks[0])
             {
-                //Remove Nimble ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Nimble Ending").gameObject.SetActive(false);
+                //Disable Mini Credits
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Mini Credits Roll").GetComponent<Button>().interactable = false;
+
+                //Disable Nimble ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Nimble Ending").GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[1])
             {
-                //Remove Stout ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Stout Ending").gameObject.SetActive(false);
+                //Disable Stout ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Stout Ending").GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[2])
             {
-                //Remove Weird ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").gameObject.SetActive(false);
+                //Disable Weird ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[5])
             {
-                //Remove Basement ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Basement").gameObject.SetActive(false);
+                //Disable Basement ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Basement").GetComponent<Button>().interactable = false;
             }
             if (progression.wins < 1)
             {
-                //Remove Mom ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Mom").gameObject.SetActive(false);
-                //Remove Credits Roll
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").gameObject.SetActive(false);
+                //Disable Mom ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Mom").GetComponent<Button>().interactable = false;
+                //Disable Credits Roll
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").GetComponent<Button>().interactable = false;
             }
 
             bool removeFinalEnding = false;
@@ -1309,8 +1320,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             if (removeFinalEnding)
             {
-                //Remove Final ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").gameObject.SetActive(false);
+                //Disable Final ending
+                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").GetComponent<Button>().interactable = false;
             }
         }
 
@@ -1318,20 +1329,22 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "DeleteProgress")]
         static void TitleController_DeleteProgress(TitleController __instance)
         {
-            //Remove Nimble ending
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Nimble Ending").gameObject.SetActive(false);
-            //Remove Stout ending
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Stout Ending").gameObject.SetActive(false);
-            //Remove Weird ending
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").gameObject.SetActive(false);
-            //Remove Basement ending
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Basement").gameObject.SetActive(false);
-            //Remove Mom ending
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Mom").gameObject.SetActive(false);
-            //Remove Credits Roll
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").gameObject.SetActive(false);
-            //Remove Final ending
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").gameObject.SetActive(false);
+            //Disable Mini Credits
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Mini Credits Roll").GetComponent<Button>().interactable = false;
+            //Disable Nimble ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Nimble Ending").GetComponent<Button>().interactable = false;
+            //Disable Stout ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Stout Ending").GetComponent<Button>().interactable = false;
+            //Disable Weird ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").GetComponent<Button>().interactable = false;
+            //Disable Basement ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Basement").GetComponent<Button>().interactable = false;
+            //Disable Mom ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Mom").GetComponent<Button>().interactable = false;
+            //Disable Credits Roll
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").GetComponent<Button>().interactable = false;
+            //Disable Final ending
+            __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").GetComponent<Button>().interactable = false;
         }
 
         //Patch: Cutscene menu from main menu
@@ -1352,6 +1365,44 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.mainMenu.SetActive(true);
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Cutscene menu from main menu");
             return false;
+        }
+
+        static bool RewatchingCutscene = false;
+        //Patch: Tracks whether player is rewatching a custcene from the main menu
+        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "PlayCutscene")]
+        static void TitleController_PlayCutscene(TitleController __instance)
+        {
+            RewatchingCutscene = true;
+        }
+
+        //Patch: Disables achievements when rewatching cutscenes from the main menu
+        //Jackpot ending plays after Mom cutscene; odds of displaying Jackpot win/lose are equal
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboUnlockController), "Start")]
+        static bool BumboUnlockController_Start(BumboUnlockController __instance, ref List<int> ___unlocks)
+        {
+            if (!RewatchingCutscene)
+            {
+                return true;
+            }
+            RewatchingCutscene = false;
+            __instance.skipUnlock = true;
+            __instance.forceUnlock = false;
+
+            if (__instance.app.view.badUnlock != null)
+            {
+                if (UnityEngine.Random.Range(0f, 1f) > 0.5f)
+                {
+                    __instance.app.view.introPaperView.musicAudio = __instance.badMusic;
+                    __instance.app.view.introPaperView.video.clip = __instance.app.view.badUnlock;
+                    __instance.app.view.goodEnding = false;
+                }
+                else
+                {
+                    __instance.app.view.goodEnding = true;
+                }
+            }
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling achievements when rewatching cutscenes from the main menu");
+            return true;
         }
 
         //***************************************************
