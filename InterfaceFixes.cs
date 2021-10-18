@@ -102,29 +102,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
-        //Patch: Fixes champion enemies creating dust twice when spawning
-        [HarmonyPrefix, HarmonyPatch(typeof(Enemy), "SpawnDust")]
-        static bool Enemy_SpawnDust(Enemy __instance)
-        {
-            if (__instance.championType == Enemy.ChampionType.NotAChampion)
-            {
-                return true;
-            }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting dust spawn of " + __instance.enemyName + "; enemy is a champion");
-            return false;
-        }
-
-        //Patch: Prevents vein from appearing on Keepers on Init
-        [HarmonyPostfix, HarmonyPatch(typeof(HangerEnemy), "Init")]
-        static void HangerEnemy_Init(HangerEnemy __instance)
-        {
-            if (__instance.berserkView != null && __instance.championType != Enemy.ChampionType.ExtraMove)
-            {
-                __instance.berserkView.gameObject.SetActive(false);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Deactivating vein icon on Hanger enemy");
-            }
-        }
-
         //***************************************************
         //*************Trinket pickup use display************
         //***************************************************
@@ -815,6 +792,74 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             useIcon.GetComponent<MeshFilter>().mesh = iconMesh;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mesh of spell container use spell icon");
+        }
+
+        //Patch: Corrects character stats on the character select screen that do not match in game values
+        //Stout: added 1 soul heart
+        //Dead: added 1 puzzle damage
+        [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), "Start")]
+        static void SelectCharacterView_Start(SelectCharacterView __instance)
+        {
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+
+            GameObject stoutStatsObject = __instance.stout.transform.Find("Bumbo The Stout").Find("stout_select").Find("bumbo_select_stats").gameObject;
+            var textureStout = assets.LoadAsset<Texture2D>("Stout Stats");
+            if (stoutStatsObject != null && textureStout != null)
+            {
+                stoutStatsObject.GetComponent<MeshRenderer>().material.mainTexture = textureStout;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stout stats texture");
+            }
+
+            GameObject deadStatsObject = __instance.dead.transform.Find("Bumbo The Dead").Find("bumbo_select").Find("bumbo_select_stats").gameObject;
+            var textureDead = assets.LoadAsset<Texture2D>("Dead Stats");
+            if (deadStatsObject != null && textureDead != null)
+            {
+                deadStatsObject.GetComponent<MeshRenderer>().material.mainTexture = textureDead;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing dead stats texture");
+            }
+        }
+
+        //Patch: Changes the color of Bum-bo the Empty's throwing hand from beige to gray
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboThrowView), "ChangeArm", new Type[] { typeof(Block.BlockType), typeof(CharacterSheet.BumboType) })]
+        static void BumboThrowView_ChangeArm(BumboThrowView __instance, CharacterSheet.BumboType _bumbo_type)
+        {
+            //Change hand color if character is Bum-bo the Empty
+            if (_bumbo_type == CharacterSheet.BumboType.Eden)
+            {
+                AssetBundle assets = Windfall.assetBundle;
+                if (assets == null)
+                {
+                    Debug.Log("Failed to load AssetBundle!");
+                    return;
+                }
+                var emptyHandTexture = assets.LoadAsset<Texture2D>("Empty Throw Hand");
+
+                foreach (GameObject gameObject in new GameObject[]
+                {
+                __instance.AtkBone,
+                __instance.AtkBooger,
+                __instance.AtkTooth,
+                __instance.AtkHeart,
+                __instance.AtkPoop,
+                __instance.AtkPee,
+                __instance.AtkCurse,
+                __instance.AtkWild,
+                __instance.AtkFist
+                })
+                {
+                    MeshRenderer component = gameObject.GetComponent<MeshRenderer>();
+                    if (emptyHandTexture != null)
+                    {
+                        component.material.mainTexture = emptyHandTexture;
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing color of Bum-bo the Empty's throwing hand");
+                    }
+                }
+            }
         }
     }
 }

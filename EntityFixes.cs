@@ -15,17 +15,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity related bug fixes");
         }
 
-        //Patch: Fixes a bug that caused invincible enemies to make the boss health bar display their healh amount when healed; the invincible enemy will now not be healed instead
-        //Patch also causes the healing 'gulp' sound to not play for the invincible enemy
-        [HarmonyPrefix, HarmonyPatch(typeof(Enemy), "AddHealth")]
-        static bool Enemy_AddHealth(Enemy __instance)
+        //Patch: Prevents vein from appearing on Keepers on Init
+        [HarmonyPostfix, HarmonyPatch(typeof(HangerEnemy), "Init")]
+        static void HangerEnemy_Init(HangerEnemy __instance)
         {
-            if (__instance.max_health == Enemy.HealthType.INVINCIBLE)
+            if (__instance.berserkView != null && __instance.championType != Enemy.ChampionType.ExtraMove)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting healing of " + __instance.enemyName + "; enemy is invincible");
-                return false;
+                __instance.berserkView.gameObject.SetActive(false);
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Deactivating vein icon on Hanger enemy");
             }
-            return true;
         }
 
         //Patch: Fixes champion enemies creating dust twice when spawning

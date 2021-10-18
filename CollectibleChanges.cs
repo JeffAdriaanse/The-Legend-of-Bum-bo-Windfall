@@ -5,7 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
 using DG.Tweening;
-
+using System.Runtime.CompilerServices;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -16,6 +16,75 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(CollectibleChanges));
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
         }
+
+		//Access base method
+		[HarmonyReversePatch]
+		[HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static bool CastSpellDummy(SleightOfHandSpell instance) { return false; }
+		//Patch: Sleight of Hand rework
+		[HarmonyPrefix, HarmonyPatch(typeof(SleightOfHandSpell), "CastSpell")]
+		static bool SleightOfHandSpell_CastSpell(SleightOfHandSpell __instance, ref bool __result)
+		{
+			if (!CastSpellDummy(__instance))
+			{
+				__result = false;
+				return false;
+			}
+			__instance.app.model.spellModel.currentSpell = null;
+			__instance.app.model.spellModel.spellQueued = false;
+			for (int i = 0; i < __instance.app.model.characterSheet.spells.Count; i++)
+			{
+				SpellElement spellElement = __instance.app.model.characterSheet.spells[i];
+				if (!spellElement.IsChargeable && spellElement != __instance)
+				{
+					int totalSpellCost = 0;
+					for (int j = 0; j < 6; j++)
+					{
+						totalSpellCost += (int)spellElement.Cost[j] + spellElement.CostModifier[j];
+					}
+
+					//Reduce mana cost by 25%
+					int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.25f);
+
+					//Do not reduce total cost below two (failsafe)
+					while (totalSpellCost - costReduction < 2)
+					{
+						costReduction--;
+						if (costReduction <= 0)
+						{
+							break;
+						}
+					}
+
+					for (int k = costReduction; k > 0; k--)
+					{
+						List<int> availableColors = new List<int>();
+						for (int l = 0; l < 6; l++)
+						{
+							if (spellElement.Cost[l] + spellElement.CostModifier[l] != 0)
+							{
+								availableColors.Add(l);
+							}
+						}
+						if (availableColors.Count > 0)
+						{
+							int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
+							spellElement.CostModifier[randomColor] -= 1;
+						}
+					}
+				}
+			}
+			__instance.app.controller.UpdateSpellManaText();
+			__instance.app.controller.SetActiveSpells(true, true);
+			__instance.app.controller.GUINotification("Spells\nCost Less\nIn Room!", GUINotificationView.NotifyType.Spell, __instance, true);
+			__instance.app.controller.eventsController.SetEvent(new IdleEvent());
+			SoundsView.Instance.PlaySound(SoundsView.eSound.Spell_LowerCost, SoundsView.eAudioSlot.Default, false);
+			__result = true;
+
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Sleight of Hand effect");
+			return false;
+		}
 
 		//Patch: Damage needles can no longer be used on spells that will not be upgraded by the needle
 		[HarmonyPostfix, HarmonyPatch(typeof(DamagePrickTrinket), "QualifySpell")]
@@ -28,6 +97,23 @@ namespace The_Legend_of_Bum_bo_Windfall
 				Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling attack spell that won't be affected by damage needle");
 			}
 		}
+		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddDamagePrick")]
+		static bool Shop_AddDamagePrick(Shop __instance, ref List<TrinketName> ___needles)
+		{
+			short num = 0;
+			while ((int)num < __instance.app.model.characterSheet.spells.Count)
+			{
+				SpellElement spellElement = __instance.app.model.characterSheet.spells[(int)num];
+				if (spellElement.Category == SpellElement.SpellCategory.Attack && !(spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean || spellElement.spellName == SpellName.PuzzleFlick))
+				{
+					___needles.Add(TrinketName.DamagePrick);
+					return false;
+				}
+				num += 1;
+			}
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing damage needle appearance condition");
+			return false;
+		}
 
 		//Patch: Charge needles can no longer be used on spells that will not be upgraded by the needle
 		[HarmonyPostfix, HarmonyPatch(typeof(ChargePrickTrinket), "QualifySpell")]
@@ -38,6 +124,152 @@ namespace The_Legend_of_Bum_bo_Windfall
 				__instance.app.view.spells[_spell_index].DisableSpell();
 				Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling item that won't be affected by charge needle");
 			}
+		}
+
+		//Patch: Mana needle rework
+		[HarmonyPostfix, HarmonyPatch(typeof(ManaPrickTrinket), "QualifySpell")]
+		static void ManaPrickTrinket_QualifySpell(ManaPrickTrinket __instance, int _spell_index)
+		{
+			int totalManaCost = 0;
+			for (int i = 0; i < 6; i++)
+			{
+				totalManaCost += (int)__instance.app.model.characterSheet.spells[_spell_index].Cost[i];
+				if (totalManaCost > 2)
+				{
+					__instance.app.view.spells[_spell_index].EnableSpell();
+					return;
+				}
+			}
+			__instance.app.view.spells[_spell_index].DisableSpell();
+
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle spell qualification");
+		}
+		[HarmonyPrefix, HarmonyPatch(typeof(ManaPrickTrinket), "UpdateSpell")]
+		static bool ManaPrickTrinket_UpdateSpell(ManaPrickTrinket __instance, int _spell_index)
+		{
+			SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
+			int totalSpellCost = 0;
+			for (int i = 0; i < 6; i++)
+			{
+				totalSpellCost += (int)spellElement.Cost[i];
+			}
+
+			//Reduce mana cost by 25%
+			int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.25f);
+
+			//Do not reduce total cost below two (failsafe)
+			while (totalSpellCost - costReduction < 2)
+            {
+				costReduction--;
+				if (costReduction <= 0)
+                {
+					break;
+                }
+            }
+
+			for (int j = costReduction; j > 0; j--)
+			{
+				//Find colors with cost above 0
+				List<int> availableColors = new List<int>();
+				for (int k = 0; k < 6; k++)
+				{
+					if (spellElement.Cost[k] != 0)
+					{
+						availableColors.Add(k);
+					}
+				}
+				//Choose random color to reduce
+				int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
+				short[] cost = __instance.app.model.characterSheet.spells[_spell_index].Cost;
+				cost[randomColor] -= 1;
+			}
+			__instance.app.controller.UpdateSpellManaText();
+			__instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
+			__instance.app.view.spells[_spell_index].spellParticles.Play();
+
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle effect");
+			return false;
+		}
+		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddManaPrick")]
+		static bool Shop_AddManaPrick(Shop __instance, ref List<TrinketName> ___needles)
+		{
+			short num = 0;
+			while ((int)num < __instance.app.model.characterSheet.spells.Count)
+			{
+				int num2 = 0;
+				for (int i = 0; i < 6; i++)
+				{
+					num2 += (int)__instance.app.model.characterSheet.spells[(int)num].Cost[i];
+					if (num2 >= 2)
+					{
+						___needles.Add(TrinketName.ManaPrick);
+						return false;
+					}
+				}
+				num += 1;
+			}
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle appearance condition");
+			return false;
+		}
+
+		//Patch: Bum-bo the Dead will now not encounter Shuffle Needles instead of Mana Needles
+		//Since spell mana cost reduction is now preserved when the cost is rerolled, mana needles are useful to Bum-bo the Dead
+		//Shuffle needles on the other hand are pretty pointless
+		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "Init")]
+		static bool Shop_Init(Shop __instance, ref List<TrinketName> ___needles, ref GameObject ___item1Pickup, ref GameObject ___item2Pickup, ref GameObject ___item3Pickup, ref GameObject ___item4Pickup, ref TrinketModel ___trinketModel)
+		{
+			___needles = new List<TrinketName>();
+			if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.Eden)
+			{
+				if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.TheDead)
+				{
+					//Shuffle Needle
+					AccessTools.Method(typeof(Shop), "AddShufflePrick").Invoke(__instance, null);
+				}
+				AccessTools.Method(typeof(Shop), "AddDamagePrick").Invoke(__instance, null);
+				AccessTools.Method(typeof(Shop), "AddChargePrick").Invoke(__instance, null);
+				AccessTools.Method(typeof(Shop), "AddRandomPrick").Invoke(__instance, null);
+				//Mana Needle
+				AccessTools.Method(typeof(Shop), "AddManaPrick").Invoke(__instance, null);
+
+				if (___needles.Count > 0)
+				{
+					___item1Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddNeedle").Invoke(__instance, new object[] { __instance.item1, __instance.item1Price });
+				}
+				if (___needles.Count > 0)
+				{
+					___item2Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddNeedle").Invoke(__instance, new object[] { __instance.item2, __instance.item2Price });
+				}
+				if (___needles.Count > 0)
+				{
+					___item3Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddNeedle").Invoke(__instance, new object[] { __instance.item3, __instance.item3Price });
+				}
+			}
+			else
+			{
+				___trinketModel = __instance.gameObject.AddComponent<TrinketModel>();
+				___item1Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddTrinket").Invoke(__instance, new object[] { __instance.item1, __instance.item1Price });
+				___item2Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddTrinket").Invoke(__instance, new object[] { __instance.item2, __instance.item2Price });
+				___item3Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddTrinket").Invoke(__instance, new object[] { __instance.item3, __instance.item3Price });
+			}
+			if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.TheLost)
+			{
+				___item4Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddHeart").Invoke(__instance, new object[] { __instance.item4, __instance.item4Price });
+			}
+			if (___item1Pickup != null)
+			{
+				___item1Pickup.GetComponent<TrinketPickupView>().shopIndex = 0;
+			}
+			if (___item2Pickup != null)
+			{
+				___item2Pickup.GetComponent<TrinketPickupView>().shopIndex = 1;
+			}
+			if (___item3Pickup != null)
+			{
+				___item3Pickup.GetComponent<TrinketPickupView>().shopIndex = 2;
+			}
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing shop generation");
+			return false;
 		}
 
 		//Patch: Reworks mana cost generation
@@ -264,13 +496,114 @@ namespace The_Legend_of_Bum_bo_Windfall
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing spell mana cost generation");
             return false;
         }
-    }
+
+        //Patch: Pentagram no longer provides puzzle damage
+        [HarmonyPostfix, HarmonyPatch(typeof(PentagramSpell), "CastSpell")]
+        static void PentagramSpell_CastSpell(PentagramSpell __instance, bool __result)
+        {
+			if (__result)
+            {
+				__instance.app.model.characterSheet.bumboRoomModifiers.damage--;
+				//Item damage room modifier is not implemented in the base game and must be added in
+				__instance.app.model.characterSheet.bumboRoomModifiers.itemDamage++;
+				__instance.app.controller.UpdateStats();
+				Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Pentagram from granting puzzle damage");
+			}
+		}
+
+		//Patch: Implements room spell damage
+		[HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "getItemDamage")]
+		static void CharacterSheet_getItemDamage(CharacterSheet __instance, ref int __result)
+		{
+			int damage = Mathf.RoundToInt((float)Mathf.Clamp(__result + __instance.app.model.characterSheet.bumboRoomModifiers.itemDamage, 1, 5));
+			__result = damage;
+		}
+		//Patch: Implements room spell damage
+		[HarmonyPrefix, HarmonyPatch(typeof(CharacterSheet), "getTemporaryItemDamage")]
+		static bool CharacterSheet_getTemporaryItemDamage(CharacterSheet __instance, ref int __result)
+		{
+			int num = __instance.bumboBaseInfo.itemDamage + __instance.app.model.characterSheet.hiddenTrinket.AddToSpellDamage();
+			short num2 = 0;
+			while ((int)num2 < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				num += __instance.app.controller.GetTrinket((int)num2).AddToSpellDamage();
+				num2 += 1;
+			}
+			int num3 = Mathf.Max(0, 5 - num);
+			int num4 = 0;
+			num4 += __instance.app.model.characterSheet.bumboRoundModifiers.itemDamage;
+			num4 += __instance.app.model.characterSheet.bumboRoundModifiers.damage;
+			//Adding room item damage
+			num4 += __instance.app.model.characterSheet.bumboRoomModifiers.itemDamage;
+			num4 += __instance.app.model.characterSheet.bumboRoomModifiers.damage;
+			__result = Mathf.Clamp(num4, 0, num3);
+			return false;
+		}
+
+		static int rockCounter = 0;
+		//Patch: Rock Friends now drops a number of rocks equal to the player's spell damage stat
+		[HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "DropRock")]
+		static bool RockFriendsSpell_DropRock(RockFriendsSpell __instance, ref int _rock_number)
+		{
+			rockCounter++;
+			_rock_number = 1;
+			if (rockCounter > __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier())
+            {
+				_rock_number = 4;
+				rockCounter = 0;
+			}
+			return true;
+		}
+
+		//***************************************************
+		//***************Calling Base Method*****************
+		//***************************************************
+
+		////Create dummy method of base method
+		////This allows for calling the base method from the child class
+		//[HarmonyReversePatch]
+		//[HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
+		//[MethodImpl(MethodImplOptions.NoInlining)]
+		//static bool BaseCastSpellDummy(PentagramSpell instance)
+		//{
+		//	return true;
+		//}
+
+		////Patch: Pentagram no longer provides puzzle damage
+		//[HarmonyPrefix, HarmonyPatch(typeof(PentagramSpell), "CastSpell")]
+		//static bool PentagramSpell_CastSpell(PentagramSpell __instance, ref bool __result)
+		//{
+		//	if (!BaseCastSpellDummy(__instance))
+		//	{
+		//		__result = false;
+		//		return false;
+		//	}
+		//	__instance.app.model.spellModel.currentSpell = null;
+		//	__instance.app.model.spellModel.spellQueued = false;
+
+		//	//Only increase spell damage
+		//	__instance.app.model.characterSheet.bumboRoomModifiers.itemDamage++;
+
+		//	__instance.app.controller.ShowDamageUp();
+		//	__instance.app.controller.UpdateStats();
+		//	__instance.app.controller.GUINotification("Hit Harder\nIn Room!", GUINotificationView.NotifyType.General, __instance, true);
+		//	__instance.app.controller.eventsController.SetEvent(new IdleEvent());
+		//	__result = true;
+		//	Console.WriteLine("[The Legend of Bum-bo: Windfall] ");
+		//	return false;
+		//}
+
+		//***************************************************
+		//***************************************************
+		//***************************************************
+	}
 
 	static class SpellManaCosts
 	{
 		public static Dictionary<SpellName, int> manaCosts = new Dictionary<SpellName, int>()
 		{
-			{ SpellName.TwentyTwenty, 6 },
+			{ SpellName.TwentyTwenty, 7 },
+			{ SpellName.Pentagram, 8 },
 		};
 	}
 }

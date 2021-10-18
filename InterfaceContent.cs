@@ -555,24 +555,24 @@ namespace The_Legend_of_Bum_bo_Windfall
                     float randomCoinResult = UnityEngine.Random.Range(0f, 1f);
                     if (randomCoinResult > 0.95f)
                     {
-                        coin_result = 30;
+                        coin_result = 25;
                     }
-                    else if (randomCoinResult > 0.85f)
+                    else if (randomCoinResult > 0.80f)
                     {
                         coin_result = 15;
                     }
-                    else if (randomCoinResult > 0.65f)
+                    else if (randomCoinResult > 0.55f)
                     {
                         coin_result = 10;
                     }
                     else
                     {
-                        coin_result = 5;
+                        coin_result = 3;
                     }
 
                     coin_result += UnityEngine.Random.Range(-2, 3);
 
-                    notification = "You Won " + coin_result + " Coins!";
+                    notification = "You Won " + coin_result + (coin_result == 1 ? " Coin!" : " Coins!");
                     __instance.app.controller.gamblingController.ModifyCoins(coin_result);
                     Sequence sequence3 = DOTween.Sequence();
                     TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence3, 1.25f), delegate ()

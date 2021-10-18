@@ -5,6 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
 using DG.Tweening;
+using System.Runtime.CompilerServices;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -14,6 +15,217 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Harmony.CreateAndPatchAll(typeof(CollectibleFixes));
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible related bug fixes");
+        }
+
+        //Access base method
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static bool CastSpellDummy(MetronomeSpell instance) { return false; }
+        //Patch: Metronome now overrides the triggered spell's cost
+        [HarmonyPrefix, HarmonyPatch(typeof(MetronomeSpell), "CastSpell")]
+        static bool MetronomeSpell_CastSpell(MetronomeSpell __instance, ref bool __result)
+        {
+            if (!CastSpellDummy(__instance))
+            {
+                __result = false;
+                return false;
+            }
+            __instance.app.model.costRefundOverride = true;
+            __instance.app.model.costRefundAmount = new short[6];
+            SpellName spellName = (SpellName)UnityEngine.Random.Range(1, 139);
+            while (spellName == SpellName.Metronome || !__instance.app.model.spellModel.spells.ContainsKey(spellName))
+            {
+                spellName = (SpellName)UnityEngine.Random.Range(1, 139);
+            }
+            MonoBehaviour.print("Metronome is casting " + spellName.ToString());
+            __instance.app.model.spellModel.currentSpell = __instance.app.model.spellModel.spells[spellName];
+            __instance.app.model.spellModel.spellQueued = true;
+
+            //Cost override
+            __instance.app.model.spellModel.currentSpell.CostOverride = true;
+
+            __instance.app.model.spellModel.currentSpell.CastSpell();
+            SoundsView.Instance.PlaySound(SoundsView.eSound.Spell_DamageUp, SoundsView.eAudioSlot.Default, false);
+            __result = true;
+
+            return false;
+        }
+
+        //Patch: Removes fake trinket when a fake trinket replaced
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketChosenToReplaceEvent), "Execute")]
+        static bool TrinketChosenToReplaceEvent_Execute(TrinketChosenToReplaceEvent __instance, int ___trinketIndex)
+        {
+            if (___trinketIndex >= 0 && __instance.app.model.trinketIsFake[___trinketIndex])
+            {
+                //Remove fake trinket
+                __instance.app.model.fakeTrinkets[___trinketIndex] = null;
+                __instance.app.model.trinketIsFake[___trinketIndex] = false;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; fake trinket was replaced");
+            }
+            return true;
+        }
+        //Patch: Glitch now displays its number of uses when acting as an activated trinket
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "UpdateTrinkets")]
+        static void BumboController_UpdateTrinkets(BumboController __instance)
+        {
+            for (short num = 0; num < 4; num += 1)
+            {
+                if ((int)num < __instance.app.model.characterSheet.trinkets.Count)
+                {
+                    TrinketElement trinket = __instance.GetTrinket((int)num);
+                    __instance.app.view.GUICamera.GetComponent<GUISide>().trinketUses[(int)num].SetActive(trinket.Category == TrinketElement.TrinketCategory.Use);
+                    if (trinket.Category == TrinketElement.TrinketCategory.Use)
+                    {
+                        __instance.app.view.GUICamera.GetComponent<GUISide>().trinketUsesCount[(int)num].text = trinket.uses + string.Empty;
+                        if (__instance.app.model.trinketIsFake[num])
+                        {
+                            Console.WriteLine("[The Legend of Bum-bo: Windfall] Displaying number of uses of activated Glitch trinket");
+                        }
+                    }
+                }
+            }
+        }
+        //Patch: Removes fake trinket when a fake trinket is used
+        //Also repositions fake trinkets when a trinket expires
+        [HarmonyPrefix, HarmonyPatch(typeof(UseTrinket), "Use")]
+        static bool UseTrinket_Use(UseTrinket __instance, ref int _index)
+        {
+            //Check whether trinket will run out of uses
+            if (__instance.uses <= 1)
+            {
+                //Check whether trinket is fake 
+                if (__instance.app.model.trinketIsFake[_index])
+                {
+                    //Remove fake trinket
+                    __instance.app.model.fakeTrinkets[_index] = null;
+                    __instance.app.model.trinketIsFake[_index] = false;
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a use trinket");
+                }
+
+                //Reposition trinkets in fake trinket array
+                for (int i = _index + 1; i < __instance.app.model.fakeTrinkets.Length; i++)
+                {
+                    if (__instance.app.model.fakeTrinkets[i] != null)
+                    {
+                        //Copy fake trinket to new position
+                        __instance.app.model.fakeTrinkets[i - 1] = __instance.app.model.fakeTrinkets[i];
+                        __instance.app.model.trinketIsFake[i - 1] = true;
+                        //Clear fake trinket from old position
+                        __instance.app.model.fakeTrinkets[i] = null;
+                        __instance.app.model.trinketIsFake[i] = false;
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Repositioning fake trinket");
+                    }
+                }
+            }
+            return true;
+        }
+        //Patch: Removes fake trinket when a fake Modeling Clay is used (Modeling Clay does not call the base use method and must be changed separately)
+        [HarmonyPrefix, HarmonyPatch(typeof(ModelingClayTrinket), "Use")]
+        static bool ModelingClayTrinket_Use(ModelingClayTrinket __instance, ref int _index)
+        {
+            //Check whether trinket will run out of uses
+            if (__instance.uses <= 1)
+            {
+                //Check whether trinket is fake 
+                if (__instance.app.model.trinketIsFake[_index])
+                {
+                    //Remove fake trinket
+                    __instance.app.model.fakeTrinkets[_index] = null;
+                    __instance.app.model.trinketIsFake[_index] = false;
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a use trinket");
+                }
+            }
+            return true;
+        }
+        //Patch: Fixes Experimental giving red heart containers to Bum-bo the Dead and Bum-bo the Lost
+        [HarmonyPrefix, HarmonyPatch(typeof(ExperimentalTrinket), "Use")]
+        static bool ExperimentalTrinket_Use(ExperimentalTrinket __instance, int _index)
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Experimental result");
+
+            //Check whether trinket will run out of uses
+            if (__instance.uses <= 1)
+            {
+                //Check whether trinket is fake 
+                if (__instance.app.model.trinketIsFake[_index])
+                {
+                    //Remove fake trinket
+                    __instance.app.model.fakeTrinkets[_index] = null;
+                    __instance.app.model.trinketIsFake[_index] = false;
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a use trinket");
+                }
+
+                //Reposition trinkets in fake trinket array
+                for (int i = _index + 1; i < __instance.app.model.fakeTrinkets.Length; i++)
+                {
+                    if (__instance.app.model.fakeTrinkets[i] != null)
+                    {
+                        //Copy fake trinket to new position
+                        __instance.app.model.fakeTrinkets[i - 1] = __instance.app.model.fakeTrinkets[i];
+                        __instance.app.model.trinketIsFake[i - 1] = true;
+                        //Clear fake trinket from old position
+                        __instance.app.model.fakeTrinkets[i] = null;
+                        __instance.app.model.trinketIsFake[i] = false;
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Repositioning fake trinket");
+                    }
+                }
+            }
+
+            //Base use method
+            __instance.uses--;
+            if (__instance.uses <= 0)
+            {
+                __instance.app.model.characterSheet.trinkets.RemoveAt(_index);
+            }
+            __instance.app.controller.UpdateTrinkets();
+            __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+
+            int num;
+            if (__instance.app.model.characterSheet.bumboType.ToString() == "TheLost")
+            {
+                num = UnityEngine.Random.Range(0, 4);
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Lost");
+            }
+            else
+            {
+                num = UnityEngine.Random.Range(0, 5);
+            }
+            switch (num)
+            {
+                case 1:
+                    __instance.app.model.characterSheet.addPuzzleDamage(1);
+                    __instance.app.controller.GUINotification("Gained Puzzle Damage!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                case 2:
+                    __instance.app.model.characterSheet.addItemDamage(1);
+                    __instance.app.controller.GUINotification("Gained Item Damage!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                case 3:
+                    __instance.app.model.characterSheet.addDex(1);
+                    __instance.app.controller.GUINotification("Gained Dexterity!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                case 4:
+                    if (__instance.app.model.characterSheet.bumboType.ToString() == "TheDead")
+                    {
+                        __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 1f);
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Dead; granting soul heart instead");
+                    }
+                    else
+                    {
+                        __instance.app.model.characterSheet.addHitPoints(1);
+                    }
+                    __instance.app.controller.GUINotification("Gained Hit Points!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+                default:
+                    __instance.app.model.characterSheet.addLuck(1);
+                    __instance.app.controller.GUINotification("Gained Luck!", GUINotificationView.NotifyType.Stats, null, true);
+                    break;
+            }
+            __instance.app.controller.AddCurse(1);
+            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
+            __instance.app.controller.UpdateStats();
+            return false;
         }
 
         //Patch: Fixes ExorcismKit often not healing all enemies
@@ -209,27 +421,18 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
+        static int flyCounter = 0;
         //Patch: Reworks Attack Fly Spell sequence to account for changes to enemy states between fly attacks
         [HarmonyPrefix, HarmonyPatch(typeof(AttackFlySpell), "EndOfMonsterRound")]
         static bool AttackFlySpell_EndOfMonsterRound(AttackFlySpell __instance, bool[] ___enemies_to_bother)
         {
-            GameObject flyCounter;
-            if (GameObject.Find("Attack Fly Counter"))
-            {
-                flyCounter = GameObject.Find("Attack Fly Counter");
-            }
-            else
-            {
-                flyCounter = new GameObject("Attack Fly Counter");
-                flyCounter.transform.position = new Vector3(0, 0, 0);
-            }
             GameObject fly = __instance.app.view.spellAttackView.attackFly;
             Sequence sequence = DOTween.Sequence();
             bool isFinalLane = false;
             int currentLane = -1;
             for (int laneCounter = 0; laneCounter < 3; laneCounter++)
             {
-                if (flyCounter.transform.position.x == laneCounter)
+                if (flyCounter == laneCounter)
                 {
                     if (___enemies_to_bother[laneCounter])
                     {
@@ -239,10 +442,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
 
-            flyCounter.transform.position += new Vector3(1, 0, 0);
-            if (flyCounter.transform.position.x > 2)
+            flyCounter ++;
+            if (flyCounter > 2)
             {
-                flyCounter.transform.position = new Vector3(0, 0, 0);
+                flyCounter = 0;
                 isFinalLane = true;
             }
 
@@ -332,67 +535,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing tweezers from granting red mana");
             }
-            return false;
-        }
-
-        //Patch: Fixes Experimental giving red heart containers to Bum-bo the Dead and Bum-bo the Lost
-        [HarmonyPrefix, HarmonyPatch(typeof(ExperimentalTrinket), "Use")]
-        static bool ExperimentalTrinket_Use(ExperimentalTrinket __instance, int _index)
-        {
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Experimental result");
-
-            __instance.uses--;
-            if (__instance.uses <= 0)
-            {
-                __instance.app.model.characterSheet.trinkets.RemoveAt(_index);
-            }
-            __instance.app.controller.UpdateTrinkets();
-            __instance.app.controller.eventsController.SetEvent(new IdleEvent());
-
-            int num;
-            if (__instance.app.model.characterSheet.bumboType.ToString() == "TheLost")
-            {
-                num = UnityEngine.Random.Range(0, 4);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Lost");
-            }
-            else
-            {
-                num = UnityEngine.Random.Range(0, 5);
-            }
-            switch (num)
-            {
-                case 1:
-                    __instance.app.model.characterSheet.addPuzzleDamage(1);
-                    __instance.app.controller.GUINotification("Gained Puzzle Damage!", GUINotificationView.NotifyType.Stats, null, true);
-                    break;
-                case 2:
-                    __instance.app.model.characterSheet.addItemDamage(1);
-                    __instance.app.controller.GUINotification("Gained Item Damage!", GUINotificationView.NotifyType.Stats, null, true);
-                    break;
-                case 3:
-                    __instance.app.model.characterSheet.addDex(1);
-                    __instance.app.controller.GUINotification("Gained Dexterity!", GUINotificationView.NotifyType.Stats, null, true);
-                    break;
-                case 4:
-                    if (__instance.app.model.characterSheet.bumboType.ToString() == "TheDead")
-                    {
-                        __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 1f);
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Dead; granting soul heart instead");
-                    }
-                    else
-                    {
-                        __instance.app.model.characterSheet.addHitPoints(1);
-                    }
-                    __instance.app.controller.GUINotification("Gained Hit Points!", GUINotificationView.NotifyType.Stats, null, true);
-                    break;
-                default:
-                    __instance.app.model.characterSheet.addLuck(1);
-                    __instance.app.controller.GUINotification("Gained Luck!", GUINotificationView.NotifyType.Stats, null, true);
-                    break;
-            }
-            __instance.app.controller.AddCurse(1);
-            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
-            __instance.app.controller.UpdateStats();
             return false;
         }
 
