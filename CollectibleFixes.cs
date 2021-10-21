@@ -801,16 +801,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
-                //Remove spells for Bum-bo the Lost
+                //Remove non valid spells
                 foreach (List<SpellName> spellList in list)
                 {
-                    List<SpellName> bannedSpells = new List<SpellName>()
-                    {
-                        SpellName.TheRelic,
-                        SpellName.CatPaw,
-                        SpellName.PrayerCard
-                    };
-                    spellList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
+                    spellList.RemoveAll((SpellName x) => !__instance.app.model.spellModel.validSpells.Contains(x));
                 }
             }
 
@@ -824,7 +818,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             for (int l = 0; l < list2.Count; l++)
             {
-                SpellElement spellElement = __instance.app.model.spellModel.spells[list[list2[l] - SpellElement.SpellCategory.Attack][UnityEngine.Random.Range(0, list[list2[l] - SpellElement.SpellCategory.Attack].Count)]];
+                SpellElement spellElement = __instance.app.model.spellModel.spells[list[(int)list2[l] - 1][UnityEngine.Random.Range(0, list[(int)list2[l] - 1].Count)]];
                 spellElement = __instance.app.controller.SetSpellCost(spellElement);
                 __instance.app.model.characterSheet.spells.Add(spellElement);
                 __instance.app.controller.SetSpell(l, __instance.app.model.characterSheet.spells[l]);
@@ -838,29 +832,32 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SpellsFromCategory")]
         static bool BumboController_SpellsFromCategory(BumboController __instance, SpellElement.SpellCategory _category, ref List<SpellName> __result)
         {
-            List<List<SpellName>> list = new List<List<SpellName>>();
-            //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
-            list.Add(new List<SpellName>(FastSpellRetrieval.AttackSpells));
-            list.Add(new List<SpellName>(FastSpellRetrieval.DefenseSpells));
-            list.Add(new List<SpellName>(FastSpellRetrieval.PuzzleSpells));
-            list.Add(new List<SpellName>(FastSpellRetrieval.UseSpells));
-            list.Add(new List<SpellName>(FastSpellRetrieval.OtherSpells));
+            List<SpellName> list = new List<SpellName>();
 
-            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
+            switch (_category)
             {
-                //Remove spells for Bum-bo the Lost
-                foreach (List<SpellName> spellList in list)
-                {
-                    List<SpellName> bannedSpells = new List<SpellName>()
-                    {
-                        SpellName.TheRelic,
-                        SpellName.CatPaw,
-                        SpellName.PrayerCard
-                    };
-                    spellList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
-                }
+                case SpellElement.SpellCategory.Attack:
+                    list = new List<SpellName>(FastSpellRetrieval.AttackSpells);
+                    break;
+                case SpellElement.SpellCategory.Defense:
+                    list = new List<SpellName>(FastSpellRetrieval.DefenseSpells);
+                    break;
+                case SpellElement.SpellCategory.Puzzle:
+                    list = new List<SpellName>(FastSpellRetrieval.PuzzleSpells);
+                    break;
+                case SpellElement.SpellCategory.Use:
+                    list = new List<SpellName>(FastSpellRetrieval.UseSpells);
+                    break;
+                case SpellElement.SpellCategory.Other:
+                    list = new List<SpellName>(FastSpellRetrieval.OtherSpells);
+                    break;
             }
-            __result = list[_category - SpellElement.SpellCategory.Attack];
+
+            //Remove non valid spells
+            list.RemoveAll((SpellName x) => !__instance.app.model.spellModel.validSpells.Contains(x));
+
+            __result = list;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of BumboController SpellsFromCategory");
             return false;
         }
@@ -874,6 +871,7 @@ static class FastSpellRetrieval
 {
     public static SpellElement.SpellCategory GetSpellCategory(SpellName spell)
     {
+        //Gets category of a given spell name (unused)
         SpellElement.SpellCategory category = SpellElement.SpellCategory.None;
         switch (spell)
         {
@@ -1289,13 +1287,13 @@ static class FastSpellRetrieval
         {
             List<SpellName> list = new List<SpellName>
             {
-                //SpellName.AttackFly,
-                //SpellName.Backstabber,
+                SpellName.AttackFly,
+                SpellName.Backstabber,
                 SpellName.BeeButt,
                 SpellName.BigRock,
                 SpellName.BorfBucket,
-                //SpellName.Brimstone,
-                //SpellName.BumboSmash,
+                SpellName.Brimstone,
+                SpellName.BumboSmash,
                 SpellName.DogTooth,
                 SpellName.Ecoli,
                 SpellName.ExorcismKit,
@@ -1310,45 +1308,16 @@ static class FastSpellRetrieval
                 SpellName.MeatHook,
                 SpellName.MegaBean,
                 SpellName.NailBoard,
-                //SpellName.Needle,
+                SpellName.Needle,
                 SpellName.Number1,
                 SpellName.Pliers,
                 SpellName.PuzzleFlick,
                 SpellName.Rock,
                 SpellName.RockFriends,
-                SpellName.RubberBat
-                //SpellName.Stick,
-                //SpellName.TheNegative
+                SpellName.RubberBat,
+                SpellName.Stick,
+                SpellName.TheNegative
             };
-            Progression progression = ProgressionController.LoadProgression();
-            if (progression.unlocks[9])
-            {
-                list.Add(SpellName.BumboSmash);
-            }
-            if (progression.unlocks[11])
-            {
-                list.Add(SpellName.Needle);
-            }
-            if (progression.unlocks[13])
-            {
-                list.Add(SpellName.Stick);
-            }
-            if (progression.unlocks[17])
-            {
-                list.Add(SpellName.AttackFly);
-            }
-            if (progression.unlocks[21])
-            {
-                list.Add(SpellName.Brimstone);
-            }
-            if (progression.unlocks[32])
-            {
-                list.Add(SpellName.TheNegative);
-            }
-            if (progression.unlocks[33])
-            {
-                list.Add(SpellName.Backstabber);
-            }
             return list;
         }
     }
@@ -1362,7 +1331,7 @@ static class FastSpellRetrieval
                 SpellName.BarbedWire,
                 SpellName.BeckoningFinger,
                 SpellName.BrownBelt,
-                //SpellName.CatHeart,
+                SpellName.CatHeart,
                 SpellName.Euthanasia,
                 SpellName.FlashBulb,
                 SpellName.Lard,
@@ -1373,7 +1342,7 @@ static class FastSpellRetrieval
                 SpellName.Peace,
                 SpellName.Pepper,
                 SpellName.PintoBean,
-                //SpellName.PrayerCard,
+                SpellName.PrayerCard,
                 SpellName.RottenMeat,
                 SpellName.SmokeMachine,
                 SpellName.Snack,
@@ -1384,15 +1353,6 @@ static class FastSpellRetrieval
                 SpellName.WhiteBelt,
                 SpellName.YellowBelt
             };
-            Progression progression = ProgressionController.LoadProgression();
-            if (progression.unlocks[23])
-            {
-                list.Add(SpellName.PrayerCard);
-            }
-            if (progression.unlocks[34])
-            {
-                list.Add(SpellName.CatHeart);
-            }
             return list;
         }
     }
@@ -1403,21 +1363,21 @@ static class FastSpellRetrieval
         {
             List<SpellName> list = new List<SpellName>
             {
-                //SpellName.TwentyLbsWeight,
+                SpellName.TwentyLbsWeight,
                 SpellName.Magic8Ball,
                 SpellName.BlackD12,
-                //SpellName.BlenderBlade,
-                //SpellName.BumboShake,
+                SpellName.BlenderBlade,
+                SpellName.BumboShake,
                 SpellName.BuzzDown,
                 SpellName.BuzzRight,
-                //SpellName.BuzzUp,
+                SpellName.BuzzUp,
                 SpellName.Chaos,
                 SpellName.CursedRainbow,
-                //SpellName.DeadDove,
+                SpellName.DeadDove,
                 SpellName.Eraser,
                 SpellName.Flip,
-                //SpellName.KrampusCross,
-                //SpellName.MagicMarker,
+                SpellName.KrampusCross,
+                SpellName.MagicMarker,
                 SpellName.Mallot,
                 SpellName.MirrorMirror,
                 SpellName.MomsLipstick,
@@ -1429,42 +1389,9 @@ static class FastSpellRetrieval
                 SpellName.RainbowFlag,
                 SpellName.RedD12,
                 SpellName.Skewer,
-                SpellName.TinyDice
-                //SpellName.Toothpick
+                SpellName.TinyDice,
+                SpellName.Toothpick
             };
-            Progression progression = ProgressionController.LoadProgression();
-            if (progression.unlocks[10])
-            {
-                list.Add(SpellName.BumboShake);
-            }
-            if (progression.unlocks[12])
-            {
-                list.Add(SpellName.Toothpick);
-            }
-            if (progression.unlocks[14])
-            {
-                list.Add(SpellName.BlenderBlade);
-            }
-            if (progression.unlocks[16])
-            {
-                list.Add(SpellName.MagicMarker);
-            }
-            if (progression.unlocks[25])
-            {
-                list.Add(SpellName.KrampusCross);
-            }
-            if (progression.unlocks[35])
-            {
-                list.Add(SpellName.DeadDove);
-            }
-            if (progression.unlocks[36])
-            {
-                list.Add(SpellName.TwentyLbsWeight);
-            }
-            if (progression.unlocks[37])
-            {
-                list.Add(SpellName.BuzzUp);
-            }
             return list;
         }
     }
@@ -1478,9 +1405,9 @@ static class FastSpellRetrieval
                 SpellName.CatPaw,
                 SpellName.CraftPaper,
                 SpellName.D10,
-                //SpellName.D20,
+                SpellName.D20,
                 SpellName.D4,
-                //SpellName.D6,
+                SpellName.D6,
                 SpellName.D8,
                 SpellName.DarkLotus,
                 SpellName.GoldenTick,
@@ -1489,12 +1416,12 @@ static class FastSpellRetrieval
                 SpellName.LooseChange,
                 SpellName.MegaBattery,
                 SpellName.Mushroom,
-                //SpellName.Pause,
+                SpellName.Pause,
                 SpellName.PriceTag,
                 SpellName.Quake,
                 SpellName.SilverChip,
                 SpellName.Teleport,
-                //SpellName.ThePoop,
+                SpellName.ThePoop,
                 SpellName.TheRelic,
                 SpellName.TracePaper,
                 SpellName.TrapDoor,
@@ -1502,23 +1429,6 @@ static class FastSpellRetrieval
                 SpellName.WoodenNickel,
                 SpellName.YumHeart
             };
-            Progression progression = ProgressionController.LoadProgression();
-            if (progression.unlocks[18])
-            {
-                list.Add(SpellName.ThePoop);
-            }
-            if (progression.unlocks[19])
-            {
-                list.Add(SpellName.D6);
-            }
-            if (progression.unlocks[27])
-            {
-                list.Add(SpellName.D20);
-            }
-            if (progression.unlocks[38])
-            {
-                list.Add(SpellName.Pause);
-            }
             return list;
         }
     }
@@ -1528,7 +1438,7 @@ static class FastSpellRetrieval
         {
             List<SpellName> list = new List<SpellName>
             {
-                //SpellName.TwentyTwenty,
+                SpellName.TwentyTwenty,
                 SpellName.Addy,
                 SpellName.BigSlurp,
                 SpellName.BlackCandle,
@@ -1543,7 +1453,7 @@ static class FastSpellRetrieval
                 SpellName.ConverterYellow,
                 SpellName.CrazyStraw,
                 SpellName.Juiced,
-                //SpellName.Libra,
+                SpellName.Libra,
                 SpellName.LuckyFoot,
                 SpellName.Metronome,
                 SpellName.MissingPiece,
@@ -1554,31 +1464,6 @@ static class FastSpellRetrieval
                 SpellName.TimeWalker,
                 SpellName.WoodenSpoon
             };
-            Progression progression = ProgressionController.LoadProgression();
-            if (progression.unlocks[29])
-            {
-                list.Add(SpellName.Libra);
-            }
-            if (progression.unlocks[39])
-            {
-                list.Add(SpellName.TwentyTwenty);
-            }
-
-            //Remove all but one converter spell
-            List<SpellName> convertersFound = new List<SpellName>();
-            for (int spellIndex = 0; spellIndex < list.Count; spellIndex++)
-            {
-                if (list[spellIndex].ToString().Contains("Converter"))
-                {
-                    convertersFound.Add(list[spellIndex]);
-                }
-            }
-            while (convertersFound.Count > 1)
-            {
-                int randomConverterIndex = UnityEngine.Random.Range(0, convertersFound.Count);
-                list.Remove(convertersFound[randomConverterIndex]);
-                convertersFound.RemoveAt(randomConverterIndex);
-            }
             return list;
         }
     }
