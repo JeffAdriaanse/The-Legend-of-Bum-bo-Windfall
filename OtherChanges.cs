@@ -61,6 +61,20 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu and unlocking everything");
         }
 
+        //Patch: Fixes a bug in CharacterSheet addSoulHearts logic that permitted granting soul health past the maximum of six total hearts
+        [HarmonyPrefix, HarmonyPatch(typeof(CharacterSheet), "addSoulHearts")]
+        static bool CharacterSheet_addSoulHearts(CharacterSheet __instance, float _amount)
+        {
+            _amount = Mathf.Clamp(_amount, 0f, 6f - __instance.bumboBaseInfo.hitPoints - __instance.soulHearts);
+            __instance.soulHearts += _amount;
+            if (__instance.soulHearts > 6f)
+            {
+                __instance.soulHearts = 6f;
+            }
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing addSoulHearts from granting soul health past the maximum of six total hearts");
+            return false;
+        }
+
         //Patch: Fixes a bug in the Mega Boner tile combo logic; it no longer incorrectly breaks out of the for statements that look for enemies
         [HarmonyPatch(typeof(BoneMegaAttackEvent), "AttackEnemy")]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
@@ -110,6 +124,137 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Reworking Mega Chomper attack to prevent it from targeting null enemies");
             return false;
+        }
+
+        //Patch: Changes floor room generation
+        [HarmonyPostfix, HarmonyPatch(typeof(MapCreationController), "CreateMap")]
+        static void MapCreationController_CreateMap(MapCreationController __instance)
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Start");
+
+            if (__instance.app.controller.savedStateController == null || __instance.app.model.mapModel.rooms == null || __instance.app.model.characterSheet == null)
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Null");
+            }
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Null check finished");
+
+            //Don't generate new map if player is in the tutorial or if a saved map is loading
+            if (__instance.app.model.characterSheet.currentFloor > 0 && !__instance.app.controller.savedStateController.IsLoading())
+            {
+                List<MapRoom.RoomType> rooms = new List<MapRoom.RoomType>()
+                {
+                    MapRoom.RoomType.Start,
+                    MapRoom.RoomType.Treasure,
+                    MapRoom.RoomType.EnemyEncounter,
+                    MapRoom.RoomType.EnemyEncounter,
+                    MapRoom.RoomType.Treasure,
+                    MapRoom.RoomType.Boss
+                };
+
+                List<MapRoom.Direction> roomDirections = new List<MapRoom.Direction>();
+                for (int roomCounter = 0; roomCounter < rooms.Count - 1; roomCounter++)
+                {
+                    //Player will never go south (backwards)
+                    List<MapRoom.Direction> possibleDirections = new List<MapRoom.Direction>()
+                    {
+                        MapRoom.Direction.N,
+                        MapRoom.Direction.E,
+                        MapRoom.Direction.W
+                    };
+
+                    //Don't go back to previous room
+                    if (roomCounter > 0)
+                    {
+                        if (roomDirections[roomCounter - 1] == MapRoom.Direction.E)
+                        {
+                            possibleDirections.Remove(MapRoom.Direction.W);
+                        }
+                        else if (roomDirections[roomCounter - 1] == MapRoom.Direction.W)
+                        {
+                            possibleDirections.Remove(MapRoom.Direction.E);
+                        }
+                    }
+
+                    //Add random direction
+                    roomDirections.Add(possibleDirections[UnityEngine.Random.Range(0, possibleDirections.Count)]);
+                }
+
+                //Map size will fit all possible maps
+                Vector2Int mapSize = new Vector2Int(((rooms.Count - 1) * 2) + 1, rooms.Count);
+                __instance.app.model.mapModel.rooms = new MapRoom[mapSize.x, mapSize.y];
+
+                //Set map size
+                __instance.app.model.mapModel.mapSize = mapSize;
+
+                //Reset map
+                AccessTools.Method(typeof(MapCreationController), "FillMapWithClosedRooms").Invoke(__instance, null);
+
+                //Start at middle bottom of map
+                Vector2Int startRoomPosition = new Vector2Int(rooms.Count - 1, 0);
+                //Track current room position
+                Vector2Int currentPosition = new Vector2Int(startRoomPosition.x, startRoomPosition.y);
+                //Track number of treasure rooms
+                int treasureRoomCount = 0;
+
+                //Generate map
+                for (int roomCounter = 0; roomCounter < rooms.Count; roomCounter++)
+                {
+                    MapRoom currentRoom = __instance.app.model.mapModel.rooms[currentPosition.x, currentPosition.y];
+                    currentRoom.roomType = rooms[roomCounter];
+                    currentRoom.cleared = false;
+
+                    //Set start room
+                    if (roomCounter == 0)
+                    {
+                        __instance.app.model.mapModel.currentRoom = currentRoom;
+                    }
+
+                    //Add room difficulty
+                    if (currentRoom.roomType == MapRoom.RoomType.Start || currentRoom.roomType == MapRoom.RoomType.EnemyEncounter)
+                    {
+                        currentRoom.difficulty = roomCounter == 0 ? 1 : 2;
+                    }
+
+                    //Set treasure room number and type
+                    if (currentRoom.roomType == MapRoom.RoomType.Treasure)
+                    {
+                        treasureRoomCount++;
+                        currentRoom.treasureNo = treasureRoomCount;
+
+                        if (__instance.app.model.characterSheet.currentFloor == 1)
+                        {
+                            currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Spell;
+                        }
+                        else if(__instance.app.model.characterSheet.currentFloor == 2)
+                        {
+                            currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Trinket;
+                        }
+                        else
+                        {
+                            currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Default;
+                        }
+                    }
+
+                    if (currentRoom.roomType != MapRoom.RoomType.Boss)
+                    {
+                        //Add room direction
+                        currentRoom.AddDoor(roomDirections[roomCounter]);
+                        currentRoom.exitDirection = roomDirections[roomCounter];
+
+                        //Update current position
+                        if (roomDirections[roomCounter] == MapRoom.Direction.N)
+                        {
+                            currentPosition.y++;
+                        }
+                        else
+                        {
+                            currentPosition.x += roomDirections[roomCounter] == MapRoom.Direction.E ? 1 : -1;
+                        }
+                    }
+                }
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing floor room generation");
+            }
         }
     }
 }

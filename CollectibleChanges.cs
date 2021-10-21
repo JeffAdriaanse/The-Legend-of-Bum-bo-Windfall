@@ -17,16 +17,111 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
         }
 
+		//Patch: Mana colors now consider spell cost modifier when deciding whether to deactivate
+		[HarmonyPostfix, HarmonyPatch(typeof(BumboController), "UpdateSpellManaText", new Type[] { typeof(int), typeof(SpellElement) })]
+		static void BumboController_UpdateSpellManaText(BumboController __instance, int _spell_index, SpellElement _spell)
+		{
+			if (!_spell.IsChargeable)
+			{
+				for (short colorCounter = 0; colorCounter < 5; colorCounter += 1)
+				{
+					int colorCounterSkipRed = (int)colorCounter;
+					if (colorCounter > 0)
+					{
+						colorCounterSkipRed++;
+					}
+					if (_spell.Cost[colorCounterSkipRed] + _spell.CostModifier[colorCounterSkipRed] <= 0)
+					{
+						__instance.app.view.spells[_spell_index].manaIconViews[colorCounterSkipRed].gameObject.SetActive(false);
+					}
+				}
+			}
+		}
+
 		//Access base method
 		[HarmonyReversePatch]
 		[HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static bool CastSpellDummy(SleightOfHandSpell instance) { return false; }
+		static bool CastSpellDummy_GoldenTickSpell(GoldenTickSpell instance) { return false; }
+		//Patch: Golden Tick rework
+		[HarmonyPrefix, HarmonyPatch(typeof(GoldenTickSpell), "CastSpell")]
+		static bool SleightOfHandSpell_CastSpell(GoldenTickSpell __instance, ref bool __result)
+		{
+			if (!CastSpellDummy_GoldenTickSpell(__instance))
+			{
+				__result = false;
+				return false;
+			}
+			__instance.app.model.spellModel.currentSpell = null;
+			__instance.app.model.spellModel.spellQueued = false;
+			for (int i = 0; i < __instance.app.model.characterSheet.spells.Count; i++)
+			{
+				SpellElement spellElement = __instance.app.model.characterSheet.spells[i];
+				if (!spellElement.IsChargeable)
+				{
+					int totalSpellCost = 0;
+					for (int j = 0; j < 6; j++)
+					{
+						totalSpellCost += (int)spellElement.Cost[j] + spellElement.CostModifier[j];
+					}
+
+					//Reduce mana cost by 40%
+					int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.4f);
+
+					//Do not reduce total cost below two
+					while (totalSpellCost - costReduction < 2)
+					{
+						costReduction--;
+						if (costReduction <= 0)
+						{
+							break;
+						}
+					}
+
+					for (int k = costReduction; k > 0; k--)
+					{
+						List<int> availableColors = new List<int>();
+						for (int l = 0; l < 6; l++)
+						{
+							if (spellElement.Cost[l] + spellElement.CostModifier[l] != 0)
+							{
+								availableColors.Add(l);
+							}
+						}
+						if (availableColors.Count > 0)
+						{
+							int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
+							spellElement.CostModifier[randomColor] -= 1;
+						}
+					}
+				}
+				else if (spellElement != __instance)
+
+				{
+					spellElement.ChargeSpell();
+				}
+			}
+			__instance.charge = 0;
+			__instance.app.controller.UpdateSpellManaText();
+			__instance.app.controller.SetActiveSpells(true, true);
+			__instance.app.controller.GUINotification("Make\nSpells Easier\nTo Cast!", GUINotificationView.NotifyType.Spell, __instance, true);
+			__instance.app.controller.eventsController.SetEvent(new IdleEvent());
+			__result = true;
+
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Golden Tick effect");
+			return false;
+		}
+
+		//Access base method
+		[HarmonyReversePatch]
+		[HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static bool CastSpellDummy_SleightOfHandSpell(SleightOfHandSpell instance) { return false; }
 		//Patch: Sleight of Hand rework
 		[HarmonyPrefix, HarmonyPatch(typeof(SleightOfHandSpell), "CastSpell")]
 		static bool SleightOfHandSpell_CastSpell(SleightOfHandSpell __instance, ref bool __result)
 		{
-			if (!CastSpellDummy(__instance))
+			if (!CastSpellDummy_SleightOfHandSpell(__instance))
 			{
 				__result = false;
 				return false;
@@ -553,6 +648,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 				rockCounter = 0;
 			}
 			return true;
+		}
+		//Patch: Changes Rock Friends description
+		[HarmonyPostfix, HarmonyPatch(typeof(RockFriendsSpell), MethodType.Constructor)]
+		static void RockFriendsSpell_Constructor(RockFriendsSpell __instance)
+		{
+			__instance.Name = "Hits Random Enemies = to Spell Damage";
 		}
 
 		//***************************************************

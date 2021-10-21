@@ -425,29 +425,65 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+        static bool loadChampions = false;
         //Patch: Overrides MakeAChampion method to load champion enemies
+        //Also changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
+        //Champions are now more common once the player has unlocked 'Everything Is Terrible!'
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "MakeAChampion")]
         static bool BumboController_MakeAChampion(BumboController __instance)
         {
             if (__instance.app.controller.savedStateController.IsLoading())
             {
                 //Use a gameObject to indicate whether hijacked SavedStateConroller method should be overridden with champion loading code
-                GameObject loadChampionsBoolean;
-                loadChampionsBoolean = GameObject.Find("Load Champions Bool");
-                if (loadChampionsBoolean == null)
-                {
-                    loadChampionsBoolean = new GameObject("Load Champions Bool");
-                }
-                loadChampionsBoolean.SetActive(true);
+                loadChampions = true;
 
                 //Loading Champions by overriding LoadStart method
                 __instance.app.controller.savedStateController.LoadStart();
                 Console.WriteLine("[The Legend of Bum-bo: Windfall] Loading champion enemies");
 
-                loadChampionsBoolean.SetActive(false);
+                loadChampions = false;
                 return false;
             }
-            return true;
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing enemy champion generation");
+            float[] array = new float[]
+            {
+                0f,
+                0.1f,
+                0.125f,
+                0.15f,
+                0.175f
+            };
+            float num = 1f;
+            float num2 = (!__instance.app.model.progression.unlocks[7]) ? 0.5f : 0.75f;
+            for (int i = 0; i < __instance.app.model.characterSheet.trinkets.Count; i++)
+            {
+                num -= __instance.GetTrinket(i).ChampionChance();
+            }
+            if (__instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Boss)
+            {
+                List<Enemy> list = new List<Enemy>();
+                for (int j = 0; j < __instance.app.model.enemies.Count; j++)
+                {
+                    if (__instance.app.model.enemies[j].alive && __instance.app.model.enemies[j].championType == Enemy.ChampionType.NotAChampion)
+                    {
+                        list.Add(__instance.app.model.enemies[j]);
+                    }
+                }
+                while (list.Count > 0)
+                {
+                    int index = UnityEngine.Random.Range(0, list.Count);
+                    if (UnityEngine.Random.Range(0f, 1f) < array[__instance.app.model.characterSheet.currentFloor] * num * num2)
+                    {
+                        Enemy.ChampionType champion = (Enemy.ChampionType)UnityEngine.Random.Range(1, 10);
+                        list[index].SetChampion(champion);
+                        list[index].Init();
+                    }
+                    list.RemoveAt(index);
+                }
+            }
+
+            return false;
         }
 
         //Patch: Hijacks LoadStart method to load champion enemies
@@ -455,7 +491,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool SavedStateController_LoadStart(SavedStateController __instance, XmlDocument ___lDoc)
         {
             //Checking whether method should be overridden with champion loading code
-            if (GameObject.Find("Load Champions Bool") != null && GameObject.Find("Load Champions Bool").activeSelf)
+            if (loadChampions)
             {
                 //Loading Champions
                 if (___lDoc == null)

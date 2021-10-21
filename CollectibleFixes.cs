@@ -17,6 +17,51 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible related bug fixes");
         }
 
+        //Patch: Fixes Pink Bow granting soul health past the maximum of six total hearts
+        [HarmonyPrefix, HarmonyPatch(typeof(PinkBowTrinket), "EndChapter")]
+        static bool PinkBowTrinket_EndChapter(PinkBowTrinket __instance)
+        {
+            __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, (float)__instance.app.controller.trinketController.EffectMultiplier());
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Pink Bow effect such that it doesn't grant soul health past the maximum of six total hearts");
+            return false;
+        }
+
+        //Patch: Fixes Glitch trinket not reducing shop prices when acting as Steam Sale
+        [HarmonyPrefix, HarmonyPatch(typeof(Shop), "UpdatePrices")]
+        static bool Shop_UpdatePrices(Shop __instance, GameObject ___item1Pickup, GameObject ___item2Pickup, GameObject ___item3Pickup, GameObject ___item4Pickup)
+        {
+            int num = 0;
+            for (int i = 0; i < __instance.app.model.characterSheet.trinkets.Count; i++)
+            {
+                //Use GetTrinket to account for glitched trinkets
+                if (__instance.app.controller.GetTrinket(i).trinketName == TrinketName.SteamSale)
+                {
+                    num += 2;
+                }
+            }
+            if (___item1Pickup != null)
+            {
+                ___item1Pickup.GetComponent<IPriceTag>().ReducePrice(num);
+                ___item1Pickup.GetComponent<IPriceTag>().UpdatePriceTag(__instance.item1Price);
+            }
+            if (___item2Pickup != null)
+            {
+                ___item2Pickup.GetComponent<IPriceTag>().ReducePrice(num);
+                ___item2Pickup.GetComponent<IPriceTag>().UpdatePriceTag(__instance.item2Price);
+            }
+            if (___item3Pickup != null)
+            {
+                ___item3Pickup.GetComponent<IPriceTag>().ReducePrice(num);
+                ___item3Pickup.GetComponent<IPriceTag>().UpdatePriceTag(__instance.item3Price);
+            }
+            if (___item4Pickup != null)
+            {
+                ___item4Pickup.GetComponent<IPriceTag>().ReducePrice(num);
+                ___item4Pickup.GetComponent<IPriceTag>().UpdatePriceTag(__instance.item4Price);
+            }
+            return false;
+        }
+
         //Access base method
         [HarmonyReversePatch]
         [HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]

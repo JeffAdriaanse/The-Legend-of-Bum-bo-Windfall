@@ -18,6 +18,74 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
+        //Patch: Fixes boss room doors appearing as normal doors
+        [HarmonyPrefix, HarmonyPatch(typeof(BoxController), "SetDoorType")]
+        static bool BoxController_SetDoorType(BoxController __instance, DoorView _north, DoorView _east, DoorView _west)
+        {
+            if (_north.gameObject.activeSelf)
+            {
+                MapRoom.RoomType roomType = __instance.app.model.mapModel.rooms[__instance.app.model.mapModel.currentRoom.x, __instance.app.model.mapModel.currentRoom.y + 1].roomType;
+                DoorView.DoorType doorType = DoorView.DoorType.Normal;
+                if (roomType == MapRoom.RoomType.Treasure)
+                {
+                    doorType = DoorView.DoorType.Treasure;
+                }
+                if (roomType == MapRoom.RoomType.Boss)
+                {
+                    doorType = DoorView.DoorType.Boss;
+                }
+                _north.SetDoorType(doorType);
+            }
+            if (_east.gameObject.activeSelf)
+            {
+                MapRoom.RoomType roomType2 = __instance.app.model.mapModel.rooms[__instance.app.model.mapModel.currentRoom.x + 1, __instance.app.model.mapModel.currentRoom.y].roomType;
+                DoorView.DoorType doorType2 = DoorView.DoorType.Normal;
+                if (roomType2 == MapRoom.RoomType.Treasure)
+                {
+                    doorType2 = DoorView.DoorType.Treasure;
+                }
+                if (roomType2 == MapRoom.RoomType.Boss)
+                {
+                    doorType2 = DoorView.DoorType.Boss;
+                }
+                _east.SetDoorType(doorType2);
+            }
+            if (_west.gameObject.activeSelf)
+            {
+                MapRoom.RoomType roomType3 = __instance.app.model.mapModel.rooms[__instance.app.model.mapModel.currentRoom.x - 1, __instance.app.model.mapModel.currentRoom.y].roomType;
+                DoorView.DoorType doorType3 = DoorView.DoorType.Normal;
+                if (roomType3 == MapRoom.RoomType.Treasure)
+                {
+                    doorType3 = DoorView.DoorType.Treasure;
+                }
+                if (roomType3 == MapRoom.RoomType.Boss)
+                {
+                    doorType3 = DoorView.DoorType.Boss;
+                }
+                _west.SetDoorType(doorType3);
+            }
+            return false;
+        }
+
+        //Patch: Changes puzzle block initial scale
+        [HarmonyPrefix, HarmonyPatch(typeof(Block), "Start")]
+        static bool Block_Start(Block __instance)
+        {
+            float blockSize = 0.92f;
+            __instance.transform.localScale = new Vector3(blockSize, blockSize, blockSize);
+            return true;
+        }
+
+        //Patch: Fixes ButtonHoverAnimation grabbing the wrong transform value when determining block initial scale
+        [HarmonyPostfix, HarmonyPatch(typeof(ButtonHoverAnimation), "Start")]
+        static void ButtonHoverAnimation_Start(ButtonHoverAnimation __instance, ref Vector3 ___initialScale, Block ___tileBlock)
+        {
+            if (___tileBlock)
+            {
+                ___initialScale = ___tileBlock.transform.localScale;
+            }
+        }
+
         //Patch: Mana drain type notifications no longer overlap when multiple are spawned at the same time; they now layer behind each other instead
         [HarmonyPostfix, HarmonyPatch(typeof(ManaDrainView), "HudAppear")]
         static void ManaDrainView_HudAppear(ManaDrainView __instance)
