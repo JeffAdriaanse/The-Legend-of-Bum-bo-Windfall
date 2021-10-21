@@ -75,6 +75,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+        //Patch: Fixes a bug in CharacterSheet addSoulHearts logic that permitted granting soul health past the maximum of six total hearts
+        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "addHitPoints")]
+        static void CharacterSheet_addHitPoints(CharacterSheet __instance)
+        {
+            while (__instance.bumboBaseInfo.hitPoints + __instance.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f)
+            {
+                __instance.soulHearts -= 0.5f;
+            }
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing overflowing soul health after gaining a red heart container");
+        }
+
         //Patch: Fixes a bug in the Mega Boner tile combo logic; it no longer incorrectly breaks out of the for statements that look for enemies
         [HarmonyPatch(typeof(BoneMegaAttackEvent), "AttackEnemy")]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)

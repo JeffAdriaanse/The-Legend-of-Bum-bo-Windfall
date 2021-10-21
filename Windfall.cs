@@ -12,7 +12,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         private const string modGUID = "org.bepinex.plugins.thelegendofbumbowindfall";
         private const string modName = "The Legend of Bum-bo: Windfall";
-        private const string modVersion = "0.1.6.1";
+        private const string modVersion = "0.1.6.4";
         private readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
 
         public static AssetBundle assetBundle; 

@@ -26,6 +26,54 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+        //Patch: Fixes D20 granting soul health past the maximum of six total hearts
+        [HarmonyPostfix, HarmonyPatch(typeof(D20Spell), "CastSpell")]
+        static void D20Spell_CastSpell(D20Spell __instance)
+        {
+            while (__instance.app.model.characterSheet.bumboBaseInfo.hitPoints + __instance.app.model.characterSheet.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f)
+            {
+                __instance.app.model.characterSheet.soulHearts -= 0.5f;
+            }
+            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing D20 from granting soul health past the maximum of six total hearts");
+        }
+
+        //Patch: Fixes Prayer Card granting soul health past the maximum of six total hearts
+        [HarmonyPostfix, HarmonyPatch(typeof(PrayerCardSpell), "CastSpell")]
+        static void PrayerCardSpell_CastSpell(PrayerCardSpell __instance)
+        {
+            while (__instance.app.model.characterSheet.bumboBaseInfo.hitPoints + __instance.app.model.characterSheet.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f)
+            {
+                __instance.app.model.characterSheet.soulHearts -= 0.5f;
+            }
+            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Prayer Card from granting soul health past the maximum of six total hearts");
+        }
+
+        //Patch: Fixes The Relic granting soul health past the maximum of six total hearts
+        [HarmonyPostfix, HarmonyPatch(typeof(TheRelicSpell), "CastSpell")]
+        static void TheRelicSpell_CastSpell(TheRelicSpell __instance)
+        {
+            while (__instance.app.model.characterSheet.bumboBaseInfo.hitPoints + __instance.app.model.characterSheet.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f)
+            {
+                __instance.app.model.characterSheet.soulHearts -= 0.5f;
+            }
+            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing The Relic from granting soul health past the maximum of six total hearts");
+        }
+
+        //Patch: Fixes Santa Sangre granting soul health past the maximum of six total hearts
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "SoulOnKill")]
+        static void TrinketController_SoulOnKill(TrinketController __instance)
+        {
+            while (__instance.app.model.characterSheet.bumboBaseInfo.hitPoints + __instance.app.model.characterSheet.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f)
+            {
+                __instance.app.model.characterSheet.soulHearts -= 0.5f;
+            }
+            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Santa Sangre from granting soul health past the maximum of six total hearts");
+        }
+
         //Patch: Fixes Glitch trinket not reducing shop prices when acting as Steam Sale
         [HarmonyPrefix, HarmonyPatch(typeof(Shop), "UpdatePrices")]
         static bool Shop_UpdatePrices(Shop __instance, GameObject ___item1Pickup, GameObject ___item2Pickup, GameObject ___item3Pickup, GameObject ___item4Pickup)
