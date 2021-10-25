@@ -16,6 +16,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying corrections to typos");
         }
 
+        //Patch: Clarifies Bum-bo the Empty's unlock condition text
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboSelectView), "Start")]
+        static void BumboSelectView_Start(BumboSelectView __instance)
+        {
+            if (__instance.bumboType == CharacterSheet.BumboType.Eden)
+            {
+                Transform unlockCondition = __instance.bumboSelect.transform.Find("Locked").Find("Unlock_Condition");
+                unlockCondition.localScale = Vector3.Scale(unlockCondition.localScale, new Vector3(1.22f, 1, 1));
+
+                Transform unlockText = unlockCondition.Find("Unlock Text");
+                unlockText.localScale = Vector3.Scale(unlockText.localScale, new Vector3(1 / 1.22f, 1, 1));
+                unlockText.GetComponent<TextMeshPro>().text = "beat the game twice with the first five characters.";
+            }
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Updating Bum-bo the Empty's unlock condition text");
+        }
+
         //Patch: Corrects a typo in one of Gizzarda's boss sign tips
         [HarmonyPostfix, HarmonyPatch(typeof(BossSignView), "SetBosses")]
         static void BossSignView_SetBosses(BossSignView __instance)

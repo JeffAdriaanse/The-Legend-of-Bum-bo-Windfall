@@ -18,6 +18,87 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
+        //Patch: Fixes treasure rooms always having room art of the Sewers of Dross, even when Bum-bo is in a different Chapter
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init(BumboController __instance)
+        {
+            TreasureRoom treasureRoom = __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>();
+            EnemyRoomView enemyRoomView = __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>();
+
+            //Replace treasure room objects with copies from the current enemy room
+
+            //Eastern door
+            UnityEngine.Object.Destroy(treasureRoom.doorEast.gameObject);
+            treasureRoom.doorEast = UnityEngine.Object.Instantiate(enemyRoomView.doorEast, enemyRoomView.doorEast.transform.position, enemyRoomView.doorEast.transform.rotation, treasureRoom.transform);
+            //Northern door
+            UnityEngine.Object.Destroy(treasureRoom.doorNorth.gameObject);
+            treasureRoom.doorNorth = UnityEngine.Object.Instantiate(enemyRoomView.doorNorth, enemyRoomView.doorNorth.transform.position, enemyRoomView.doorNorth.transform.rotation, treasureRoom.transform);
+            //Western door
+            UnityEngine.Object.Destroy(treasureRoom.doorWest.gameObject);
+            treasureRoom.doorWest = UnityEngine.Object.Instantiate(enemyRoomView.doorWest, enemyRoomView.doorWest.transform.position, enemyRoomView.doorWest.transform.rotation, treasureRoom.transform);
+
+            string eastWall = null;
+            string westWall = null;
+            string backWall = null;
+            string floor = null;
+
+            switch (__instance.app.model.characterSheet.currentFloor)
+            {
+                case 1:
+                    eastWall = "Sewer_Side_Wall (1)";
+                    westWall = "Sewer_Side_Wall";
+                    backWall = "Sewer_Back_Wall";
+                    floor = "Sewer_Floor";
+                    break;
+                case 2:
+                    eastWall = "Cave_Side_Wall (1)";
+                    westWall = "Cave_Side_Wall";
+                    backWall = "Cave_Back_Wall";
+                    floor = "Cave_Floor";
+                    break;
+                case 3:
+                    eastWall = "Temple_East_Side_Wall";
+                    westWall = "Temple_West_Side_Wall";
+                    backWall = "Temple_Back_Wall";
+                    floor = "Temple_Floor";
+                    break;
+                case 4:
+                    eastWall = "Basement_East_Side_Wall";
+                    westWall = "Basement_East_Side_Wall (1)";
+                    backWall = "Basement_Back_Wall";
+                    floor = "Basement_Floor";
+                    break;
+            }
+
+            if (eastWall != null && enemyRoomView.transform.Find(eastWall) != null)
+            {
+                Transform transform = enemyRoomView.transform.Find(eastWall);
+                UnityEngine.Object.Destroy(treasureRoom.transform.Find("Sewer_Side_Wall (1)").gameObject);
+                UnityEngine.Object.Instantiate(transform, transform.position, transform.rotation, treasureRoom.transform);
+            }
+
+            if (westWall != null && enemyRoomView.transform.Find(westWall) != null)
+            {
+                Transform transform = enemyRoomView.transform.Find(westWall);
+                UnityEngine.Object.Destroy(treasureRoom.transform.Find("Sewer_Side_Wall").gameObject);
+                UnityEngine.Object.Instantiate(transform, transform.position, transform.rotation, treasureRoom.transform);
+            }
+
+            if (backWall != null && enemyRoomView.transform.Find(backWall) != null)
+            {
+                Transform transform = enemyRoomView.transform.Find(backWall);
+                UnityEngine.Object.Destroy(treasureRoom.transform.Find("Sewer_Back_Wall").gameObject);
+                UnityEngine.Object.Instantiate(transform, transform.position, transform.rotation, treasureRoom.transform);
+            }
+
+            if (floor != null && enemyRoomView.transform.Find(floor) != null)
+            {
+                Transform transform = enemyRoomView.transform.Find(floor);
+                UnityEngine.Object.Destroy(treasureRoom.transform.Find("Sewer_Floor").gameObject);
+                UnityEngine.Object.Instantiate(transform, transform.position, transform.rotation, treasureRoom.transform);
+            }
+        }
+
         //Patch: Fixes boss room doors appearing as normal doors
         [HarmonyPrefix, HarmonyPatch(typeof(BoxController), "SetDoorType")]
         static bool BoxController_SetDoorType(BoxController __instance, DoorView _north, DoorView _east, DoorView _west)

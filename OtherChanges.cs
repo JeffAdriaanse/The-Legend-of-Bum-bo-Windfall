@@ -141,15 +141,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(MapCreationController), "CreateMap")]
         static void MapCreationController_CreateMap(MapCreationController __instance)
         {
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Start");
-
-            if (__instance.app.controller.savedStateController == null || __instance.app.model.mapModel.rooms == null || __instance.app.model.characterSheet == null)
-            {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Null");
-            }
-
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Null check finished");
-
             //Don't generate new map if player is in the tutorial or if a saved map is loading
             if (__instance.app.model.characterSheet.currentFloor > 0 && !__instance.app.controller.savedStateController.IsLoading())
             {

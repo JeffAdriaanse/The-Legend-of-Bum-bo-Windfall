@@ -8,6 +8,8 @@ using DG.Tweening;
 using System.Xml;
 using System.IO;
 using System.Text;
+using System.Reflection;
+using PathologicalGames;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -19,7 +21,303 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying save changes");
         }
 
+        //Patch: initializePuzzle log
+        [HarmonyPostfix, HarmonyPatch(typeof(Puzzle), "initializePuzzle")]
+        static void Puzzle_initializePuzzle(Puzzle __instance)
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] initializePuzzle, loading: " + __instance.app.controller.savedStateController.IsLoading());
+        }
+
+        //Patch: FloorStartEvent log
+        [HarmonyPrefix, HarmonyPatch(typeof(FloorStartEvent), "Execute")]
+        static bool FloorStartEvent_Execute(FloorStartEvent __instance)
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] FloorStartEvent, " + __instance.app.model.mapModel.currentRoom.roomType);
+            return true;
+        }
+
+        //Patch: MoveIntoRoomEvent log
+        [HarmonyPostfix, HarmonyPatch(typeof(MoveIntoRoomEvent), "Execute")]
+        static void MoveIntoRoomEvent_Execute(MoveIntoRoomEvent __instance)
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] MoveIntoRoomEvent, " + __instance.app.model.mapModel.currentRoom.roomType);
+        }
+
+        //Patch: MoveIntoRoomEvent ResetRoom log
+        [HarmonyPostfix, HarmonyPatch(typeof(MoveIntoRoomEvent), "ResetRoom")]
+        static void MoveIntoRoomEvent_ResetRoom(MoveIntoRoomEvent __instance)
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] ResetRoom, " + __instance.app.model.mapModel.currentRoom.roomType);
+        }
+
+        //Patch: Loads damage taken
+        [HarmonyPostfix, HarmonyPatch(typeof(SavedStateController), "LoadCharacterSheet")]
+        static void SavedStateController_LoadCharacterSheet_DamageTaken(SavedStateController __instance, XmlDocument ___lDoc)
+        {
+            if (___lDoc == null)
+            {
+                return;
+            }
+
+            XmlNode xmlNode = ___lDoc.SelectSingleNode("/save/damageTaken");
+            if (xmlNode == null)
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] damageTaken null");
+                return;
+            }
+
+            float damage = float.Parse(xmlNode.Attributes["damage"].Value);
+
+            while (damage < 0f && (__instance.app.model.characterSheet.hitPoints + __instance.app.model.characterSheet.soulHearts > 0.5f))
+            {
+                __instance.app.model.characterSheet.RegisterDamage(-0.5f);
+
+                if (__instance.app.model.characterSheet.soulHearts > 0f)
+                {
+                    __instance.app.model.characterSheet.soulHearts -= 0.5f;
+                    if (__instance.app.model.characterSheet.soulHearts < 0.5f)
+                    {
+                        __instance.app.model.characterSheet.soulHearts = 0f;
+                    }
+                }
+                else if (__instance.app.model.characterSheet.hitPoints > 0.5f)
+                {
+                    __instance.app.model.characterSheet.hitPoints -= 0.5f;
+                }
+                damage += 0.5f;
+            }
+
+            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
+        }
+
+        //Patch: Saves damage taken
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "TakeDamage")]
+        static void BumboController_TakeDamage(BumboController __instance, float _damage, bool __result)
+        {
+            if (__result && _damage < 0f)
+            {
+                XmlDocument lDoc = new XmlDocument();
+
+                lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
+
+                XmlNode xmlNode = lDoc.SelectSingleNode("save");
+
+                XmlNode xmlNode2 = xmlNode.SelectSingleNode("damageTaken");
+
+                if (xmlNode2 == null)
+                {
+                    //Add damage taken
+                    XmlElement xmlElement = lDoc.CreateElement("damageTaken");
+                    xmlNode.AppendChild(xmlElement);
+                    xmlElement.SetAttribute("damage", _damage.ToString());
+                }
+                else
+                {
+                    //Update damage taken if damage is already present
+                    float damageTaken = float.Parse(xmlNode2.Attributes["damage"].Value);
+                    damageTaken += _damage;
+                    xmlNode2.Attributes["damage"].Value = damageTaken.ToString();
+                }
+
+                StringWriter stringWriter = new StringWriter();
+                lDoc.Save(stringWriter);
+                AccessTools.Method(typeof(SavedStateController), "WriteXml").Invoke(__instance, new object[] { stringWriter.ToString() });
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Saving damage taken");
+            }
+        }
+
+        //Patch: Removes navigation arrows and pans camera when loading directly into a treasure room (i.e when reloading a treasure room save)
+        [HarmonyPostfix, HarmonyPatch(typeof(FloorStartEvent), "Execute")]
+        static void FloorStartEvent_Execute_Treasure_Room(FloorStartEvent __instance)
+        {
+            if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure)
+            {
+                __instance.app.view.navigation.arrowNorth.SetActive(false);
+                __instance.app.view.navigation.arrowSouth.SetActive(false);
+                __instance.app.view.navigation.arrowEast.SetActive(false);
+                __instance.app.view.navigation.arrowWest.SetActive(false);
+
+                //Move camera to normal position for treasure room
+                //Transform values copied from MoveIntoRoomEvent
+                __instance.app.view.mainCameraView.transform.position = new Vector3(0f, 1f, -4.29f);
+                __instance.app.view.mainCameraView.transform.eulerAngles = new Vector3(8.2f, 1.33f, 0f);
+            }
+        }
+
+        //Track MoveIntoRoomEvent sequence
+        static Sequence moveIntoRoomEventSequence;
+        //Patch: Tracks sequence for WrapAround
+        [HarmonyPrefix, HarmonyPatch(typeof(MoveIntoRoomEvent), "WrapAround")]
+        static bool MoveIntoRoomEvent_WrapAround(MoveIntoRoomEvent __instance, NavigationArrowView.Direction ___direction)
+        {
+            __instance.app.view.mainCameraView.transform.position = new Vector3(__instance.app.view.mainCamera.transform.position.x * -1f, __instance.app.view.mainCamera.transform.position.y, __instance.app.view.mainCamera.transform.position.z);
+            if (__instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Treasure)
+            {
+                Sequence sequence = DOTween.Sequence();
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Join(TweenSettingsExtensions.Append(TweenSettingsExtensions.Join(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.position + new Vector3((___direction != NavigationArrowView.Direction.Left) ? 0.333f : -0.333f, 0f, 0f), 0.35f, false), Ease.OutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.rotation.eulerAngles + new Vector3(0f, 0f, (___direction != NavigationArrowView.Direction.Left) ? -3f : 3f), 0.35f, 0), Ease.OutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.position, 0.15f, false), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.rotation.eulerAngles, 0.15f, 0), Ease.InOutQuad)), delegate ()
+                {
+                    __instance.ResetRoom();
+                });
+
+                //Track sequence
+                moveIntoRoomEventSequence = sequence;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Tracking WrapAround sequence");
+            }
+            else
+            {
+                __instance.ResetRoom();
+            }
+            return false;
+        }
+        //Patch: Tracks sequence for HopInFront
+        [HarmonyPrefix, HarmonyPatch(typeof(MoveIntoRoomEvent), "HopInFront")]
+        static bool MoveIntoRoomEvent_HopInFront(MoveIntoRoomEvent __instance, NavigationArrowView.Direction ___direction)
+        {
+            __instance.app.view.mainCameraView.transform.position = __instance.app.model.cameraNavigationPosition.position + new Vector3(0f, 4.5f, -4f);
+            if (__instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Treasure)
+            {
+                Sequence sequence = DOTween.Sequence();
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.InsertCallback(TweenSettingsExtensions.Join(TweenSettingsExtensions.Join(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveZ(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.position.z, 0.5f, false), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.position.y, 0.5f, false), Ease.InOutQuad)), 0.05f, delegate ()
+                {
+                    __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().ChangeLight(EnemyRoomView.RoomLightScheme.Default, 0.1f, true);
+                }), delegate ()
+                {
+                    __instance.ResetRoom();
+                });
+                //Track sequence
+                moveIntoRoomEventSequence = sequence;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Tracking HopInFront sequence");
+            }
+            else
+            {
+                __instance.ResetRoom();
+            }
+            return false;
+        }
+        //Patch: Tracks sequence for HopInFront
+        [HarmonyPrefix, HarmonyPatch(typeof(MoveIntoRoomEvent), "HopInBack")]
+        static bool MoveIntoRoomEvent_HopInBack(MoveIntoRoomEvent __instance, NavigationArrowView.Direction ___direction)
+        {
+            __instance.app.view.mainCameraView.transform.position = __instance.app.model.cameraNavigationPosition.position + new Vector3(0f, 4.5f, 6f);
+            if (__instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Treasure)
+            {
+                Sequence sequence = DOTween.Sequence();
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.InsertCallback(TweenSettingsExtensions.Join(TweenSettingsExtensions.Join(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveZ(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.position.z, 0.5f, false), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(__instance.app.view.mainCameraView.transform, __instance.app.model.cameraNavigationPosition.position.y, 0.5f, false), Ease.InOutQuad)), 0.05f, delegate ()
+                {
+                    __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().ChangeLight(EnemyRoomView.RoomLightScheme.Default, 0.1f, true);
+                }), delegate ()
+                {
+                    __instance.ResetRoom();
+                });
+                //Track sequence
+                moveIntoRoomEventSequence = sequence;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Tracking HopInBack sequence");
+            }
+            else
+            {
+                __instance.ResetRoom();
+            }
+            return false;
+        }
+        //Patch: Overrides BumboController StartRoom
+        //Saves the game when entering treasure rooms
+        //Waits for the room to be initialized before saving
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "StartRoom")]
+        static bool BumboController_StartRoom(BumboController __instance)
+        {
+            __instance.boxController.ChangeRoomBox();
+            __instance.app.view.decorationView.ShowDecorations();
+            if (__instance.app.model.mapModel.currentRoom.coins != null && __instance.app.model.mapModel.currentRoom.coins.Length > 0)
+            {
+                short num = 0;
+                while ((int)num < __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().coinDecoration.Length)
+                {
+                    __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().coinDecoration[(int)num].gameObject.SetActive(__instance.app.model.mapModel.currentRoom.coins[(int)num]);
+                    num += 1;
+                }
+            }
+            else
+            {
+                __instance.app.model.mapModel.currentRoom.coins = new bool[__instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().coinDecoration.Length];
+                short num2 = 0;
+                while ((int)num2 < __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().coinDecoration.Length)
+                {
+                    __instance.app.model.mapModel.currentRoom.coins[(int)num2] = false;
+                    __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().coinDecoration[(int)num2].gameObject.SetActive(false);
+                    num2 += 1;
+                }
+            }
+            __instance.app.view.reflectionProbe.RenderProbe();
+            short num3 = (short)((__instance.app.view.shitView.shit.Count - 3) / 2);
+            short num4 = (short)(__instance.app.view.shitView.shit.Count - (int)num3 - 1);
+            __instance.app.view.shitView.availableShit.Clear();
+            for (int i = 0; i < __instance.app.view.shitView.shit.Count; i++)
+            {
+                if (i >= (int)num3 && i <= (int)num4)
+                {
+                    __instance.app.view.shitView.shit[i].gameObject.SetActive(true);
+                    __instance.app.view.shitView.shit[i].Reset();
+                    __instance.app.view.shitView.availableShit.Add(__instance.app.view.shitView.shit[i]);
+                }
+                else
+                {
+                    __instance.app.view.shitView.shit[i].gameObject.SetActive(false);
+                }
+            }
+            for (short num5 = 0; num5 < 6; num5 += 1)
+            {
+                __instance.app.model.mana[(int)num5] = 0;
+            }
+            __instance.SetActiveSpells(true, true);
+            __instance.StartRoomWithTrinkets();
+            __instance.StartRoundWithTrinkets();
+            __instance.app.model.spellModel.spellQueued = false;
+            if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure && !__instance.app.model.mapModel.currentRoom.cleared)
+            {
+                __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().InitiateRoom();
+            }
+            else if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Shop && !__instance.app.model.mapModel.currentRoom.cleared)
+            {
+                __instance.app.view.boxes.shopRoom.GetComponent<ShopRoomView>().shop.Init();
+            }
+            if (__instance.app.controller.savedStateController.IsLoading())
+            {
+                if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Boss)
+                {
+                    if (__instance.app.model.characterSheet.currentFloor == 4)
+                    {
+                        __instance.app.view.levelMusicView.PlayFinalBossMusic();
+                    }
+                    else
+                    {
+                        __instance.app.view.levelMusicView.PlayBossMusic();
+                    }
+                }
+                __instance.app.controller.savedStateController.LoadEnd();
+            }
+            else if (__instance.app.model.characterSheet.currentFloor != 0 && (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.EnemyEncounter || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Boss || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Start || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure) && !__instance.app.model.mapModel.currentRoom.cleared)
+            {
+                if (moveIntoRoomEventSequence != null && moveIntoRoomEventSequence.IsPlaying())
+                {
+                    //Wait for room to be initialized
+                    moveIntoRoomEventSequence.OnComplete(delegate
+                    {
+                        __instance.app.controller.savedStateController.Save();
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Waited");
+                    });
+                }
+                else
+                {
+                    __instance.app.controller.savedStateController.Save();
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Didn't wait");
+                }
+            }
+            return false;
+        }
+
         //Patch: Overrides save method in order to include trinket uses and enemy champion statuses when saving
+        //Also checks for null enemy layout
+        //Also saves treasure room pickups
         [HarmonyPrefix, HarmonyPatch(typeof(SavedStateController), "Save")]
         static bool SavedStateController_Save(SavedStateController __instance, byte[] ___Key)
         {
@@ -57,6 +355,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             xmlElement4.SetAttribute("puzzleDamage", __instance.app.model.characterSheet.bumboBaseInfo.puzzleDamage.ToString());
             xmlElement4.SetAttribute("dexterity", __instance.app.model.characterSheet.bumboBaseInfo.dexterity.ToString());
             xmlElement4.SetAttribute("coins", __instance.app.model.characterSheet.bumboBaseInfo.coins.ToString());
+
             for (int i = 0; i < __instance.app.model.characterSheet.bumboBaseInfo.startingSpells.Length; i++)
             {
                 StartingSpell startingSpell = __instance.app.model.characterSheet.bumboBaseInfo.startingSpells[i];
@@ -84,6 +383,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             XmlNodeList xmlNodeList2 = xmlElement2.SelectNodes("trinket");
             XmlNode xmlNode = xmlElement2.SelectSingleNode("hiddenTrinket");
             xmlElement2.SetAttribute("coins", __instance.app.model.characterSheet.coins.ToString());
+
             for (int k = 0; k < __instance.app.model.characterSheet.spells.Count; k++)
             {
                 SpellElement spellElement = __instance.app.model.characterSheet.spells[k];
@@ -124,6 +424,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 xmlElement2.AppendChild(xmlElement11);
                 xmlElement11.SetAttribute("name", __instance.app.model.characterSheet.hiddenTrinket.trinketName.ToString());
             }
+
             xmlElement2.SetAttribute("hitPoints", __instance.app.model.characterSheet.hitPoints.ToString());
             xmlElement2.SetAttribute("soulHearts", __instance.app.model.characterSheet.soulHearts.ToString());
             xmlElement2.SetAttribute("timesincestart", __instance.app.model.characterSheet.timesincestart.ToString());
@@ -177,6 +478,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 xmlElement14.SetAttribute("currentRoomX", __instance.app.model.mapModel.currentRoom.x.ToString());
                 xmlElement14.SetAttribute("currentRoomY", __instance.app.model.mapModel.currentRoom.y.ToString());
             }
+
             XmlElement xmlElement16 = xmlDocument.CreateElement("enemies");
             xmlElement.AppendChild(xmlElement16);
             xmlElement16.SetAttribute("difficulty", __instance.app.model.mapModel.currentRoomEnemyLayout.difficulty.ToString());
@@ -184,42 +486,55 @@ namespace The_Legend_of_Bum_bo_Windfall
             xmlElement16.AppendChild(xmlElement17);
             XmlElement xmlElement18 = xmlDocument.CreateElement("air");
             xmlElement16.AppendChild(xmlElement18);
-            for (int num2 = 0; num2 < __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies.Count; num2++)
-            {
-                for (int num3 = 0; num3 < __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies[num2].Count; num3++)
-                {
-                    EnemyName enemyName = __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies[num2][num3];
-                    XmlElement xmlElement19 = xmlDocument.CreateElement("enemy");
-                    xmlElement17.AppendChild(xmlElement19);
-                    xmlElement19.SetAttribute("name", enemyName.ToString());
-                    xmlElement19.SetAttribute("x", num3.ToString());
-                    xmlElement19.SetAttribute("y", num2.ToString());
 
-                    //Save ground enemy champion status
-                    if (__instance.app.controller.GetGroundEnemy(num3, num2) != null)
+            //Null check for enemy layouts
+            //Enemy layouts will be null when entering a boss room after reloading from the preceding treasure room
+
+            //Ground enemies
+            if (__instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies != null)
+            {
+                for (int num2 = 0; num2 < __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies.Count; num2++)
+                {
+                    for (int num3 = 0; num3 < __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies[num2].Count; num3++)
                     {
-                        xmlElement19.SetAttribute("championStatus", __instance.app.controller.GetGroundEnemy(num3, num2).championType.ToString());
+                        EnemyName enemyName = __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies[num2][num3];
+                        XmlElement xmlElement19 = xmlDocument.CreateElement("enemy");
+                        xmlElement17.AppendChild(xmlElement19);
+                        xmlElement19.SetAttribute("name", enemyName.ToString());
+                        xmlElement19.SetAttribute("x", num3.ToString());
+                        xmlElement19.SetAttribute("y", num2.ToString());
+
+                        //Save ground enemy champion status
+                        if (__instance.app.controller.GetGroundEnemy(num3, num2) != null)
+                        {
+                            xmlElement19.SetAttribute("championStatus", __instance.app.controller.GetGroundEnemy(num3, num2).championType.ToString());
+                        }
                     }
                 }
             }
-            for (int num4 = 0; num4 < __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies.Count; num4++)
+            //Air enemies
+            if (__instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies != null)
             {
-                for (int num5 = 0; num5 < __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies[num4].Count; num5++)
+                for (int num4 = 0; num4 < __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies.Count; num4++)
                 {
-                    EnemyName enemyName2 = __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies[num4][num5];
-                    XmlElement xmlElement20 = xmlDocument.CreateElement("enemy");
-                    xmlElement18.AppendChild(xmlElement20);
-                    xmlElement20.SetAttribute("name", enemyName2.ToString());
-                    xmlElement20.SetAttribute("x", num5.ToString());
-                    xmlElement20.SetAttribute("y", num4.ToString());
-
-                    //Save air enemy champion status
-                    if (__instance.app.controller.GetAirEnemy(num5, num4) != null)
+                    for (int num5 = 0; num5 < __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies[num4].Count; num5++)
                     {
-                        xmlElement20.SetAttribute("championStatus", __instance.app.controller.GetAirEnemy(num5, num4).championType.ToString());
+                        EnemyName enemyName2 = __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies[num4][num5];
+                        XmlElement xmlElement20 = xmlDocument.CreateElement("enemy");
+                        xmlElement18.AppendChild(xmlElement20);
+                        xmlElement20.SetAttribute("name", enemyName2.ToString());
+                        xmlElement20.SetAttribute("x", num5.ToString());
+                        xmlElement20.SetAttribute("y", num4.ToString());
+
+                        //Save air enemy champion status
+                        if (__instance.app.controller.GetAirEnemy(num5, num4) != null)
+                        {
+                            xmlElement20.SetAttribute("championStatus", __instance.app.controller.GetAirEnemy(num5, num4).championType.ToString());
+                        }
                     }
                 }
             }
+
             XmlElement xmlElement21 = xmlDocument.CreateElement("puzzle");
             xmlElement.AppendChild(xmlElement21);
             xmlElement21.SetAttribute("width", __instance.app.view.puzzle.blocks.GetLength(0).ToString());
@@ -242,30 +557,46 @@ namespace The_Legend_of_Bum_bo_Windfall
                 xmlElement23.SetAttribute("x", num8.ToString());
                 xmlElement23.SetAttribute("type", __instance.app.view.puzzle.nextBlockViews[num8].GetCurrentBlockType().ToString());
             }
+
+            //Save treasure room pickups
+            if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure && __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>())
+            {
+                XmlElement xmlElement24 = xmlDocument.CreateElement("treasure");
+                xmlElement.AppendChild(xmlElement24);
+
+                List<GameObject> pickups = (List<GameObject>)typeof(TreasureRoom).GetField("pickups", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>());
+
+                for (int pickupCounter = 0; pickupCounter < pickups.Count; pickupCounter++)
+                {
+                    XmlElement xmlElement25 = xmlDocument.CreateElement("pickup");
+                    xmlElement24.AppendChild(xmlElement25);
+
+                    SpellElement spell = pickups[pickupCounter].GetComponent<SpellPickup>() ? pickups[pickupCounter].GetComponent<SpellPickup>().spell : null;
+                    TrinketElement trinket = pickups[pickupCounter].GetComponent<TrinketPickupView>() ? pickups[pickupCounter].GetComponent<TrinketPickupView>().trinket : null;
+
+                    xmlElement25.SetAttribute("type", spell != null ? "spell" : "trinket");
+
+                    xmlElement25.SetAttribute("name", spell != null ? spell.spellName.ToString() : trinket.trinketName.ToString());
+
+                    if (spell != null)
+                    {
+                        XmlElement xmlElement26 = xmlDocument.CreateElement("cost");
+                        xmlElement25.AppendChild(xmlElement26);
+                        xmlElement26.SetAttribute("boneCost", spell.Cost[0].ToString());
+                        xmlElement26.SetAttribute("heartCost", spell.Cost[1].ToString());
+                        xmlElement26.SetAttribute("poopCost", spell.Cost[2].ToString());
+                        xmlElement26.SetAttribute("boogerCost", spell.Cost[3].ToString());
+                        xmlElement26.SetAttribute("toothCost", spell.Cost[4].ToString());
+                        xmlElement26.SetAttribute("peeCost", spell.Cost[5].ToString());
+                    }
+                }
+            }
+
             try
             {
                 StringWriter stringWriter = new StringWriter();
                 xmlDocument.Save(stringWriter);
-
-                //Rewriting SavedStateController WriteXml method instead of using it because it is private
-                string xml = stringWriter.ToString();
-
-                if (Debug.isDebugBuild)
-                {
-                    File.WriteAllText(FilePath.ToString(), xml);
-                }
-                else
-                {
-                    byte[] bytes = Encoding.UTF8.GetBytes(xml);
-                    for (int i = 0; i < bytes.Length; i++)
-                    {
-                        byte b = ___Key[i % ___Key.Length];
-                        byte[] array = bytes;
-                        int num = i;
-                        array[num] ^= b;
-                    }
-                    File.WriteAllBytes(FilePath.ToString(), bytes);
-                }
+                AccessTools.Method(typeof(SavedStateController), "WriteXml").Invoke(__instance, new object[] { stringWriter.ToString() });
                 Debug.Log("Saved state to " + FilePath.ToString());
             }
             catch (Exception ex)
@@ -275,6 +606,59 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Overriding save method");
             return false;
+        }
+
+        //Patch: Loads saved pickups when reloading a save in a treasure room
+        [HarmonyPostfix, HarmonyPatch(typeof(TreasureRoom), "InitiateRoom")]
+        static void TreasureRoom_InitiateRoom(TreasureRoom __instance, ref List<GameObject> ___pickups)
+        {
+            if (!__instance.app.controller.savedStateController.IsLoading())
+            {
+                return;
+            }
+
+            foreach (GameObject pickup in ___pickups)
+            {
+                UnityEngine.Object.Destroy(pickup);
+            }
+            ___pickups.Clear();
+
+            XmlDocument lDoc = (XmlDocument)typeof(SavedStateController).GetField("lDoc", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance.app.controller.savedStateController);
+
+            if (lDoc != null)
+            {
+                XmlNode xmlNode = lDoc.SelectSingleNode("/save/treasure");
+
+                XmlNodeList xmlNodeList = xmlNode.SelectNodes("pickup");
+                for (int i = 0; i < xmlNodeList.Count; i++)
+                {
+                    XmlNode xmlNode2 = xmlNodeList[i];
+                    string type = xmlNode2.Attributes["type"].Value;
+                    
+                    if (type == "spell")
+                    {
+                        AccessTools.Method(typeof(TreasureRoom), "SetSpell", new Type[] { typeof(int), typeof(List<SpellName>), typeof(SpellElement.SpellCategory) }).Invoke(__instance, new object[] { i + 1, new List<SpellName>(), SpellElement.SpellCategory.Attack });
+
+                        XmlNode xmlNode3 = xmlNode2.SelectSingleNode("cost");
+                        short[] newCost = new short[]
+                        {
+                            Convert.ToInt16(xmlNode3.Attributes["boneCost"].Value),
+                            Convert.ToInt16(xmlNode3.Attributes["heartCost"].Value),
+                            Convert.ToInt16(xmlNode3.Attributes["poopCost"].Value),
+                            Convert.ToInt16(xmlNode3.Attributes["boogerCost"].Value),
+                            Convert.ToInt16(xmlNode3.Attributes["toothCost"].Value),
+                            Convert.ToInt16(xmlNode3.Attributes["peeCost"].Value),
+                        };
+
+                        ___pickups[i].GetComponent<SpellPickup>().SetSpell(CharacterSheet.BumboType.TheBrave, (SpellName)Enum.Parse(typeof(SpellName), xmlNode2.Attributes["name"].Value), newCost, __instance.app.model.spellModel);
+                    }
+                    else
+                    {
+                        AccessTools.Method(typeof(TreasureRoom), "SetTrinkets", new Type[] { typeof(int), typeof(List<TrinketName>) }).Invoke(__instance, new object[] { i + 1, new List<TrinketName>() });
+                        ___pickups[i].GetComponent<TrinketPickupView>().SetTrinket((TrinketName)Enum.Parse(typeof(TrinketName), xmlNode2.Attributes["name"].Value));
+                    }
+                }
+            }
         }
 
         //Patch: Overrides LoadCharacterSheet method in order to include trinket uses when reloading a save
