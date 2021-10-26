@@ -19,9 +19,19 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes treasure rooms always having room art of the Sewers of Dross, even when Bum-bo is in a different Chapter
+        //Also ends floor when loading a saved game in the Wooden Nickel
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
         static void BumboController_Init(BumboController __instance)
         {
+            //End floor when loading a saved game in the Wooden Nickel
+            if (__instance.app.controller.gamblingController == null && PlayerPrefs.GetInt("loadGambling", 0) == 1 && !SaveChanges.newGame && !SaveChanges.leftWoodenNickel)
+            {
+                DOTween.KillAll(false);
+                __instance.app.controller.eventsController.SetEvent(new BumboEvent());
+                __instance.app.controller.EndFloor();
+                return;
+            }
+
             TreasureRoom treasureRoom = __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>();
             EnemyRoomView enemyRoomView = __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>();
 

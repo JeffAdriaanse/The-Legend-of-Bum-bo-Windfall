@@ -50,6 +50,215 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] ResetRoom, " + __instance.app.model.mapModel.currentRoom.roomType);
         }
 
+        public static bool newGame = false;
+        //Patch: Sets newGame to true when starting a new game
+        [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), "selectBumbo")]
+        static void ChooseBumbo_selectBumbo(ChooseBumbo __instance)
+        {
+            newGame = true;
+        }
+
+        public static bool leftWoodenNickel = false;
+        //Patch: Sets leftWoodenNickel to true when leaving the Wooden Nickel
+        [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "StartChapterIntro")]
+        static void GamblingController_StartChapterIntro(GamblingController __instance)
+        {
+            leftWoodenNickel = true;
+        }
+
+        //Patch: Saves the shop when entering the Wooden Nickel if the Wooden Nickel hasn't been saved already
+        [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "Start")]
+        static void GamblingController_Start(GamblingController __instance)
+        {
+            int loadGambling = PlayerPrefs.GetInt("loadGambling", 0);
+            if (loadGambling == 0)
+            {
+                SaveShop(__instance);
+            }
+        }
+
+        static void SaveShop(GamblingController __instance)
+        {
+            //Set flag to load into the Wooden Nickel when reloading a save (true)
+            PlayerPrefs.SetInt("loadGambling", 1);
+            PlayerPrefs.Save();
+
+            XmlDocument lDoc = new XmlDocument();
+            lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
+
+            XmlNode xmlNode = lDoc.SelectSingleNode("save");
+            XmlNode xmlNode2 = xmlNode.SelectSingleNode("gambling");
+
+            if (xmlNode2 != null)
+            {
+                xmlNode2.RemoveAll();
+            }
+            else
+            {
+                xmlNode2 = lDoc.CreateElement("gambling");
+                xmlNode.AppendChild(xmlNode2);
+            }
+
+            //Save shop
+            for (int pickupCounter = 0; pickupCounter < 4; pickupCounter++)
+            {
+                GameObject pickup = null;
+                switch (pickupCounter)
+                {
+                    case 0:
+                        pickup = __instance.app.controller.gamblingController.shop.item1.transform.GetChild(0).gameObject;
+                        break;
+                    case 1:
+                        pickup = __instance.app.controller.gamblingController.shop.item2.transform.GetChild(0).gameObject;
+                        break;
+                    case 2:
+                        pickup = __instance.app.controller.gamblingController.shop.item3.transform.GetChild(0).gameObject;
+                        break;
+                    case 3:
+                        pickup = __instance.app.controller.gamblingController.shop.item4.transform.GetChild(0).gameObject;
+                        break;
+                }
+                if (pickup != null)
+                {
+                    XmlElement xmlElement29 = lDoc.CreateElement("pickup");
+                    xmlNode2.AppendChild(xmlElement29);
+
+                    xmlElement29.SetAttribute("index", pickupCounter.ToString());
+                    if (pickup.GetComponent<HeartPickupView>())
+                    {
+                        xmlElement29.SetAttribute("type", "heart");
+                    }
+                    else if (pickup.GetComponent<TrinketPickupView>())
+                    {
+                        xmlElement29.SetAttribute("type", "trinket");
+                        xmlElement29.SetAttribute("trinketName", pickup.GetComponent<TrinketPickupView>().trinketName.ToString());
+                    }
+                }
+            }
+
+            //Save character sheet
+            XmlNode xmlNode3 = xmlNode.SelectSingleNode("character");
+            if (xmlNode3 != null)
+            {
+                xmlNode3.RemoveAll();
+            }
+            else
+            {
+                xmlNode3 = lDoc.CreateElement("character");
+                xmlNode.AppendChild(xmlNode3);
+            }
+
+            XmlElement xmlElement = (XmlElement)xmlNode3;
+
+            string name = "bumboType";
+            int bumboType = (int)__instance.app.model.characterSheet.bumboType;
+            xmlElement.SetAttribute(name, bumboType.ToString());
+            XmlElement xmlElement4 = lDoc.CreateElement("baseInfo");
+            xmlNode3.AppendChild(xmlElement4);
+            XmlElement xmlElement5 = xmlElement4;
+            string name2 = "bumboType";
+            int bumboType2 = (int)__instance.app.model.characterSheet.bumboType;
+            xmlElement5.SetAttribute(name2, bumboType2.ToString());
+            xmlElement4.SetAttribute("hitPoints", __instance.app.model.characterSheet.bumboBaseInfo.hitPoints.ToString());
+            xmlElement4.SetAttribute("soulHearts", __instance.app.model.characterSheet.bumboBaseInfo.soulHearts.ToString());
+            xmlElement4.SetAttribute("itemDamage", __instance.app.model.characterSheet.bumboBaseInfo.itemDamage.ToString());
+            xmlElement4.SetAttribute("luck", __instance.app.model.characterSheet.bumboBaseInfo.luck.ToString());
+            xmlElement4.SetAttribute("puzzleDamage", __instance.app.model.characterSheet.bumboBaseInfo.puzzleDamage.ToString());
+            xmlElement4.SetAttribute("dexterity", __instance.app.model.characterSheet.bumboBaseInfo.dexterity.ToString());
+            xmlElement4.SetAttribute("coins", __instance.app.model.characterSheet.bumboBaseInfo.coins.ToString());
+
+            for (int i = 0; i < __instance.app.model.characterSheet.bumboBaseInfo.startingSpells.Length; i++)
+            {
+                StartingSpell startingSpell = __instance.app.model.characterSheet.bumboBaseInfo.startingSpells[i];
+                XmlElement xmlElement6 = lDoc.CreateElement("startingSpell");
+                xmlElement4.AppendChild(xmlElement6);
+                xmlElement6.SetAttribute("name", startingSpell.spell.ToString());
+                xmlElement6.SetAttribute("boneCost", startingSpell.boneCost.ToString());
+                xmlElement6.SetAttribute("heartCost", startingSpell.heartCost.ToString());
+                xmlElement6.SetAttribute("poopCost", startingSpell.poopCost.ToString());
+                xmlElement6.SetAttribute("boogerCost", startingSpell.boogerCost.ToString());
+                xmlElement6.SetAttribute("toothCost", startingSpell.toothCost.ToString());
+                xmlElement6.SetAttribute("peeCost", startingSpell.peeCost.ToString());
+            }
+            for (int j = 0; j < __instance.app.model.characterSheet.bumboBaseInfo.startingTrinkets.Length; j++)
+            {
+                TrinketName trinketName = __instance.app.model.characterSheet.bumboBaseInfo.startingTrinkets[j];
+                XmlElement xmlElement7 = lDoc.CreateElement("startingTrinket");
+                xmlElement4.AppendChild(xmlElement7);
+                xmlElement7.SetAttribute("name", trinketName.ToString());
+            }
+            XmlElement xmlElement8 = lDoc.CreateElement("hiddenTrinket");
+            xmlElement4.AppendChild(xmlElement8);
+            xmlElement8.SetAttribute("name", __instance.app.model.characterSheet.bumboBaseInfo.hiddenTrinket.ToString());
+            XmlNodeList xmlNodeList = xmlNode3.SelectNodes("spell");
+            XmlNodeList xmlNodeList2 = xmlNode3.SelectNodes("trinket");
+            XmlNode xmlNode4 = xmlNode3.SelectSingleNode("hiddenTrinket");
+            xmlElement.SetAttribute("coins", __instance.app.model.characterSheet.coins.ToString());
+
+            for (int k = 0; k < __instance.app.model.characterSheet.spells.Count; k++)
+            {
+                SpellElement spellElement = __instance.app.model.characterSheet.spells[k];
+                XmlElement xmlElement9 = lDoc.CreateElement("spell");
+                xmlNode3.AppendChild(xmlElement9);
+                xmlElement9.SetAttribute("name", spellElement.spellName.ToString());
+                xmlElement9.SetAttribute("boneCost", spellElement.Cost[0].ToString());
+                xmlElement9.SetAttribute("heartCost", spellElement.Cost[1].ToString());
+                xmlElement9.SetAttribute("poopCost", spellElement.Cost[2].ToString());
+                xmlElement9.SetAttribute("boogerCost", spellElement.Cost[3].ToString());
+                xmlElement9.SetAttribute("toothCost", spellElement.Cost[4].ToString());
+                xmlElement9.SetAttribute("peeCost", spellElement.Cost[5].ToString());
+                xmlElement9.SetAttribute("boneCostModifier", spellElement.CostModifier[0].ToString());
+                xmlElement9.SetAttribute("heartCostModifier", spellElement.CostModifier[1].ToString());
+                xmlElement9.SetAttribute("poopCostModifier", spellElement.CostModifier[2].ToString());
+                xmlElement9.SetAttribute("boogerCostModifier", spellElement.CostModifier[3].ToString());
+                xmlElement9.SetAttribute("toothCostModifier", spellElement.CostModifier[4].ToString());
+                xmlElement9.SetAttribute("peeCostModifier", spellElement.CostModifier[5].ToString());
+                xmlElement9.SetAttribute("costOverride", spellElement.CostOverride.ToString());
+                xmlElement9.SetAttribute("charge", spellElement.charge.ToString());
+                xmlElement9.SetAttribute("requiredCharge", spellElement.requiredCharge.ToString());
+                xmlElement9.SetAttribute("chargeEveryRound", spellElement.chargeEveryRound.ToString());
+                xmlElement9.SetAttribute("usedInRound", spellElement.usedInRound.ToString());
+                xmlElement9.SetAttribute("baseDamage", spellElement.baseDamage.ToString());
+            }
+            for (int l = 0; l < __instance.app.model.characterSheet.trinkets.Count; l++)
+            {
+                TrinketElement trinketElement = __instance.app.model.characterSheet.trinkets[l];
+                XmlElement xmlElement10 = lDoc.CreateElement("trinket");
+                xmlNode3.AppendChild(xmlElement10);
+                xmlElement10.SetAttribute("name", trinketElement.trinketName.ToString());
+                //Saving trinket uses
+                xmlElement10.SetAttribute("uses", trinketElement.uses.ToString());
+            }
+            if (__instance.app.model.characterSheet.hiddenTrinket != null)
+            {
+                XmlElement xmlElement11 = lDoc.CreateElement("hiddenTrinket");
+                xmlNode3.AppendChild(xmlElement11);
+                xmlElement11.SetAttribute("name", __instance.app.model.characterSheet.hiddenTrinket.trinketName.ToString());
+            }
+
+            xmlElement.SetAttribute("hitPoints", __instance.app.model.characterSheet.hitPoints.ToString());
+            xmlElement.SetAttribute("soulHearts", __instance.app.model.characterSheet.soulHearts.ToString());
+            xmlElement.SetAttribute("timesincestart", __instance.app.model.characterSheet.timesincestart.ToString());
+            //Save previous floor
+            xmlElement.SetAttribute("currentFloor", (__instance.app.model.characterSheet.currentFloor > 1 ? __instance.app.model.characterSheet.currentFloor - 1: __instance.app.model.characterSheet.currentFloor).ToString());
+            XmlElement xmlElement12 = lDoc.CreateElement("floors");
+            xmlNode3.AppendChild(xmlElement12);
+            for (int m = 0; m < 5; m++)
+            {
+                XmlElement xmlElement13 = lDoc.CreateElement("floor");
+                xmlElement12.AppendChild(xmlElement13);
+                xmlElement13.SetAttribute("id", m.ToString());
+                xmlElement13.SetAttribute("damageTaken", ((m >= __instance.app.model.characterSheet.damageTakenInFloor.Length) ? 0f : __instance.app.model.characterSheet.damageTakenInFloor[m]).ToString());
+            }
+
+            StringWriter stringWriter = new StringWriter();
+            lDoc.Save(stringWriter);
+            AccessTools.Method(typeof(SavedStateController), "WriteXml").Invoke(__instance, new object[] { stringWriter.ToString() });
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Saving shop and characterSheet");
+        }
+
+        //Patch: Loads character sheet and shop when loading a saved game in the Wooden Nickel
+
         //Patch: Saves damage taken
         [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "RegisterDamage")]
         static void CharacterSheet_RegisterDamage(CharacterSheet __instance, float damage)
@@ -320,12 +529,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-
-        static TrinketName[] bossRewards; 
-        //Patch: Overrides save method in order to include trinket uses and enemy champion statuses when saving
-        //Also checks for null enemy layout
-        //Also saves treasure room pickups
-        //Also predetermines and saves boss room pickups if the current room is a boss room
+        static TrinketName[] bossRewards;
+        //Patch: Overrides save method
+        //Accounts for trinket uses and enemy champion statuses
+        //Checks for null enemy layouts
+        //Accounts for treasure room pickups if the current room is a treasure room
+        //Predetermines and saves boss room pickups if the current room is a boss room
+        //Tracks whether game was saved in the Wooden Nickel
         [HarmonyPrefix, HarmonyPatch(typeof(SavedStateController), "Save")]
         static bool SavedStateController_Save(SavedStateController __instance, byte[] ___Key)
         {
@@ -446,6 +656,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 xmlElement13.SetAttribute("id", m.ToString());
                 xmlElement13.SetAttribute("damageTaken", ((m >= __instance.app.model.characterSheet.damageTakenInFloor.Length) ? 0f : __instance.app.model.characterSheet.damageTakenInFloor[m]).ToString());
             }
+
             XmlElement xmlElement14 = xmlDocument.CreateElement("map");
             xmlElement.AppendChild(xmlElement14);
             xmlElement14.SetAttribute("roomLayoutWidth", __instance.app.model.mapModel.rooms.GetLength(0).ToString());
@@ -495,6 +706,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             XmlElement xmlElement18 = xmlDocument.CreateElement("air");
             xmlElement16.AppendChild(xmlElement18);
 
+
             //Null check for enemy layouts
             //Enemy layouts will be null when entering a boss room after reloading from the preceding treasure room
 
@@ -541,29 +753,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                     }
                 }
-            }
-
-            XmlElement xmlElement21 = xmlDocument.CreateElement("puzzle");
-            xmlElement.AppendChild(xmlElement21);
-            xmlElement21.SetAttribute("width", __instance.app.view.puzzle.blocks.GetLength(0).ToString());
-            xmlElement21.SetAttribute("height", __instance.app.view.puzzle.blocks.GetLength(1).ToString());
-            for (int num6 = 0; num6 < __instance.app.view.puzzle.blocks.GetLength(1); num6++)
-            {
-                for (int num7 = 0; num7 < __instance.app.view.puzzle.blocks.GetLength(0); num7++)
-                {
-                    XmlElement xmlElement22 = xmlDocument.CreateElement("block");
-                    xmlElement21.AppendChild(xmlElement22);
-                    xmlElement22.SetAttribute("x", num7.ToString());
-                    xmlElement22.SetAttribute("y", num6.ToString());
-                    xmlElement22.SetAttribute("type", __instance.app.view.puzzle.blocks[num7, num6].GetComponent<Block>().block_type.ToString());
-                }
-            }
-            for (int num8 = 0; num8 < __instance.app.view.puzzle.nextBlockViews.Count; num8++)
-            {
-                XmlElement xmlElement23 = xmlDocument.CreateElement("nextblock");
-                xmlElement21.AppendChild(xmlElement23);
-                xmlElement23.SetAttribute("x", num8.ToString());
-                xmlElement23.SetAttribute("type", __instance.app.view.puzzle.nextBlockViews[num8].GetCurrentBlockType().ToString());
             }
 
             //Save treasure room pickups
@@ -640,6 +829,42 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 bossRewards = null;
             }
+
+            XmlElement xmlElement21 = xmlDocument.CreateElement("puzzle");
+            xmlElement.AppendChild(xmlElement21);
+            xmlElement21.SetAttribute("width", __instance.app.view.puzzle.blocks.GetLength(0).ToString());
+            xmlElement21.SetAttribute("height", __instance.app.view.puzzle.blocks.GetLength(1).ToString());
+            for (int num6 = 0; num6 < __instance.app.view.puzzle.blocks.GetLength(1); num6++)
+            {
+                for (int num7 = 0; num7 < __instance.app.view.puzzle.blocks.GetLength(0); num7++)
+                {
+                    XmlElement xmlElement22 = xmlDocument.CreateElement("block");
+                    xmlElement21.AppendChild(xmlElement22);
+                    xmlElement22.SetAttribute("x", num7.ToString());
+                    xmlElement22.SetAttribute("y", num6.ToString());
+                    xmlElement22.SetAttribute("type", __instance.app.view.puzzle.blocks[num7, num6].GetComponent<Block>().block_type.ToString());
+                }
+            }
+            for (int num8 = 0; num8 < __instance.app.view.puzzle.nextBlockViews.Count; num8++)
+            {
+                XmlElement xmlElement23 = xmlDocument.CreateElement("nextblock");
+                xmlElement21.AppendChild(xmlElement23);
+                xmlElement23.SetAttribute("x", num8.ToString());
+                xmlElement23.SetAttribute("type", __instance.app.view.puzzle.nextBlockViews[num8].GetCurrentBlockType().ToString());
+            }
+
+            if (__instance.app.controller.gamblingController == null)
+            {
+                //Set flag to load into the Wooden Nickel when reloading a save (false)
+                PlayerPrefs.SetInt("loadGambling", 0);
+                PlayerPrefs.Save();
+            }
+
+            //Set newGame to false
+            newGame = false;
+
+            //Set leftWoodenNickel to false
+            leftWoodenNickel = false;
 
             try
             {
@@ -897,14 +1122,60 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (__instance.app.controller.savedStateController.IsLoading())
             {
-                //Use a gameObject to indicate whether hijacked SavedStateConroller method should be overridden with champion loading code
-                loadChampions = true;
-
-                //Loading Champions by overriding LoadStart method
-                __instance.app.controller.savedStateController.LoadStart();
+                //Loading Champions
+                XmlDocument lDoc = (XmlDocument)typeof(SavedStateController).GetField("lDoc", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance.app.controller.savedStateController);
+                if (lDoc == null)
+                {
+                    return false;
+                }
+                XmlNode xmlNode = lDoc.SelectSingleNode("/save/enemies");
+                XmlNode xmlNode2 = xmlNode.SelectSingleNode("ground");
+                XmlNode xmlNode3 = xmlNode.SelectSingleNode("air");
+                XmlNodeList xmlNodeList = xmlNode2.SelectNodes("enemy");
+                for (int i = 0; i < xmlNodeList.Count; i++)
+                {
+                    XmlNode xmlNode4 = xmlNodeList.Item(i);
+                    int groundX = Convert.ToInt32(xmlNode4.Attributes["x"].Value);
+                    int groundY = Convert.ToInt32(xmlNode4.Attributes["y"].Value);
+                    if (xmlNode4.Attributes["championStatus"] != null)
+                    {
+                        Enemy.ChampionType champion = (Enemy.ChampionType)Enum.Parse(typeof(Enemy.ChampionType), xmlNode4.Attributes["championStatus"].Value);
+                        for (int j = 0; j < __instance.app.model.enemies.Count; j++)
+                        {
+                            if (__instance.app.model.enemies[j] != null && __instance.app.model.enemies[j].alive && __instance.app.model.enemies[j].championType == Enemy.ChampionType.NotAChampion && __instance.app.model.enemies[j].battlefieldPosition.x == groundX && __instance.app.model.enemies[j].battlefieldPosition.y == groundY && __instance.app.model.enemies[j].enemyType != Enemy.EnemyType.Flying)
+                            {
+                                __instance.app.model.enemies[j].SetChampion(champion);
+                                if (__instance.app.model.enemies[j].championType != Enemy.ChampionType.NotAChampion)
+                                {
+                                    __instance.app.model.enemies[j].Init();
+                                }
+                            }
+                        }
+                    }
+                }
+                XmlNodeList xmlNodeList2 = xmlNode3.SelectNodes("enemy");
+                for (int k = 0; k < xmlNodeList2.Count; k++)
+                {
+                    XmlNode xmlNode5 = xmlNodeList2.Item(k);
+                    int airX = Convert.ToInt32(xmlNode5.Attributes["x"].Value);
+                    int airY = Convert.ToInt32(xmlNode5.Attributes["y"].Value);
+                    if (xmlNode5.Attributes["championStatus"] != null)
+                    {
+                        Enemy.ChampionType champion2 = (Enemy.ChampionType)Enum.Parse(typeof(Enemy.ChampionType), xmlNode5.Attributes["championStatus"].Value);
+                        for (int l = 0; l < __instance.app.model.enemies.Count; l++)
+                        {
+                            if (__instance.app.model.enemies[l] != null && __instance.app.model.enemies[l].alive && __instance.app.model.enemies[l].championType == Enemy.ChampionType.NotAChampion && __instance.app.model.enemies[l].battlefieldPosition.x == airX && __instance.app.model.enemies[l].battlefieldPosition.y == airY && __instance.app.model.enemies[l].enemyType == Enemy.EnemyType.Flying)
+                            {
+                                __instance.app.model.enemies[l].SetChampion(champion2);
+                                if (__instance.app.model.enemies[l].championType != Enemy.ChampionType.NotAChampion)
+                                {
+                                    __instance.app.model.enemies[l].Init();
+                                }
+                            }
+                        }
+                    }
+                }
                 Console.WriteLine("[The Legend of Bum-bo: Windfall] Loading champion enemies");
-
-                loadChampions = false;
                 return false;
             }
 
@@ -947,70 +1218,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             return false;
-        }
-
-        //Patch: Hijacks LoadStart method to load champion enemies
-        [HarmonyPrefix, HarmonyPatch(typeof(SavedStateController), "LoadStart")]
-        static bool SavedStateController_LoadStart(SavedStateController __instance, XmlDocument ___lDoc)
-        {
-            //Checking whether method should be overridden with champion loading code
-            if (loadChampions)
-            {
-                //Loading Champions
-                if (___lDoc == null)
-                {
-                    return false;
-                }
-                XmlNode xmlNode = ___lDoc.SelectSingleNode("/save/enemies");
-                XmlNode xmlNode2 = xmlNode.SelectSingleNode("ground");
-                XmlNode xmlNode3 = xmlNode.SelectSingleNode("air");
-                XmlNodeList xmlNodeList = xmlNode2.SelectNodes("enemy");
-                for (int i = 0; i < xmlNodeList.Count; i++)
-                {
-                    XmlNode xmlNode4 = xmlNodeList.Item(i);
-                    int num = Convert.ToInt32(xmlNode4.Attributes["x"].Value);
-                    int num2 = Convert.ToInt32(xmlNode4.Attributes["y"].Value);
-                    if (xmlNode4.Attributes["championStatus"] != null)
-                    {
-                        Enemy.ChampionType champion = (Enemy.ChampionType)Enum.Parse(typeof(Enemy.ChampionType), xmlNode4.Attributes["championStatus"].Value);
-                        for (int j = 0; j < __instance.app.model.enemies.Count; j++)
-                        {
-                            if (__instance.app.model.enemies[j] != null && __instance.app.model.enemies[j].alive && __instance.app.model.enemies[j].championType == Enemy.ChampionType.NotAChampion && __instance.app.model.enemies[j].battlefieldPosition.x == num && __instance.app.model.enemies[j].battlefieldPosition.y == num2 && __instance.app.model.enemies[j].enemyType != Enemy.EnemyType.Flying)
-                            {
-                                __instance.app.model.enemies[j].SetChampion(champion);
-                                if (__instance.app.model.enemies[j].championType != Enemy.ChampionType.NotAChampion)
-                                {
-                                    __instance.app.model.enemies[j].Init();
-                                }
-                            }
-                        }
-                    }
-                }
-                XmlNodeList xmlNodeList2 = xmlNode3.SelectNodes("enemy");
-                for (int k = 0; k < xmlNodeList2.Count; k++)
-                {
-                    XmlNode xmlNode5 = xmlNodeList2.Item(k);
-                    int num3 = Convert.ToInt32(xmlNode5.Attributes["x"].Value);
-                    int num4 = Convert.ToInt32(xmlNode5.Attributes["y"].Value);
-                    if (xmlNode5.Attributes["championStatus"] != null)
-                    {
-                        Enemy.ChampionType champion2 = (Enemy.ChampionType)Enum.Parse(typeof(Enemy.ChampionType), xmlNode5.Attributes["championStatus"].Value);
-                        for (int l = 0; l < __instance.app.model.enemies.Count; l++)
-                        {
-                            if (__instance.app.model.enemies[l] != null && __instance.app.model.enemies[l].alive && __instance.app.model.enemies[l].championType == Enemy.ChampionType.NotAChampion && __instance.app.model.enemies[l].battlefieldPosition.x == num3 && __instance.app.model.enemies[l].battlefieldPosition.y == num4 && __instance.app.model.enemies[l].enemyType == Enemy.EnemyType.Flying)
-                            {
-                                __instance.app.model.enemies[l].SetChampion(champion2);
-                                if (__instance.app.model.enemies[l].championType != Enemy.ChampionType.NotAChampion)
-                                {
-                                    __instance.app.model.enemies[l].Init();
-                                }
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
-            return true;
         }
     }
 }
