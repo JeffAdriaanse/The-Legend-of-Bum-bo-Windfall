@@ -50,6 +50,42 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] ResetRoom, " + __instance.app.model.mapModel.currentRoom.roomType);
         }
 
+        //Patch: Saves damage taken
+        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "RegisterDamage")]
+        static void CharacterSheet_RegisterDamage(CharacterSheet __instance, float damage)
+        {
+            if (damage > 0f)
+            {
+                XmlDocument lDoc = new XmlDocument();
+
+                lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
+
+                XmlNode xmlNode = lDoc.SelectSingleNode("save");
+
+                XmlNode xmlNode2 = xmlNode.SelectSingleNode("damageTaken");
+
+                if (xmlNode2 == null)
+                {
+                    //Add damage taken
+                    XmlElement xmlElement = lDoc.CreateElement("damageTaken");
+                    xmlNode.AppendChild(xmlElement);
+                    xmlElement.SetAttribute("damage", (-damage).ToString());
+                }
+                else
+                {
+                    //Update damage taken if damage is already present
+                    float damageTaken = float.Parse(xmlNode2.Attributes["damage"].Value);
+                    damageTaken -= damage;
+                    xmlNode2.Attributes["damage"].Value = damageTaken.ToString();
+                }
+
+                StringWriter stringWriter = new StringWriter();
+                lDoc.Save(stringWriter);
+                AccessTools.Method(typeof(SavedStateController), "WriteXml").Invoke(__instance, new object[] { stringWriter.ToString() });
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Saving damage taken");
+            }
+        }
+
         //Patch: Loads damage taken
         [HarmonyPostfix, HarmonyPatch(typeof(SavedStateController), "LoadCharacterSheet")]
         static void SavedStateController_LoadCharacterSheet_DamageTaken(SavedStateController __instance, XmlDocument ___lDoc)
@@ -70,8 +106,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             while (damage < 0f && (__instance.app.model.characterSheet.hitPoints + __instance.app.model.characterSheet.soulHearts > 0.5f))
             {
-                __instance.app.model.characterSheet.RegisterDamage(-0.5f);
+                //RegisterDamage
+                if (!(__instance.app.model.characterSheet.currentFloor < 0 || __instance.app.model.characterSheet.currentFloor >= 5))
+                {
+                    __instance.app.model.characterSheet.damageTakenInFloor[__instance.app.model.characterSheet.currentFloor] -= 0.5f;
+                }
 
+                //Reduce player health
                 if (__instance.app.model.characterSheet.soulHearts > 0f)
                 {
                     __instance.app.model.characterSheet.soulHearts -= 0.5f;
@@ -90,43 +131,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
         }
 
-        //Patch: Saves damage taken
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "TakeDamage")]
-        static void BumboController_TakeDamage(BumboController __instance, float _damage, bool __result)
-        {
-            if (__result && _damage < 0f)
-            {
-                XmlDocument lDoc = new XmlDocument();
-
-                lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
-
-                XmlNode xmlNode = lDoc.SelectSingleNode("save");
-
-                XmlNode xmlNode2 = xmlNode.SelectSingleNode("damageTaken");
-
-                if (xmlNode2 == null)
-                {
-                    //Add damage taken
-                    XmlElement xmlElement = lDoc.CreateElement("damageTaken");
-                    xmlNode.AppendChild(xmlElement);
-                    xmlElement.SetAttribute("damage", _damage.ToString());
-                }
-                else
-                {
-                    //Update damage taken if damage is already present
-                    float damageTaken = float.Parse(xmlNode2.Attributes["damage"].Value);
-                    damageTaken += _damage;
-                    xmlNode2.Attributes["damage"].Value = damageTaken.ToString();
-                }
-
-                StringWriter stringWriter = new StringWriter();
-                lDoc.Save(stringWriter);
-                AccessTools.Method(typeof(SavedStateController), "WriteXml").Invoke(__instance, new object[] { stringWriter.ToString() });
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Saving damage taken");
-            }
-        }
-
-        //Patch: Removes navigation arrows and pans camera when loading directly into a treasure room (i.e when reloading a treasure room save)
+        //Patch: Removes navigation arrows and moves camera when loading directly into a treasure room (namely, when reloading a treasure room save)
         [HarmonyPostfix, HarmonyPatch(typeof(FloorStartEvent), "Execute")]
         static void FloorStartEvent_Execute_Treasure_Room(FloorStartEvent __instance)
         {
@@ -221,7 +226,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
         //Patch: Overrides BumboController StartRoom
         //Saves the game when entering treasure rooms
-        //Waits for the room to be initialized before saving
+        //Waits for the room to be initialized before saving, which ensures that the puzzle board is saved properly
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "StartRoom")]
         static bool BumboController_StartRoom(BumboController __instance)
         {
@@ -315,9 +320,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+
+        static TrinketName[] bossRewards; 
         //Patch: Overrides save method in order to include trinket uses and enemy champion statuses when saving
         //Also checks for null enemy layout
         //Also saves treasure room pickups
+        //Also predetermines and saves boss room pickups if the current room is a boss room
         [HarmonyPrefix, HarmonyPatch(typeof(SavedStateController), "Save")]
         static bool SavedStateController_Save(SavedStateController __instance, byte[] ___Key)
         {
@@ -592,6 +600,47 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
 
+            //Predetermine and save boss room pickups
+            if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Boss)
+            {
+                bossRewards = new TrinketName[2];
+                //Random trinket
+                bossRewards[0] = __instance.app.model.trinketModel.validTrinkets[UnityEngine.Random.Range(0, __instance.app.model.trinketModel.validTrinkets.Count)];
+
+                //Random trinket that is not the same as the first trinket
+                List<TrinketName> list = new List<TrinketName>();
+                for (int i = 1; i < __instance.app.model.trinketModel.validTrinkets.Count; i++)
+                {
+                    bool flag = false;
+                    if (bossRewards[0] == __instance.app.model.trinketModel.validTrinkets[i])
+                    {
+                        flag = true;
+                    }
+
+                    if (!flag)
+                    {
+                        list.Add(__instance.app.model.trinketModel.validTrinkets[i]);
+                    }
+                }
+                if (list.Count > 0)
+                {
+                    int index = UnityEngine.Random.Range(0, list.Count);
+                    bossRewards[1] = list[index];
+                }
+                else
+                {
+                    bossRewards[1] = __instance.app.model.trinketModel.validTrinkets[UnityEngine.Random.Range(0, __instance.app.model.trinketModel.validTrinkets.Count)];
+                }
+                XmlElement xmlElement27 = xmlDocument.CreateElement("bossRewards");
+                xmlElement.AppendChild(xmlElement27);
+                xmlElement27.SetAttribute("reward0", bossRewards[0].ToString());
+                xmlElement27.SetAttribute("reward1", bossRewards[1].ToString());
+            }
+            else
+            {
+                bossRewards = null;
+            }
+
             try
             {
                 StringWriter stringWriter = new StringWriter();
@@ -658,6 +707,36 @@ namespace The_Legend_of_Bum_bo_Windfall
                         ___pickups[i].GetComponent<TrinketPickupView>().SetTrinket((TrinketName)Enum.Parse(typeof(TrinketName), xmlNode2.Attributes["name"].Value));
                     }
                 }
+            }
+        }
+
+        //Patch: Loads boss room pickups
+        [HarmonyPostfix, HarmonyPatch(typeof(SavedStateController), "LoadBoss")]
+        static void SavedStateController_LoadBoss(SavedStateController __instance, XmlDocument ___lDoc)
+        {
+            if (___lDoc == null)
+            {
+                return;
+            }
+
+            XmlNode xmlNode = ___lDoc.SelectSingleNode("/save/bossRewards");
+            if (xmlNode != null)
+            {
+                bossRewards = new TrinketName[]
+                {
+                    (TrinketName)Enum.Parse(typeof(TrinketName), xmlNode.Attributes["reward0"].Value),
+                    (TrinketName)Enum.Parse(typeof(TrinketName), xmlNode.Attributes["reward1"].Value)
+                };
+            }
+        }
+        //Patch: Changes boss room pickups to loaded pickups
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "CreateBossRewards")]
+        static void BumboController_CreateBossRewards(BumboController __instance)
+        {
+            if (bossRewards != null)
+            {
+                __instance.app.view.bossRewardParents[0].transform.GetChild(0).GetComponent<TrinketPickupView>().SetTrinket(bossRewards[0], 0);
+                __instance.app.view.bossRewardParents[1].transform.GetChild(0).GetComponent<TrinketPickupView>().SetTrinket(bossRewards[1], 0);
             }
         }
 
