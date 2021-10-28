@@ -24,7 +24,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void BumboController_Init(BumboController __instance)
         {
             //End floor when loading a saved game in the Wooden Nickel
-            if (__instance.app.controller.gamblingController == null && PlayerPrefs.GetInt("loadGambling", 0) == 1 && !SaveChanges.newGame && !SaveChanges.leftWoodenNickel)
+            if (__instance.app.controller.gamblingController == null && PlayerPrefs.GetInt("loadGambling", 0) == 1 && SaveChanges.loadIntoWoodenNickel)
             {
                 DOTween.KillAll(false);
                 __instance.app.controller.eventsController.SetEvent(new BumboEvent());

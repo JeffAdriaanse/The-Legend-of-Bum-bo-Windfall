@@ -50,34 +50,33 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] ResetRoom, " + __instance.app.model.mapModel.currentRoom.roomType);
         }
 
-        public static bool newGame = false;
-        //Patch: Sets newGame to true when starting a new game
+        public static bool loadIntoWoodenNickel = true;
+        //Patch: Sets loadIntoWoodenNickel to true when starting a new game
         [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), "selectBumbo")]
         static void ChooseBumbo_selectBumbo(ChooseBumbo __instance)
         {
-            newGame = true;
+            loadIntoWoodenNickel = false;
         }
-
-        public static bool leftWoodenNickel = false;
-        //Patch: Sets leftWoodenNickel to true when leaving the Wooden Nickel
+        //Patch: Sets loadIntoWoodenNickel to true when leaving the Wooden Nickel
         [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "StartChapterIntro")]
         static void GamblingController_StartChapterIntro(GamblingController __instance)
         {
-            leftWoodenNickel = true;
+            loadIntoWoodenNickel = false;
         }
 
-        //Patch: Saves the shop when entering the Wooden Nickel if the Wooden Nickel hasn't been saved already
-        [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "Start")]
-        static void GamblingController_Start(GamblingController __instance)
+        //Patch: Saves the shop when GamblingEvent is executed
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboEvent), "Execute")]
+        static void BumboEvent_Execute(BumboEvent __instance)
         {
-            int loadGambling = PlayerPrefs.GetInt("loadGambling", 0);
-            if (loadGambling == 0)
+            if (__instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent" && __instance.app.controller.gamblingController != null)
             {
-                SaveShop(__instance);
+                SaveShop(__instance.app.controller.gamblingController.shop);
             }
         }
 
-        static void SaveShop(GamblingController __instance)
+        //Saves the Wooden Nickel shop and the player's character sheet
+        //Floor counter is reduced by 1
+        public static void SaveShop(Shop __instance)
         {
             //Set flag to load into the Wooden Nickel when reloading a save (true)
             PlayerPrefs.SetInt("loadGambling", 1);
@@ -85,6 +84,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             XmlDocument lDoc = new XmlDocument();
             lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] 1");
 
             XmlNode xmlNode = lDoc.SelectSingleNode("save");
             XmlNode xmlNode2 = xmlNode.SelectSingleNode("gambling");
@@ -99,26 +100,40 @@ namespace The_Legend_of_Bum_bo_Windfall
                 xmlNode.AppendChild(xmlNode2);
             }
 
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.01");
+
             //Save shop
             for (int pickupCounter = 0; pickupCounter < 4; pickupCounter++)
             {
-                GameObject pickup = null;
+                Transform transform = null;
                 switch (pickupCounter)
                 {
                     case 0:
-                        pickup = __instance.app.controller.gamblingController.shop.item1.transform.GetChild(0).gameObject;
+                        transform = __instance.item1.transform;
                         break;
                     case 1:
-                        pickup = __instance.app.controller.gamblingController.shop.item2.transform.GetChild(0).gameObject;
+                        transform = __instance.item2.transform;
                         break;
                     case 2:
-                        pickup = __instance.app.controller.gamblingController.shop.item3.transform.GetChild(0).gameObject;
+                        transform = __instance.item3.transform;
                         break;
                     case 3:
-                        pickup = __instance.app.controller.gamblingController.shop.item4.transform.GetChild(0).gameObject;
+                        transform = __instance.item4.transform;
                         break;
                 }
-                if (pickup != null)
+
+                GameObject pickup = null;
+                for (int i = 0; i < transform.childCount; i++)
+                {
+                    if (transform.GetChild(i).GetComponent<HeartPickupView>() || transform.GetChild(i).GetComponent<TrinketPickupView>())
+                    {
+                        pickup = transform.GetChild(i).gameObject;
+                        break;
+                    }
+                }
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.1");
+
+                if (pickup != null && pickup.activeSelf)
                 {
                     XmlElement xmlElement29 = lDoc.CreateElement("pickup");
                     xmlNode2.AppendChild(xmlElement29);
@@ -130,11 +145,19 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                     else if (pickup.GetComponent<TrinketPickupView>())
                     {
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.2");
                         xmlElement29.SetAttribute("type", "trinket");
-                        xmlElement29.SetAttribute("trinketName", pickup.GetComponent<TrinketPickupView>().trinketName.ToString());
+                        xmlElement29.SetAttribute("trinketName", pickup.GetComponent<TrinketPickupView>().trinket.trinketName.ToString());
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.3");
                     }
                 }
+                else
+                {
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Null pickup at index " + pickupCounter);
+                }
             }
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] 2");
 
             //Save character sheet
             XmlNode xmlNode3 = xmlNode.SelectSingleNode("character");
@@ -860,11 +883,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 PlayerPrefs.Save();
             }
 
-            //Set newGame to false
-            newGame = false;
-
-            //Set leftWoodenNickel to false
-            leftWoodenNickel = false;
+            //Set loadIntoWoodenNickel to true
+            loadIntoWoodenNickel = true;
 
             try
             {

@@ -6,6 +6,8 @@ using UnityEngine;
 using System.Reflection.Emit;
 using DG.Tweening;
 using System.Runtime.CompilerServices;
+using System.Xml;
+using System.Reflection;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -310,9 +312,135 @@ namespace The_Legend_of_Bum_bo_Windfall
 		//Patch: Bum-bo the Dead will now not encounter Shuffle Needles instead of Mana Needles
 		//Since spell mana cost reduction is now preserved when the cost is rerolled, mana needles are useful to Bum-bo the Dead
 		//Shuffle needles on the other hand are pretty pointless
+		//Also saves and loads shop
 		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "Init")]
 		static bool Shop_Init(Shop __instance, ref List<TrinketName> ___needles, ref GameObject ___item1Pickup, ref GameObject ___item2Pickup, ref GameObject ___item3Pickup, ref GameObject ___item4Pickup, ref TrinketModel ___trinketModel)
 		{
+			if (PlayerPrefs.GetInt("loadGambling", 0) == 1)
+            {
+				//Load shop
+				XmlDocument lDoc = (XmlDocument)typeof(SavedStateController).GetField("lDoc", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance.app.controller.savedStateController);
+
+				if (lDoc != null)
+				{
+					XmlNode xmlNode = lDoc.SelectSingleNode("/save/gambling");
+
+					if (xmlNode != null)
+					{
+						XmlNodeList xmlNodeList = xmlNode.SelectNodes("pickup");
+
+						bool[] savedPickups = new bool[4];
+
+						for (int i = 0; i < xmlNodeList.Count; i++)
+						{
+							XmlNode xmlNode2 = xmlNodeList.Item(i);
+
+							int index = Convert.ToInt32(xmlNode2.Attributes["index"].Value);
+							savedPickups[i] = true;
+
+							string type = xmlNode2.Attributes["type"].Value;
+
+							GameObject itemPickup = null;
+							GameObject item = null;
+							ItemPriceView itemPrice = null;
+							switch (index)
+							{
+								case 0:
+									item = __instance.item1;
+									itemPrice = __instance.item1Price;
+									break;
+								case 1:
+									item = __instance.item2;
+									itemPrice = __instance.item2Price;
+									break;
+								case 2:
+									item = __instance.item3;
+									itemPrice = __instance.item3Price;
+									break;
+								case 3:
+									item = __instance.item4;
+									itemPrice = __instance.item4Price;
+									break;
+							}
+
+							if (type == "heart")
+                            {
+								itemPickup = (GameObject)AccessTools.Method(typeof(Shop), "AddHeart").Invoke(__instance, new object[] { item, itemPrice });
+							}
+							else if (type == "trinket")
+                            {
+								TrinketName trinketName = (TrinketName)Enum.Parse(typeof(TrinketName), xmlNode2.Attributes["trinketName"].Value);
+
+								if (__instance.app.model.trinketModel.trinkets[trinketName].Category != TrinketElement.TrinketCategory.Prick)
+                                {
+									if (___trinketModel == null)
+                                    {
+										___trinketModel = __instance.gameObject.AddComponent<TrinketModel>();
+									}
+								}
+
+								itemPickup = (GameObject)AccessTools.Method(typeof(Shop), "AddTrinket").Invoke(__instance, new object[] { item, itemPrice });
+								int price = 7;
+								switch (trinketName)
+                                {
+									case TrinketName.ManaPrick:
+										price = 8;
+										break;
+									case TrinketName.DamagePrick:
+										price = 5;
+										break;
+									case TrinketName.ChargePrick:
+										price = 8;
+										break;
+									case TrinketName.ShufflePrick:
+										price = 2;
+										break;
+									case TrinketName.RandomPrick:
+										price = 5;
+										break;
+								}
+
+								TrinketPickupView trinketPickupView = itemPickup.GetComponent<TrinketPickupView>();
+								trinketPickupView.SetTrinket(trinketName, price);
+								itemPrice.SetPrice(price);
+								trinketPickupView.removePickup = true;
+
+								switch (index)
+								{
+									case 0:
+										 ___item1Pickup = itemPickup;
+										break;
+									case 1:
+										___item2Pickup = itemPickup;
+										break;
+									case 2:
+										___item3Pickup = itemPickup;
+										break;
+									case 3:
+										___item4Pickup = itemPickup;
+										break;
+								}
+							}
+						}
+
+						if (___item1Pickup != null)
+						{
+							___item1Pickup.GetComponent<TrinketPickupView>().shopIndex = 0;
+						}
+						if (___item2Pickup != null)
+						{
+							___item2Pickup.GetComponent<TrinketPickupView>().shopIndex = 1;
+						}
+						if (___item3Pickup != null)
+						{
+							___item3Pickup.GetComponent<TrinketPickupView>().shopIndex = 2;
+						}
+
+						return false;
+					}
+				}
+            }
+
 			___needles = new List<TrinketName>();
 			if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.Eden)
 			{
@@ -364,6 +492,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 				___item3Pickup.GetComponent<TrinketPickupView>().shopIndex = 2;
 			}
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing shop generation");
+
+			if (PlayerPrefs.GetInt("loadGambling", 0) == 0)
+			{
+				//Save shop
+				SaveChanges.SaveShop(__instance);
+			}
 			return false;
 		}
 
