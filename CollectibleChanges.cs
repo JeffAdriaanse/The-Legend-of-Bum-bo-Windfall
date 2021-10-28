@@ -19,6 +19,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
         }
 
+		//Patch: Changes starting stats and collectibles of characters
+		//Increases the cost of Bum-bo the Dead's attack fly
+		[HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "Awake")]
+		static void CharacterSheet_Awake(CharacterSheet __instance)
+		{
+			StartingSpell[] deadStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheDead].startingSpells;
+			for (int i = 0; i < deadStartingSpells.Length; i++)
+            {
+				StartingSpell deadStartingSpell = deadStartingSpells[i];
+				if (deadStartingSpell.spell == SpellName.AttackFly)
+                {
+					deadStartingSpell.toothCost = 6;
+				}
+			}
+		}
+
 		//Patch: Mana colors now consider spell cost modifier when deciding whether to deactivate
 		[HarmonyPostfix, HarmonyPatch(typeof(BumboController), "UpdateSpellManaText", new Type[] { typeof(int), typeof(SpellElement) })]
 		static void BumboController_UpdateSpellManaText(BumboController __instance, int _spell_index, SpellElement _spell)
@@ -790,6 +806,71 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.Name = "Hits Random Enemies = to Spell Damage";
 		}
 
+		//Patch: Changes Attack Fly spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(AttackFlySpell), "Damage")]
+		static void AttackFlySpell_Damage(AttackFlySpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+		//Patch: Removes Bum-bo the Dead's special Attack Fly cost reroll
+		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SetSpellCostForTheDeadsAttackFly")]
+		static bool BumboController_SetSpellCostForTheDeadsAttackFly(BumboController __instance, SpellElement _spell, bool[] _ignore_mana, ref SpellElement __result)
+		{
+			__result = __instance.SetSpellCost(_spell, _ignore_mana);
+			return false;
+		}
+
+		//Patch: Prevents Mama Foot from killing the player
+		[HarmonyPrefix, HarmonyPatch(typeof(MamaFootSpell), "Reward")]
+		static bool MamaFootSpell_Reward(MamaFootSpell __instance)
+		{
+			float damage = 0.5f * __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier;
+			while (damage >= __instance.app.model.characterSheet.hitPoints + __instance.app.model.characterSheet.soulHearts)
+            {
+				damage -= 0.5f;
+            }
+
+			if (damage > 0)
+            {
+				__instance.app.controller.TakeDamage(damage / __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier, null);
+			}
+			__instance.app.Notify("reward.spell", null, new object[0]);
+			return false;
+		}
+
+		//Patch: Changes Brimstone spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(BrimstoneSpell), "Damage")]
+		static void BrimstoneSpell_Damage(BrimstoneSpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+
+		//Patch: Changes Lemon spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(LemonSpell), "Damage")]
+		static void LemonSpell_Damage(LemonSpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+
+		//Patch: Changes Pliers spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(PliersSpell), "Damage")]
+		static void PliersSpell_Damage(PliersSpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+
+		//Patch: Changes Dog Tooth spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(DogToothSpell), "Damage")]
+		static void DogToothSpell_Damage(DogToothSpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+		//Patch: Changes Dog Tooth description
+		[HarmonyPostfix, HarmonyPatch(typeof(DogToothSpell), MethodType.Constructor)]
+		static void DogToothSpell_Constructor(DogToothSpell __instance)
+		{
+			__instance.Name = "Attack that Heals You";
+		}
 		//***************************************************
 		//***************Calling Base Method*****************
 		//***************************************************
@@ -839,6 +920,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			{ SpellName.TwentyTwenty, 7 },
 			{ SpellName.Pentagram, 8 },
+			{ SpellName.AttackFly, 8 },
+			{ SpellName.MamaFoot, 13 },
+			{ SpellName.Lemon, 5 },
+			{ SpellName.Pliers, 5 },
 		};
 	}
 }

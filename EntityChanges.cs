@@ -82,19 +82,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 				if (_immunity == Enemy.AttackImmunity.ReducePuzzleDamage)
 				{
 					__instance.PuzzleResisted();
-					damage = Mathf.Floor(damage/5);
+					damage = Mathf.Floor(damage / 4);
 					if (damage > 0)
                     {
-						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy damage resistance");
+						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy puzzle damage resistance");
 					}
 				}
 				else if (_immunity == Enemy.AttackImmunity.ReduceSpellDamage)
 				{
 					__instance.SpellResisted();
-					damage = Mathf.Floor(damage / 5);
+					damage = Mathf.Floor(damage / 4);
 					if (damage > 0)
 					{
-						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy damage resistance");
+						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy spell damage resistance");
 					}
 				}
 			}

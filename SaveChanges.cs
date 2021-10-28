@@ -50,14 +50,39 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] ResetRoom, " + __instance.app.model.mapModel.currentRoom.roomType);
         }
 
-        public static bool loadIntoWoodenNickel = true;
-        //Patch: Sets loadIntoWoodenNickel to true when starting a new game
-        [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), "selectBumbo")]
-        static void ChooseBumbo_selectBumbo(ChooseBumbo __instance)
+        public static bool LoadIntoWoodenNickel(BumboApplication instance)
         {
-            loadIntoWoodenNickel = false;
+            return instance.controller.gamblingController == null && PlayerPrefs.GetInt("loadGambling", 0) == 1 && loadIntoWoodenNickel && TitleController.startMode == TitleController.StartMode.Continue;
         }
-        //Patch: Sets loadIntoWoodenNickel to true when leaving the Wooden Nickel
+
+        //Patch: Prevent music from playing
+        [HarmonyPrefix, HarmonyPatch(typeof(LevelMusicView), "PlayLevelMusic")]
+        static bool LevelMusicView_PlayLevelMusic(LevelMusicView __instance)
+        {
+            if (LoadIntoWoodenNickel(__instance.app))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Loads directly to the Wooden Nickel
+        [HarmonyPrefix, HarmonyPatch(typeof(FloorStartEvent), "Execute")]
+        static bool FloorStartEvent_Execute_Prefix(FloorStartEvent __instance)
+        {
+            if (LoadIntoWoodenNickel(__instance.app))
+            {
+                __instance.app.controller.Init();
+                __instance.app.controller.FinishFloor();
+                __instance.app.controller.loadingController = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Loading") as GameObject).GetComponent<LoadingController>();
+                __instance.app.controller.loadingController.loadScene("gambling");
+                return false;
+            }
+            return true;
+        }
+
+        public static bool loadIntoWoodenNickel = true;
+        //Patch: Sets loadIntoWoodenNickel to false when leaving the Wooden Nickel
         [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "StartChapterIntro")]
         static void GamblingController_StartChapterIntro(GamblingController __instance)
         {
@@ -280,7 +305,31 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Saving shop and characterSheet");
         }
 
-        //Patch: Loads character sheet and shop when loading a saved game in the Wooden Nickel
+        //Patch: Saves coins when spending money at the Wooden Nickel
+        [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "ModifyCoins")]
+        static void GamblingController_ModifyCoins(GamblingController __instance)
+        {
+            SaveCoins(__instance.app);
+        }
+
+        //Saves player coin count
+        public static void SaveCoins(BumboApplication __instance)
+        {
+            XmlDocument lDoc = new XmlDocument();
+            lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
+
+            XmlNode xmlNode = lDoc.SelectSingleNode("save/character");
+            if (xmlNode != null)
+            {
+                XmlElement xmlElement = (XmlElement)xmlNode;
+                xmlElement.SetAttribute("coins", __instance.model.characterSheet.coins.ToString());
+            }
+
+            StringWriter stringWriter = new StringWriter();
+            lDoc.Save(stringWriter);
+            AccessTools.Method(typeof(SavedStateController), "WriteXml").Invoke(__instance, new object[] { stringWriter.ToString() });
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Saving coin count");
+        }
 
         //Patch: Saves damage taken
         [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "RegisterDamage")]
