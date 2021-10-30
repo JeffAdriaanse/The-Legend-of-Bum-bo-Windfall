@@ -179,10 +179,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
-        //Patch: Removes fake trinket when a fake trinket is used
-        //Also repositions fake trinkets when a trinket expires
-        [HarmonyPrefix, HarmonyPatch(typeof(UseTrinket), "Use")]
-        static bool UseTrinket_Use(UseTrinket __instance, ref int _index)
+        public static void UseTrinket_Use_Prefix(UseTrinket __instance, int _index)
         {
             //Check whether trinket will run out of uses
             if (__instance.uses <= 1)
@@ -211,24 +208,37 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
+        }
+        public static void UseTrinket_Use_Base_Method(UseTrinket __instance, int _index)
+        {
+            __instance.uses--;
+            if (__instance.uses <= 0)
+            {
+                __instance.app.model.characterSheet.trinkets.RemoveAt(_index);
+            }
+            __instance.app.controller.UpdateTrinkets();
+        }
+        public static void UseTrinket_Use_Postfix(UseTrinket __instance)
+        {
+            //Disabled for Boom and Death, since they manually set a new event when used
+            if (__instance.trinketName != TrinketName.Boom && __instance.trinketName != TrinketName.Death)
+            {
+                __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+            }
+        }
+        //Patch: Removes fake trinket when a fake trinket is used
+        //Also repositions fake trinkets when a trinket expires
+        [HarmonyPrefix, HarmonyPatch(typeof(UseTrinket), "Use")]
+        static bool UseTrinket_Use(UseTrinket __instance, int _index)
+        {
+            UseTrinket_Use_Prefix(__instance, _index);
             return true;
         }
         //Patch: Removes fake trinket when a fake Modeling Clay is used (Modeling Clay does not call the base use method and must be changed separately)
         [HarmonyPrefix, HarmonyPatch(typeof(ModelingClayTrinket), "Use")]
-        static bool ModelingClayTrinket_Use(ModelingClayTrinket __instance, ref int _index)
+        static bool ModelingClayTrinket_Use(ModelingClayTrinket __instance, int _index)
         {
-            //Check whether trinket will run out of uses
-            if (__instance.uses <= 1)
-            {
-                //Check whether trinket is fake 
-                if (__instance.app.model.trinketIsFake[_index])
-                {
-                    //Remove fake trinket
-                    __instance.app.model.fakeTrinkets[_index] = null;
-                    __instance.app.model.trinketIsFake[_index] = false;
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a use trinket");
-                }
-            }
+            UseTrinket_Use_Prefix(__instance, _index);
             return true;
         }
         //Patch: Fixes Experimental giving red heart containers to Bum-bo the Dead and Bum-bo the Lost
@@ -237,43 +247,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Experimental result");
 
-            //Check whether trinket will run out of uses
-            if (__instance.uses <= 1)
-            {
-                //Check whether trinket is fake 
-                if (__instance.app.model.trinketIsFake[_index])
-                {
-                    //Remove fake trinket
-                    __instance.app.model.fakeTrinkets[_index] = null;
-                    __instance.app.model.trinketIsFake[_index] = false;
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a use trinket");
-                }
-
-                //Reposition trinkets in fake trinket array
-                for (int i = _index + 1; i < __instance.app.model.fakeTrinkets.Length; i++)
-                {
-                    if (__instance.app.model.fakeTrinkets[i] != null)
-                    {
-                        //Copy fake trinket to new position
-                        __instance.app.model.fakeTrinkets[i - 1] = __instance.app.model.fakeTrinkets[i];
-                        __instance.app.model.trinketIsFake[i - 1] = true;
-                        //Clear fake trinket from old position
-                        __instance.app.model.fakeTrinkets[i] = null;
-                        __instance.app.model.trinketIsFake[i] = false;
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Repositioning fake trinket");
-                    }
-                }
-            }
-
             //Base use method
-            __instance.uses--;
-            if (__instance.uses <= 0)
-            {
-                __instance.app.model.characterSheet.trinkets.RemoveAt(_index);
-            }
-            __instance.app.controller.UpdateTrinkets();
-            __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+            UseTrinket_Use_Prefix(__instance, _index);
 
+            UseTrinket_Use_Base_Method(__instance, _index);
+
+            UseTrinket_Use_Postfix(__instance);
+
+            //Experimental use method
             int num;
             if (__instance.app.model.characterSheet.bumboType.ToString() == "TheLost")
             {
@@ -370,50 +351,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting Ecoli spell effect; enemy is above a boss");
                 return false;
-            }
-            return true;
-        }
-
-        //Patch: Fixes canceling spells with temporarily reduced mana costs refunding more mana than they cost
-        //Patch also counteracts reduction in mana refund from Sucker enemies
-        [HarmonyPrefix, HarmonyPatch(typeof(EventsController), "OnNotification")]
-        static bool EventsController_OnNotification(EventsController __instance, ref string _event_path)
-        {
-            if (_event_path == "cancel.spell"
-                && !__instance.app.model.costRefundOverride
-                && !(__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GrabBossRewardEvent")
-                && !(__instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && __instance.app.view.gamblingView != null)
-                && !(__instance.app.view.gamblingView != null)
-                && !(__instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
-                && !(__instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent"))
-            {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana cost refund");
-
-                //**********Step 1: Counteract mana loss from base method**********
-
-                //Get number of Sucker enemies
-                int SuckerCount = 0;
-                for (int i = 0; i < __instance.app.model.enemies.Count; i++)
-                {
-                    if (__instance.app.model.enemies[i].enemyName == EnemyName.Sucker)
-                    {
-                        SuckerCount++;
-                    }
-                }
-
-                //Get amount of each mana type that is lost from Suckers and add it directly to player mana
-                for (int i = 0; i < 6; i++)
-                {
-                    __instance.app.model.mana[i] += (short)Mathf.Max(Mathf.Min(SuckerCount, __instance.app.model.spellModel.currentSpell.Cost[i] - 1), 0);
-                }
-
-                //**********Step 2: Reduce mana gain by incorporating cost modifiers**********
-
-                //Get amount of each mana type that is not lost from cost modifier (these values will be negative) and directly remove it from player mana
-                for (int i = 0; i < 6; i++)
-                {
-                    __instance.app.model.mana[i] += __instance.app.model.spellModel.currentSpell.CostModifier[i];
-                }
             }
             return true;
         }
@@ -702,18 +639,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(UseTrinket), "Use")]
         static void UseTrinket_Use(UseTrinket __instance)
         {
-            //Disabled for Boom and Death, since they manually set a new event when used
-            if (__instance.trinketName != TrinketName.Boom && __instance.trinketName != TrinketName.Death)
-            {
-                __instance.app.controller.eventsController.SetEvent(new IdleEvent());
-            }
+            UseTrinket_Use_Postfix(__instance);
         }
 
         //Patch: Causes the player's turn to end automatically after using Modeling Clay while out of moves if they can't do anything (unlike other use trinkets, Modeling Clay doesn't call the base Use method)
         [HarmonyPostfix, HarmonyPatch(typeof(ModelingClayTrinket), "Use")]
         static void ModelingClayTrinket_Use(ModelingClayTrinket __instance)
         {
-            __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+            UseTrinket_Use_Postfix(__instance);
         }
 
         //Patch: Prevents additional Lose Move notification from spawning when using Lard

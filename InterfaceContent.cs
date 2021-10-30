@@ -1082,6 +1082,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Adapts EventsController OnNotification to allow for cancel button functionality when replacing a trinket
         //Also fixes cancel button in treasure rooms not working during BumboEvent
+        //Patch: Fixes canceling spells with temporarily reduced mana costs refunding more mana than they cost
+        //Patch also counteracts reduction in mana refund from Sucker enemies
+        //Patch: Add cancel functionality for use trinkets
         [HarmonyPrefix, HarmonyPatch(typeof(EventsController), "OnNotification")]
         static bool EventsController_OnNotification(EventsController __instance, string _event_path, object _target, params object[] _data)
         {
@@ -1099,6 +1102,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && __instance.app.view.gamblingView != null)
             {
+                //TrinketReplaceEvent cancel when at Wooden Nickel
                 if (__instance.app.model.gamblingModel.cameraAt == 0)
                 {
                     __instance.app.controller.eventsController.SetEvent(new TrinketChosenToReplaceEvent(-1));
@@ -1142,6 +1146,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 else if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
                 {
+                    //TrinketReplaceEvent cancel when not at Wooden Nickel
                     __instance.SetEvent(new BumboEvent());
                     __instance.app.controller.HideNotifications(false);
                     if (!__instance.app.model.iOS)
@@ -1156,7 +1161,25 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 else if (_event_path == "cancel.spell")
                 {
-                    if (__instance.app.controller.trinketController.RerollSpellCost())
+                    //Add cancel functionality for use trinkets
+                    if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
+                    {
+                        for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
+                        {
+                            if (CollectibleChanges.enabledSpells[spellCounter2])
+                            {
+                                __instance.app.view.spells[spellCounter2].EnableSpell();
+                            }
+                            else
+                            {
+                                __instance.app.view.spells[spellCounter2].DisableSpell();
+                            }
+                        }
+                        CollectibleChanges.currentTrinket = null;
+                    }
+
+                    //Null check for spellViewUsed
+                    if (__instance.app.controller.trinketController.RerollSpellCost() && __instance.app.model.spellViewUsed != null)
                     {
                         SpellView spellViewUsed = __instance.app.model.spellViewUsed;
                         int spellIndex = spellViewUsed.spellIndex;
@@ -1181,8 +1204,37 @@ namespace The_Legend_of_Bum_bo_Windfall
                         __instance.app.model.costRefundOverride = false;
                         __instance.app.controller.UpdateMana(__instance.app.model.costRefundAmount, false);
                     }
-                    else
+                    //Null check for current spell
+                    else if (__instance.app.model.spellModel.currentSpell != null)
                     {
+                        //**********Step 1: Counteract mana loss from base method**********
+
+                        //Get number of Sucker enemies
+                        int SuckerCount = 0;
+                        for (int i = 0; i < __instance.app.model.enemies.Count; i++)
+                        {
+                            if (__instance.app.model.enemies[i].enemyName == EnemyName.Sucker)
+                            {
+                                SuckerCount++;
+                            }
+                        }
+
+                        //Get amount of each mana type that is lost from Suckers and add it directly to player mana
+                        for (int i = 0; i < 6; i++)
+                        {
+                            __instance.app.model.mana[i] += (short)Mathf.Max(Mathf.Min(SuckerCount, __instance.app.model.spellModel.currentSpell.Cost[i] - 1), 0);
+                        }
+
+                        //**********Step 2: Reduce mana gain by incorporating cost modifiers**********
+
+                        //Get amount of each mana type that is not lost from cost modifier (these values will be negative) and directly remove it from player mana
+                        for (int i = 0; i < 6; i++)
+                        {
+                            __instance.app.model.mana[i] += __instance.app.model.spellModel.currentSpell.CostModifier[i];
+                        }
+
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana cost refund");
+
                         __instance.app.controller.UpdateMana(__instance.app.model.spellModel.currentSpell.Cost, false);
                         __instance.app.model.spellModel.currentSpell.FullCharge();
                     }

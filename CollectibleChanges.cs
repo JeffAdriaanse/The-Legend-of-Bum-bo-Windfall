@@ -19,6 +19,164 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
         }
 
+		public static UseTrinket currentTrinket;
+		static int currentTrinketIndex;
+		public static bool[] enabledSpells = new bool[5];
+		//Patch: Allows the player to choose which spell to use Rainbow Tick on 
+		[HarmonyPrefix, HarmonyPatch(typeof(RainbowTickTrinket), "Use")]
+		static bool RainbowTickTrinket_Use(RainbowTickTrinket __instance, int _index)
+		{
+			//Loop through spells
+			bool anyActiveSpells = false;
+			int spellCounter = 0;
+			while (spellCounter < __instance.app.model.characterSheet.spells.Count)
+			{
+				//Record which spells are disabled
+				if (!__instance.app.view.spells[spellCounter].disableObject.activeSelf)
+                {
+					enabledSpells[spellCounter] = true;
+                }
+                else
+                {
+					enabledSpells[spellCounter] = false;
+				}
+
+				//Enable/disable spells
+				int totalManaCost = 0;
+				for (int i = 0; i < 6; i++)
+				{
+					totalManaCost += (int)__instance.app.model.characterSheet.spells[spellCounter].Cost[i];
+					if (totalManaCost > 2)
+					{
+						__instance.app.view.spells[spellCounter].EnableSpell();
+						anyActiveSpells = true;
+					}
+                    else
+                    {
+						__instance.app.view.spells[spellCounter].DisableSpell();
+					}
+				}
+				spellCounter += 1;
+			}
+
+			//Abort if there are no viable spells
+			if (!anyActiveSpells)
+            {
+				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
+				{
+					if (enabledSpells[spellCounter2])
+					{
+						__instance.app.view.spells[spellCounter2].EnableSpell();
+					}
+					else
+					{
+						__instance.app.view.spells[spellCounter2].DisableSpell();
+					}
+				}
+				__instance.app.controller.GUINotification("No Viable Spells", GUINotificationView.NotifyType.General, null, true);
+				return false;
+			}
+
+			currentTrinket = __instance;
+			currentTrinketIndex = _index;
+
+			__instance.app.model.spellModel.currentSpell = null;
+			__instance.app.model.spellModel.spellQueued = false;
+
+			__instance.app.model.spellViewUsed = null;
+
+			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
+			__instance.app.controller.GUINotification("Pick A Spell To Modify", GUINotificationView.NotifyType.Spell, null, false);
+
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Rainbow Tick effect");
+			return false;
+		}
+
+		//Patch: Implements Rainbow Tick effect
+		[HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
+		static bool SpellView_OnMouseDown(SpellView __instance, bool ___exit, SpellElement ___spell)
+		{
+			if (!__instance.app.model.paused && !___exit && ___spell != null && !__instance.disableObject.activeSelf && __instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent" && currentTrinket != null)
+			{
+				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.Button, SoundsView.eAudioSlot.Default, false);
+
+				CollectibleFixes.UseTrinket_Use_Prefix(currentTrinket, currentTrinketIndex);
+				CollectibleFixes.UseTrinket_Use_Base_Method(currentTrinket, currentTrinketIndex);
+				CollectibleFixes.UseTrinket_Use_Postfix(currentTrinket);
+
+				SpellElement spellElement = ___spell;
+				int totalSpellCost = 0;
+				for (int i = 0; i < 6; i++)
+				{
+					totalSpellCost += (int)spellElement.Cost[i];
+				}
+
+				//Reduce mana cost by 15%
+				int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.15f);
+
+				//Do not reduce total cost below two (failsafe)
+				while (totalSpellCost - costReduction < 2)
+				{
+					costReduction--;
+					if (costReduction <= 0)
+					{
+						break;
+					}
+				}
+
+				for (int j = costReduction; j > 0; j--)
+				{
+					//Find colors with cost above 0
+					List<int> availableColors = new List<int>();
+					for (int k = 0; k < 6; k++)
+					{
+						if (spellElement.Cost[k] != 0)
+						{
+							availableColors.Add(k);
+						}
+					}
+					//Choose random color to reduce
+					int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
+					short[] cost = __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost;
+					cost[randomColor] -= 1;
+				}
+
+				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
+				{
+					if (enabledSpells[spellCounter2])
+					{
+						__instance.app.view.spells[spellCounter2].EnableSpell();
+					}
+					else
+					{
+						__instance.app.view.spells[spellCounter2].DisableSpell();
+					}
+				}
+
+				__instance.app.controller.UpdateSpellManaText();
+				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
+				__instance.app.view.spells[__instance.spellIndex].spellParticles.Play();
+
+				currentTrinket = null;
+
+				__instance.Shake(1f);
+				__instance.app.controller.HideNotifications(false);
+
+				__instance.app.model.spellModel.currentSpell = null;
+				__instance.app.model.spellModel.spellQueued = false;
+
+				if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
+                {
+					__instance.app.controller.eventsController.EndEvent();
+				}
+
+				Console.WriteLine("[The Legend of Bum-bo: Windfall] Implementing Rainbow Tick effect");
+				return false;
+			}
+			return true;
+		}
+
+
 		//Patch: Changes starting stats and collectibles of characters
 		//Increases the cost of Bum-bo the Dead's attack fly
 		[HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "Awake")]
@@ -521,9 +679,55 @@ namespace The_Legend_of_Bum_bo_Windfall
 		//Certain spells have new base mana costs
 		//The number of mana colors is now determined in a flexible way
 		//Permanent and temporary mana cost reduction is now preserved when rerolling spell costs
+		//Converter special mana cost generation is preserved when its mana cost is rerolled
 		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SetSpellCost", new Type[] { typeof(SpellElement), typeof(bool[]) })]
         static bool BumboController_SetSpellCost(BumboController __instance, SpellElement _spell, bool[] _ignore_mana, ref SpellElement __result)
         {
+			if (_spell.spellName.ToString().Contains("Converter"))
+            {
+				Block.BlockType blockType = Block.BlockType.Bone;
+				switch (_spell.spellName)
+                {
+					case SpellName.ConverterWhite:
+						blockType = Block.BlockType.Bone;
+						break;
+					case SpellName.ConverterBrown:
+						blockType = Block.BlockType.Poop;
+						break;
+					case SpellName.ConverterGreen:
+						blockType = Block.BlockType.Booger;
+						break;
+					case SpellName.ConverterGrey:
+						blockType = Block.BlockType.Tooth;
+						break;
+					case SpellName.ConverterYellow:
+						blockType = Block.BlockType.Pee;
+						break;
+				}
+
+				List<Block.BlockType> list = new List<Block.BlockType>();
+				for (int i = 0; i < 6; i++)
+				{
+					if (i != 1 && i != (int)blockType)
+					{
+						list.Add((Block.BlockType)i);
+					}
+				}
+				short[] array = new short[6];
+				for (int j = 0; j < 2; j++)
+				{
+					int index = UnityEngine.Random.Range(0, list.Count);
+					Block.BlockType chosenBlockType = list[index];
+					array[(int)chosenBlockType] += 1;
+					list.RemoveAt(index);
+				}
+				_spell.Cost = array;
+				__result = _spell;
+
+				Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Converter mana cost generation");
+				return false;
+			}
+
 			if (_ignore_mana == null)
 			{
 				_ignore_mana = new bool[6];
@@ -785,6 +989,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
+		//Patch: Increases mana gain from Converter
+		[HarmonyPrefix, HarmonyPatch(typeof(ConverterSpell), "ConvertMana")]
+		static bool ConverterSpell_ConvertMana(ConverterSpell __instance, Block.BlockType _type)
+		{
+			short[] array = new short[6];
+			//Increase mana gain to 2
+			array[(int)_type] += 2;
+			__instance.app.controller.UpdateMana(array, true);
+			__instance.app.controller.ShowManaGain();
+			return false;
+		}
+
 		static int rockCounter = 0;
 		//Patch: Rock Friends now drops a number of rocks equal to the player's spell damage stat
 		[HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "DropRock")]
@@ -820,7 +1036,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		//Patch: Prevents Mama Foot from killing the player
+		//Patch: Prevents Mama Foot from killing the player (broken)
 		[HarmonyPrefix, HarmonyPatch(typeof(MamaFootSpell), "Reward")]
 		static bool MamaFootSpell_Reward(MamaFootSpell __instance)
 		{
@@ -830,10 +1046,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 				damage -= 0.5f;
             }
 
-			if (damage > 0)
-            {
-				__instance.app.controller.TakeDamage(damage / __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier, null);
-			}
+			__instance.app.controller.TakeDamage(-damage / __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier, null);
+
 			__instance.app.Notify("reward.spell", null, new object[0]);
 			return false;
 		}
@@ -855,6 +1069,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 		//Patch: Changes Pliers spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(PliersSpell), "Damage")]
 		static void PliersSpell_Damage(PliersSpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+
+		//Patch: Changes Mama Shoe spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(MamaShoeSpell), "Damage")]
+		static void MamaShoeSpell_Damage(MamaShoeSpell __instance, ref int __result)
 		{
 			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
@@ -924,6 +1145,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{ SpellName.MamaFoot, 13 },
 			{ SpellName.Lemon, 5 },
 			{ SpellName.Pliers, 5 },
+			{ SpellName.Juiced, 6 }
 		};
 	}
 }
