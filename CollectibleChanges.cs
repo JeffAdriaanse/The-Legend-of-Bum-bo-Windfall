@@ -19,9 +19,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
         }
 
+		//Patch: Changes Thermos description 
+		[HarmonyPostfix, HarmonyPatch(typeof(ThermosTrinket), MethodType.Constructor)]
+		static void ThermosTrinket_Constructor(ThermosTrinket __instance)
+		{
+			__instance.Name = "Charge All Items + Heal";
+		}
+
 		public static UseTrinket currentTrinket;
 		static int currentTrinketIndex;
-		public static bool[] enabledSpells = new bool[5];
+		public static bool[] enabledSpells = new bool[6];
 		//Patch: Allows the player to choose which spell to use Rainbow Tick on 
 		[HarmonyPrefix, HarmonyPatch(typeof(RainbowTickTrinket), "Use")]
 		static bool RainbowTickTrinket_Use(RainbowTickTrinket __instance, int _index)
@@ -42,19 +49,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 				}
 
 				//Enable/disable spells
-				int totalManaCost = 0;
-				for (int i = 0; i < 6; i++)
-				{
-					totalManaCost += (int)__instance.app.model.characterSheet.spells[spellCounter].Cost[i];
-					if (totalManaCost > 2)
-					{
-						__instance.app.view.spells[spellCounter].EnableSpell();
-						anyActiveSpells = true;
-					}
-                    else
-                    {
-						__instance.app.view.spells[spellCounter].DisableSpell();
-					}
+				if (CalculateCostReduction(spellCounter, 0.15f, __instance.app) > 0)
+                {
+					__instance.app.view.spells[spellCounter].EnableSpell();
+					anyActiveSpells = true;
+				}
+                else
+                {
+					__instance.app.view.spells[spellCounter].DisableSpell();
 				}
 				spellCounter += 1;
 			}
@@ -91,8 +93,81 @@ namespace The_Legend_of_Bum_bo_Windfall
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Rainbow Tick effect");
 			return false;
 		}
+		//Patch: Changes Rainbow Tick description 
+		[HarmonyPostfix, HarmonyPatch(typeof(RainbowTickTrinket), MethodType.Constructor)]
+		static void RainbowTickTrinket_Constructor(RainbowTickTrinket __instance)
+		{
+			__instance.Name = "Reduces Spell Cost";
+		}
 
-		//Patch: Implements Rainbow Tick effect
+		//Patch: Allows the player to choose which spell to use Brown Tick on 
+		[HarmonyPrefix, HarmonyPatch(typeof(BrownTickTrinket), "Use")]
+		static bool BrownTickTrinket_Use(BrownTickTrinket __instance, int _index)
+		{
+			//Loop through spells
+			bool anyActiveSpells = false;
+			int spellCounter = 0;
+			while (spellCounter < __instance.app.model.characterSheet.spells.Count)
+			{
+				//Record which spells are disabled
+				if (!__instance.app.view.spells[spellCounter].disableObject.activeSelf)
+				{
+					enabledSpells[spellCounter] = true;
+				}
+				else
+				{
+					enabledSpells[spellCounter] = false;
+				}
+
+				//Enable/disable spells
+				if (__instance.app.model.characterSheet.spells[spellCounter].IsChargeable && __instance.app.model.characterSheet.spells[spellCounter].requiredCharge > 0)
+				{
+					__instance.app.view.spells[spellCounter].EnableSpell();
+					anyActiveSpells = true;
+				}
+				else
+				{
+					__instance.app.view.spells[spellCounter].DisableSpell();
+				}
+				spellCounter += 1;
+			}
+
+			//Abort if there are no viable spells
+			if (!anyActiveSpells)
+			{
+				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
+				{
+					if (enabledSpells[spellCounter2])
+					{
+						__instance.app.view.spells[spellCounter2].EnableSpell();
+					}
+					else
+					{
+						__instance.app.view.spells[spellCounter2].DisableSpell();
+					}
+				}
+				__instance.app.controller.GUINotification("No Viable Spells", GUINotificationView.NotifyType.General, null, true);
+				return false;
+			}
+
+			currentTrinket = __instance;
+			currentTrinketIndex = _index;
+
+			__instance.app.model.spellModel.currentSpell = null;
+			__instance.app.model.spellModel.spellQueued = false;
+
+			__instance.app.model.spellViewUsed = null;
+
+			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
+			__instance.app.controller.GUINotification("Pick A Spell To Modify", GUINotificationView.NotifyType.Spell, null, false);
+
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Brown Tick effect");
+			return false;
+		}
+
+		//Patch: Implements trinket modify spell effects
+		//Rainbow Tick
+		//Brown Tick
 		[HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
 		static bool SpellView_OnMouseDown(SpellView __instance, bool ___exit, SpellElement ___spell)
 		{
@@ -104,41 +179,46 @@ namespace The_Legend_of_Bum_bo_Windfall
 				CollectibleFixes.UseTrinket_Use_Base_Method(currentTrinket, currentTrinketIndex);
 				CollectibleFixes.UseTrinket_Use_Postfix(currentTrinket);
 
-				SpellElement spellElement = ___spell;
-				int totalSpellCost = 0;
-				for (int i = 0; i < 6; i++)
-				{
-					totalSpellCost += (int)spellElement.Cost[i];
-				}
+				switch (currentTrinket.trinketName)
+                {
+					case TrinketName.RainbowTick:
+						SpellElement spellElement = ___spell;
 
-				//Reduce mana cost by 15%
-				int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.15f);
+						int costReduction = CalculateCostReduction(__instance.spellIndex, 0.15f, __instance.app);
 
-				//Do not reduce total cost below two (failsafe)
-				while (totalSpellCost - costReduction < 2)
-				{
-					costReduction--;
-					if (costReduction <= 0)
-					{
-						break;
-					}
-				}
-
-				for (int j = costReduction; j > 0; j--)
-				{
-					//Find colors with cost above 0
-					List<int> availableColors = new List<int>();
-					for (int k = 0; k < 6; k++)
-					{
-						if (spellElement.Cost[k] != 0)
+						for (int j = costReduction; j > 0; j--)
 						{
-							availableColors.Add(k);
+							//Find colors with cost above 0
+							List<int> availableColors = new List<int>();
+							for (int k = 0; k < 6; k++)
+							{
+								if (spellElement.Cost[k] != 0)
+								{
+									availableColors.Add(k);
+								}
+							}
+							//Choose random color to reduce
+							int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
+							short[] cost = __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost;
+							cost[randomColor] -= 1;
 						}
-					}
-					//Choose random color to reduce
-					int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
-					short[] cost = __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost;
-					cost[randomColor] -= 1;
+						break;
+					case TrinketName.BrownTick:
+						//Reduce recharge time
+						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge > 0)
+                        {
+							__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge--;
+						}
+						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge < __instance.app.model.characterSheet.spells[__instance.spellIndex].charge)
+						{
+							__instance.app.model.characterSheet.spells[__instance.spellIndex].charge = __instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge;
+						}
+						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge == 0)
+						{
+							__instance.app.model.characterSheet.spells[__instance.spellIndex].chargeEveryRound = true;
+							__instance.app.model.characterSheet.spells[__instance.spellIndex].usedInRound = false;
+						}
+						break;
 				}
 
 				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
@@ -153,12 +233,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 					}
 				}
 
+				__instance.app.controller.SetActiveSpells(true, true);
 				__instance.app.controller.UpdateSpellManaText();
-				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
-				__instance.app.view.spells[__instance.spellIndex].spellParticles.Play();
-
 				currentTrinket = null;
 
+				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
+				__instance.app.view.spells[__instance.spellIndex].spellParticles.Play();
 				__instance.Shake(1f);
 				__instance.app.controller.HideNotifications(false);
 
@@ -170,12 +250,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 					__instance.app.controller.eventsController.EndEvent();
 				}
 
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Implementing Rainbow Tick effect");
+				Console.WriteLine("[The Legend of Bum-bo: Windfall] Implementing trinket modify spell effect");
 				return false;
 			}
 			return true;
 		}
-
 
 		//Patch: Changes starting stats and collectibles of characters
 		//Increases the cost of Bum-bo the Dead's attack fly
@@ -397,21 +476,44 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 		}
 
+		public static int CalculateCostReduction(int _spell_index, float reductionPercentage, BumboApplication bumboApplication)
+        {
+			//Calculate cost reduction
+			int totalManaCost = 0;
+			for (int i = 0; i < 6; i++)
+			{
+				totalManaCost += (int)bumboApplication.model.characterSheet.spells[_spell_index].Cost[i];
+			}
+
+			int costReduction = Mathf.RoundToInt((float)totalManaCost * reductionPercentage);
+
+			//Do not reduce total cost below two
+			while (totalManaCost - costReduction < 2)
+			{
+				costReduction--;
+				if (costReduction <= 0)
+				{
+					break;
+				}
+			}
+			return costReduction;
+		}
+
 		//Patch: Mana needle rework
 		[HarmonyPostfix, HarmonyPatch(typeof(ManaPrickTrinket), "QualifySpell")]
 		static void ManaPrickTrinket_QualifySpell(ManaPrickTrinket __instance, int _spell_index)
 		{
-			int totalManaCost = 0;
-			for (int i = 0; i < 6; i++)
-			{
-				totalManaCost += (int)__instance.app.model.characterSheet.spells[_spell_index].Cost[i];
-				if (totalManaCost > 2)
-				{
-					__instance.app.view.spells[_spell_index].EnableSpell();
-					return;
-				}
+			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app);
+
+			//Enable spell if cost reduction is above zero
+			if (costReduction > 0)
+            {
+				__instance.app.view.spells[_spell_index].EnableSpell();
 			}
-			__instance.app.view.spells[_spell_index].DisableSpell();
+            else
+            {
+				__instance.app.view.spells[_spell_index].DisableSpell();
+			}
 
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle spell qualification");
 		}
@@ -419,24 +521,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static bool ManaPrickTrinket_UpdateSpell(ManaPrickTrinket __instance, int _spell_index)
 		{
 			SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
-			int totalSpellCost = 0;
-			for (int i = 0; i < 6; i++)
-			{
-				totalSpellCost += (int)spellElement.Cost[i];
-			}
 
-			//Reduce mana cost by 25%
-			int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.25f);
-
-			//Do not reduce total cost below two (failsafe)
-			while (totalSpellCost - costReduction < 2)
-            {
-				costReduction--;
-				if (costReduction <= 0)
-                {
-					break;
-                }
-            }
+			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app);
 
 			for (int j = costReduction; j > 0; j--)
 			{
@@ -467,15 +553,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 			short num = 0;
 			while ((int)num < __instance.app.model.characterSheet.spells.Count)
 			{
-				int num2 = 0;
-				for (int i = 0; i < 6; i++)
+				int costReduction = CalculateCostReduction(num, 0.25f, __instance.app);
+				if (costReduction > 0)
 				{
-					num2 += (int)__instance.app.model.characterSheet.spells[(int)num].Cost[i];
-					if (num2 >= 2)
-					{
-						___needles.Add(TrinketName.ManaPrick);
-						return false;
-					}
+					___needles.Add(TrinketName.ManaPrick);
+					Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle appearance condition");
+					return false;
 				}
 				num += 1;
 			}
