@@ -1396,6 +1396,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Add cutscene menu button to main menu
         //Also disables cutscenes that haven't been unlocked
+        //Also adds coins to title box
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
         static void TitleController_Start(TitleController __instance)
         {
@@ -1453,6 +1454,68 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Disable Final ending
                 __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").GetComponent<Button>().interactable = false;
             }
+
+            //Title box coins
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+
+            var CoinsMesh = assets.LoadAsset<Mesh>("Coins_Model_V1");
+            var CoinsTexture = assets.LoadAsset<Texture2D>("Coins_Flat");
+
+            coins = new GameObject();
+            MeshFilter meshFilter = coins.AddComponent<MeshFilter>();
+            meshFilter.mesh = CoinsMesh;
+            MeshRenderer meshRenderer = coins.AddComponent<MeshRenderer>();
+            meshRenderer.material.mainTexture = CoinsTexture;
+            Transform planeTransform = __instance.box.transform.Find("Plane").transform;
+            coins.transform.position = planeTransform.position + new Vector3(0f, 0.37f, 0f);
+            coins.transform.rotation = planeTransform.rotation;
+            coins.transform.Rotate(new Vector3(0, 0, 57f));
+            coins.transform.localScale = Vector3.Scale(planeTransform.localScale, new Vector3(0.2f, 0.2f, 0.1f));
+            coins.transform.SetParent(planeTransform);
+
+            //Title Windfall Logo
+            var LogoMesh = assets.LoadAsset<Mesh>("Windfall_Logo");
+            var LogoTexture = assets.LoadAsset<Texture2D>("Windfall_Logo_Image");
+
+            GameObject logo = new GameObject();
+            MeshFilter meshFilter2 = logo.AddComponent<MeshFilter>();
+            meshFilter2.mesh = LogoMesh;
+            MeshRenderer meshRenderer2 = logo.AddComponent<MeshRenderer>();
+            meshRenderer2.material.mainTexture = LogoTexture;
+            Transform bumboTransform = GameObject.Find("Logo").transform.Find("Bum-bo");
+            logo.transform.position = new Vector3(0.05f, 1.2f, -2.19f);
+            logo.transform.rotation = Quaternion.Euler(274.2f, 181.4f, 1.51f);
+            logo.transform.localScale = new Vector3(180f, 2.62f, 60f);
+            logo.transform.SetParent(bumboTransform);
+
+            Transform tagline = bumboTransform.Find("bum-bo_tagline");
+            tagline.position = new Vector3(-0.08f, 0.17f, -1.87f);
+        }
+        static GameObject coins;
+        //Patch: Hide coins from title box on input
+        [HarmonyPrefix, HarmonyPatch(typeof(TitleController), "Update")]
+        static bool TitleController_Update(TitleController __instance, bool ___loading)
+        {
+            if (!(__instance.turnOnDebugKey && (Input.GetKeyDown(KeyCode.BackQuote) || Input.GetKeyDown(KeyCode.F1))) && ((Input.anyKeyDown || Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.touchCount > 0) && !___loading))
+            {
+                if (coins != null)
+                {
+                    Sequence sequence = DOTween.Sequence();
+                    sequence.AppendInterval(0.5f);
+                    TweenSettingsExtensions.Append(sequence, ShortcutExtensions.DOMoveZ(coins.transform, -3f, 0.5f));
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Hiding coins");
+                }
+                else
+                {
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Null");
+                }
+            }
+            return true;
         }
 
         //Patch: Update cutscene menu when progress is deleted
