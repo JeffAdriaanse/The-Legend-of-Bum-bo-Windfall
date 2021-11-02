@@ -55,6 +55,9 @@
     <Reference Include="UnityEngine">
       <HintPath>Libs\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>Libs\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>Libs\UnityEngine.AudioModule.dll</HintPath>
     </Reference>

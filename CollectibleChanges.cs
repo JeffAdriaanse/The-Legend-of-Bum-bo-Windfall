@@ -8,6 +8,7 @@ using DG.Tweening;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using System.Reflection;
+using TMPro;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -49,7 +50,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				}
 
 				//Enable/disable spells
-				if (CalculateCostReduction(spellCounter, 0.15f, __instance.app) > 0)
+				if (CalculateCostReduction(spellCounter, 0.15f, __instance.app, false) > 0)
                 {
 					__instance.app.view.spells[spellCounter].EnableSpell();
 					anyActiveSpells = true;
@@ -184,7 +185,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					case TrinketName.RainbowTick:
 						SpellElement spellElement = ___spell;
 
-						int costReduction = CalculateCostReduction(__instance.spellIndex, 0.15f, __instance.app);
+						int costReduction = CalculateCostReduction(__instance.spellIndex, 0.15f, __instance.app, false);
 
 						for (int j = costReduction; j > 0; j--)
 						{
@@ -201,6 +202,17 @@ namespace The_Legend_of_Bum_bo_Windfall
 							int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
 							short[] cost = __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost;
 							cost[randomColor] -= 1;
+
+							int totalCombinedCost = 0;
+							//Increase the reduced color's cost modifier if the spell's total cost (including modifier) would be reduced below minimum OR if the reduced color's cost (including modifier) would be reduced below zero
+							for (int costCounter = 0; costCounter < 6; costCounter++)
+                            {
+								totalCombinedCost += (short)(__instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[costCounter] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[costCounter]);
+							}
+							if (totalCombinedCost < SpellManaCosts.MinimumManaCost(__instance.app.model.characterSheet.spells[__instance.spellIndex].spellName) || __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[randomColor] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] < 0)
+                            {
+								__instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] += 1;
+							}
 						}
 						break;
 					case TrinketName.BrownTick:
@@ -270,27 +282,88 @@ namespace The_Legend_of_Bum_bo_Windfall
 					deadStartingSpell.toothCost = 6;
 				}
 			}
+
+			StartingSpell[] weirdStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheWeird].startingSpells;
+			for (int i = 0; i < weirdStartingSpells.Length; i++)
+			{
+				StartingSpell weirdStartingSpell = weirdStartingSpells[i];
+				if (weirdStartingSpell.spell == SpellName.MagicMarker)
+				{
+					weirdStartingSpell.peeCost = 6;
+				}
+			}
 		}
 
-		//Patch: Mana colors now consider spell cost modifier when deciding whether to deactivate
-		[HarmonyPostfix, HarmonyPatch(typeof(BumboController), "UpdateSpellManaText", new Type[] { typeof(int), typeof(SpellElement) })]
-		static void BumboController_UpdateSpellManaText(BumboController __instance, int _spell_index, SpellElement _spell)
+		//Patch: Spell mana cost text now indicates whether the cost is temporarily modified
+		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "UpdateSpellManaText", new Type[] { typeof(int), typeof(SpellElement) })]
+		static bool BumboController_UpdateSpellManaText(BumboController __instance, int _spell_index, SpellElement _spell)
 		{
 			if (!_spell.IsChargeable)
 			{
-				for (short colorCounter = 0; colorCounter < 5; colorCounter += 1)
+				float num = 0f;
+				__instance.app.view.spells[_spell_index].spellMana1.SetActive(false);
+				for (short num2 = 0; num2 < 5; num2 += 1)
 				{
-					int colorCounterSkipRed = (int)colorCounter;
-					if (colorCounter > 0)
+					int num3 = (int)num2;
+					if (num2 > 0)
 					{
-						colorCounterSkipRed++;
+						num3++;
 					}
-					if (_spell.Cost[colorCounterSkipRed] + _spell.CostModifier[colorCounterSkipRed] <= 0)
+					if (_spell.Cost[num3] > 0 || _spell.CostModifier[num3] > 0)
 					{
-						__instance.app.view.spells[_spell_index].manaIconViews[colorCounterSkipRed].gameObject.SetActive(false);
+						__instance.app.view.spells[_spell_index].manaIconViews[num3].gameObject.transform.localPosition = new Vector3(-0.13f + 0.085f * num, 0.02f, 0f);
+						__instance.app.view.spells[_spell_index].manaIconViews[num3].gameObject.SetActive(true);
+						__instance.app.view.spells[_spell_index].manaIconViews[num3].SetMana((int)(_spell.Cost[num3] + _spell.CostModifier[num3]));
+						num += 1f;
+
+						//Change text color
+						if (_spell.CostModifier[num3] < 0)
+						{
+							__instance.app.view.spells[_spell_index].manaIconViews[num3].amount.color = new Color(0.005f, 0.05f, 0.2f);
+						}
+						else if (_spell.CostModifier[num3] > 0)
+						{
+							__instance.app.view.spells[_spell_index].manaIconViews[num3].amount.color = new Color(0.2f, 0.005f, 0.005f);
+						}
+						else
+						{
+							__instance.app.view.spells[_spell_index].manaIconViews[num3].amount.color = Color.black;
+						}
+					}
+					else
+					{
+						__instance.app.view.spells[_spell_index].manaIconViews[num3].gameObject.SetActive(false);
 					}
 				}
 			}
+			else
+			{
+				__instance.app.view.spells[_spell_index].spellMana1.SetActive(true);
+				for (short num4 = 0; num4 < 5; num4 += 1)
+				{
+					int num5 = (int)num4;
+					if (num4 > 0)
+					{
+						num5++;
+					}
+					__instance.app.view.spells[_spell_index].manaIconViews[num5].gameObject.SetActive(false);
+				}
+				short num6 = 0;
+				while ((int)num6 < __instance.app.view.spells[_spell_index].spellMana2.Length)
+				{
+					__instance.app.view.spells[_spell_index].spellMana2[(int)num6].SetActive(false);
+					num6 += 1;
+				}
+				short num7 = 0;
+				while ((int)num7 < __instance.app.view.spells[_spell_index].spellMana3.Length)
+				{
+					__instance.app.view.spells[_spell_index].spellMana3[(int)num7].SetActive(false);
+					num7 += 1;
+				}
+				__instance.app.view.spells[_spell_index].spellMana1.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0.5f, 0.255f));
+				__instance.app.view.spells[_spell_index].spellMana1.transform.GetChild(0).GetComponent<TextMeshPro>().text = _spell.charge + " / " + _spell.requiredCharge;
+			}
+			return false;
 		}
 
 		//Access base method
@@ -314,24 +387,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				SpellElement spellElement = __instance.app.model.characterSheet.spells[i];
 				if (!spellElement.IsChargeable)
 				{
-					int totalSpellCost = 0;
-					for (int j = 0; j < 6; j++)
-					{
-						totalSpellCost += (int)spellElement.Cost[j] + spellElement.CostModifier[j];
-					}
-
-					//Reduce mana cost by 40%
-					int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.4f);
-
-					//Do not reduce total cost below two
-					while (totalSpellCost - costReduction < 2)
-					{
-						costReduction--;
-						if (costReduction <= 0)
-						{
-							break;
-						}
-					}
+					int costReduction = CalculateCostReduction(i, 0.4f, __instance.app, true);
 
 					for (int k = costReduction; k > 0; k--)
 					{
@@ -388,24 +444,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				SpellElement spellElement = __instance.app.model.characterSheet.spells[i];
 				if (!spellElement.IsChargeable && spellElement != __instance)
 				{
-					int totalSpellCost = 0;
-					for (int j = 0; j < 6; j++)
-					{
-						totalSpellCost += (int)spellElement.Cost[j] + spellElement.CostModifier[j];
-					}
-
-					//Reduce mana cost by 25%
-					int costReduction = Mathf.RoundToInt((float)totalSpellCost * 0.25f);
-
-					//Do not reduce total cost below two (failsafe)
-					while (totalSpellCost - costReduction < 2)
-					{
-						costReduction--;
-						if (costReduction <= 0)
-						{
-							break;
-						}
-					}
+					int costReduction = CalculateCostReduction(i, 0.25f, __instance.app, true);
 
 					for (int k = costReduction; k > 0; k--)
 					{
@@ -476,19 +515,23 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 		}
 
-		public static int CalculateCostReduction(int _spell_index, float reductionPercentage, BumboApplication bumboApplication)
+		public static int CalculateCostReduction(int _spell_index, float reductionPercentage, BumboApplication bumboApplication, bool temporaryCost)
         {
 			//Calculate cost reduction
 			int totalManaCost = 0;
 			for (int i = 0; i < 6; i++)
 			{
 				totalManaCost += (int)bumboApplication.model.characterSheet.spells[_spell_index].Cost[i];
+				if (temporaryCost)
+                {
+					totalManaCost += (int)bumboApplication.model.characterSheet.spells[_spell_index].CostModifier[i];
+				}
 			}
 
 			int costReduction = Mathf.RoundToInt((float)totalManaCost * reductionPercentage);
 
-			//Do not reduce total cost below two
-			while (totalManaCost - costReduction < 2)
+			//Do not reduce total cost below minimum
+			while (totalManaCost - costReduction < SpellManaCosts.MinimumManaCost(bumboApplication.model.characterSheet.spells[_spell_index].spellName))
 			{
 				costReduction--;
 				if (costReduction <= 0)
@@ -503,7 +546,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(ManaPrickTrinket), "QualifySpell")]
 		static void ManaPrickTrinket_QualifySpell(ManaPrickTrinket __instance, int _spell_index)
 		{
-			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app);
+			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app, false);
 
 			//Enable spell if cost reduction is above zero
 			if (costReduction > 0)
@@ -522,7 +565,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
 
-			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app);
+			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app, false);
 
 			for (int j = costReduction; j > 0; j--)
 			{
@@ -553,7 +596,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			short num = 0;
 			while ((int)num < __instance.app.model.characterSheet.spells.Count)
 			{
-				int costReduction = CalculateCostReduction(num, 0.25f, __instance.app);
+				int costReduction = CalculateCostReduction(num, 0.25f, __instance.app, false);
 				if (costReduction > 0)
 				{
 					___needles.Add(TrinketName.ManaPrick);
@@ -1175,47 +1218,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			__instance.Name = "Attack that Heals You";
 		}
-		//***************************************************
-		//***************Calling Base Method*****************
-		//***************************************************
-
-		////Create dummy method of base method
-		////This allows for calling the base method from the child class
-		//[HarmonyReversePatch]
-		//[HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
-		//[MethodImpl(MethodImplOptions.NoInlining)]
-		//static bool BaseCastSpellDummy(PentagramSpell instance)
-		//{
-		//	return true;
-		//}
-
-		////Patch: Pentagram no longer provides puzzle damage
-		//[HarmonyPrefix, HarmonyPatch(typeof(PentagramSpell), "CastSpell")]
-		//static bool PentagramSpell_CastSpell(PentagramSpell __instance, ref bool __result)
-		//{
-		//	if (!BaseCastSpellDummy(__instance))
-		//	{
-		//		__result = false;
-		//		return false;
-		//	}
-		//	__instance.app.model.spellModel.currentSpell = null;
-		//	__instance.app.model.spellModel.spellQueued = false;
-
-		//	//Only increase spell damage
-		//	__instance.app.model.characterSheet.bumboRoomModifiers.itemDamage++;
-
-		//	__instance.app.controller.ShowDamageUp();
-		//	__instance.app.controller.UpdateStats();
-		//	__instance.app.controller.GUINotification("Hit Harder\nIn Room!", GUINotificationView.NotifyType.General, __instance, true);
-		//	__instance.app.controller.eventsController.SetEvent(new IdleEvent());
-		//	__result = true;
-		//	Console.WriteLine("[The Legend of Bum-bo: Windfall] ");
-		//	return false;
-		//}
-
-		//***************************************************
-		//***************************************************
-		//***************************************************
 	}
 
 	static class SpellManaCosts
@@ -1228,7 +1230,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{ SpellName.MamaFoot, 13 },
 			{ SpellName.Lemon, 5 },
 			{ SpellName.Pliers, 5 },
-			{ SpellName.Juiced, 6 }
+			{ SpellName.Juiced, 6 },
+			{ SpellName.MagicMarker, 6 }
+		};
+
+		public static int MinimumManaCost(SpellName spell)
+        {
+			return minimumManaCosts.TryGetValue(spell, out int value) ? value : 2;
+        }
+
+		public static Dictionary<SpellName, int> minimumManaCosts = new Dictionary<SpellName, int>()
+		{
+			{ SpellName.MagicMarker, 5 }
 		};
 	}
 }

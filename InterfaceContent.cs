@@ -1463,8 +1463,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            var CoinsMesh = assets.LoadAsset<Mesh>("Coins_Model_V1");
-            var CoinsTexture = assets.LoadAsset<Texture2D>("Coins_Flat");
+            var CoinsMesh = assets.LoadAsset<Mesh>("Coins_Model_V2");
+            var CoinsTexture = assets.LoadAsset<Texture2D>("Title_Coins_Texture_V2");
 
             coins = new GameObject();
             MeshFilter meshFilter = coins.AddComponent<MeshFilter>();
@@ -1497,25 +1497,45 @@ namespace The_Legend_of_Bum_bo_Windfall
             tagline.position = new Vector3(-0.08f, 0.17f, -1.87f);
         }
         static GameObject coins;
-        //Patch: Hide coins from title box on input
+        //Patch: Hide coins and logo from title box on input
         [HarmonyPrefix, HarmonyPatch(typeof(TitleController), "Update")]
-        static bool TitleController_Update(TitleController __instance, bool ___loading)
+        static bool TitleController_Update(TitleController __instance, ref bool ___loading)
         {
-            if (!(__instance.turnOnDebugKey && (Input.GetKeyDown(KeyCode.BackQuote) || Input.GetKeyDown(KeyCode.F1))) && ((Input.anyKeyDown || Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.touchCount > 0) && !___loading))
+            if (__instance.unlockAllCharacters)
             {
-                if (coins != null)
-                {
-                    Sequence sequence = DOTween.Sequence();
-                    sequence.AppendInterval(0.5f);
-                    TweenSettingsExtensions.Append(sequence, ShortcutExtensions.DOMoveZ(coins.transform, -3f, 0.5f));
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Hiding coins");
-                }
-                else
-                {
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Null");
-                }
+                __instance.unlockAllCharacters = false;
+                __instance.UnlockAllCharacters();
             }
-            return true;
+            if (__instance.unlockEverything)
+            {
+                __instance.unlockEverything = false;
+                Progression progression = new Progression();
+                for (int i = 0; i < 43; i++)
+                {
+                    progression.unlocks[i] = true;
+                }
+                ProgressionController.SaveProgression(progression);
+            }
+            if (__instance.turnOnDebugKey && (Input.GetKeyDown(KeyCode.BackQuote) || Input.GetKeyDown(KeyCode.F1)))
+            {
+                __instance.OpenDebugMenu();
+            }
+            else if ((Input.anyKeyDown || Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.touchCount > 0) && !___loading)
+            {
+                ___loading = true;
+                GameObject gameObject = GameObject.Find("title_box").gameObject;
+                gameObject.GetComponent<Animator>().SetTrigger("OpenBox");
+                SoundsView.Instance.PlaySound(SoundsView.eSound.TitleScreenFade, SoundsView.eAudioSlot.Default, false);
+                Sequence sequence = DOTween.Sequence();
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Insert(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetDelay<Tweener>(TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(gameObject.transform, (-5.5f)*1.5f, (0.3f) * 1.5f, false), Ease.InQuad), 0.33333334f)), 0.33333334f, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(GameObject.Find("Logo").transform, (6.5f) * 1.5f, (0.3f) * 1.5f, false), Ease.InQuad)), 0.5f), delegate ()
+                {
+                    __instance.menuObject.SetActive(true);
+                }), delegate ()
+                {
+                    SoundsView.Instance.PlaySound(SoundsView.eSound.Menu_Appear, SoundsView.eAudioSlot.Default, false);
+                });
+            }
+            return false;
         }
 
         //Patch: Update cutscene menu when progress is deleted
