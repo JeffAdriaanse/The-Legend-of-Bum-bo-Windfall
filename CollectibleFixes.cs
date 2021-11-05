@@ -179,6 +179,51 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
+
+        //Patch: Repositions fake trinkets when 1up! is triggered
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "InsteadOfDeath")]
+        public static void TrinketController_InsteadOfDeath(TrinketController __instance, ref bool __result)
+        {
+            short num = 0;
+            while ((int)num < __instance.app.model.characterSheet.trinkets.Count)
+            {
+                if (__instance.app.controller.GetTrinket((int)num).InsteadOfDeath())
+                {
+                    //Check whether trinket is fake 
+                    if (__instance.app.model.trinketIsFake[num])
+                    {
+                        //Remove fake trinket
+                        __instance.app.model.fakeTrinkets[num] = null;
+                        __instance.app.model.trinketIsFake[num] = false;
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a 1up!");
+                    }
+
+                    //Reposition trinkets in fake trinket array
+                    for (int i = num + 1; i < __instance.app.model.fakeTrinkets.Length; i++)
+                    {
+                        if (__instance.app.model.fakeTrinkets[i] != null)
+                        {
+                            //Copy fake trinket to new position
+                            __instance.app.model.fakeTrinkets[i - 1] = __instance.app.model.fakeTrinkets[i];
+                            __instance.app.model.trinketIsFake[i - 1] = true;
+                            //Clear fake trinket from old position
+                            __instance.app.model.fakeTrinkets[i] = null;
+                            __instance.app.model.trinketIsFake[i] = false;
+                            Console.WriteLine("[The Legend of Bum-bo: Windfall] Repositioning fake trinket");
+                        }
+                    }
+
+                    __instance.app.model.characterSheet.trinkets.RemoveAt((int)num);
+                    __instance.app.controller.UpdateTrinkets();
+                    __result = true;
+                    return;
+                }
+                num += 1;
+            }
+            __result = false;
+            return;
+        }
+
         public static void UseTrinket_Use_Prefix(UseTrinket __instance, int _index)
         {
             //Check whether trinket will run out of uses

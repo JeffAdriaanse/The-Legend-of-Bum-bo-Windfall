@@ -20,11 +20,300 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
         }
 
-		//Patch: Changes Thermos description 
-		[HarmonyPostfix, HarmonyPatch(typeof(ThermosTrinket), MethodType.Constructor)]
-		static void ThermosTrinket_Constructor(ThermosTrinket __instance)
+		static float TrinketLuckModifier(CharacterSheet characterSheet)
+        {
+			return 1 + (characterSheet.getLuck() / 10);
+		}
+
+		static int EffectActivationCounter(float effectValue)
+        {
+			int floor = Mathf.FloorToInt(effectValue);
+			float remainder = effectValue - floor;
+
+			return UnityEngine.Random.Range(0f, 1f) < remainder ? floor + 1 : floor;
+		}
+
+		//Patch: Moving AAA Battery effect to BumboController
+		[HarmonyPostfix, HarmonyPatch(typeof(AAABatteryTrinket), "AddToDex")]
+		static void AAABatteryTrinket_AddToDex(AAABatteryTrinket __instance, ref int __result)
 		{
-			__instance.Name = "Charge All Items + Heal";
+			__result = 1;
+		}
+		//Patch: AAA Battery effect now stacks non-independently
+		//AAABattery effect now incorporates Luck stat and Curio effect multiplier
+		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "ResetActionPoints")]
+		static bool BumboController_ResetActionPoints(BumboController __instance)
+		{
+			BumboModel model = __instance.app.model;
+			model.actionPoints = (short)model.characterSheet.getDex();
+
+			//Change AAA Battery effect
+			float activationChance = 0.1f;
+
+			int batteryCount = 0;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < model.characterSheet.trinkets.Count)
+			{
+				batteryCount += (short)__instance.GetTrinket((int)trinketCounter).AddToDex();
+				trinketCounter += 1;
+			}
+			if (batteryCount != 0)
+            {
+				float movementChance = batteryCount * activationChance * TrinketLuckModifier(__instance.app.model.characterSheet) * __instance.app.controller.trinketController.EffectMultiplier();
+				
+				int movementGain = EffectActivationCounter(movementChance);
+
+				//Trigger effect
+				if (movementGain != 0)
+                {
+					__instance.app.controller.ModifyActionPoint(movementGain);
+				}
+			}
+
+			model.actionPoints += (short)model.characterSheet.bumboRoundModifiers.actionPoints;
+			model.actionPoints += (short)model.characterSheet.bumboRoomModifiers.actionPoints;
+			model.actionPoints += model.actionPointModifier;
+			model.actionPointModifier = 0;
+			if (model.actionPoints <= 0)
+			{
+				model.actionPoints = 1;
+			}
+			__instance.app.view.actionPoints.SetActionPoints((int)model.actionPoints);
+			if (model.iOS)
+			{
+				__instance.app.view.IOSActionPoints.GetComponent<TextMeshPro>().text = model.actionPoints.ToString();
+			}
+			return false;
+		}
+
+		//Patch: Allows AA Battery and Soul Bag effects to stack past 100% and incorporate Luck stat
+		//Effect chances for AA Battery and Soul Bag now function independently
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "GainAPFromKill")]
+		static bool TrinketController_GainAPFromKill(TrinketController __instance)
+		{
+			//Increase effect value for each trinket
+			float AABatteryEffectValue = 0f;
+			float SoulBagEffectValue = 0f;
+			float OtherEffectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.AABattery)
+                {
+					AABatteryEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
+				}
+				else if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SoulBag)
+                {
+					SoulBagEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
+				}
+                else
+                {
+					OtherEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
+				}
+				trinketCounter += 1;
+			}
+			AABatteryEffectValue *= (float)__instance.EffectMultiplier();
+			AABatteryEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			SoulBagEffectValue *= (float)__instance.EffectMultiplier();
+			SoulBagEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			OtherEffectValue *= (float)__instance.EffectMultiplier();
+			OtherEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int AABatteryEffectActivationCounter = EffectActivationCounter(AABatteryEffectValue);
+			int SoulBagEffectActivationCounter = EffectActivationCounter(SoulBagEffectValue);
+			int OtherEffectActivationCounter = EffectActivationCounter(OtherEffectValue);
+
+			bool effectTriggered = false;
+			//Main effect
+			if (AABatteryEffectActivationCounter > 0)
+			{
+				__instance.app.controller.ModifyActionPoint(AABatteryEffectActivationCounter);
+				effectTriggered = true;
+			}
+			if (SoulBagEffectActivationCounter > 0)
+			{
+				__instance.app.controller.ModifyActionPoint(SoulBagEffectActivationCounter);
+				effectTriggered = true;
+			}
+			if (OtherEffectActivationCounter > 0)
+			{
+				__instance.app.controller.ModifyActionPoint(OtherEffectActivationCounter);
+				effectTriggered = true;
+			}
+			//Additional effect if one of the trinkets was activated
+			if (effectTriggered)
+            {
+				__instance.app.controller.ShowActionPointGain();
+			}
+			return false;
+		}
+
+		//Patch: Allows Bag-O-Sucking effect to stack past 100% and incorporate Luck stat
+		//Bag-O-Sucking effect now stacks non-independently with itself
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "OnEnemyHit")]
+		static bool TrinketController_OnEnemyHit(TrinketController __instance, Enemy.AttackImmunity _immunity)
+		{
+			//Increase effect value
+			float activationChance = 0.5f;
+
+			float BagOSuckingEffectValue = 0f;
+
+			short num = 0;
+			while ((int)num < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				__instance.app.controller.GetTrinket((int)num).OnEnemyHit();
+				if (_immunity == Enemy.AttackImmunity.ReducePuzzleDamage)
+				{
+					__instance.app.controller.GetTrinket((int)num).OnEnemyPuzzleHit();
+				}
+				if (_immunity == Enemy.AttackImmunity.ReduceSpellDamage)
+				{
+					if (__instance.app.controller.GetTrinket((int)num).trinketName == TrinketName.BagOSucking)
+                    {
+						BagOSuckingEffectValue += activationChance;
+					}
+				}
+				num += 1;
+			}
+			__instance.app.model.characterSheet.hiddenTrinket.OnEnemyHit();
+			if (_immunity == Enemy.AttackImmunity.ReducePuzzleDamage)
+			{
+				__instance.app.model.characterSheet.hiddenTrinket.OnEnemyPuzzleHit();
+			}
+			if (_immunity == Enemy.AttackImmunity.ReduceSpellDamage)
+			{
+				__instance.app.model.characterSheet.hiddenTrinket.OnEnemySpellHit();
+			}
+
+			BagOSuckingEffectValue *= (float)__instance.EffectMultiplier();
+			BagOSuckingEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int BagOSuckingActivationCounter = EffectActivationCounter(BagOSuckingEffectValue);
+
+			//Replace Bag-O-Sucking effect
+			if (BagOSuckingActivationCounter > 0)
+			{
+				List<ManaType> list = new List<ManaType>
+				{
+					ManaType.Bone,
+					ManaType.Booger,
+					ManaType.Pee,
+					ManaType.Poop,
+					ManaType.Tooth
+				};
+				short[] array = new short[6];
+				for (int i = 0; i < BagOSuckingActivationCounter * 3; i++)
+				{
+					List<ManaType> list2 = new List<ManaType>();
+					for (int j = 0; j < list.Count; j++)
+					{
+						if (__instance.app.model.mana[(int)list[j]] + array[(int)list[j]] < 9)
+						{
+							list2.Add(list[j]);
+						}
+					}
+					if (list2.Count > 0)
+					{
+						ManaType manaType = list2[UnityEngine.Random.Range(0, list2.Count)];
+						array[(int)manaType] += 1;
+					}
+				}
+				__instance.app.controller.UpdateMana(array, false);
+				__instance.app.controller.ShowManaGain();
+				__instance.app.controller.SetActiveSpells(true, true);
+			}
+			return false;
+		}
+
+		//Patch: Allows Bloody Battery effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "GainAPFromAttack")]
+		static bool TrinketController_GainAPFromAttack(TrinketController __instance, Enemy.AttackImmunity _immunity)
+		{
+			//Increase effect value
+			float BloodyBatteryEffectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				BloodyBatteryEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromAttack();
+				trinketCounter += 1;
+			}
+			BloodyBatteryEffectValue *= (float)__instance.EffectMultiplier();
+			BloodyBatteryEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int BloodyBatteryActivationCounter = EffectActivationCounter(BloodyBatteryEffectValue);
+
+			//Trigger effect
+			if (BloodyBatteryActivationCounter > 0)
+			{
+				__instance.app.controller.ModifyActionPoint(BloodyBatteryActivationCounter);
+				__instance.app.controller.ShowActionPointGain();
+			}
+			return false;
+		}
+		//Patch: Reduces Bloody Battery trigger chance
+		[HarmonyPostfix, HarmonyPatch(typeof(BloodyBatteryTrinket), "ChanceOfGainingAPFromAttack")]
+		static void BloodyBatteryTrinket_ChanceOfGainingAPFromAttack(BloodyBatteryTrinket __instance, ref float __result)
+		{
+			__result = 0.1f;
+		}
+
+		//Patch: Allows CurvedHorn effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "NewRound")]
+		static bool TrinketController_NewRound(TrinketController __instance)
+		{
+			__instance.RemoveCurseOnRoundStart();
+			__instance.AtHalfHeart();
+
+			//Increase effect value
+			float CurvedHornEffectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				if (__instance.app.model.characterSheet.trinkets[(int)trinketCounter].trinketName == TrinketName.CurvedHorn)
+				{
+					CurvedHornEffectValue += 0.33f;
+				}
+				trinketCounter += 1;
+			}
+			CurvedHornEffectValue *= (float)__instance.EffectMultiplier();
+			CurvedHornEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int CurvedHornActivationCounter = EffectActivationCounter(CurvedHornEffectValue);
+
+			//Trigger effect
+			if (CurvedHornActivationCounter > 0)
+			{
+				__instance.app.model.characterSheet.bumboRoundModifiers.itemDamage += CurvedHornActivationCounter;
+				__instance.app.controller.UpdateStats();
+				__instance.app.controller.UpdateSpellDamage();
+				__instance.app.controller.ShowDamageUp();
+			}
+			return false;
+		}
+
+		//Patch: Prevents Death from targeting bosses
+		[HarmonyPrefix, HarmonyPatch(typeof(DeathTrinket), "Use")]
+		static bool DeathTrinket_Use(DeathTrinket __instance, int _index)
+		{
+			CollectibleFixes.UseTrinket_Use_Prefix(__instance, currentTrinketIndex);
+			CollectibleFixes.UseTrinket_Use_Base_Method(__instance, currentTrinketIndex);
+			CollectibleFixes.UseTrinket_Use_Postfix(__instance);
+
+			List<Enemy> list = new List<Enemy>();
+			list.AddRange(__instance.app.model.enemies);
+			short num = 0;
+			while ((int)num < list.Count)
+			{
+				if (list[(int)num] != null && list[(int)num].GetComponent<Enemy>().alive)
+				{
+					float damage = list[(int)num].boss ? 3f : list[(int)num].getHealth();
+					list[(int)num].GetComponent<Enemy>().Hurt(damage, Enemy.AttackImmunity.SuperAttack, null, -1);
+				}
+				num += 1;
+			}
+			__instance.app.controller.eventsController.SetEvent(new NextComboEvent());
+
+			return false;
 		}
 
 		public static UseTrinket currentTrinket;
@@ -268,8 +557,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return true;
 		}
 
+		//Patch: Changes Thermos description 
+		[HarmonyPostfix, HarmonyPatch(typeof(ThermosTrinket), MethodType.Constructor)]
+		static void ThermosTrinket_Constructor(ThermosTrinket __instance)
+		{
+			__instance.Name = "Charge All Items + Heal";
+		}
+
 		//Patch: Changes starting stats and collectibles of characters
-		//Increases the cost of Bum-bo the Dead's attack fly
+		//Increases the cost of Bum-bo the Dead's Attack Fly
+		//Increases the cost of Bum-bo the Weird's Magic Marker
 		[HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "Awake")]
 		static void CharacterSheet_Awake(CharacterSheet __instance)
 		{
@@ -1218,6 +1515,27 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			__instance.Name = "Attack that Heals You";
 		}
+
+		//Patch: Changes Hair Ball spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(HairBallSpell), "Damage")]
+		static void HairBallSpell_Damage(HairBallSpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+
+		//Patch: Changes Hat Pin spell damage to incorporate the player's spell damage stat
+		[HarmonyPostfix, HarmonyPatch(typeof(HatPinSpell), "Damage")]
+		static void HatPinSpell_Damage(HatPinSpell __instance, ref int __result)
+		{
+			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+		}
+
+		//Patch: Changes Rock description
+		[HarmonyPostfix, HarmonyPatch(typeof(RockSpell), MethodType.Constructor)]
+		static void RockSpell_Constructor(RockSpell __instance)
+		{
+			__instance.Name = "Hits the Furthest Enemy";
+		}
 	}
 
 	static class SpellManaCosts
@@ -1231,7 +1549,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{ SpellName.Lemon, 5 },
 			{ SpellName.Pliers, 5 },
 			{ SpellName.Juiced, 6 },
-			{ SpellName.MagicMarker, 6 }
+			{ SpellName.MagicMarker, 6 },
+			{ SpellName.HairBall, 7 },
+			{ SpellName.HatPin, 8 }
 		};
 
 		public static int MinimumManaCost(SpellName spell)

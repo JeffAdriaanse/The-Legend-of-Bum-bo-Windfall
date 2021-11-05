@@ -1207,35 +1207,25 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Null check for current spell
                     else if (__instance.app.model.spellModel.currentSpell != null)
                     {
-                        //**********Step 1: Counteract mana loss from base method**********
-
-                        //Get number of Sucker enemies
-                        int SuckerCount = 0;
-                        for (int i = 0; i < __instance.app.model.enemies.Count; i++)
+                        //UpdateMana replacement that doesn't factor Sucker mana reduction
+                        //Include cost modifier
+                        for (int colorCounter = 0; colorCounter < 6; colorCounter++)
                         {
-                            if (__instance.app.model.enemies[i].enemyName == EnemyName.Sucker)
+                            short[] mana = __instance.app.model.mana;
+                            mana[colorCounter] += (short)(__instance.app.model.spellModel.currentSpell.Cost[colorCounter] + __instance.app.model.spellModel.currentSpell.CostModifier[colorCounter]);
+                            if (mana[colorCounter] > 9)
                             {
-                                SuckerCount++;
+                                mana[colorCounter] = 9;
                             }
-                        }
-
-                        //Get amount of each mana type that is lost from Suckers and add it directly to player mana
-                        for (int i = 0; i < 6; i++)
-                        {
-                            __instance.app.model.mana[i] += (short)Mathf.Max(Mathf.Min(SuckerCount, __instance.app.model.spellModel.currentSpell.Cost[i] - 1), 0);
-                        }
-
-                        //**********Step 2: Reduce mana gain by incorporating cost modifiers**********
-
-                        //Get amount of each mana type that is not lost from cost modifier (these values will be negative) and directly remove it from player mana
-                        for (int i = 0; i < 6; i++)
-                        {
-                            __instance.app.model.mana[i] += __instance.app.model.spellModel.currentSpell.CostModifier[i];
+                            if (mana[colorCounter] < 0)
+                            {
+                                mana[colorCounter] = 0;
+                            }
+                            __instance.app.view.manaView.setManaText((ManaType)colorCounter, __instance.app.model.mana[(int)colorCounter]);
                         }
 
                         Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana cost refund");
 
-                        __instance.app.controller.UpdateMana(__instance.app.model.spellModel.currentSpell.Cost, false);
                         __instance.app.model.spellModel.currentSpell.FullCharge();
                     }
                     float transition_time = 1f * __instance.app.model.enemyAnimationSpeed;
@@ -1463,7 +1453,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            var CoinsMesh = assets.LoadAsset<Mesh>("Coins_Model_V2");
+            var CoinsMesh = assets.LoadAsset<Mesh>("Coins_Model_V3");
             var CoinsTexture = assets.LoadAsset<Texture2D>("Title_Coins_Texture_V2");
 
             coins = new GameObject();
