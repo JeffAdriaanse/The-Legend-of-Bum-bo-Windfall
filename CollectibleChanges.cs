@@ -20,12 +20,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
         }
 
-		static float TrinketLuckModifier(CharacterSheet characterSheet)
+		public static float TrinketLuckModifier(CharacterSheet characterSheet)
         {
-			return 1 + (characterSheet.getLuck() / 10);
+			return 1 + ((characterSheet.getLuck() - 1) / 10);
 		}
 
-		static int EffectActivationCounter(float effectValue)
+		public static int EffectActivationCounter(float effectValue)
         {
 			int floor = Mathf.FloorToInt(effectValue);
 			float remainder = effectValue - floor;
@@ -33,38 +33,48 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return UnityEngine.Random.Range(0f, 1f) < remainder ? floor + 1 : floor;
 		}
 
-		//Patch: Moving AAA Battery effect to BumboController
-		[HarmonyPostfix, HarmonyPatch(typeof(AAABatteryTrinket), "AddToDex")]
-		static void AAABatteryTrinket_AddToDex(AAABatteryTrinket __instance, ref int __result)
-		{
-			__result = 1;
-		}
 		//Patch: AAA Battery effect now stacks non-independently
 		//AAABattery effect now incorporates Luck stat and Curio effect multiplier
+		//AAABattery effect now grants movement independently of Hoof
 		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "ResetActionPoints")]
 		static bool BumboController_ResetActionPoints(BumboController __instance)
 		{
 			BumboModel model = __instance.app.model;
 			model.actionPoints = (short)model.characterSheet.getDex();
 
+			//Implement Hoof effect
+			int HoofCount = 0;
+
 			//Change AAA Battery effect
+			//Chance: 1/10
 			float activationChance = 0.1f;
 
-			int batteryCount = 0;
+			int AAABatteryCount = 0;
 			short trinketCounter = 0;
 			while ((int)trinketCounter < model.characterSheet.trinkets.Count)
 			{
-				batteryCount += (short)__instance.GetTrinket((int)trinketCounter).AddToDex();
+				HoofCount += __instance.GetTrinket((int)trinketCounter).trinketName == TrinketName.Hoof ? 1 : 0;
+
+				//Bypass AddToDex
+				AAABatteryCount += __instance.GetTrinket((int)trinketCounter).trinketName == TrinketName.AAABattery ? 1 : 0;
 				trinketCounter += 1;
 			}
-			if (batteryCount != 0)
+			
+			if (HoofCount > 0)
             {
-				float movementChance = batteryCount * activationChance * TrinketLuckModifier(__instance.app.model.characterSheet) * __instance.app.controller.trinketController.EffectMultiplier();
+				HoofCount *= __instance.app.controller.trinketController.EffectMultiplier();
+
+				__instance.app.controller.ModifyActionPoint(HoofCount);
+			}
+			
+			if (AAABatteryCount > 0)
+            {
+				float movementChance = AAABatteryCount * activationChance * TrinketLuckModifier(__instance.app.model.characterSheet) * __instance.app.controller.trinketController.EffectMultiplier();
 				
 				int movementGain = EffectActivationCounter(movementChance);
 
 				//Trigger effect
-				if (movementGain != 0)
+				if (movementGain > 0)
                 {
 					__instance.app.controller.ModifyActionPoint(movementGain);
 				}
@@ -100,10 +110,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{
 				if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.AABattery)
                 {
+					//Chance: 1/4
 					AABatteryEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
 				}
 				else if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SoulBag)
                 {
+					//Chance: 1/4
 					SoulBagEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
 				}
                 else
@@ -154,9 +166,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static bool TrinketController_OnEnemyHit(TrinketController __instance, Enemy.AttackImmunity _immunity)
 		{
 			//Increase effect value
+			//Chance: 1/2
 			float activationChance = 0.5f;
 
-			float BagOSuckingEffectValue = 0f;
+			float effectValue = 0f;
 
 			short num = 0;
 			while ((int)num < __instance.app.model.characterSheet.trinkets.Count)
@@ -170,7 +183,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				{
 					if (__instance.app.controller.GetTrinket((int)num).trinketName == TrinketName.BagOSucking)
                     {
-						BagOSuckingEffectValue += activationChance;
+						effectValue += activationChance;
 					}
 				}
 				num += 1;
@@ -185,13 +198,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 				__instance.app.model.characterSheet.hiddenTrinket.OnEnemySpellHit();
 			}
 
-			BagOSuckingEffectValue *= (float)__instance.EffectMultiplier();
-			BagOSuckingEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			effectValue *= (float)__instance.EffectMultiplier();
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
 
-			int BagOSuckingActivationCounter = EffectActivationCounter(BagOSuckingEffectValue);
+			int activationCounter = EffectActivationCounter(effectValue);
 
 			//Replace Bag-O-Sucking effect
-			if (BagOSuckingActivationCounter > 0)
+			if (activationCounter > 0)
 			{
 				List<ManaType> list = new List<ManaType>
 				{
@@ -202,7 +215,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					ManaType.Tooth
 				};
 				short[] array = new short[6];
-				for (int i = 0; i < BagOSuckingActivationCounter * 3; i++)
+				for (int i = 0; i < activationCounter * 3; i++)
 				{
 					List<ManaType> list2 = new List<ManaType>();
 					for (int j = 0; j < list.Count; j++)
@@ -227,25 +240,26 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		//Patch: Allows Bloody Battery effect to stack past 100% and incorporate Luck stat
 		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "GainAPFromAttack")]
-		static bool TrinketController_GainAPFromAttack(TrinketController __instance, Enemy.AttackImmunity _immunity)
+		static bool TrinketController_GainAPFromAttack(TrinketController __instance)
 		{
 			//Increase effect value
-			float BloodyBatteryEffectValue = 0f;
+			float effectValue = 0f;
 			short trinketCounter = 0;
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
-				BloodyBatteryEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromAttack();
+				//Chance: 1/10
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromAttack();
 				trinketCounter += 1;
 			}
-			BloodyBatteryEffectValue *= (float)__instance.EffectMultiplier();
-			BloodyBatteryEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			effectValue *= (float)__instance.EffectMultiplier();
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
 
-			int BloodyBatteryActivationCounter = EffectActivationCounter(BloodyBatteryEffectValue);
+			int activationCounter = EffectActivationCounter(effectValue);
 
 			//Trigger effect
-			if (BloodyBatteryActivationCounter > 0)
+			if (activationCounter > 0)
 			{
-				__instance.app.controller.ModifyActionPoint(BloodyBatteryActivationCounter);
+				__instance.app.controller.ModifyActionPoint(activationCounter);
 				__instance.app.controller.ShowActionPointGain();
 			}
 			return false;
@@ -254,7 +268,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(BloodyBatteryTrinket), "ChanceOfGainingAPFromAttack")]
 		static void BloodyBatteryTrinket_ChanceOfGainingAPFromAttack(BloodyBatteryTrinket __instance, ref float __result)
 		{
-			__result = 0.1f;
+			__result = 0.15f;
 		}
 
 		//Patch: Allows CurvedHorn effect to stack past 100% and incorporate Luck stat
@@ -265,25 +279,26 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.AtHalfHeart();
 
 			//Increase effect value
-			float CurvedHornEffectValue = 0f;
+			float effectValue = 0f;
 			short trinketCounter = 0;
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
-				if (__instance.app.model.characterSheet.trinkets[(int)trinketCounter].trinketName == TrinketName.CurvedHorn)
+				if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.CurvedHorn)
 				{
-					CurvedHornEffectValue += 0.33f;
+					//Chance: 1/3
+					effectValue += (float)1f/3f;
 				}
 				trinketCounter += 1;
 			}
-			CurvedHornEffectValue *= (float)__instance.EffectMultiplier();
-			CurvedHornEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			effectValue *= (float)__instance.EffectMultiplier();
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
 
-			int CurvedHornActivationCounter = EffectActivationCounter(CurvedHornEffectValue);
+			int activationCounter = EffectActivationCounter(effectValue);
 
 			//Trigger effect
-			if (CurvedHornActivationCounter > 0)
+			if (activationCounter > 0)
 			{
-				__instance.app.model.characterSheet.bumboRoundModifiers.itemDamage += CurvedHornActivationCounter;
+				__instance.app.model.characterSheet.bumboRoundModifiers.itemDamage += activationCounter;
 				__instance.app.controller.UpdateStats();
 				__instance.app.controller.UpdateSpellDamage();
 				__instance.app.controller.ShowDamageUp();
@@ -291,7 +306,547 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		//Patch: Prevents Death from targeting bosses
+		//Patch: Allows Drakula Teeth effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "GainHealthFromAttack")]
+		static bool TrinketController_GainHealthFromAttack(TrinketController __instance)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/10
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingHealthFromAttack();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			if (activationCounter > 0)
+			{
+				__instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0.5f * activationCounter, 0f);
+				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.Gulp, SoundsView.eAudioSlot.Default, false);
+			}
+			return false;
+		}
+
+		//Patch: Allows Magnet effect to stack past 100% and incorporate Luck stat
+		//Override trinket controller method
+		[HarmonyPostfix, HarmonyPatch(typeof(BumboController), "CalculateReward")]
+		static void BumboController_CalculateReward(BumboController __instance, ref int __result)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/3
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Magnet ? (float)1f/3f : 0f;
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.trinketController.EffectMultiplier();
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			__result += activationCounter * 2;
+		}
+		//Disable original Magnet effect
+		[HarmonyPostfix, HarmonyPatch(typeof(MagnetTrinket), "DoubleReward")]
+		static void MagnetTrinket_DoubleReward(MagnetTrinket __instance, ref float __result)
+		{
+			__result = 0f;
+		}
+
+		//Patch: Mom's Photo now incorporates Luck stat
+		[HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "WillBlind")]
+		static void TrinketController_WillBlind(TrinketController __instance, ref bool __result)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/4
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfBlind();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			__result = UnityEngine.Random.Range(0f, 1f) < effectValue;
+		}
+
+		//Patch: Allows Nine Volt effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "RechargeOnSpell")]
+		static bool TrinketController_RechargeOnSpell(TrinketController __instance)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/4
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).RechargeOnSpell();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int NineVoltActivationCounter = EffectActivationCounter(effectValue);
+			bool effectTriggered = false;
+
+			while (NineVoltActivationCounter > 0)
+			{
+				NineVoltActivationCounter--;
+				List<int> list = new List<int>();
+				short num3 = 0;
+				while ((int)num3 < __instance.app.model.characterSheet.spells.Count)
+				{
+					if (__instance.app.model.characterSheet.spells[(int)num3].IsChargeable && __instance.app.model.characterSheet.spells[(int)num3].charge < __instance.app.model.characterSheet.spells[(int)num3].requiredCharge)
+					{
+						list.Add((int)num3);
+					}
+					num3 += 1;
+				}
+				if (list.Count > 0)
+				{
+					int index = UnityEngine.Random.Range(0, list.Count);
+					__instance.app.model.characterSheet.spells[list[index]].ChargeSpell();
+					effectTriggered = true;
+				}
+			}
+
+			if (effectTriggered)
+            {
+				__instance.app.controller.SetActiveSpells(true, true);
+			}
+			return false;
+		}
+
+		//Patch: Pink Eye now incorporates Luck stat
+		[HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "WillPoison")]
+		static void TrinketController_WillPoison(TrinketController __instance, ref bool __result)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/4
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfPoison();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			__result = UnityEngine.Random.Range(0f, 1f) < effectValue;
+		}
+
+		//Patch: Allows Pinky effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "WildTileOnKill")]
+		static bool TrinketController_WildTileOnKill(TrinketController __instance)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/3
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Pinky ? 1/3 : 0f;
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			if (activationCounter > 0)
+			{
+				List<Block> list = new List<Block>();
+				for (int i = 0; i < __instance.app.view.puzzle.width; i++)
+				{
+					for (int j = 0; j < __instance.app.view.puzzle.height; j++)
+					{
+						Block component = __instance.app.view.puzzle.blocks[i, j].GetComponent<Block>();
+						if (component.block_type != Block.BlockType.Wild)
+						{
+							list.Add(component);
+						}
+					}
+				}
+				while (list.Count > 0 && activationCounter > 0)
+				{
+					activationCounter--;
+
+					int index = UnityEngine.Random.Range(0, list.Count);
+					short x = (short)list[index].position.x;
+					short y = (short)list[index].position.y;
+					list[index].Despawn(false);
+					__instance.app.view.puzzle.setBlock(Block.BlockType.Wild, x, y, false, true);
+				}
+			}
+			return false;
+		}
+
+		//Disable original Rat Heart effect
+		[HarmonyPrefix, HarmonyPatch(typeof(RatHeartTrinket), "StartRoom")]
+		static bool RatHeartTrinket_StartRoom(RatHeartTrinket __instance)
+		{
+			return false;
+		}
+		//Disable original Small Box effect
+		[HarmonyPrefix, HarmonyPatch(typeof(SmallBoxTrinket), "StartRoom")]
+		static bool SmallBoxTrinket_StartRoom(SmallBoxTrinket __instance)
+		{
+			return false;
+		}
+		//Patch: Allows Rat Heart effect to stack past 100% and incorporate Luck stat and Curio effect multiplier
+		//Also causes Small Box to stack non-independently and incoporate Curio effect multiplier
+		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "StartRoomWithTrinkets")]
+		static bool BumboController_StartRoomWithTrinkets(BumboController __instance)
+		{
+			if ((__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.EnemyEncounter || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Boss || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Start) && !__instance.app.model.mapModel.currentRoom.cleared)
+			{
+				float RatHeartEffectValue = 0f;
+				int SmallBoxEffectValue = 0;
+				short trinketCounter = 0;
+				while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+				{
+					//Chance: 1/4
+					RatHeartEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.RatHeart ? 0.25f : 0f;
+					SmallBoxEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SmallBox ? 1 : 0;
+					__instance.GetTrinket((int)trinketCounter).StartRoom();
+					trinketCounter += 1;
+				}
+				__instance.app.model.characterSheet.hiddenTrinket.StartRoom();
+				__instance.UpdateMana(new short[6], false);
+
+				//Incorporate Luck modifier and Curio multiplier
+				RatHeartEffectValue *= (float)__instance.trinketController.EffectMultiplier();
+				RatHeartEffectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+				SmallBoxEffectValue *= __instance.trinketController.EffectMultiplier();
+
+				int RatHeartActivationCounter = EffectActivationCounter(RatHeartEffectValue);
+
+				if (RatHeartActivationCounter > 0)
+                {
+					__instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 0.5f * RatHeartActivationCounter);
+				}
+
+				if (SmallBoxEffectValue > 0)
+                {
+					short[] array = new short[6];
+					
+					while (SmallBoxEffectValue > 0)
+                    {
+						SmallBoxEffectValue--;
+
+						List<ManaType> list = new List<ManaType>
+						{
+							ManaType.Bone,
+							ManaType.Booger,
+							ManaType.Pee,
+							ManaType.Poop,
+							ManaType.Tooth
+						};
+						while (list.Count > 3)
+						{
+							int index = UnityEngine.Random.Range(0, list.Count);
+							list.RemoveAt(index);
+						}
+						for (int i = 0; i < list.Count; i++)
+						{
+							ManaType manaType = list[i];
+							array[(int)manaType] += 1;
+						}
+					}
+
+					__instance.app.controller.UpdateMana(array, false);
+					__instance.app.controller.ShowManaGain();
+					__instance.app.controller.SetActiveSpells(true, true);
+				}
+			}
+			return false;
+		}
+
+		//Patch: Rat Tail effect now stacks non-independently and incorporates Luck stat and Curio effect multiplier
+		[HarmonyPostfix, HarmonyPatch(typeof(RatTailTrinket), "AddToDodge")]
+		static void RatTailTrinket_AddToDodge(RatTailTrinket __instance, ref float __result)
+		{
+			//Abort for all but one Rat Tail
+			int firstRatTailIndex = -1;
+			short trinketCounter1 = 0;
+			while ((int)trinketCounter1 < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				if (__instance.app.controller.GetTrinket((int)trinketCounter1).trinketName == TrinketName.RatTail)
+                {
+					firstRatTailIndex = trinketCounter1;
+				}
+				trinketCounter1 += 1;
+			}
+
+			if (firstRatTailIndex == -1 || __instance != __instance.app.controller.GetTrinket((int)firstRatTailIndex))
+            {
+				return;
+            }
+
+			//Return chance of all Rat Tail trinkets combined
+			float effectValue = 0f;
+			short trinketCounter2 = 0;
+			while ((int)trinketCounter2 < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/10
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter2).trinketName == TrinketName.RatTail ? 0.1f : 0f;
+				trinketCounter2 += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			__result = effectValue;
+		}
+
+		//Patch: Allows Santa Sangre effect to stack past 100% and incorporate Luck stat
+		//Also fixes Santa Sangre granting soul health past the maximum of six total hearts
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "SoulOnKill")]
+		static bool TrinketController_SoulOnKill(TrinketController __instance)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/10
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).SoulOnKill();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			if (activationCounter > 0)
+			{
+				__instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 0.5f * activationCounter);
+			}
+			return false;
+		}
+
+		//Patch: Allows Sharp Nail effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "HurtMovingEnemies")]
+		static bool TrinketController_HurtMovingEnemies(TrinketController __instance)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/10
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceToHurtMovingEnemies();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			if (activationCounter > 0)
+			{
+				for (int enemyCounter = 0; enemyCounter < __instance.app.model.aiModel.movingEnemies.Count; enemyCounter++)
+				{
+					__instance.app.model.aiModel.movingEnemies[enemyCounter].Hurt(activationCounter, Enemy.AttackImmunity.ReduceSpellDamage, null, __instance.app.model.aiModel.movingEnemies[enemyCounter].position.x);
+				}
+			}
+			return false;
+		}
+
+		//Patch: Causes Silver Skull to stack non-independently and incorporate Curio multiplier
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "RewardKill")]
+		static bool TrinketController_RewardKill(TrinketController __instance)
+		{
+			int effectValue = 0;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SilverSkull ? 1 : 0;
+				trinketCounter += 1;
+			}
+			effectValue *= __instance.EffectMultiplier();
+
+			if (effectValue > 0)
+			{
+				short[] array = new short[6];
+
+				while (effectValue > 0)
+                {
+					effectValue--;
+
+					List<Block.BlockType> list = new List<Block.BlockType>();
+					for (int i = 0; i < 6; i++)
+					{
+						if (__instance.app.model.mana[i] < 9)
+						{
+							list.Add((Block.BlockType)i);
+						}
+					}
+					Block.BlockType blockType = list[UnityEngine.Random.Range(0, list.Count)];
+					array[(int)blockType] += 1;
+				}
+
+				__instance.app.controller.UpdateMana(array, false);
+				__instance.app.controller.ShowManaGain();
+				__instance.app.controller.SetActiveSpells(true, true);
+			}
+			return false;
+		}
+
+		//Patch: Causes Stray Barb to stack non-independently and incorporate Luck stat
+		[HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "ChanceForCounterAttack")]
+		static void TrinketController_ChanceForCounterAttack(TrinketController __instance, ref int __result)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/10
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceForCounterAttack();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			__result = activationCounter;
+		}
+
+		//Patch: Super Ball now incorporates Luck stat
+		[HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "WillKnockback")]
+		static void TrinketController_WillKnockback(TrinketController __instance, ref bool __result)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/2
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceToKnockback();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+			__result = UnityEngine.Random.Range(0f, 1f) < effectValue;
+		}
+
+		//Patch: Allows Swallowed Penny effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "OnHurt")]
+		static bool TrinketController_OnHurt(TrinketController __instance)
+		{
+			short trinketCounter1 = 0;
+			while ((int)trinketCounter1 < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				__instance.app.controller.GetTrinket((int)trinketCounter1).OnHurt();
+				trinketCounter1 += 1;
+			}
+			float effectValue = 0f;
+			short trinketCounter2 = 0;
+			while ((int)trinketCounter2 < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/4
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter2).CoinOnHurt();
+				trinketCounter2 += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			if (activationCounter > 0)
+			{
+				__instance.app.controller.ModifyCoins(activationCounter);
+			}
+			return false;
+		}
+
+		//Patch: Allows Tweezers effect to stack past 100% and incorporate Luck stat
+		//Also prevents Tweezers from granting red mana
+		[HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "GainRandomManaFromAttack")]
+		static bool TrinketController_GainRandomManaFromAttack(TrinketController __instance)
+		{
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/2
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingRandomManaFromAttack();
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			if (activationCounter > 0)
+			{
+				short[] array = new short[6];
+				int randomColor = UnityEngine.Random.Range(0, 5);
+				if (randomColor > 0)
+				{
+					randomColor++;
+				}
+				array[randomColor] = (short)activationCounter;
+				__instance.app.view.stolenManaView.gameObject.SetActive(true);
+				__instance.app.view.stolenManaView.SetManaStolen(activationCounter, (Block.BlockType)randomColor);
+				__instance.app.controller.UpdateMana(array, false);
+				__instance.app.controller.ShowManaGain();
+				__instance.app.controller.SetActiveSpells(true, true);
+
+				Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing tweezers from granting red mana");
+			}
+			return false;
+		}
+
+		//Patch: Allows Wet Diaper effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "ModifyActionPoint")]
+		static bool BumboController_ModifyActionPoint(BumboController __instance, int _modifier)
+		{
+			__instance.app.model.actionPoints += (short)_modifier;
+
+			//Replace Wet Diaper effect
+			float effectValue = 0f;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				//Chance: 1/4
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.WetDiaper ? 0.2f : 0f;
+				trinketCounter += 1;
+			}
+			effectValue *= (float)__instance.trinketController.EffectMultiplier();
+			//Incorporate Luck modifier
+			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int activationCounter = EffectActivationCounter(effectValue);
+
+			if (_modifier > 0 && activationCounter > 0)
+			{
+				__instance.app.model.actionPoints += (short)activationCounter;
+			}
+			if (__instance.app.model.actionPoints < 0)
+			{
+				__instance.app.model.actionPoints = 0;
+			}
+			if (__instance.app.model.actionPoints > 9)
+			{
+				__instance.app.model.actionPoints = 9;
+			}
+			__instance.app.view.actionPoints.SetActionPoints((int)__instance.app.model.actionPoints);
+			__instance.app.view.IOSActionPoints.GetComponent<TextMeshPro>().text = __instance.app.model.actionPoints.ToString();
+			return false;
+		}
+
+		//Patch: Reduces Death damage dealt to bosses
 		[HarmonyPrefix, HarmonyPatch(typeof(DeathTrinket), "Use")]
 		static bool DeathTrinket_Use(DeathTrinket __instance, int _index)
 		{
@@ -1290,7 +1845,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					}
 					spellCost[cheapestColorIndex] += 1;
 				}
-				List<ManaType> bannedColors = new List<ManaType>
+				List<ManaType> allowedColors = new List<ManaType>
 				{
 					ManaType.Bone,
 					ManaType.Booger,
@@ -1300,19 +1855,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 				};
 				for (int m = 0; m < __instance.app.model.characterSheet.spells.Count; m++)
 				{
-					if (bannedColors.Count > 0)
+					if (allowedColors.Count > 0)
 					{
-						for (int n = bannedColors.Count - 1; n >= 0; n--)
+						for (int n = allowedColors.Count - 1; n >= 0; n--)
 						{
-							if (_ignore_mana[(int)bannedColors[n]])
+							if (_ignore_mana[(int)allowedColors[n]])
 							{
 								//Ban ignored colors
-								bannedColors.RemoveAt(n);
+								allowedColors.RemoveAt(n);
 							}
-							else if (__instance.app.model.characterSheet.spells[m].Cost[(int)bannedColors[n]] != 0)
+							else if (__instance.app.model.characterSheet.spells[m].Cost[(int)allowedColors[n]] != 0)
 							{
 								//Ban colors of existing spells
-								bannedColors.RemoveAt(n);
+								allowedColors.RemoveAt(n);
 							}
 						}
 					}
@@ -1321,20 +1876,20 @@ namespace The_Legend_of_Bum_bo_Windfall
 				_spell.Cost = new short[6];
 				for (int num10 = 0; num10 < spellCost.Count; num10++)
 				{
-					if (bannedColors.Count == 0)
+					if (allowedColors.Count == 0)
 					{
 						for (int num11 = 0; num11 < 6; num11++)
 						{
 							if (num11 != 1 && list6.IndexOf((ManaType)num11) < 0)
 							{
-								bannedColors.Add((ManaType)num11);
+								allowedColors.Add((ManaType)num11);
 							}
 						}
 					}
-					int index2 = UnityEngine.Random.Range(0, bannedColors.Count);
-					_spell.Cost[(int)bannedColors[index2]] = spellCost[num10];
-					list6.Add(bannedColors[index2]);
-					bannedColors.RemoveAt(index2);
+					int index2 = UnityEngine.Random.Range(0, allowedColors.Count);
+					_spell.Cost[(int)allowedColors[index2]] = spellCost[num10];
+					list6.Add(allowedColors[index2]);
+					allowedColors.RemoveAt(index2);
 				}
 
 				//Preserve temporary mana cost reduction

@@ -16,11 +16,29 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity changes");
         }
 
-        //Patch: Override enemy hurt method to modify damage resistance
-        [HarmonyPrefix, HarmonyPatch(typeof(Enemy), "Hurt")]
+		//Patch: Override enemy hurt method to modify damage resistance
+		//Also changes Mysterious Bag effect to stack past 100% and incorporate Luck stat
+		[HarmonyPrefix, HarmonyPatch(typeof(Enemy), "Hurt")]
         static bool Enemy_Hurt(Enemy __instance, ref bool ___knockbackHappened, float damage, Enemy.AttackImmunity _immunity = Enemy.AttackImmunity.SuperAttack, StatusEffect _status_effects = null, int _column = -1)
         {
-			if (__instance.dealSplashDamage && __instance.app.controller.trinketController.Splash())
+			//Chance: 1/4
+			float activationChance = 0.25f;
+
+			float MysteriousBagEffectValue = 0;
+			short trinketCounter = 0;
+			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+			{
+				MysteriousBagEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.MysteriousBag ? activationChance : 0f;
+				trinketCounter += 1;
+			}
+
+			MysteriousBagEffectValue *= (float)__instance.app.controller.trinketController.EffectMultiplier();
+			MysteriousBagEffectValue *= CollectibleChanges.TrinketLuckModifier(__instance.app.model.characterSheet);
+
+			int MysteriousBagActivationCounter = CollectibleChanges.EffectActivationCounter(MysteriousBagEffectValue);
+
+			//Replace Mysterious Bag effect
+			if (__instance.dealSplashDamage && MysteriousBagActivationCounter > 0)
 			{
 				if (__instance.position.x > 0)
 				{
@@ -28,7 +46,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					if (enemy != null)
 					{
 						enemy.dealSplashDamage = false;
-						enemy.Hurt(1f, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
+						enemy.Hurt((float)MysteriousBagActivationCounter, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
 					}
 				}
 				if (__instance.position.x < 2)
@@ -37,7 +55,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					if (enemy2 != null)
 					{
 						enemy2.dealSplashDamage = false;
-						enemy2.Hurt(1f, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
+						enemy2.Hurt((float)MysteriousBagActivationCounter, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
 					}
 				}
 				if (__instance.position.y > 0)
@@ -46,7 +64,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					if (enemy3 != null)
 					{
 						enemy3.dealSplashDamage = false;
-						enemy3.Hurt(1f, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
+						enemy3.Hurt((float)MysteriousBagActivationCounter, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
 					}
 				}
 				if (__instance.position.y < 2)
@@ -55,7 +73,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					if (enemy4 != null)
 					{
 						enemy4.dealSplashDamage = false;
-						enemy4.Hurt(1f, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
+						enemy4.Hurt((float)MysteriousBagActivationCounter, Enemy.AttackImmunity.ReduceSpellDamage, null, -1);
 					}
 				}
 			}

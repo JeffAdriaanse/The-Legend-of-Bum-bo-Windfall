@@ -62,18 +62,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing The Relic from granting soul health past the maximum of six total hearts");
         }
 
-        //Patch: Fixes Santa Sangre granting soul health past the maximum of six total hearts
-        [HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "SoulOnKill")]
-        static void TrinketController_SoulOnKill(TrinketController __instance)
-        {
-            while (__instance.app.model.characterSheet.bumboBaseInfo.hitPoints + __instance.app.model.characterSheet.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f)
-            {
-                __instance.app.model.characterSheet.soulHearts -= 0.5f;
-            }
-            __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Santa Sangre from granting soul health past the maximum of six total hearts");
-        }
-
         //Patch: Fixes Glitch trinket not reducing shop prices when acting as Steam Sale
         [HarmonyPrefix, HarmonyPatch(typeof(Shop), "UpdatePrices")]
         static bool Shop_UpdatePrices(Shop __instance, GameObject ___item1Pickup, GameObject ___item2Pickup, GameObject ___item3Pickup, GameObject ___item4Pickup)
@@ -578,38 +566,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.Notify("reward.spell", null, new object[0]);
 
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Fish Hook from granting red mana");
-            return false;
-        }
-
-        //Patch: Prevents Tweezers from granting red mana
-        [HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "GainRandomManaFromAttack")]
-        static bool TrinketController_GainRandomManaFromAttack(TrinketController __instance)
-        {
-            float num = 0f;
-            short num2 = 0;
-            while ((int)num2 < __instance.app.model.characterSheet.trinkets.Count)
-            {
-                num += __instance.app.controller.GetTrinket((int)num2).ChanceOfGainingRandomManaFromAttack();
-                num2 += 1;
-            }
-            num *= (float)__instance.EffectMultiplier();
-            if (UnityEngine.Random.Range(0f, 1f) < num)
-            {
-                short[] array = new short[6];
-                int num3 = UnityEngine.Random.Range(0, 5);
-                if (num3 > 0)
-                {
-                    num3++;
-                }
-                array[num3] = 1;
-                __instance.app.view.stolenManaView.gameObject.SetActive(true);
-                __instance.app.view.stolenManaView.SetManaStolen(1, (Block.BlockType)num3);
-                __instance.app.controller.UpdateMana(array, false);
-                __instance.app.controller.ShowManaGain();
-                __instance.app.controller.SetActiveSpells(true, true);
-
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing tweezers from granting red mana");
-            }
             return false;
         }
 

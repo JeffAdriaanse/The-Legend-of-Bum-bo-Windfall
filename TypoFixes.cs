@@ -63,12 +63,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes Curved Horn trinket name typo
+        //Fixes Dracula Teeth trinket name typo
         [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "trinketKA", MethodType.Getter)]
         static void TrinketModel_trinketKA(ref Dictionary<TrinketName, string> __result)
         {
             Dictionary<TrinketName, string> returnedDict = new Dictionary<TrinketName, string>(__result);
 
             returnedDict[TrinketName.CurvedHorn] = "Curved Horn";
+            returnedDict[TrinketName.DrakulaTeeth] = "Dracula Teeth";
 
             __result = returnedDict;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixing Curved Horn name typo");
