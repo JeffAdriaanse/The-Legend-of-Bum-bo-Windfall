@@ -16,6 +16,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity changes");
         }
 
+		//Patch: Reduces Tainted Peeper's moves by one
+		[HarmonyPostfix, HarmonyPatch(typeof(PeepsBoss), "Init")]
+		static void PeepsBoss_Init(PeepsBoss __instance)
+		{
+			__instance.turns = 1;
+			__instance.app.view.GUICamera.GetComponent<GUISide>().bossHeartView.SetMoves(__instance.turns + 2);
+		}
+
 		//Patch: Override enemy hurt method to modify damage resistance
 		//Also changes Mysterious Bag effect to stack past 100% and incorporate Luck stat
 		[HarmonyPrefix, HarmonyPatch(typeof(Enemy), "Hurt")]

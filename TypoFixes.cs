@@ -75,5 +75,40 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = returnedDict;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixing Curved Horn name typo");
         }
+
+        //Patch: Changes Stick description
+        [HarmonyPostfix, HarmonyPatch(typeof(StickSpell), MethodType.Constructor)]
+        static void StickSpell_Constructor(StickSpell __instance)
+        {
+            __instance.Name = "Whack Away!";
+        }
+
+        //Patch: Changes Bag-O-Sucking description 
+        [HarmonyPostfix, HarmonyPatch(typeof(BagOSuckingTrinket), MethodType.Constructor)]
+        static void BagOSuckingTrinket_Constructor(BagOSuckingTrinket __instance)
+        {
+            __instance.Name = "Gain Mana when You Hit!";
+        }
+
+        //Patch: Changes Glitch description 
+        [HarmonyPostfix, HarmonyPatch(typeof(GlitchTrinket), MethodType.Constructor)]
+        static void GlitchTrinket_Constructor(GlitchTrinket __instance)
+        {
+            __instance.Name = "What Will It Be?";
+        }
+
+        //Patch: Changes Nine Volt description 
+        [HarmonyPostfix, HarmonyPatch(typeof(NineVoltTrinket), MethodType.Constructor)]
+        static void NineVoltTrinket_Constructor(NineVoltTrinket __instance)
+        {
+            __instance.Name = "Items May Gain Charges";
+        }
+
+        //Patch: Changes Pinky description 
+        [HarmonyPostfix, HarmonyPatch(typeof(PinkyTrinket), MethodType.Constructor)]
+        static void PinkyTrinket_Constructor(PinkyTrinket __instance)
+        {
+            __instance.Name = "May Gain Wilds on Kills";
+        }
     }
 }

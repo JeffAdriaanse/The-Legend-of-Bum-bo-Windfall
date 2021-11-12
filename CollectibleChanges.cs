@@ -33,6 +33,17 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return UnityEngine.Random.Range(0f, 1f) < remainder ? floor + 1 : floor;
 		}
 
+		//Patch: Prevents Craft Paper from being used on Craft Paper
+		[HarmonyPrefix, HarmonyPatch(typeof(CraftPaperSpell), "AlterSpell")]
+		static bool CraftPaperSpell_AlterSpell(CraftPaperSpell __instance, int _spell_index)
+		{
+			if (__instance.app.model.characterSheet.spells[_spell_index].spellName == SpellName.CraftPaper)
+            {
+				return false;
+			}
+			return true;
+		}
+
 		//Patch: AAA Battery effect now stacks non-independently
 		//AAABattery effect now incorporates Luck stat and Curio effect multiplier
 		//AAABattery effect now grants movement independently of Hoof
@@ -1053,7 +1064,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             {
 								totalCombinedCost += (short)(__instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[costCounter] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[costCounter]);
 							}
-							if (totalCombinedCost < SpellManaCosts.MinimumManaCost(__instance.app.model.characterSheet.spells[__instance.spellIndex].spellName) || __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[randomColor] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] < 0)
+							if (totalCombinedCost < SpellManaCosts.MinimumManaCost(__instance.app.model.characterSheet.spells[__instance.spellIndex]) || __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[randomColor] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] < 0)
                             {
 								__instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] += 1;
 							}
@@ -1383,7 +1394,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			int costReduction = Mathf.RoundToInt((float)totalManaCost * reductionPercentage);
 
 			//Do not reduce total cost below minimum
-			while (totalManaCost - costReduction < SpellManaCosts.MinimumManaCost(bumboApplication.model.characterSheet.spells[_spell_index].spellName))
+			while (totalManaCost - costReduction < SpellManaCosts.MinimumManaCost(bumboApplication.model.characterSheet.spells[_spell_index]))
 			{
 				costReduction--;
 				if (costReduction <= 0)
@@ -1712,45 +1723,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 			if (!_spell.IsChargeable && _spell.setCost)
 			{
-				//New mana costs
-				int totalSpellCost = -1;
-
-				int value;
-				if (SpellManaCosts.manaCosts.TryGetValue(_spell.spellName, out value))
-				{
-					totalSpellCost = value;
-				}
-
-				List<short> spellCost = new List<short>();
-
-				//Old mana costs
-				if (totalSpellCost == -1)
-				{
-					switch (_spell.manaSize)
-					{
-						case SpellElement.ManaSize.S:
-							totalSpellCost = 2;
-							break;
-						case SpellElement.ManaSize.M:
-							totalSpellCost = 4;
-							break;
-						case SpellElement.ManaSize.L:
-							totalSpellCost = 6;
-							break;
-						case SpellElement.ManaSize.XL:
-							totalSpellCost = 10;
-							break;
-						case SpellElement.ManaSize.XXL:
-							totalSpellCost = 16;
-							break;
-						case SpellElement.ManaSize.XXXL:
-							totalSpellCost = 20;
-							break;
-						default:
-							totalSpellCost = 1;
-							break;
-					}
-				}
+				//Get total mana cost
+				int totalSpellCost = SpellManaCosts.GetManaCost(_spell);
 
 				//Preserve mana cost reduction
 				int currentSpellCost = 0;
@@ -1824,6 +1798,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 						colorCount = maximumColorCount;
                     }
 				}
+
+				List<short> spellCost = new List<short>();
 
 				for (int j = colorCount; j > 0; j--)
 				{
@@ -2095,10 +2071,51 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 	static class SpellManaCosts
 	{
-		public static Dictionary<SpellName, int> manaCosts = new Dictionary<SpellName, int>()
+		public static int GetManaCost(SpellElement spell)
+        {
+			//New mana costs
+			int totalSpellCost = -1;
+
+			if (manaCosts.TryGetValue(spell.spellName, out int value))
+			{
+				totalSpellCost = value;
+            }
+
+            //Old mana costs
+            if (totalSpellCost == -1)
+            {
+                switch (spell.manaSize)
+                {
+                    case SpellElement.ManaSize.S:
+                        totalSpellCost = 2;
+                        break;
+                    case SpellElement.ManaSize.M:
+                        totalSpellCost = 4;
+                        break;
+                    case SpellElement.ManaSize.L:
+                        totalSpellCost = 6;
+                        break;
+                    case SpellElement.ManaSize.XL:
+                        totalSpellCost = 10;
+                        break;
+                    case SpellElement.ManaSize.XXL:
+                        totalSpellCost = 16;
+                        break;
+                    case SpellElement.ManaSize.XXXL:
+                        totalSpellCost = 20;
+                        break;
+                    default:
+                        totalSpellCost = 1;
+                        break;
+                }
+            }
+			return totalSpellCost;
+        }
+
+        public static Dictionary<SpellName, int> manaCosts = new Dictionary<SpellName, int>()
 		{
 			{ SpellName.TwentyTwenty, 7 },
-			{ SpellName.Pentagram, 8 },
+			{ SpellName.Pentagram, 7 },
 			{ SpellName.AttackFly, 8 },
 			{ SpellName.MamaFoot, 13 },
 			{ SpellName.Lemon, 5 },
@@ -2106,12 +2123,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{ SpellName.Juiced, 6 },
 			{ SpellName.MagicMarker, 6 },
 			{ SpellName.HairBall, 7 },
-			{ SpellName.HatPin, 8 }
+			{ SpellName.HatPin, 8 },
+			{ SpellName.TimeWalker, 16 },
+			{ SpellName.BigSlurp, 11 }
 		};
 
-		public static int MinimumManaCost(SpellName spell)
+		public static int MinimumManaCost(SpellElement spell)
         {
-			return minimumManaCosts.TryGetValue(spell, out int value) ? value : 2;
+			return minimumManaCosts.TryGetValue(spell.spellName, out int value) ? value : Mathf.Max(2, Mathf.RoundToInt(GetManaCost(spell) / 2));
         }
 
 		public static Dictionary<SpellName, int> minimumManaCosts = new Dictionary<SpellName, int>()

@@ -15,50 +15,74 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying other changes");
         }
 
-        //Patch: Enables debug menu
-        [HarmonyPostfix, HarmonyPatch(typeof(DebugController), "Start")]
-        static void DebugController_Start(DebugController __instance)
+        ////Patch: Enables debug menu
+        //[HarmonyPostfix, HarmonyPatch(typeof(DebugController), "Start")]
+        //static void DebugController_Start(DebugController __instance)
+        //{
+        //    __instance.turnOnDebugKey = true;
+        //    Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu");
+        //}
+
+        ////Patch: Enables title debug menu and grants 100% game completion
+        //[HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
+        //static void TitleController_Start(TitleController __instance)
+        //{
+        //    __instance.turnOnDebugKey = true;
+
+        //    //Progression progression = new Progression();
+        //    //progression.braveMoneyWins = 1;
+        //    //progression.braveWins = 2;
+        //    //progression.chapter3NoDamageWins = 1;
+        //    //progression.chapter4Wins = 4;
+        //    //progression.completedTutorial = true;
+        //    //for (int i = 0; i < progression.cutscenes.Length; i++)
+        //    //{
+        //    //    progression.cutscenes[i] = true;
+        //    //}
+        //    //progression.deadMoneyWins = 1;
+        //    //progression.deadWins = 2;
+        //    //progression.emptyMoneyWins = 1;
+        //    //progression.emptyWins = 2;
+        //    //progression.lostMoneyWins = 1;
+        //    //progression.lostWins = 2;
+        //    //progression.nimbleMoneyWins = 1;
+        //    //progression.nimbleWins = 2;
+        //    //progression.stoutMoneyWins = 1;
+        //    //progression.stoutWins = 2;
+        //    //for (int i = 0; i < 43; i++)
+        //    //{
+        //    //    progression.unlocks[i] = true;
+        //    //}
+        //    //progression.weirdMoneyWins = 1;
+        //    //progression.weirdWins = 2;
+        //    //progression.wins = 14;
+        //    //ProgressionController.SaveProgression(progression);
+
+        //    Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu and unlocking everything");
+        //}
+
+        //Patch: Heart tiles no longer appear naturally when playing as Bum-bo the Lost
+        [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "nextBlock")]
+        static bool Puzzle_nextBlock(Puzzle __instance, ref int ___heartCounter)
         {
-            __instance.turnOnDebugKey = true;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu");
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            {
+                ___heartCounter = -1;
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing heart tiles from spawning when playing as Bum-bo the Lost");
+            }
+            return true;
         }
-
-        //Patch: Enables title debug menu and grants 100% game completion
-        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
-        static void TitleController_Start(TitleController __instance)
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "StartingBlocks")]
+        static void TrinketController_StartingBlocks(TrinketController __instance, ref int[] __result)
         {
-            __instance.turnOnDebugKey = true;
-
-            //Progression progression = new Progression();
-            //progression.braveMoneyWins = 1;
-            //progression.braveWins = 2;
-            //progression.chapter3NoDamageWins = 1;
-            //progression.chapter4Wins = 4;
-            //progression.completedTutorial = true;
-            //for (int i = 0; i < progression.cutscenes.Length; i++)
-            //{
-            //    progression.cutscenes[i] = true;
-            //}
-            //progression.deadMoneyWins = 1;
-            //progression.deadWins = 2;
-            //progression.emptyMoneyWins = 1;
-            //progression.emptyWins = 2;
-            //progression.lostMoneyWins = 1;
-            //progression.lostWins = 2;
-            //progression.nimbleMoneyWins = 1;
-            //progression.nimbleWins = 2;
-            //progression.stoutMoneyWins = 1;
-            //progression.stoutWins = 2;
-            //for (int i = 0; i < 43; i++)
-            //{
-            //    progression.unlocks[i] = true;
-            //}
-            //progression.weirdMoneyWins = 1;
-            //progression.weirdWins = 2;
-            //progression.wins = 14;
-            //ProgressionController.SaveProgression(progression);
-
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu and unlocking everything");
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            {
+                if (__result[1] > 0)
+                {
+                    __result[1]--;
+                }
+            }
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing starting heart tile from spawning when playing as Bum-bo the Lost");
         }
 
         //Patch: Fixes a bug in CharacterSheet addSoulHearts logic that permitted granting soul health past the maximum of six total hearts
@@ -75,7 +99,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Fixes a bug in CharacterSheet addSoulHearts logic that permitted granting soul health past the maximum of six total hearts
+        //Patch: Fixes a bug in CharacterSheet addHitPoints logic that permitted granting soul health past the maximum of six total hearts
         [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "addHitPoints")]
         static void CharacterSheet_addHitPoints(CharacterSheet __instance)
         {

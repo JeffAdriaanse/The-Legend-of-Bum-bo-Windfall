@@ -110,8 +110,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             XmlDocument lDoc = new XmlDocument();
             lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] 1");
-
             XmlNode xmlNode = lDoc.SelectSingleNode("save");
             XmlNode xmlNode2 = xmlNode.SelectSingleNode("gambling");
 
@@ -124,8 +122,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 xmlNode2 = lDoc.CreateElement("gambling");
                 xmlNode.AppendChild(xmlNode2);
             }
-
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.01");
 
             //Save shop
             for (int pickupCounter = 0; pickupCounter < 4; pickupCounter++)
@@ -156,7 +152,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         break;
                     }
                 }
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.1");
 
                 if (pickup != null && pickup.activeSelf)
                 {
@@ -170,10 +165,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                     else if (pickup.GetComponent<TrinketPickupView>())
                     {
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.2");
                         xmlElement29.SetAttribute("type", "trinket");
                         xmlElement29.SetAttribute("trinketName", pickup.GetComponent<TrinketPickupView>().trinket.trinketName.ToString());
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] 1.3");
                     }
                 }
                 else
@@ -181,8 +174,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Console.WriteLine("[The Legend of Bum-bo: Windfall] Null pickup at index " + pickupCounter);
                 }
             }
-
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] 2");
 
             //Save character sheet
             XmlNode xmlNode3 = xmlNode.SelectSingleNode("character");
@@ -1182,7 +1173,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        static bool loadChampions = false;
         //Patch: Overrides MakeAChampion method to load champion enemies
         //Also changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
         //Champions are now more common once the player has unlocked 'Everything Is Terrible!'
@@ -1257,11 +1247,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 0.15f,
                 0.175f
             };
-            float num = 1f;
-            float num2 = (!__instance.app.model.progression.unlocks[7]) ? 0.5f : 0.75f;
+            float NegaCrownMultiplier = 1f;
+            float difficultyMultiplier = (!__instance.app.model.progression.unlocks[7]) ? 0.5f : 0.7f;
             for (int i = 0; i < __instance.app.model.characterSheet.trinkets.Count; i++)
             {
-                num -= __instance.GetTrinket(i).ChampionChance();
+                NegaCrownMultiplier -= __instance.GetTrinket(i).ChampionChance();
             }
             if (__instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Boss)
             {
@@ -1276,7 +1266,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 while (list.Count > 0)
                 {
                     int index = UnityEngine.Random.Range(0, list.Count);
-                    if (UnityEngine.Random.Range(0f, 1f) < array[__instance.app.model.characterSheet.currentFloor] * num * num2)
+                    if (UnityEngine.Random.Range(0f, 1f) < array[__instance.app.model.characterSheet.currentFloor] * NegaCrownMultiplier * difficultyMultiplier)
                     {
                         Enemy.ChampionType champion = (Enemy.ChampionType)UnityEngine.Random.Range(1, 10);
                         list[index].SetChampion(champion);
@@ -1285,7 +1275,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     list.RemoveAt(index);
                 }
             }
-
             return false;
         }
     }

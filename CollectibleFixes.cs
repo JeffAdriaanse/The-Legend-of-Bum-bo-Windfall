@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Reflection.Emit;
 using DG.Tweening;
 using System.Runtime.CompilerServices;
+using System.Linq;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -350,11 +351,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Randomly removes all but one converter spell from valid spells list each time the list is retrieved; this reduces the chance of encountering Converter during gameplay
+        //Also modifies Lost banned spells
         [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "validSpells", MethodType.Getter)]
-        static void SpellModel_validSpells(ref List<SpellName> __result)
+        static void SpellModel_validSpells(SpellModel __instance, ref List<SpellName> __result)
         {
             List<SpellName> returnedList = new List<SpellName>(__result);
 
+            //Removing all but one Converter
             List<SpellName> convertersFound = new List<SpellName>();
             for (int spellIndex = 0; spellIndex < __result.Count; spellIndex++)
             {
@@ -363,7 +366,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     convertersFound.Add(__result[spellIndex]);
                 }
             }
-
             while (convertersFound.Count > 1)
             {
                 int randomConverterIndex = UnityEngine.Random.Range(0, convertersFound.Count);
@@ -371,8 +373,61 @@ namespace The_Legend_of_Bum_bo_Windfall
                 convertersFound.RemoveAt(randomConverterIndex);
             }
 
+            //Changing Lost banned spells
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            {
+                SpellName[] bannedSpells = new SpellName[]
+                {
+                //Old
+                SpellName.TheRelic,
+                SpellName.CatPaw,
+                SpellName.PrayerCard /*(broken in original method)*/,
+
+                //New
+                SpellName.CatHeart,
+                SpellName.Lard,
+                SpellName.RottenMeat,
+                SpellName.Snack,
+                SpellName.MomsLipstick,
+                SpellName.YumHeart
+                };
+                returnedList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
+            }
+
             __result = returnedList;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing all but one Converter spell from valid spells list");
+        }
+
+        //Patch: Modifies Lost banned trinkets
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "validTrinkets", MethodType.Getter)]
+        static void TrinketModel_validTrinkets(TrinketModel __instance, ref List<TrinketName> __result)
+        {
+            List<TrinketName> returnedList = new List<TrinketName>(__result);
+
+            //Changing Lost banned trinkets
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            {
+                TrinketName[] bannedTrinkets = new TrinketName[]
+                {
+                //Old
+				TrinketName.PinkBow,
+                TrinketName.Hierophant,
+                TrinketName.RatHeart,
+                TrinketName.SantaSangre,
+                TrinketName.Feather,
+
+                //New
+                TrinketName.DrakulaTeeth,
+                TrinketName.Artery,
+                TrinketName.Breakfast,
+                TrinketName.StemCell,
+                TrinketName.TurtleShell,
+                TrinketName.Dinner,
+                TrinketName.SwallowedPenny
+                };
+                returnedList.RemoveAll((TrinketName x) => bannedTrinkets.Contains(x));
+            }
+
+            __result = returnedList;
         }
 
         //Patch: Prevents Ecoli from affecting flying enemies that are above a boss, which would cause a softlock
@@ -733,13 +788,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             list.Add(new List<SpellName>(FastSpellRetrieval.UseSpells));
             list.Add(new List<SpellName>(FastSpellRetrieval.OtherSpells));
 
-            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            //Remove non valid spells
+            foreach (List<SpellName> spellList in list)
             {
-                //Remove non valid spells
-                foreach (List<SpellName> spellList in list)
-                {
-                    spellList.RemoveAll((SpellName x) => !__instance.app.model.spellModel.validSpells.Contains(x));
-                }
+                spellList.RemoveAll((SpellName x) => !__instance.app.model.spellModel.validSpells.Contains(x));
             }
 
             List<SpellElement.SpellCategory> list2 = new List<SpellElement.SpellCategory>();

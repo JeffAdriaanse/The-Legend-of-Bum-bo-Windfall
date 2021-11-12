@@ -1162,7 +1162,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 else if (_event_path == "cancel.spell")
                 {
                     //Add cancel functionality for use trinkets
-                    if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
+                    if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent" && CollectibleChanges.currentTrinket != null)
                     {
                         for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
                         {
