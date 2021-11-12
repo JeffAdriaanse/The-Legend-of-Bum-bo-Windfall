@@ -2,8 +2,8 @@
 The Legend of Bum-bo: Windfall is a mod for the Legend of Bum-bo that fixes bugs, adds new features, and adjusts game balance.
 ## Installation
 1. Follow these [instructions](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_mono.html) to install BepInEx in The Legend of Bum-bo game folder (The Legend of Bum-bo has a 64-bit executable).
-2. Download the mod from the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
-3. Move the mod folder entitled `The Legend of Bum-bo_Windfall` into the `Bepinex/Plugins` directory in the game folder.
+2. Download `The.Legend.of.Bum-bo_Windfall.zip` file from the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
+3. Unzip the mod file and move the folder entitled `The Legend of Bum-bo_Windfall` into the `Bepinex/Plugins` directory in the game folder.
 
 To uninstall the mod, simply remove the mod folder from `Bepinex/Plugins`.
 ## Bug Reports
