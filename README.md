@@ -12,4 +12,4 @@ If possible, try to submit images and/or video demonstrating the bug.
 
 You can also view the console log while the game is running by editing the text file entitled `Bepinex` in the `Bepinex/config` directory and changing `Enabled` to `true` under `[Logging.Console]`. If an error occurs, it will show up in red text in the console.
 ## Contact
-Have questions or comments? Send me an Email at jeff.adriaanse@gmail.com or through Discord at Shpim#0573.
+Have questions or comments? Send me an Email at jeff.adriaanse@gmail.com or contact me through Discord at Shpim#0573.
