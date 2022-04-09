@@ -1611,5 +1611,60 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
         //***************************************************
+
+        //***************************************************
+        //****************Map Menu Button********************
+        //***************************************************
+        /*
+        //Patch: Add map menu button on GUISide Awake
+        public static GameObject mapMenuButton;
+        [HarmonyPostfix, HarmonyPatch(typeof(MenuButtonView), "Start")]
+        static void MenuButtonView_Start(MenuButtonView __instance)
+        {
+            if (mapMenuButton != null)
+            {
+                return;
+            }
+
+            mapMenuButton = UnityEngine.Object.Instantiate(__instance.gameObject, new Vector3(1.19f, 2.1f, -4.7f), __instance.transform.rotation, __instance.transform.parent);
+
+            mapMenuButton.name = "Map Menu Button";
+
+            //AssetBundle assets = Windfall.assetBundle;
+            //if (assets == null)
+            //{
+            //    Debug.Log("Failed to load AssetBundle!");
+            //    return;
+            //}
+
+            //var mapMenuButtonMesh = assets.LoadAsset<Mesh>("");
+            //var mapMenuButtonTexture = assets.LoadAsset<Texture2D>("");
+
+            //MeshFilter meshFilter = mapMenuButton.GetComponent<MeshFilter>();
+            //meshFilter.mesh = mapMenuButtonMesh;
+
+            //MeshRenderer meshRenderer = mapMenuButton.GetComponent<MeshRenderer>();
+            //meshRenderer.material.mainTexture = mapMenuButtonTexture;
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating map menu button");
+        }
+
+        //Patch: Add click effect
+        [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "OnMouseDown")]
+        static bool MenuButtonView_OnMouseDown(MenuButtonView __instance, bool ___clickable)
+        {
+            if (__instance.name == "Map Menu Button")
+            {
+                //Create map menu
+                __instance.app.model.paused = true;
+
+                return false;
+            }
+            return true;
+        }
+        */
+        //***************************************************
+        //***************************************************
+        //***************************************************
     }
 }

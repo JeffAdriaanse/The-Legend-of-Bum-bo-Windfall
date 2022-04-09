@@ -362,6 +362,12 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(SavedStateController), "LoadCharacterSheet")]
         static void SavedStateController_LoadCharacterSheet_DamageTaken(SavedStateController __instance, XmlDocument ___lDoc)
         {
+            //Abort if in the Wooden Nickel
+            if (__instance.app.view.gamblingView != null)
+            {
+                return;
+            }
+
             if (___lDoc == null)
             {
                 return;
