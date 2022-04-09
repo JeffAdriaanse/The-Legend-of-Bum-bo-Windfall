@@ -15,6 +15,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying other changes");
         }
 
+        /*
         //Patch: Enables debug menu
         [HarmonyPostfix, HarmonyPatch(typeof(DebugController), "Start")]
         static void DebugController_Start(DebugController __instance)
@@ -27,7 +28,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
         static void TitleController_Start(TitleController __instance)
         {
-            /*
             __instance.turnOnDebugKey = true;
 
             //Testing antialiasing setting
@@ -65,8 +65,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             //ProgressionController.SaveProgression(progression);
 
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu and unlocking everything");
-            */
         }
+        */
 
         //Patch: Heart tiles no longer appear naturally when playing as Bum-bo the Lost
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "nextBlock")]

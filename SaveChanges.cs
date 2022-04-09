@@ -21,6 +21,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying save changes");
         }
 
+        /*
         //Patch: initializePuzzle log
         [HarmonyPostfix, HarmonyPatch(typeof(Puzzle), "initializePuzzle")]
         static void Puzzle_initializePuzzle(Puzzle __instance)
@@ -49,6 +50,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Console.WriteLine("[The Legend of Bum-bo: Windfall] ResetRoom, " + __instance.app.model.mapModel.currentRoom.roomType);
         }
+        */
 
         public static bool LoadIntoWoodenNickel(BumboApplication instance)
         {
@@ -111,6 +113,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             lDoc.LoadXml((string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(__instance, new object[] { }));
 
             XmlNode xmlNode = lDoc.SelectSingleNode("save");
+
+            //Remove damage taken
+            XmlNode xmlNode5 = xmlNode.SelectSingleNode("damageTaken");
+            if (xmlNode5 != null)
+            {
+                xmlNode.RemoveChild(xmlNode5);
+            }
+
             XmlNode xmlNode2 = xmlNode.SelectSingleNode("gambling");
 
             if (xmlNode2 != null)
@@ -362,12 +372,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(SavedStateController), "LoadCharacterSheet")]
         static void SavedStateController_LoadCharacterSheet_DamageTaken(SavedStateController __instance, XmlDocument ___lDoc)
         {
-            //Abort if in the Wooden Nickel
-            if (__instance.app.view.gamblingView != null)
-            {
-                return;
-            }
-
             if (___lDoc == null)
             {
                 return;
