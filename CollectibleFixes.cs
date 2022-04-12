@@ -351,6 +351,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Prevents Meat Hook from Peep Eyes
+        [HarmonyPrefix, HarmonyPatch(typeof(MeatHookSpell), "RearrangeEnemies")]
+        static bool ExorcismKitSpell_RearrangeEnemies(ExorcismKitSpell __instance, Transform _enemy_transform)
+        {
+            Enemy enemy = _enemy_transform.GetComponent<Enemy>();
+            if (enemy != null && (enemy.enemyName == EnemyName.PeepEye || enemy.enemyName == EnemyName.TaintedPeepEye))
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Meat Hook from moving " + enemy.enemyName.ToString());
+                return false;
+            }
+            return true;
+        }
+
         //Patch: Randomly removes all but one converter spell from valid spells list each time the list is retrieved; this reduces the chance of encountering Converter during gameplay
         //Also modifies Lost banned spells
         [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "validSpells", MethodType.Getter)]
