@@ -582,10 +582,20 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes the pause menu button remaining clickable while the pause menu is already open
+        //Also hides the pause menu when the map is open
         [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "Update")]
         static bool MenuButtonView_Update(MenuButtonView __instance, bool ___showing)
         {
-            if (!__instance.app.view.menuView.activeSelf && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent"))
+            //Check whether canvas is active
+            GameObject canvas = InterfaceContent.mapCanvas;
+            bool canvasNull = canvas == null;
+            bool canvasActive = false;
+            if (!canvasNull)
+            {
+                canvasActive = InterfaceContent.mapCanvas.activeSelf;
+            }
+
+            if (!__instance.app.view.menuView.activeSelf && !canvasActive && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent"))
             {
                 if (!___showing)
                 {

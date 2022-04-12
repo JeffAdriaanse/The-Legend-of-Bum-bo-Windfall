@@ -73,6 +73,9 @@
     <Reference Include="UnityEngine.UI">
       <HintPath>Libs\UnityEngine.UI.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>Libs\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.VideoModule">
       <HintPath>Libs\UnityEngine.VideoModule.dll</HintPath>
     </Reference>

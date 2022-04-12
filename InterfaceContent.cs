@@ -1615,9 +1615,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //****************Map Menu Button********************
         //***************************************************
-        /*
         //Patch: Add map menu button on GUISide Awake
+        //Also creates map menu
         public static GameObject mapMenuButton;
+        public static GameObject mapCanvas;
         [HarmonyPostfix, HarmonyPatch(typeof(MenuButtonView), "Start")]
         static void MenuButtonView_Start(MenuButtonView __instance)
         {
@@ -1626,27 +1627,72 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            mapMenuButton = UnityEngine.Object.Instantiate(__instance.gameObject, new Vector3(1.19f, 2.1f, -4.7f), __instance.transform.rotation, __instance.transform.parent);
-
+            mapMenuButton = UnityEngine.Object.Instantiate(__instance.gameObject, new Vector3(1.21f, 2.09f, -4.71f), __instance.transform.rotation, __instance.transform.parent);
+            ButtonHoverAnimation mapHover = mapMenuButton.GetComponent<ButtonHoverAnimation>();
+            if (mapHover)
+            {
+                UnityEngine.Object.Destroy(mapHover);
+                mapMenuButton.transform.localScale = Vector3.Scale(mapMenuButton.transform.localScale, new Vector3(0.7f, 1f, 0.7f));
+                mapMenuButton.AddComponent<ButtonHoverAnimation>();
+            }
             mapMenuButton.name = "Map Menu Button";
 
-            //AssetBundle assets = Windfall.assetBundle;
-            //if (assets == null)
-            //{
-            //    Debug.Log("Failed to load AssetBundle!");
-            //    return;
-            //}
-
-            //var mapMenuButtonMesh = assets.LoadAsset<Mesh>("");
-            //var mapMenuButtonTexture = assets.LoadAsset<Texture2D>("");
-
-            //MeshFilter meshFilter = mapMenuButton.GetComponent<MeshFilter>();
-            //meshFilter.mesh = mapMenuButtonMesh;
-
-            //MeshRenderer meshRenderer = mapMenuButton.GetComponent<MeshRenderer>();
-            //meshRenderer.material.mainTexture = mapMenuButtonTexture;
-
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating map menu button");
+
+            //Create map menu
+            //Canvas
+            mapCanvas = new GameObject("Map Canvas");
+            mapCanvas.SetActive(false);
+            mapCanvas.layer = 5;
+            Canvas canvas = mapCanvas.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            GraphicRaycaster raycaster = mapCanvas.AddComponent<GraphicRaycaster>();
+            CanvasScaler scaler = mapCanvas.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            //Background
+            GameObject mapBackground = new GameObject("Map Background");
+            mapBackground.layer = 5;
+            RectTransform backgroundTransform = mapBackground.AddComponent<RectTransform>();
+            mapBackground.transform.SetParent(mapCanvas.transform);
+            backgroundTransform.localPosition = new Vector3(0, 0, 0);
+            backgroundTransform.anchorMin = new Vector2(0, 0);
+            backgroundTransform.anchorMax = new Vector2(1, 1);
+            Image backgroundImage = mapBackground.AddComponent<Image>();
+            backgroundImage.color = Color.black;
+            //Exit
+            GameObject mapExit = new GameObject("Map Exit");
+            mapExit.layer = 5;
+            RectTransform exitTransform = mapExit.AddComponent<RectTransform>();
+            mapExit.transform.SetParent(mapCanvas.transform);
+            exitTransform.localPosition = new Vector3(0, 0, 0);
+            exitTransform.anchorMin = new Vector3(0.47f, 0.05f);
+            exitTransform.anchorMax = new Vector3(0.53f, 0.18f);
+            Image exitImage = mapExit.AddComponent<Image>();
+            exitImage.color = Color.white;
+
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+            var sprite = assets.LoadAsset<Sprite>("Exit");
+            exitImage.sprite = sprite;
+
+            Button exitButton = mapExit.AddComponent<Button>();
+            exitButton.onClick.AddListener(ExitMapMenu);
+            mapExit.AddComponent<ButtonHoverAnimation>();
+            //Mouse
+            GameObject mapMouse = GameObject.Instantiate(__instance.app.view.menuView.transform.Find("Mouse").gameObject);
+            mapMouse.layer = 5;
+            mapMouse.transform.SetParent(mapCanvas.transform);
+            mapMouse.transform.localScale = new Vector3(5, 5, 5);
+        }
+
+        static void ExitMapMenu()
+        {
+            mapCanvas.SetActive(false);
+            mapMenuButton.GetComponent<MenuButtonView>().app.model.paused = false;
         }
 
         //Patch: Add click effect
@@ -1655,14 +1701,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (__instance.name == "Map Menu Button")
             {
-                //Create map menu
+                mapCanvas.SetActive(true);
                 __instance.app.model.paused = true;
 
                 return false;
             }
             return true;
         }
-        */
+
         //***************************************************
         //***************************************************
         //***************************************************
