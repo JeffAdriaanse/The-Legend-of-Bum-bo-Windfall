@@ -49,15 +49,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Rotating status effects of " + __instance.enemyName);
         }
 
-        //Patch: Fixes TadoEnemy init overriding Greedling movement, which would cause Greedlings to have only one movement
-        [HarmonyPostfix, HarmonyPatch(typeof(TadoEnemy), "Init")]
-        static void TadoEnemy_Init(TadoEnemy __instance)
+        //Patch: Fixes TadoEnemy init not setting turns 1 before baseinit
+        [HarmonyPrefix, HarmonyPatch(typeof(TadoEnemy), "Init")]
+        static bool TadoEnemy_Init(TadoEnemy __instance)
         {
-            if (__instance.enemyName == EnemyName.Greedling)
-            {
-                __instance.turns = 2;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Overriding TadoEnemy turns amount on init; Greedling now has two movement");
-            }
+            __instance.turns = 1;
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Setting TadoEnemy turns amount on init to 1");
+            return true;
         }
 
         //***************************************************
@@ -143,7 +141,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
 
         //Patch: Fixes enemies spawning with incorrect health amounts if enemies of the same type have already been defeated in previous rooms of the current chapter
-        //This patch overrides enemy starting health values and uses hard coded health instead 
+        //This patch overrides enemy starting health values and uses hard coded health instead
         [HarmonyPostfix, HarmonyPatch(typeof(Enemy), "Spawn")]
         static void Enemy_Spawn(Enemy __instance)
         {
