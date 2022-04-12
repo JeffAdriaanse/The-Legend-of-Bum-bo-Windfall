@@ -1142,7 +1142,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				StartingSpell deadStartingSpell = deadStartingSpells[i];
 				if (deadStartingSpell.spell == SpellName.AttackFly)
                 {
-					deadStartingSpell.toothCost = 6;
+					deadStartingSpell.toothCost = 5;
 				}
 			}
 
@@ -2116,7 +2116,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			{ SpellName.TwentyTwenty, 7 },
 			{ SpellName.Pentagram, 7 },
-			{ SpellName.AttackFly, 8 },
+			{ SpellName.AttackFly, 7 },
 			{ SpellName.MamaFoot, 13 },
 			{ SpellName.Lemon, 5 },
 			{ SpellName.Pliers, 5 },
