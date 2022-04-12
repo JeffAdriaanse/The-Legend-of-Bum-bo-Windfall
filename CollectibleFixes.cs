@@ -337,6 +337,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes ExorcismKit often not healing all enemies
+        //Heals 1 health
         [HarmonyPostfix, HarmonyPatch(typeof(ExorcismKitSpell), "HurtAndHeal")]
         static void ExorcismKitSpell_HurtAndHeal(ExorcismKitSpell __instance, ref List<Enemy> enemies_to_heal, ref Enemy enemy_to_hurt)
         {
@@ -344,7 +345,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if ((__instance.app.model.enemies[enemyCounter].alive || __instance.app.model.enemies[enemyCounter].enemyName == EnemyName.Shit) && !enemies_to_heal.Contains(__instance.app.model.enemies[enemyCounter]) && enemy_to_hurt != __instance.app.model.enemies[enemyCounter])
                 {
-                    __instance.app.model.enemies[enemyCounter].AddHealth(2f);
+                    __instance.app.model.enemies[enemyCounter].AddHealth(1f);
                     Console.WriteLine("[The Legend of Bum-bo: Windfall] Healing " + __instance.app.model.enemies[enemyCounter].enemyName + "; it should have been healed by ExorcismKit, but was skipped over");
                 }
             }

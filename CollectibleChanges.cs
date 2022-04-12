@@ -33,6 +33,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return UnityEngine.Random.Range(0f, 1f) < remainder ? floor + 1 : floor;
 		}
 
+		//Patch: Reduces ExorcismKit enemy heal from 2 to 1
+		[HarmonyPrefix, HarmonyPatch(typeof(ExorcismKitSpell), "HurtAndHeal")]
+		static bool ExorcismKitSpell_HurtAndHeal(ExorcismKitSpell __instance, ref List<Enemy> enemies_to_heal, ref Enemy enemy_to_hurt)
+		{
+			for (int i = 0; i < enemies_to_heal.Count; i++)
+			{
+				enemies_to_heal[i].AddHealth(1f);
+			}
+			enemy_to_hurt.Hurt((float)__instance.Damage(), Enemy.AttackImmunity.ReduceSpellDamage, __instance.statusEffects, enemy_to_hurt.position.x);
+			return false;
+		}
+
 		//Patch: Prevents Craft Paper from being used on Craft Paper
 		[HarmonyPrefix, HarmonyPatch(typeof(CraftPaperSpell), "AlterSpell")]
 		static bool CraftPaperSpell_AlterSpell(CraftPaperSpell __instance, int _spell_index)
