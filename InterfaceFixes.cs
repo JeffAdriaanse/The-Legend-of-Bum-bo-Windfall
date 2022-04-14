@@ -631,6 +631,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes the pause menu opening sound playing when attempting to open the pause menu using hotkeys while it is already open
+        //Prevents opening the pause menu while the map menu is open
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "Update")]
         static bool BumboController_Update(BumboController __instance, ref float ___restartTime)
         {
@@ -647,7 +648,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 ___restartTime = 0f;
             }
-            if (Input.GetKeyDown(KeyCode.Escape) && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent") && !__instance.app.view.menuView.activeSelf)
+            if ((!InterfaceContent.mapCanvas.activeSelf) && Input.GetKeyDown(KeyCode.Escape) && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent") && !__instance.app.view.menuView.activeSelf)
             {
                 __instance.app.model.paused = true;
                 __instance.app.view.menuView.SetActive(true);
