@@ -648,7 +648,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 ___restartTime = 0f;
             }
-            if ((!InterfaceContent.mapCanvas.activeSelf) && Input.GetKeyDown(KeyCode.Escape) && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent") && !__instance.app.view.menuView.activeSelf)
+            if (InterfaceContent.mapCanvas != null && !InterfaceContent.mapCanvas.activeSelf && Input.GetKeyDown(KeyCode.Escape) && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent") && !__instance.app.view.menuView.activeSelf)
             {
                 __instance.app.model.paused = true;
                 __instance.app.view.menuView.SetActive(true);
