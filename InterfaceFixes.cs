@@ -587,12 +587,12 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool MenuButtonView_Update(MenuButtonView __instance, bool ___showing)
         {
             //Check whether canvas is active
-            GameObject canvas = InterfaceContent.mapCanvas;
+            GameObject canvas = MapMenu.mapMenuCanvas;
             bool canvasNull = canvas == null;
             bool canvasActive = false;
             if (!canvasNull)
             {
-                canvasActive = InterfaceContent.mapCanvas.activeSelf;
+                canvasActive = canvas.activeSelf;
             }
 
             if (!__instance.app.view.menuView.activeSelf && !canvasActive && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent"))
@@ -648,7 +648,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 ___restartTime = 0f;
             }
-            if (InterfaceContent.mapCanvas != null && !InterfaceContent.mapCanvas.activeSelf && Input.GetKeyDown(KeyCode.Escape) && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent") && !__instance.app.view.menuView.activeSelf)
+            if (MapMenu.mapMenuCanvas != null && !MapMenu.mapMenuCanvas.activeSelf && Input.GetKeyDown(KeyCode.Escape) && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent") && !__instance.app.view.menuView.activeSelf)
             {
                 __instance.app.model.paused = true;
                 __instance.app.view.menuView.SetActive(true);

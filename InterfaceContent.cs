@@ -8,6 +8,7 @@ using DG.Tweening;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using System.Collections;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -1614,37 +1615,85 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
 
         //***************************************************
-        //****************Map Menu Button********************
+        //*********************Map Menu**********************
         //***************************************************
-        //Patch: Add map menu button on GUISide Awake
-        //Also creates map menu
-        public static GameObject mapMenuButton;
-        public static GameObject mapCanvas;
-        [HarmonyPostfix, HarmonyPatch(typeof(MenuButtonView), "Start")]
-        static void MenuButtonView_Start(MenuButtonView __instance)
+
+        //Patch: Add map menu buttonclick effect
+        [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "OnMouseDown")]
+        static bool MenuButtonView_OnMouseDown(MenuButtonView __instance, bool ___clickable)
         {
-            if (mapMenuButton != null || __instance.app.model.characterSheet.currentFloor == 0)
+            if (__instance.name == "Map Menu Button")
             {
-                return;
+                MapMenu.OpenMapMenu();
+                return false;
             }
+            return true;
+        }
 
-            mapMenuButton = UnityEngine.Object.Instantiate(__instance.gameObject, new Vector3(1.21f, 2.09f, -4.71f), __instance.transform.rotation, __instance.transform.parent);
-            ButtonHoverAnimation mapHover = mapMenuButton.GetComponent<ButtonHoverAnimation>();
-            if (mapHover)
-            {
-                UnityEngine.Object.Destroy(mapHover);
-                mapMenuButton.transform.localScale = Vector3.Scale(mapMenuButton.transform.localScale, new Vector3(0.7f, 1f, 0.7f));
-                mapMenuButton.AddComponent<ButtonHoverAnimation>();
-            }
-            mapMenuButton.name = "Map Menu Button";
+        //Patch: Set up map menu
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init(BumboController __instance)
+        {
+            MapMenu.CreateMapMenu(__instance);
+        }
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating map menu button");
+        //***************************************************
+        //***************************************************
+        //***************************************************
+    }
 
-            if (mapCanvas != null)
-            {
-                return;
-            }
+    static class MapMenu
+    {
+        private static BumboApplication app;
 
+        private static GameObject mapMenuButton;
+
+        public static GameObject mapMenuCanvas;
+        private static GameObject mapCanvasBackground;
+
+        private static GameObject mapCanvasHeader;
+        private static Vector2 headerStartPos;
+        private static RectTransform headerRectTransform;
+        private static float headerOffsetY = 230;
+
+        private static GameObject mapCanvasRoomContainer;
+        private static Vector2 roomContainerStartPos;
+        private static RectTransform roomContainerRectTransform;
+        private static float roomContainerOffsetY = 350;
+
+        private static GameObject mapCanvasExit;
+        private static Vector2 exitStartPos;
+        private static RectTransform exitRectTransform;
+        private static float exitOffsetY = -100;
+
+        private static GameObject mapCanvasMouse;
+
+        private static float opacityValue = 0.6f;
+
+        private static Sprite bumboHead;
+
+        public static void CreateMapMenu(BumboElement bumboElement)
+        {
+            FindApp(bumboElement);
+
+            if (app.model.characterSheet.currentFloor == 0) return;
+
+            GrabAssets();
+
+            if (mapMenuButton == null) CreateMapMenuButton();
+            else mapMenuButton = app.view.GUICamera.transform.Find("HUD").Find("Map Menu Button").gameObject;
+
+            if (mapMenuCanvas == null) CreateMapMenuCanvas();
+            else mapMenuCanvas = app.view.transform.Find("Map Menu Canvas").gameObject;
+        }
+
+        private static void FindApp(BumboElement bumboElement)
+        {
+            app = bumboElement.app;
+        }
+
+        private static void GrabAssets()
+        {
             AssetBundle assets = Windfall.assetBundle;
             if (assets == null)
             {
@@ -1653,8 +1702,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Grab Bum-bo head sprite
-            Sprite bumboHead = new Sprite();
-            switch (__instance.app.model.characterSheet.bumboType)
+            switch (app.model.characterSheet.bumboType)
             {
                 case CharacterSheet.BumboType.TheBrave:
                     bumboHead = assets.LoadAsset<Sprite>("Brave Head");
@@ -1678,283 +1726,297 @@ namespace The_Legend_of_Bum_bo_Windfall
                     bumboHead = assets.LoadAsset<Sprite>("Lost Head");
                     break;
             }
+        }
 
-            //Create map menu
+        private static void CreateMapMenuButton()
+        {
+            GameObject menuButton = app.view.GUICamera.transform.Find("HUD").Find("menu button").gameObject;
+
+            mapMenuButton = UnityEngine.Object.Instantiate(menuButton, new Vector3(1.21f, 2.09f, -4.71f), menuButton.transform.rotation, menuButton.transform.parent);
+
+            ButtonHoverAnimation mapHover = mapMenuButton.GetComponent<ButtonHoverAnimation>();
+            if (mapHover)
+            {
+                UnityEngine.Object.Destroy(mapHover);
+                mapMenuButton.transform.localScale = Vector3.Scale(mapMenuButton.transform.localScale, new Vector3(0.7f, 1f, 0.7f));
+                mapMenuButton.AddComponent<ButtonHoverAnimation>();
+            }
+            mapMenuButton.name = "Map Menu Button";
+        }
+
+        private static void CreateMapMenuCanvas()
+        {
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
 
             //Canvas
-            mapCanvas = new GameObject("Map Canvas");
-            mapCanvas.SetActive(false);
-            mapCanvas.layer = 5;
-            Canvas canvas = mapCanvas.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            GraphicRaycaster raycaster = mapCanvas.AddComponent<GraphicRaycaster>();
-            CanvasScaler scaler = mapCanvas.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            mapCanvas.transform.SetParent(__instance.app.view.transform);
-            mapCanvas.transform.SetAsFirstSibling();
-            mapCanvas.SetActive(false);
+            GameObject mapMenuCanvasPrefab = assets.LoadAsset<GameObject>("Map Menu Canvas");
+            mapMenuCanvas = UnityEngine.Object.Instantiate(mapMenuCanvasPrefab);
+            mapMenuCanvas.transform.SetParent(app.view.transform);
+            mapMenuCanvas.transform.SetAsFirstSibling();
+            mapMenuCanvas.SetActive(false);
 
-            //Background
-            Material frostedGlass = assets.LoadAsset<Material>("FrostedGlass");
-            frostedGlass.mainTexture = assets.LoadAsset<Texture2D>("Coins_Flat");
-            frostedGlass.color = Color.white;
-            frostedGlass.shader = assets.LoadAsset<Shader>("FrostedGlass");
-            GameObject mapBackground = SetupCanvasElement("Map Background", mapCanvas, new Vector2(0, 0), Vector2.zero, new Vector2(0, 0), new Vector2(1, 1), null, frostedGlass, Color.magenta, null);
+            //Mouse
+            mapCanvasMouse = GameObject.Instantiate(app.view.menuView.transform.Find("Mouse").gameObject);
+            mapCanvasMouse.layer = 5;
+            mapCanvasMouse.transform.SetParent(mapMenuCanvas.transform);
+            mapCanvasMouse.transform.localScale = new Vector3(2.4f, 2.4f, 2.4f);
 
-            //Exit
-            GameObject mapExit = SetupCanvasElement("Map Exit", mapCanvas, new Vector2(0, 42), new Vector2(125, 50), new Vector2(0.5f, 0), new Vector2(0.5f, 0), assets.LoadAsset<Sprite>("Exit"), null, Color.white, ExitMapMenu);
+            //Canvas children
+            mapCanvasBackground = mapMenuCanvas.transform.Find("Background").gameObject;
 
-            //Header
-            GameObject mapHeader = SetupCanvasElement("Map Header", mapCanvas, new Vector2(0, -60), new Vector2(60, 60), new Vector2(0.5f, 1), new Vector2(0.5f, 1), null, null, Color.white, null);
-            HorizontalLayoutGroup headerHorizontalLayoutGroup = mapHeader.AddComponent<HorizontalLayoutGroup>();
-            headerHorizontalLayoutGroup.padding = new RectOffset(5, 5, 5, 5);
-            headerHorizontalLayoutGroup.spacing = 8;
-            headerHorizontalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
-            headerHorizontalLayoutGroup.childControlHeight = true;
-            headerHorizontalLayoutGroup.childControlWidth = true;
-            ContentSizeFitter headerContentSizeFitter = mapHeader.AddComponent<ContentSizeFitter>();
-            headerContentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            headerContentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            mapCanvasHeader = mapMenuCanvas.transform.Find("Header").gameObject;
+            headerRectTransform = mapCanvasHeader.GetComponent<RectTransform>();
+            headerStartPos = headerRectTransform.anchoredPosition;
+            headerRectTransform.anchoredPosition = new Vector2(headerRectTransform.anchoredPosition.x, headerRectTransform.anchoredPosition.y + headerOffsetY);
 
-            //Chapters
+            mapCanvasRoomContainer = mapMenuCanvas.transform.Find("Room Container").gameObject;
+            roomContainerRectTransform = mapCanvasRoomContainer.GetComponent<RectTransform>();
+            roomContainerStartPos = roomContainerRectTransform.anchoredPosition;
+            roomContainerRectTransform.anchoredPosition = new Vector2(roomContainerRectTransform.anchoredPosition.x, roomContainerRectTransform.anchoredPosition.y + roomContainerOffsetY);
+
+            mapCanvasExit = mapMenuCanvas.transform.Find("Exit").gameObject;
+            exitRectTransform = mapCanvasExit.GetComponent<RectTransform>();
+            exitStartPos = exitRectTransform.anchoredPosition;
+            exitRectTransform.anchoredPosition = new Vector2(exitRectTransform.anchoredPosition.x, exitRectTransform.anchoredPosition.y + exitOffsetY);
+
+            //Set up canvas elements
+            SetUpHeader();
+            SetUpRooms();
+            SetupExit();
+        }
+
+        private static void SetUpHeader()
+        {
             int numberOfChapters;
-            Progression progression = __instance.app.model.progression;
+
+            Progression progression = app.model.progression;
             if (!progression.unlocks[0]) numberOfChapters = 1;
             else if (!progression.unlocks[1]) numberOfChapters = 2;
             else if (!progression.unlocks[2]) numberOfChapters = 3;
             else numberOfChapters = 4;
 
-            for (int chapterCounter = 0; chapterCounter < ((numberOfChapters * 2) - 1); chapterCounter++)
+            int lastActiveChapterIndex = (numberOfChapters * 4) - 3;
+
+            //Set active chapters
+            for (int childCounter = 0; childCounter < mapCanvasHeader.transform.childCount; childCounter++)
             {
-                UnityEngine.Events.UnityAction action;
-                string chapterText;
-                string chapterButtonName = (chapterCounter % 2 == 0) ? "Chapter " + ((chapterCounter/2) + 1).ToString() : "Wooden Nickel " + (((chapterCounter - 1) / 2) + 2).ToString();
-                switch (chapterCounter)
+                GameObject gameObject = mapCanvasHeader.transform.GetChild(childCounter).gameObject;
+
+                if (childCounter > lastActiveChapterIndex)
                 {
+                    gameObject.SetActive(false);
+                }
+                else
+                {
+                    gameObject.SetActive(true);
+                }
+            }
+
+            //Add button functionality
+            foreach (Button button in mapCanvasHeader.transform.GetComponentsInChildren<Button>(true))
+            {
+                UnityEngine.Events.UnityAction action = null;
+                bool isWoodenNickelButton = false;
+
+                int childIndex = button.transform.GetSiblingIndex();
+                switch (childIndex)
+                {
+                    default:
+                        isWoodenNickelButton = true;
+                        break;
                     case 0:
                         action = SwitchToChapter1;
-                        chapterText = "Sewers of Dross";
-                        break;
-                    case 2:
-                        action = SwitchToChapter2;
-                        chapterText = "Forlorn Hollow";
                         break;
                     case 4:
+                        action = SwitchToChapter2;
+                        break;
+                    case 8:
                         action = SwitchToChapter3;
-                        chapterText = "The Halls of Belial";
                         break;
-                    case 6:
+                    case 12:
                         action = SwitchToChapter4;
-                        chapterText = "The Basement";
-                        break;
-                    default:
-                        action = null;
-                        chapterText = "Wooden Nickel";
                         break;
                 }
-                //Chapter button
-                GameObject chapterButton = SetupCanvasElement(chapterButtonName + " Button", mapHeader, new Vector2(0, 0), new Vector2(50, 50), new Vector2(0, 1), new Vector2(0, 1), null, null, Color.white, action);
-                LayoutElement chapterButtonLayoutElement = chapterButton.AddComponent<LayoutElement>();
-                chapterButtonLayoutElement.preferredHeight = 50;
-                chapterButtonLayoutElement.preferredWidth = 50;
+
+                if (!isWoodenNickelButton)
+                {
+                    button.onClick.AddListener(action);
+                    button.gameObject.AddComponent<ButtonHoverAnimation>();
+                }
+
+                //Add button hover functionality
+
                 //Event triggers
-                EventTrigger chapterButtonEventTrigger = chapterButton.AddComponent<EventTrigger>();
+                EventTrigger chapterButtonEventTrigger = button.gameObject.GetComponent<EventTrigger>();
                 //Mouse enter trigger
                 EventTrigger.Entry mouseEnter = new EventTrigger.Entry();
                 mouseEnter.eventID = EventTriggerType.PointerEnter;
-                mouseEnter.callback.AddListener((data) => { MouseEnterChapterButton((PointerEventData)data, chapterButton); });
+                mouseEnter.callback.AddListener((data) => { MouseEnterChapterButton((PointerEventData)data, button.gameObject); });
                 chapterButtonEventTrigger.triggers.Add(mouseEnter);
                 //Mouse exit trigger
                 EventTrigger.Entry mouseExit = new EventTrigger.Entry();
                 mouseExit.eventID = EventTriggerType.PointerExit;
-                mouseExit.callback.AddListener((data) => { MouseExitChapterButton((PointerEventData)data, chapterButton); });
+                mouseExit.callback.AddListener((data) => { MouseExitChapterButton((PointerEventData)data, button.gameObject); });
                 chapterButtonEventTrigger.triggers.Add(mouseExit);
-
-                //Chapter label
-                GameObject chapterLabel = SetupCanvasElement(chapterButtonName + " Label", chapterButton, new Vector2(0, 0.9f), new Vector2(50, 50), new Vector2(0.5f, -0.24f), new Vector2(0.5f, -0.24f), null, null, Color.white, null);
-                chapterLabel.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                ContentSizeFitter chapterLabelContentSizeFitter = chapterLabel.AddComponent<ContentSizeFitter>();
-                VerticalLayoutGroup chapterLabelVerticalLayoutGroup = chapterLabel.AddComponent<VerticalLayoutGroup>();
-                chapterLabelVerticalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
-                chapterLabelVerticalLayoutGroup.childControlHeight = true;
-                chapterLabelVerticalLayoutGroup.childControlWidth = true;
-                chapterLabelContentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-                chapterLabelContentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-                chapterLabel.SetActive(false);
-                //Chapter label text
-                GameObject chapterLabelText = SetupCanvasElement(chapterButtonName + " Label Text", chapterLabel, new Vector2(0, 0), new Vector2(50, 50), new Vector2(0, 1), new Vector2(0, 1), null, null, Color.magenta, null);
-                chapterLabelText.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
-                Text chapterLabelTextComponent = chapterLabelText.AddComponent<Text>();
-                chapterLabelTextComponent.text = chapterText;
-                chapterLabelTextComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-                chapterLabelTextComponent.fontSize = 120;
-                chapterLabelTextComponent.color = Color.black;
-                chapterLabelTextComponent.alignment = TextAnchor.MiddleCenter;
-                chapterLabelTextComponent.horizontalOverflow = HorizontalWrapMode.Overflow;
-                chapterLabelTextComponent.verticalOverflow = VerticalWrapMode.Overflow;
-
-                //Chapter completed marker
-                GameObject chapterCompletedMarker = SetupCanvasElement(chapterButtonName + " Completed Marker", chapterButton, new Vector2(0, 0), new Vector2(40, 40), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), null, null, Color.black, null);
-
-                //Bum-bo chapter marker
-                GameObject bumboChapterMarker = SetupCanvasElement(chapterButtonName + " Bum-bo Marker", chapterButton, new Vector2(0, 30), new Vector2(40, 32), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), bumboHead, null, Color.white, null);
-                bumboChapterMarker.GetComponent<Image>().preserveAspect = true;
             }
 
-            //Room container
-            GameObject roomContainer = SetupCanvasElement("Room Container", mapCanvas, new Vector2(0, -10), new Vector2(620, 250), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), null, null, Color.white, null);
-            HorizontalLayoutGroup roomContainerHorizontalLayoutGroup = roomContainer.AddComponent<HorizontalLayoutGroup>();
-            roomContainerHorizontalLayoutGroup.spacing = 15;
-            roomContainerHorizontalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
-            roomContainerHorizontalLayoutGroup.childControlHeight = true;
-            roomContainerHorizontalLayoutGroup.childControlWidth = true;
-            roomContainerHorizontalLayoutGroup.childForceExpandHeight = false;
-            roomContainerHorizontalLayoutGroup.childForceExpandWidth = false;
-
-            //Rooms
-            for (int roomCounter = 0; roomCounter < 6; roomCounter++)
+            //Set Bum-bo sprites
+            for (int childCounter = 0; childCounter < mapCanvasHeader.transform.childCount; childCounter++)
             {
-                GameObject room = SetupCanvasElement("Room " + (roomCounter + 1).ToString(), roomContainer, new Vector2(0, 0), new Vector2(80, 80), new Vector2(0, 1), new Vector2(0, 1), null, null, Color.gray, null);
-                LayoutElement roomLayoutElement = room.AddComponent<LayoutElement>();
-                roomLayoutElement.preferredHeight = 80;
-                roomLayoutElement.preferredWidth = 80;
-                GameObject roomCompletedMarker = SetupCanvasElement("Room Completed Marker " + (roomCounter + 1).ToString(), room, new Vector2(0, 0), new Vector2(60, 60), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), null, null, Color.white, null);
-                GameObject bumboRoomMarker = SetupCanvasElement("Bum-bo Room Marker " + (roomCounter + 1).ToString(), room, new Vector2(0, 40), new Vector2(50, 40), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), bumboHead, null, Color.white, null);
-                bumboRoomMarker.GetComponent<Image>().preserveAspect = true;
-            }
-
-            //Mouse
-            GameObject mapMouse = GameObject.Instantiate(__instance.app.view.menuView.transform.Find("Mouse").gameObject);
-            mapMouse.layer = 5;
-            mapMouse.transform.SetParent(mapCanvas.transform);
-            mapMouse.transform.localScale = new Vector3(2.4f, 2.4f, 2.4f);
-        }
-
-        static GameObject SetupCanvasElement(string name, GameObject parent, Vector2 relativePosition, Vector2 size, Vector2 anchorMin, Vector2 anchorMax, Sprite sprite, Material material, Color color, UnityEngine.Events.UnityAction clickedEvent)
-        {
-            GameObject canvasElement = new GameObject(name);
-            canvasElement.layer = 5;
-            RectTransform elementTransform = canvasElement.AddComponent<RectTransform>();
-            canvasElement.transform.SetParent(parent.transform);
-            elementTransform.anchorMin = anchorMin;
-            elementTransform.anchorMax = anchorMax;
-            elementTransform.localPosition = relativePosition;
-            canvasElement.transform.localPosition = relativePosition;
-            elementTransform.offsetMin = new Vector2(relativePosition.x, relativePosition.y);
-            elementTransform.offsetMax = new Vector2(relativePosition.x, relativePosition.y);
-            if (size != Vector2.zero) elementTransform.sizeDelta = size;
-
-            if (material != null || sprite != null || color != Color.magenta)
-            {
-                Image elementImage = canvasElement.AddComponent<Image>();
-                if (material != null) elementImage.material = material;
-                if (sprite != null) elementImage.sprite = sprite;
-                if (color != Color.magenta) elementImage.color = color;
-            }
-
-            if (clickedEvent != null)
-            {
-                Button elementButton = canvasElement.AddComponent<Button>();
-                elementButton.onClick.AddListener(clickedEvent);
-                canvasElement.AddComponent<ButtonHoverAnimation>();
-            }
-
-            return canvasElement;
-        }
-
-        static void ExitMapMenu()
-        {
-            mapCanvas.SetActive(false);
-            mapMenuButton.GetComponent<MenuButtonView>().app.model.paused = false;
-        }
-
-        static void UpdateChapters()
-        {
-            BumboApplication app = mapMenuButton.GetComponent<MenuButtonView>().app;
-            for (int chapterCounter = 0; chapterCounter < 4; chapterCounter++)
-            {
-                bool gambling = app.view.gamblingView != null;
-                Transform chapterTransform = mapCanvas.transform.Find("Map Header").Find("Chapter " + (chapterCounter + 1).ToString() + " Button");
-                chapterTransform.Find("Chapter " + (chapterCounter + 1).ToString() + " Completed Marker").gameObject.SetActive((chapterCounter + 1) < app.model.characterSheet.currentFloor);
-                chapterTransform.Find("Chapter " + (chapterCounter + 1).ToString() + " Bum-bo Marker").gameObject.SetActive((chapterCounter + 1) == app.model.characterSheet.currentFloor && !gambling);
-
-                Transform woodenNickelTransform = mapCanvas.transform.Find("Map Header").Find("Wooden Nickel " + (chapterCounter + 1).ToString() + " Button");
-
-                if (woodenNickelTransform != null)
+                GameObject chapterMarker = mapCanvasHeader.transform.GetChild(childCounter).Find("Bum-bo Chapter Marker")?.gameObject;
+                if (chapterMarker)
                 {
-                    woodenNickelTransform.Find("Wooden Nickel " + (chapterCounter + 1).ToString() + " Completed Marker").gameObject.SetActive(((chapterCounter + 1) < app.model.characterSheet.currentFloor) || ((chapterCounter + 1) == app.model.characterSheet.currentFloor && !gambling));
-                    woodenNickelTransform.Find("Wooden Nickel " + (chapterCounter + 1).ToString() + " Bum-bo Marker").gameObject.SetActive((chapterCounter + 1) == app.model.characterSheet.currentFloor && gambling);
+                    chapterMarker.GetComponent<Image>().sprite = bumboHead;
                 }
             }
         }
 
-        static void SwitchToChapter1() { SwitchToChapter(1); }
-        static void SwitchToChapter2() { SwitchToChapter(2); }
-        static void SwitchToChapter3() { SwitchToChapter(3); }
-        static void SwitchToChapter4() { SwitchToChapter(4); }
-        static void SwitchToChapter(int chapterNumber)
+        private static void UpdateHeader()
         {
-            BumboApplication app = mapMenuButton.GetComponent<MenuButtonView>().app;
-            MapRoom[] mapRooms = SearchMap.FindMapRooms(app.model.mapModel);
+            //Move Bum-bo chapter marker
+            bool gambling = app.view.gamblingView != null;
 
-            //Update room markers
-            if (chapterNumber < app.model.characterSheet.currentFloor)
+            int currentChapterIndex = (app.model.characterSheet.currentFloor * 4) - (gambling ? 5 : 3);
+
+            for (int chapterCounter = 0; chapterCounter < mapCanvasHeader.transform.childCount; chapterCounter++)
             {
-                for (int roomCounter = 0; roomCounter < 6; roomCounter++)
+                GameObject chapterMarker = mapCanvasHeader.transform.GetChild(chapterCounter).Find("Bum-bo Chapter Marker")?.gameObject;
+                if (chapterMarker)
                 {
-                    Transform roomTransform = mapCanvas.transform.Find("Room Container").Find("Room " + (roomCounter + 1).ToString());
-                    roomTransform.Find("Room Completed Marker " + (roomCounter + 1).ToString()).gameObject.SetActive(true);
-                    roomTransform.Find("Bum-bo Room Marker " + (roomCounter + 1).ToString()).gameObject.SetActive(false);
-                }
-            }
-            if (chapterNumber > app.model.characterSheet.currentFloor)
-            {
-                for (int roomCounter = 0; roomCounter < 6; roomCounter++)
-                {
-                    Transform roomTransform = mapCanvas.transform.Find("Room Container").Find("Room " + (roomCounter + 1).ToString());
-                    roomTransform.Find("Room Completed Marker " + (roomCounter + 1).ToString()).gameObject.SetActive(false);
-                    roomTransform.Find("Bum-bo Room Marker " + (roomCounter + 1).ToString()).gameObject.SetActive(false);
-                }
-            }
-            if (chapterNumber == app.model.characterSheet.currentFloor)
-            {
-                for (int roomCounter = 0; roomCounter < 6; roomCounter++)
-                {
-                    bool gambling = app.view.gamblingView != null;
-                    Transform roomTransform = mapCanvas.transform.Find("Room Container").Find("Room " + (roomCounter + 1).ToString());
-                    roomTransform.Find("Room Completed Marker " + (roomCounter + 1).ToString()).gameObject.SetActive(mapRooms[roomCounter].cleared && !gambling);
-                    roomTransform.Find("Bum-bo Room Marker " + (roomCounter + 1).ToString()).gameObject.SetActive(mapRooms[roomCounter] == app.model.mapModel.currentRoom && !gambling);
+                    chapterMarker.SetActive(chapterCounter == currentChapterIndex - 1);
                 }
             }
         }
 
-        static void MouseEnterChapterButton(PointerEventData data, GameObject button)
+        private static void MouseEnterChapterButton(PointerEventData data, GameObject button)
         {
             button.transform.GetComponentInChildren<Text>(true).transform.parent.gameObject.SetActive(true);
         }
-        static void MouseExitChapterButton(PointerEventData data, GameObject button)
+        private static void MouseExitChapterButton(PointerEventData data, GameObject button)
         {
             button.transform.GetComponentInChildren<Text>(true).transform.parent.gameObject.SetActive(false);
         }
 
-        //Patch: Add click effect
-        [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "OnMouseDown")]
-        static bool MenuButtonView_OnMouseDown(MenuButtonView __instance, bool ___clickable)
+        private static void SetUpRooms()
         {
-            if (__instance.name == "Map Menu Button")
+            //Set Bum-bo sprites
+            for (int childCounter = 0; childCounter < mapCanvasRoomContainer.transform.childCount; childCounter++)
             {
-                mapCanvas.SetActive(true);
-                SwitchToChapter(__instance.app.model.characterSheet.currentFloor);
-                UpdateChapters();
-                __instance.app.model.paused = true;
-                return false;
+                GameObject roomMarker = mapCanvasRoomContainer.transform.GetChild(childCounter).Find("Bum-bo Room Marker")?.gameObject;
+                if (roomMarker)
+                {
+                    roomMarker.GetComponent<Image>().sprite = bumboHead;
+                }
             }
-            return true;
         }
 
-        //***************************************************
-        //***************************************************
-        //***************************************************
+        private static void SwitchToChapter1() { UpdateSelectedChapter(1); }
+        private static void SwitchToChapter2() { UpdateSelectedChapter(2); }
+        private static void SwitchToChapter3() { UpdateSelectedChapter(3); }
+        private static void SwitchToChapter4() { UpdateSelectedChapter(4); }
+        private static void UpdateSelectedChapter(int chapter)
+        {
+            MapRoom[] mapRooms = SearchMap.FindMapRooms(app.model.mapModel);
+
+            bool gambling = app.view.gamblingView != null;
+
+            //Move Bum-bo room marker and change opacity of rooms
+            for (int roomCounter = 1; roomCounter < 7; roomCounter++)
+            {
+                Transform roomTransform = mapCanvasRoomContainer.transform.Find("Room " + roomCounter.ToString());
+                Transform arrowTransform = mapCanvasRoomContainer.transform.Find("Arrow " + roomCounter.ToString());
+
+                Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((mapRooms[roomCounter - 1].visited) && !gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
+
+                if (roomTransform != null)
+                {
+                    roomTransform.Find("Bum-bo Room Marker").gameObject.SetActive(chapter == app.model.characterSheet.currentFloor ? (mapRooms[roomCounter - 1] == app.model.mapModel.currentRoom && !gambling) : false);
+
+                    if (roomTransform.GetComponent<Image>().color != null)
+                    {
+                        roomTransform.GetComponent<Image>().color = color;
+                    }
+                }
+
+                //Arrows are always at full opacity
+                /*
+                if (arrowTransform != null)
+                {
+                    if (arrowTransform.GetComponent<Image>().color != null)
+                    {
+                        arrowTransform.GetComponent<Image>().color = color;
+                    }
+                }
+                */
+            }
+        }
+
+        private static void SetupExit()
+        {
+            Button button = mapCanvasExit.GetComponent<Button>();
+            button.onClick.AddListener(CloseMapMenu);
+            button.gameObject.AddComponent<ButtonHoverAnimation>();
+        }
+
+        private static Sequence frostedGlassSequence;
+        private static int FrostedGlassRadius { get { return mapCanvasBackground.GetComponent<Image>().material.GetInt("_Radius"); } set { mapCanvasBackground.GetComponent<Image>().material.SetInt("_Radius", value); } }
+        private static float MapCanvasHeaderY { get { return headerRectTransform.anchoredPosition.y; } set { headerRectTransform.anchoredPosition = new Vector2(headerRectTransform.anchoredPosition.x, value); } }
+        private static float MapCanvasRoomContainerY { get { return roomContainerRectTransform.anchoredPosition.y; } set { roomContainerRectTransform.anchoredPosition = new Vector2(roomContainerRectTransform.anchoredPosition.x, value); } }
+        private static float MapCanvasExitY { get { return exitRectTransform.anchoredPosition.y; } set { exitRectTransform.anchoredPosition = new Vector2(exitRectTransform.anchoredPosition.x, value); } }
+
+        public static void OpenMapMenu()
+        {
+            //Hide labels
+            foreach (Text labelText in mapCanvasHeader.GetComponentsInChildren<Text>(true))
+            {
+                labelText.transform.parent.gameObject.SetActive(false);
+            }
+
+            //Open menu
+            UpdateHeader();
+            UpdateSelectedChapter(app.model.characterSheet.currentFloor);
+            mapMenuCanvas.SetActive(true);
+            app.model.paused = true;
+
+            //Initialize sequence
+            if (frostedGlassSequence != null) frostedGlassSequence.Kill(false);
+            frostedGlassSequence = DOTween.Sequence();
+
+            //Add blur
+            frostedGlassSequence.Append(DOTween.To(() => FrostedGlassRadius, x => FrostedGlassRadius = x, 7, 0.4f));
+
+            //Reveal foreground canvas elements
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y, 0.4f)).SetEase(Ease.OutQuad);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y, 0.4f)).SetEase(Ease.OutQuad);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y, 0.4f)).SetEase(Ease.OutQuad);
+        }
+
+        private static void CloseMapMenu()
+        {
+            //Initialize sequence
+            if (frostedGlassSequence != null) frostedGlassSequence.Kill(false);
+            frostedGlassSequence = DOTween.Sequence();
+
+            //Remove blur
+            frostedGlassSequence.Append(DOTween.To(() => FrostedGlassRadius, x => FrostedGlassRadius = x, 0, 0.4f));
+
+            //Hide foreground canvas elements
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y + headerOffsetY, 0.4f)).SetEase(Ease.OutQuad);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y + roomContainerOffsetY, 0.4f)).SetEase(Ease.OutQuad);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y + exitOffsetY, 0.4f)).SetEase(Ease.OutQuad);
+
+            frostedGlassSequence.AppendCallback(delegate
+            {
+                //Close menu
+                mapMenuCanvas.SetActive(false);
+                mapMenuButton.GetComponent<MenuButtonView>().app.model.paused = false;
+            });
+        }
     }
 
     static class SearchMap

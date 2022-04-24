@@ -1985,7 +1985,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(RockFriendsSpell), MethodType.Constructor)]
 		static void RockFriendsSpell_Constructor(RockFriendsSpell __instance)
 		{
-			__instance.Name = "Hits Random Enemies = to Spell Damage";
+			__instance.Name = "Hits Enemies = to Spell Damage";
 		}
 
 		//Patch: Changes Attack Fly spell damage to incorporate the player's spell damage stat
