@@ -1667,6 +1667,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static GameObject mapCanvasRoomContainer;
         private static Vector2 roomContainerStartPos;
         private static RectTransform roomContainerRectTransform;
+        private static float roomContainerOffsetX = -800;
         private static float roomContainerOffsetY = 350;
 
         private static GameObject mapCanvasExit;
@@ -1943,43 +1944,98 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        private static void SwitchToChapter1() { UpdateSelectedChapter(1); }
-        private static void SwitchToChapter2() { UpdateSelectedChapter(2); }
-        private static void SwitchToChapter3() { UpdateSelectedChapter(3); }
-        private static void SwitchToChapter4() { UpdateSelectedChapter(4); }
-        private static void UpdateSelectedChapter(int chapter)
+        private static int currentSelectedChapter = 0;
+
+        private static Sequence changeChapterSequence;
+
+        private static float MapCanvasRoomContainerX { get { return roomContainerRectTransform.anchoredPosition.x; } set { roomContainerRectTransform.anchoredPosition = new Vector2(value, roomContainerRectTransform.anchoredPosition.y); } }
+
+        private static void SwitchToChapter1() { UpdateSelectedChapter(1, true); }
+        private static void SwitchToChapter2() { UpdateSelectedChapter(2, true); }
+        private static void SwitchToChapter3() { UpdateSelectedChapter(3, true); }
+        private static void SwitchToChapter4() { UpdateSelectedChapter(4, true); }
+        private static void UpdateSelectedChapter(int chapter, bool animate)
         {
-            MapRoom[] mapRooms = SearchMap.FindMapRooms(app.model.mapModel);
-
-            //Move Bum-bo room marker and change opacity of rooms
-            for (int roomCounter = 1; roomCounter < 7; roomCounter++)
+            if (chapter == currentSelectedChapter)
             {
-                Transform roomTransform = mapCanvasRoomContainer.transform.Find("Room " + roomCounter.ToString());
-                Transform arrowTransform = mapCanvasRoomContainer.transform.Find("Arrow " + roomCounter.ToString());
-
-                Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((mapRooms[roomCounter - 1].visited) && !Gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
-
-                if (roomTransform != null)
-                {
-                    roomTransform.Find("Bum-bo Room Marker").gameObject.SetActive(chapter == app.model.characterSheet.currentFloor ? (mapRooms[roomCounter - 1] == app.model.mapModel.currentRoom && !Gambling) : false);
-
-                    if (roomTransform.GetComponent<Image>().color != null)
-                    {
-                        roomTransform.GetComponent<Image>().color = color;
-                    }
-                }
-
-                //Arrows are always at full opacity
-                /*
-                if (arrowTransform != null)
-                {
-                    if (arrowTransform.GetComponent<Image>().color != null)
-                    {
-                        arrowTransform.GetComponent<Image>().color = color;
-                    }
-                }
-                */
+                return;
             }
+
+            float modifiedRoomContainerOffsetX = roomContainerOffsetX;
+            
+            //Reverse direction if selecting a lower chapter
+            if (chapter < currentSelectedChapter)
+            {
+                modifiedRoomContainerOffsetX = -roomContainerOffsetX;
+            }
+
+            //Halt current sequence if it hasn't completed
+            if (changeChapterSequence != null) frostedGlassSequence.Kill(false);
+
+            changeChapterSequence = DOTween.Sequence();
+
+            if (animate)
+            {
+                //Move room container to the side
+                changeChapterSequence.Append(DOTween.To(() => MapCanvasRoomContainerX, x => MapCanvasRoomContainerX = x, roomContainerStartPos.x + modifiedRoomContainerOffsetX, 0.4f));
+            }
+
+            //Update room visuals
+            changeChapterSequence.AppendCallback(delegate
+            {
+
+                MapRoom[] mapRooms = SearchMap.FindMapRooms(app.model.mapModel);
+
+                //Move Bum-bo room marker and change opacity of rooms
+                for (int roomCounter = 1; roomCounter < 7; roomCounter++)
+                {
+                    Transform roomTransform = mapCanvasRoomContainer.transform.Find("Room " + roomCounter.ToString());
+                    Transform arrowTransform = mapCanvasRoomContainer.transform.Find("Arrow " + roomCounter.ToString());
+
+                    Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((mapRooms[roomCounter - 1].visited) && !Gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
+
+                    if (roomTransform != null)
+                    {
+                        roomTransform.Find("Bum-bo Room Marker").gameObject.SetActive(chapter == app.model.characterSheet.currentFloor ? (mapRooms[roomCounter - 1] == app.model.mapModel.currentRoom && !Gambling) : false);
+
+                        if (roomTransform.GetComponent<Image>().color != null)
+                        {
+                            roomTransform.GetComponent<Image>().color = color;
+                        }
+                    }
+
+                    //Arrows are always at full opacity
+                    /*
+                    if (arrowTransform != null)
+                    {
+                        if (arrowTransform.GetComponent<Image>().color != null)
+                        {
+                            arrowTransform.GetComponent<Image>().color = color;
+                        }
+                    }
+                    */
+                }
+            });
+
+            if (animate)
+            {
+                changeChapterSequence.AppendCallback(delegate
+                {
+                    //Move room container to the opposite side
+                    MapCanvasRoomContainerX = roomContainerStartPos.x - modifiedRoomContainerOffsetX;
+                });
+            }
+
+            if (animate)
+            {
+                changeChapterSequence.AppendInterval(0.05f);
+
+                //Move room container back to the center
+                changeChapterSequence.Append(DOTween.To(() => MapCanvasRoomContainerX, x => MapCanvasRoomContainerX = x, roomContainerStartPos.x, 0.4f).SetEase(mapTweeningEase));
+            }
+
+            //Update selected chapter
+            currentSelectedChapter = chapter;
         }
 
         private static void SetupExit()
@@ -2005,7 +2061,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Open menu
             UpdateHeader();
-            UpdateSelectedChapter(app.model.characterSheet.currentFloor);
+            UpdateSelectedChapter(app.model.characterSheet.currentFloor, false);
             mapMenuCanvas.SetActive(true);
             app.model.paused = true;
 
