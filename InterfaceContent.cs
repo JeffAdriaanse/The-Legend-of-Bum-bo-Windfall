@@ -1677,7 +1677,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static GameObject mapCanvasMouse;
 
-        private static float opacityValue = 0.6f;
+        private static float opacityValue = 0.5f;
 
         private static Ease mapTweeningEase = Ease.OutQuad;
 

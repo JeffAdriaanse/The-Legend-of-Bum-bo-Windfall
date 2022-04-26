@@ -611,22 +611,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes spell/trinket inventory hover sounds playing while the pause menu is open
+        //Also prevents hover animations when in the pause/map menu
         [HarmonyPostfix, HarmonyPatch(typeof(ButtonHoverAnimation), "CheckEnabled")]
-        static void ButtonHoverAnimation_CheckEnabled(ButtonHoverAnimation __instance, ref bool __result, SpellView ___spellView, TrinketView ___trinketView)
+        static void ButtonHoverAnimation_CheckEnabled(ButtonHoverAnimation __instance, ref bool __result, RectTransform ___rectTransform)
         {
-            if (___spellView != null)
+            if (__instance.app != null && __instance.app.model.paused && ___rectTransform == null)
             {
-                if (__instance.app.model.paused)
-                {
-                    __result = false;
-                }
-            }
-            else if (___trinketView != null)
-            {
-                if (__instance.app.model.paused)
-                {
-                    __result = false;
-                }
+                __result = false;
             }
         }
 
