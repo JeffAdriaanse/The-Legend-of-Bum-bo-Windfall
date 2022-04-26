@@ -1622,7 +1622,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "OnMouseDown")]
         static bool MenuButtonView_OnMouseDown(MenuButtonView __instance, bool ___clickable)
         {
-            if (__instance.name == "Map Menu Button")
+            if (__instance.name == ("Map Menu Button") || __instance.name ==  "Gambling Map Menu Button")
             {
                 MapMenu.OpenMapMenu();
                 return false;
@@ -1637,6 +1637,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             MapMenu.CreateMapMenu(__instance);
         }
 
+        //Patch: Create gambling map menu button
+        [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "Start")]
+        static void GamblingController_Init(GamblingController __instance)
+        {
+            MapMenu.CreateGamblingMapMenuButton();
+        }
+
         //***************************************************
         //***************************************************
         //***************************************************
@@ -1647,6 +1654,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static BumboApplication app;
 
         private static GameObject mapMenuButton;
+        private static GameObject gamblingMapMenuButton;
 
         public static GameObject mapMenuCanvas;
         private static GameObject mapCanvasBackground;
@@ -1670,7 +1678,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static float opacityValue = 0.6f;
 
+        private static Ease mapTweeningEase = Ease.OutQuad;
+
         private static Sprite bumboHead;
+
+        private static bool Gambling { get { return app.view.gamblingView != null; } }
 
         public static void CreateMapMenu(BumboElement bumboElement)
         {
@@ -1742,6 +1754,24 @@ namespace The_Legend_of_Bum_bo_Windfall
                 mapMenuButton.AddComponent<ButtonHoverAnimation>();
             }
             mapMenuButton.name = "Map Menu Button";
+        }
+
+        public static void CreateGamblingMapMenuButton()
+        {
+            if (!Gambling) return;
+
+            GameObject menuButton = app.view.GUICamera.transform.Find("HUD").Find("menu button").gameObject;
+
+            gamblingMapMenuButton = UnityEngine.Object.Instantiate(menuButton, new Vector3(1.21f, 2.09f, -4.71f), menuButton.transform.rotation, menuButton.transform.parent);
+
+            ButtonHoverAnimation mapHover = gamblingMapMenuButton.GetComponent<ButtonHoverAnimation>();
+            if (mapHover)
+            {
+                UnityEngine.Object.Destroy(mapHover);
+                gamblingMapMenuButton.transform.localScale = Vector3.Scale(gamblingMapMenuButton.transform.localScale, new Vector3(0.7f, 1f, 0.7f));
+                gamblingMapMenuButton.AddComponent<ButtonHoverAnimation>();
+            }
+            gamblingMapMenuButton.name = "Gambling Map Menu Button";
         }
 
         private static void CreateMapMenuCanvas()
@@ -1879,9 +1909,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void UpdateHeader()
         {
             //Move Bum-bo chapter marker
-            bool gambling = app.view.gamblingView != null;
-
-            int currentChapterIndex = (app.model.characterSheet.currentFloor * 4) - (gambling ? 5 : 3);
+            int currentChapterIndex = (app.model.characterSheet.currentFloor * 4) - (Gambling ? 5 : 3);
 
             for (int chapterCounter = 0; chapterCounter < mapCanvasHeader.transform.childCount; chapterCounter++)
             {
@@ -1923,19 +1951,17 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             MapRoom[] mapRooms = SearchMap.FindMapRooms(app.model.mapModel);
 
-            bool gambling = app.view.gamblingView != null;
-
             //Move Bum-bo room marker and change opacity of rooms
             for (int roomCounter = 1; roomCounter < 7; roomCounter++)
             {
                 Transform roomTransform = mapCanvasRoomContainer.transform.Find("Room " + roomCounter.ToString());
                 Transform arrowTransform = mapCanvasRoomContainer.transform.Find("Arrow " + roomCounter.ToString());
 
-                Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((mapRooms[roomCounter - 1].visited) && !gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
+                Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((mapRooms[roomCounter - 1].visited) && !Gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
 
                 if (roomTransform != null)
                 {
-                    roomTransform.Find("Bum-bo Room Marker").gameObject.SetActive(chapter == app.model.characterSheet.currentFloor ? (mapRooms[roomCounter - 1] == app.model.mapModel.currentRoom && !gambling) : false);
+                    roomTransform.Find("Bum-bo Room Marker").gameObject.SetActive(chapter == app.model.characterSheet.currentFloor ? (mapRooms[roomCounter - 1] == app.model.mapModel.currentRoom && !Gambling) : false);
 
                     if (roomTransform.GetComponent<Image>().color != null)
                     {
@@ -1991,9 +2017,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             frostedGlassSequence.Append(DOTween.To(() => FrostedGlassRadius, x => FrostedGlassRadius = x, 7, 0.4f));
 
             //Reveal foreground canvas elements
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y, 0.4f)).SetEase(Ease.OutQuad);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y, 0.4f)).SetEase(Ease.OutQuad);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y, 0.4f)).SetEase(Ease.OutQuad);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y, 0.4f)).SetEase(mapTweeningEase);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y, 0.4f)).SetEase(mapTweeningEase);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y, 0.4f)).SetEase(mapTweeningEase);
         }
 
         private static void CloseMapMenu()
@@ -2006,15 +2032,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             frostedGlassSequence.Append(DOTween.To(() => FrostedGlassRadius, x => FrostedGlassRadius = x, 0, 0.4f));
 
             //Hide foreground canvas elements
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y + headerOffsetY, 0.4f)).SetEase(Ease.OutQuad);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y + roomContainerOffsetY, 0.4f)).SetEase(Ease.OutQuad);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y + exitOffsetY, 0.4f)).SetEase(Ease.OutQuad);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y + headerOffsetY, 0.4f)).SetEase(mapTweeningEase);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y + roomContainerOffsetY, 0.4f)).SetEase(mapTweeningEase);
+            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y + exitOffsetY, 0.4f)).SetEase(mapTweeningEase);
 
             frostedGlassSequence.AppendCallback(delegate
             {
                 //Close menu
                 mapMenuCanvas.SetActive(false);
-                mapMenuButton.GetComponent<MenuButtonView>().app.model.paused = false;
+                app.model.paused = false;
             });
         }
     }
