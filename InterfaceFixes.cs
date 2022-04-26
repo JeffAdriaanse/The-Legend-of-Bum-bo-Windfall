@@ -307,10 +307,21 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Disables the end turn sign collider when it spawns, preventing it from being clicked while above the play area
         [HarmonyPostfix, HarmonyPatch(typeof(EndTurnView), "Start")]
-        static void EndTurn_Start(EndTurnView __instance)
+        static void EndTurnView_Start(EndTurnView __instance)
         {
             __instance.GetComponent<BoxCollider>().enabled = false;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling end turn sign collider on start");
+        }
+
+        //Patch: Prevents end turn sign from being clicked while the game is paused
+        [HarmonyPrefix, HarmonyPatch(typeof(EndTurnView), "OnMouseDown")]
+        static bool EndTurnView_OnMouseDown(EndTurnView __instance)
+        {
+            if (__instance.app.model.paused)
+            {
+                return false;
+            }
+            return true;
         }
 
         //Patch: Fixes a bug causing the 'options' sub-menu to not open in the Wooden Nickel
@@ -804,6 +815,17 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void GamblingNavigation_Show(GamblingNavigation __instance)
         {
             __instance.MakeClickable(true);
+        }
+
+        //Patch: Prevents arrows from being clickable while the game is paused
+        [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "OnMouseDown")]
+        static bool GamblingNavigation_OnMouseDown(GamblingNavigation __instance)
+        {
+            if (__instance.app.model.paused)
+            {
+                return false;
+            }
+            return true;
         }
         //***************************************************
         //***************************************************
