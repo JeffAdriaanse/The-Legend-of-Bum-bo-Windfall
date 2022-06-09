@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using TMPro;
 using DG.Tweening;
 using System.IO;
+using UnityEngine.UI;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -623,12 +624,23 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Fixes spell/trinket inventory hover sounds playing while the pause menu is open
         //Also prevents hover animations when in the pause/map menu
+        //Also prevents dropdown from changing size while open
         [HarmonyPostfix, HarmonyPatch(typeof(ButtonHoverAnimation), "CheckEnabled")]
         static void ButtonHoverAnimation_CheckEnabled(ButtonHoverAnimation __instance, ref bool __result, RectTransform ___rectTransform)
         {
             if (__instance.app != null && __instance.app.model.paused && ___rectTransform == null)
             {
                 __result = false;
+            }
+
+            Dropdown dropdown = __instance.GetComponent<Dropdown>();
+            if (dropdown != null)
+            {
+                Transform list = dropdown.transform.Find("Dropdown List");
+                if (list != null && list.gameObject.activeSelf)
+                {
+                    __result = false;
+                }
             }
         }
 
@@ -963,6 +975,23 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             wheelSliceHeart.GetComponent<MeshRenderer>().material.mainTexture = texture;
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stat wheel heart texture");
+        }
+
+        //Patch: Changes wheel back mesh to remove red spot
+        [HarmonyPostfix, HarmonyPatch(typeof(WheelView), "Start")]
+        static void WheelView_Start_Wheel_Back(WheelView __instance)
+        {
+            GameObject wheelBack = __instance.transform.Find("Wheel_Back").gameObject;
+
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+            var mesh = assets.LoadAsset<Mesh>("Wheel_Back_Updated");
+
+            wheelBack.GetComponent<MeshFilter>().mesh = mesh;
         }
 
         //Patch: Changes mesh of use spell icon to fix texture mapping issue

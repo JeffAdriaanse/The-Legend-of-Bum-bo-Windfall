@@ -18,6 +18,41 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible related bug fixes");
         }
 
+        //Patch: Prevents glitched trinkets from randomizing a second time when starting a chapter or reloading a save
+        //Specifically, the method will be aborted if 'goIdle' is true (which is the case when roomStartEvent is triggered by floorStartEvent, not moveIntoRoomEvent)
+        //Also prevents glitched trinkets from randomizing the first time when reloading a save so as to not overwrite loaded glitched trinkets
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), nameof(BumboController.PrestartRoom))]
+        static bool BumboController_PrestartRoom(BumboController __instance)
+        {
+            if (WindfallSavedState.IsLoading() || (__instance.app.model.bumboEvent.GetType() == typeof(RoomStartEvent) && (bool)AccessTools.Field(typeof(RoomStartEvent), "goIdle").GetValue(__instance.app.model.bumboEvent)))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Logs glitched trinkets
+        [HarmonyPostfix, HarmonyPatch(typeof(GlitchTrinket), nameof(GlitchTrinket.ChangeTrinket))]
+        static void GlitchTrinket_ChangeTrinket(GlitchTrinket __instance, int _index)
+        {
+            TrinketElement[] fakeTrinkets = __instance.app.model.fakeTrinkets;
+            if (fakeTrinkets != null && fakeTrinkets[_index] != null)
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Fake trinket at index " + _index + ": " + fakeTrinkets[_index].Name);
+            }
+        }
+
+        //Patch: Fixes Breakfast activating a second time when reloading a save
+        [HarmonyPostfix, HarmonyPatch(typeof(BreakfastTrinket), "AddToHealth")]
+        static void BreakfastTrinket_AddToHealth(BreakfastTrinket __instance, ref float __result)
+        {
+            if (__instance.app.controller.savedStateController.IsLoading())
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Breakfast from granting health when reloading a save");
+                __result = 0f;
+            }
+        }
+
         //Patch: Fixes Pink Bow granting soul health past the maximum of six total hearts
         [HarmonyPrefix, HarmonyPatch(typeof(PinkBowTrinket), "EndChapter")]
         static bool PinkBowTrinket_EndChapter(PinkBowTrinket __instance)
@@ -744,9 +779,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         //**********Spell Retrieval Performance**************
         //***************************************************
         //Patch: Improves performance of Empty Hidden Trinket
+        //Also fixes Empty Hidden Trinket activating a second time when reloading a save
         [HarmonyPrefix, HarmonyPatch(typeof(EmptyHiddenTrinket), "StartRoom")]
         static bool EmptyHiddenTrinket_StartRoom(EmptyHiddenTrinket __instance)
         {
+            if (__instance.app.controller.savedStateController.IsLoading())
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Empty Hidden Trinket from rerolling spells when reloading a save");
+                return false;
+            }
+
             List<List<SpellName>> list = new List<List<SpellName>>();
             //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
             list.Add(new List<SpellName>(FastSpellRetrieval.AttackSpells));
@@ -791,9 +833,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Improves performance of Rainbow Bag
+        //Also fixes Rainbow Bag activating a second time when reloading a save
         [HarmonyPrefix, HarmonyPatch(typeof(RainbowBagTrinket), "StartRoom")]
         static bool RainbowBagTrinket_StartRoom(RainbowBagTrinket __instance)
         {
+            if (__instance.app.controller.savedStateController.IsLoading())
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Rainbow Bag from rerolling spells when reloading a save");
+                return false;
+            }
+
             List<List<SpellName>> list = new List<List<SpellName>>();
             //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
             list.Add(new List<SpellName>(FastSpellRetrieval.AttackSpells));

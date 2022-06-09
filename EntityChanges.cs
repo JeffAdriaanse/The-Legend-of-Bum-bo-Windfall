@@ -16,6 +16,56 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity changes");
         }
 
+		//Changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
+		//Champions are now more common once the player has unlocked 'Everything Is Terrible!'
+		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), nameof(BumboController.MakeAChampion))]
+		static bool BumboController_MakeAChampion(BumboController __instance)
+		{
+			if (WindfallSavedState.IsLoading())
+			{
+				return true;
+			}
+
+			float[] array = new float[]
+			{
+				0f,
+				0.1f,
+				0.125f,
+				0.15f,
+				0.175f
+			};
+			float NegaCrownMultiplier = 1f;
+			float difficultyMultiplier = (!__instance.app.model.progression.unlocks[7]) ? 0.5f : 0.7f;
+			for (int i = 0; i < __instance.app.model.characterSheet.trinkets.Count; i++)
+			{
+				NegaCrownMultiplier -= __instance.GetTrinket(i).ChampionChance();
+			}
+			if (__instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Boss)
+			{
+				List<Enemy> list = new List<Enemy>();
+				for (int j = 0; j < __instance.app.model.enemies.Count; j++)
+				{
+					if (__instance.app.model.enemies[j].alive && __instance.app.model.enemies[j].championType == Enemy.ChampionType.NotAChampion)
+					{
+						list.Add(__instance.app.model.enemies[j]);
+					}
+				}
+				while (list.Count > 0)
+				{
+					int index = UnityEngine.Random.Range(0, list.Count);
+					if (UnityEngine.Random.Range(0f, 1f) < array[__instance.app.model.characterSheet.currentFloor] * NegaCrownMultiplier * difficultyMultiplier)
+					{
+						Enemy.ChampionType champion = (Enemy.ChampionType)UnityEngine.Random.Range(1, 10);
+						list[index].SetChampion(champion);
+						list[index].Init();
+					}
+					list.RemoveAt(index);
+				}
+			}
+			return false;
+		}
+
+
 		//Patch: Equalizes the chances between lanes when Loaf is determining where to spawn Corn Dips
 		[HarmonyPrefix, HarmonyPatch(typeof(LoafBoss), "SpawnDips")]
 		static bool LoafBoss_SpawnDips(LoafBoss __instance, int _spawn_y, ref bool __result)
@@ -102,7 +152,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__result = true;
 			return false;
 		}
-
 
 		//Patch: Reduces Tainted Peeper's moves by one
 		[HarmonyPostfix, HarmonyPatch(typeof(PeepsBoss), "Init")]

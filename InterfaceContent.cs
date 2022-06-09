@@ -99,467 +99,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //***************************************************
-        //******************Entity Tooltips******************
-        //***************************************************
-
-        ////Patch: Adding box collider to enemy on BaseInit
-        //[HarmonyPostfix, HarmonyPatch(typeof(Enemy), "BaseInit")]
-        //static void Enemy_BaseInit(Enemy __instance)
-        //{
-        //    BoxCollider boxCollider;
-        //    if (__instance.gameObject.GetComponent<BoxCollider>())
-        //    {
-        //        boxCollider = __instance.gameObject.GetComponent<BoxCollider>();
-        //        boxCollider.enabled = true;
-        //    }
-        //    else
-        //    {
-        //        boxCollider = __instance.gameObject.AddComponent<BoxCollider>();
-        //    }
-        //    boxCollider.center = new Vector3(0, __instance.enemyType != Enemy.EnemyType.Ground ? 1.2f : 0.25f, 0);
-        //    boxCollider.size = new Vector3(0.8f, 0.8f, 0.2f);
-        //    Console.WriteLine("[The Legend of Bum-bo: Windfall] Adding box collider to " + __instance.enemyName);
-        //}
-
-        //////Patch: Hiding tooltip when StartMonsterTurnEvent is executed 
-        ////[HarmonyPostfix, HarmonyPatch(typeof(StartMonsterTurnEvent), "Execute")]
-        ////static void StartMonsterTurnEvent_Execute(StartMonsterTurnEvent __instance)
-        ////{
-        ////    __instance.app.view.toolTip.Hide();
-        ////    Console.WriteLine("[The Legend of Bum-bo: Windfall] Hiding tooltip on StartMonsterTurnEvent");
-        ////}
-
-        ////Patch: Hijacking BumboController update method to use tooltip for enemy box colliders
-        //[HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Update")]
-        //static void BumboController_Update(BumboController __instance)
-        //{
-        //    if (__instance.app.controller.loadingController != null || __instance.app.view.gamblingView != null)
-        //    {
-        //        //Abort if game is loading or if player is in Wooden Nickel
-        //        return;
-        //    }
-        //    //Disable enemy box colliders when not in IdleEvent or ChanceToCastSpellEvent
-        //    for (int j = 0; j < __instance.app.model.enemies.Count; j++)
-        //    {
-        //        if (__instance.app.model.enemies[j].GetComponent<BoxCollider>())
-        //        {
-        //            if (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent")
-        //            {
-        //                if (!__instance.app.model.enemies[j].GetComponent<BoxCollider>().enabled)
-        //                {
-        //                    __instance.app.model.enemies[j].GetComponent<BoxCollider>().enabled = true;
-        //                }
-        //            }
-        //            else
-        //            {
-        //                if (__instance.app.model.enemies[j].GetComponent<BoxCollider>().enabled)
-        //                {
-        //                    __instance.app.model.enemies[j].GetComponent<BoxCollider>().enabled = false;
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    Color tintColor = new Color(0.5f, 0.5f, 0.5f);
-
-        //    Ray ray = __instance.app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
-        //    RaycastHit[] hits = Physics.RaycastAll(ray);
-        //    bool hitValidCollider = false;
-
-        //    float closestEnemyDistance = float.PositiveInfinity;
-        //    Enemy selectedEnemy = null;
-
-        //    //Find closest enemy
-        //    Enemy closestHitEnemy = null;
-        //    for (int i = 0; i < hits.Length; i++)
-        //    {
-        //        RaycastHit hit = hits[i];
-        //        Enemy enemy = hit.collider.GetComponent<Enemy>();
-        //        //Check whether any tooltip related colliders were hit
-        //        if (enemy || hit.collider.GetComponent<BumboFacesController>() || hit.collider.GetComponent<TrinketView>())
-        //        {
-        //            hitValidCollider = true;
-        //        }
-        //        if (enemy && hit.distance < closestEnemyDistance)
-        //        {
-        //            closestEnemyDistance = hit.distance;
-        //            closestHitEnemy = enemy;
-        //        }
-        //    }
-
-        //    if (__instance.app.view.gamblingView == null || __instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent")
-        //    {
-        //        //Find second closest enemy if mouse button is currently pressed
-        //        closestEnemyDistance = float.PositiveInfinity;
-        //        Enemy secondClosestHitEnemy = null;
-        //        if (Input.GetMouseButton(0))
-        //        {
-        //            for (int i = 0; i < hits.Length; i++)
-        //            {
-        //                RaycastHit hit = hits[i];
-        //                Enemy enemy = hit.collider.GetComponent<Enemy>();
-        //                //Exclude closest hit enemy
-        //                if (enemy && hit.distance < closestEnemyDistance && enemy != closestHitEnemy)
-        //                {
-        //                    closestEnemyDistance = hit.distance;
-        //                    secondClosestHitEnemy = enemy;
-        //                }
-        //            }
-
-        //            if (secondClosestHitEnemy != null)
-        //            {
-        //                selectedEnemy = secondClosestHitEnemy;
-        //            }
-        //        }
-
-        //        if (selectedEnemy == null && closestHitEnemy != null)
-        //        {
-        //            selectedEnemy = closestHitEnemy;
-        //        }
-
-        //        if (selectedEnemy != null && (__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent"))
-        //        {
-        //            selectedEnemy.objectTinter.Tint(tintColor);
-
-        //            Vector3 mousePos = Input.mousePosition;
-        //            mousePos.z = Camera.main.nearClipPlane + 0.8f;
-        //            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(mousePos);
-
-        //            //Grab enemy name
-        //            string newEnemyName = selectedEnemy.enemyName.ToString() == "None" ? "" : selectedEnemy.enemyName.ToString();
-        //            //Grab boss name if boss
-        //            Boss selectedBoss = selectedEnemy.GetComponent<Boss>();
-        //            if (newEnemyName == "" && selectedBoss)
-        //            {
-        //                newEnemyName = selectedBoss.bossName.ToString();
-        //                if (selectedEnemy.GetComponent<BygoneGhostBoss>())
-        //                {
-        //                    newEnemyName = "Bygone";
-        //                }
-        //            }
-        //            //Translate enemy name
-        //            if (newEnemyName != "")
-        //            {
-        //                switch (newEnemyName)
-        //                {
-        //                    case "Shit":
-        //                        newEnemyName = "Poop";
-        //                        break;
-
-        //                    case "Stone":
-        //                        newEnemyName = "Rock";
-        //                        break;
-
-        //                    case "Arsemouth":
-        //                        newEnemyName = "Tall Boy";
-        //                        break;
-
-        //                    case "Butthead":
-        //                        newEnemyName = "Squat";
-        //                        break;
-
-        //                    case "Hopper":
-        //                        newEnemyName = "Leaper";
-        //                        break;
-
-        //                    case "Tado":
-        //                        newEnemyName = "Tato Kid";
-        //                        break;
-
-        //                    case "WillOWisp":
-        //                        newEnemyName = "Whisp";
-        //                        break;
-
-        //                    case "DigDig":
-        //                        newEnemyName = "Dig Dig";
-        //                        break;
-
-        //                    case "Longit":
-        //                        newEnemyName = "Longits";
-        //                        break;
-
-        //                    case "Imposter":
-        //                        if (selectedEnemy.enemyName == EnemyName.BlueBoney)
-        //                        {
-        //                            newEnemyName = "Skully B.";
-        //                        }
-        //                        else if (selectedEnemy.enemyName == EnemyName.PurpleBoney)
-        //                        {
-        //                            newEnemyName = "Skully P.";
-        //                        }
-        //                        else if (selectedEnemy.enemyName == EnemyName.Isaacs)
-        //                        {
-        //                            newEnemyName = "Isaac";
-        //                        }
-        //                        else if (selectedEnemy.enemyName == EnemyName.MaskedImposter)
-        //                        {
-        //                            newEnemyName = "Mask";
-        //                        }
-        //                        else
-        //                        {
-        //                            newEnemyName = "Imposter";
-        //                        }
-        //                        break;
-
-        //                    case "BoomFly":
-        //                        newEnemyName = "Boom Fly";
-        //                        break;
-
-        //                    case "GreenBlobby":
-        //                        newEnemyName = "Green Blobby";
-        //                        break;
-
-        //                    case "Tader":
-        //                        newEnemyName = "Daddy Tato";
-        //                        break;
-
-        //                    case "CornyDip":
-        //                        newEnemyName = "Corn Dip";
-        //                        break;
-
-        //                    case "PeepEye":
-        //                        newEnemyName = "Peeper Eye";
-        //                        break;
-
-        //                    case "Tutorial":
-        //                        newEnemyName = "Tutorial Keeper";
-        //                        break;
-
-        //                    case "MegaPoofer":
-        //                        newEnemyName = "Mega Poofer";
-        //                        break;
-
-        //                    case "RedBlobby":
-        //                        newEnemyName = "Red Blobby";
-        //                        break;
-
-        //                    case "BlackBlobby":
-        //                        newEnemyName = "Black Blobby";
-        //                        break;
-
-        //                    case "MirrorHauntLeft":
-        //                        newEnemyName = "Mirror";
-        //                        break;
-
-        //                    case "MirrorHauntRight":
-        //                        newEnemyName = "Mirror";
-        //                        break;
-
-        //                    case "Hanger":
-        //                        newEnemyName = "Keeper";
-        //                        break;
-
-        //                    case "MeatGolem":
-        //                        newEnemyName = "Meat Golum";
-        //                        break;
-
-        //                    case "FloatingCultist":
-        //                        newEnemyName = "Floater";
-        //                        break;
-
-        //                    case "WalkingCultist":
-        //                        newEnemyName = "Cultist";
-        //                        break;
-
-        //                    case "Leechling":
-        //                        newEnemyName = "Suck";
-        //                        break;
-
-        //                    case "RedCultist":
-        //                        newEnemyName = "Red Floater";
-        //                        break;
-
-        //                    case "Flipper":
-        //                        if (selectedEnemy.attackImmunity == Enemy.AttackImmunity.ReduceSpellDamage)
-        //                        {
-        //                            newEnemyName = "Jib";
-        //                        }
-        //                        else
-        //                        {
-        //                            newEnemyName = "Nib";
-        //                        }
-        //                        break;
-
-        //                    case "GreenBlib":
-        //                        newEnemyName = "Green Blib";
-        //                        break;
-
-        //                    case "ManaWisp":
-        //                        newEnemyName = "Mana Wisp";
-        //                        break;
-
-        //                    case "TaintedPeepEye":
-        //                        newEnemyName = "Tainted Peeper Eye";
-        //                        break;
-        //                    //Translate boss name
-        //                    case "Duke":
-        //                        newEnemyName = "The Duke";
-        //                        break;
-
-        //                    case "ShyGal":
-        //                        newEnemyName = "Shy Gal";
-        //                        break;
-
-        //                    case "TaintedDusk":
-        //                        newEnemyName = "Tainted Dusk";
-        //                        break;
-
-        //                    case "TaintedPeeper":
-        //                        newEnemyName = "Tainted Peeper";
-        //                        break;
-
-        //                    case "TaintedShyGal":
-        //                        newEnemyName = "Tainted Shy Gal";
-        //                        break;
-        //                }
-        //            }
-
-        //            //Grab enemy turns count
-        //            string enemyTurns = selectedEnemy.turns == 0 ? "" : selectedEnemy.turns.ToString();
-        //            //Override enemy turns count in certain cases
-        //            if (selectedEnemy.turns > 0 && __instance.app.model.characterSheet.bumboRoundModifiers.skipEnemyTurns > 0)
-        //            {
-        //                //If player has used the Pause spell, the enemy is paused and will not use actions
-        //                enemyTurns = "Paused";
-        //            }
-        //            else if (selectedEnemy.turns > 1 && __instance.app.model.characterSheet.bumboRoundModifiers.slow == true)
-        //            {
-        //                //If player has used the Stop Watch spell, the enemy is slowed and will use at most one action
-        //                enemyTurns = "1";
-        //            }
-
-        //            //Add Moves text
-        //            if (enemyTurns != null && enemyTurns != "")
-        //            {
-        //                enemyTurns = "\nActions: " + enemyTurns;
-        //            }
-
-        //            //Grab next enemy action
-        //            string enemyNextAction = null;
-        //            if (selectedEnemy.nextAction != null)
-        //            {
-        //                enemyNextAction = selectedEnemy.nextAction.ResultingCondition().ToString();
-        //            }
-
-        //            //If next enemy action has not yet been determined, calculate it in advance instead
-        //            if (enemyNextAction == null)
-        //            {
-        //                //Record enemy previous conditions & next action
-        //                EnemyReaction.ReactionCause oldConditions = selectedEnemy.conditions;
-        //                EnemyReaction oldAction = selectedEnemy.nextAction;
-
-        //                //Update enemy next action
-        //                selectedEnemy.PlanNextMove();
-
-        //                //Grab next enemy action
-        //                enemyNextAction = selectedEnemy.nextAction == null ? "" : selectedEnemy.nextAction.ResultingCondition().ToString();
-
-        //                //Revert enemy state
-        //                selectedEnemy.conditions = oldConditions;
-        //                selectedEnemy.nextAction = oldAction;
-        //            }
-
-        //            //Override action name in certain cases
-        //            if (selectedEnemy.primed)
-        //            {
-        //                //If enemy is primed, it must be attacking next
-        //                enemyNextAction = "Attacking";
-        //            }
-        //            if (!selectedBoss && enemyNextAction == "Attacking" && !selectedEnemy.primed)
-        //            {
-        //                //If enemy is not primed, it usually won't be attacking next (bosses excluded)
-        //                //Default to prime instead (most likely option)
-        //                enemyNextAction = "Prime";
-        //            }
-        //            if (selectedEnemy.enemyName == EnemyName.Curser && enemyNextAction == "Attacking")
-        //            {
-        //                //Curser 'attack' actions are really just spell casts
-        //                enemyNextAction = "Spelled";
-        //            }
-        //            if (selectedEnemy.enemyName == EnemyName.Larry && enemyNextAction == "Moving" || enemyNextAction == "Primed")
-        //            {
-        //                //Larry move and prime actions are determined randomly; consequently, its action cannot be forseen
-        //                enemyNextAction = "";
-        //            }
-
-        //            //Translate action name
-        //            if (enemyNextAction != null && enemyNextAction != "")
-        //            {
-        //                switch (enemyNextAction)
-        //                {
-        //                    case "Moving":
-        //                        enemyNextAction = "Move";
-        //                        break;
-
-        //                    case "Primed":
-        //                        enemyNextAction = "Prime";
-        //                        break;
-
-        //                    case "Attacking":
-        //                        if (newEnemyName == "Tainted Peeper" || newEnemyName == "Red Floater")
-        //                        {
-        //                            enemyNextAction = "Double Attack";
-        //                        }
-        //                        else
-        //                        {
-        //                            enemyNextAction = "Attack";
-        //                        }
-        //                        break;
-
-        //                    case "Spelled":
-        //                        enemyNextAction = "Cast Spell";
-        //                        break;
-
-        //                    case "Spellcasting":
-        //                        enemyNextAction = "Cast Spell";
-        //                        break;
-
-        //                    case "Spawned":
-        //                        enemyNextAction = "Spawn Enemy";
-        //                        break;
-
-        //                    case "HasStatusFog":
-        //                        enemyNextAction = "Create Fog";
-        //                        break;
-
-        //                    case "Nothing":
-        //                        enemyNextAction = "";
-        //                        break;
-        //                }
-        //            }
-
-        //            //Add Next Action text
-        //            if (enemyNextAction != null && enemyNextAction != "")
-        //            {
-        //                enemyNextAction = "\nNext Action: " + enemyNextAction;
-        //            }
-
-        //            //Display tooltip
-        //            __instance.app.view.toolTip.Show(newEnemyName + enemyTurns + enemyNextAction, ToolTip.Anchor.BottomLeft);
-        //            __instance.app.view.toolTip.transform.position = worldPosition;
-        //            __instance.app.view.toolTip.transform.rotation = Quaternion.Euler(51f, 180f, 0);
-        //        }
-        //    }
-
-        //    foreach (Enemy enemy in __instance.app.model.enemies)
-        //    {
-        //        if (enemy != selectedEnemy && enemy.objectTinter.tintColor == tintColor)
-        //        {
-        //            enemy.objectTinter.NoTint();
-        //        }
-        //    }
-
-        //    if (!hitValidCollider)
-        //    {
-        //        __instance.app.view.toolTip.Hide();
-        //    }
-        //}
-
-        //***************************************************
-        //***************************************************
-        //***************************************************
-
-        //***************************************************
         //**********Animation Speed Manipulation*************
         //***************************************************
 
@@ -1389,48 +928,50 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Patch: Add cutscene menu button to main menu
         //Also disables cutscenes that haven't been unlocked
         //Also adds coins to title box
+        //Also adds win streak counter to main menu
+        //Also applies graphics settings to title camera and character select camera
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
         static void TitleController_Start(TitleController __instance)
         {
-            GameObject gameObject = UnityEngine.Object.Instantiate(__instance.menuObject.transform.Find("Debug Menu").Find("Cutscenes").gameObject, __instance.mainMenu.transform);
-            gameObject.GetComponent<RectTransform>().SetSiblingIndex(4);
+            GameObject cutscenesButton = UnityEngine.Object.Instantiate(__instance.debugMenu.transform.Find("Cutscenes").gameObject, __instance.mainMenu.transform);
+            cutscenesButton.GetComponent<RectTransform>().SetSiblingIndex(4);
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Added cutscene menu button");
 
             //Reorder endings
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").SetSiblingIndex(4);
-            __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").SetSiblingIndex(6);
+            __instance.cutsceneMenu.transform.Find("Weird Ending").SetSiblingIndex(4);
+            __instance.cutsceneMenu.transform.Find("Credits Roll").SetSiblingIndex(6);
 
             //Disable endings based on game progress
             Progression progression = ProgressionController.LoadProgression();
             if (!progression.unlocks[0])
             {
                 //Disable Mini Credits
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Mini Credits Roll").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Mini Credits Roll").GetComponent<Button>().interactable = false;
 
                 //Disable Nimble ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Nimble Ending").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Nimble Ending").GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[1])
             {
                 //Disable Stout ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Stout Ending").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Stout Ending").GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[2])
             {
                 //Disable Weird ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Weird Ending").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Weird Ending").GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[5])
             {
                 //Disable Basement ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Basement").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Ending Basement").GetComponent<Button>().interactable = false;
             }
             if (progression.wins < 1)
             {
                 //Disable Mom ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Mom").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Ending Mom").GetComponent<Button>().interactable = false;
                 //Disable Credits Roll
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Credits Roll").GetComponent<Button>().interactable = false;
             }
 
             bool removeFinalEnding = false;
@@ -1444,7 +985,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (removeFinalEnding)
             {
                 //Disable Final ending
-                __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").GetComponent<Button>().interactable = false;
+                __instance.cutsceneMenu.transform.Find("Ending Final").GetComponent<Button>().interactable = false;
             }
 
             //Title box coins
@@ -1458,7 +999,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             var CoinsMesh = assets.LoadAsset<Mesh>("Coins_Model_V3");
             var CoinsTexture = assets.LoadAsset<Texture2D>("Title_Coins_Texture_V2");
 
-            coins = new GameObject();
+            GameObject coins = new GameObject();
             MeshFilter meshFilter = coins.AddComponent<MeshFilter>();
             meshFilter.mesh = CoinsMesh;
             MeshRenderer meshRenderer = coins.AddComponent<MeshRenderer>();
@@ -1487,8 +1028,58 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             Transform tagline = bumboTransform.Find("bum-bo_tagline");
             tagline.position = new Vector3(-0.08f, 0.17f, -1.87f);
+
+            //Win streak counter
+            WinStreakCounter.CreateWinStreakCounter(__instance);
+
+            //Apply graphics to cameras
+            GraphicsModifier.ApplyGraphicsToCamera(__instance.titleCamera.GetComponent<Camera>(), true, false);
+            GraphicsModifier.ApplyGraphicsToCamera(__instance.chooseCamera.GetComponent<Camera>(), true, false);
+
+            //Create graphics options
+            GraphicsOptions.SetUpGraphicsOptions(__instance.menuObject, false);
+
+            //Create graphics menu
+            GraphicsOptions.CreateGraphicsMenu(__instance.menuObject);
+
+
+            //Log quality settings
+            Console.WriteLine("Quality Level: " + QualitySettings.GetQualityLevel());
+            Console.WriteLine("Pixel Light Count: " + QualitySettings.pixelLightCount);
+            Console.WriteLine("Texture Quality: " + QualitySettings.masterTextureLimit);
+            Console.WriteLine("Anisotropic Textures: " + QualitySettings.anisotropicFiltering);
+            Console.WriteLine("AntiAliasing: " + QualitySettings.antiAliasing);
+            Console.WriteLine("Soft Particles: " + QualitySettings.softParticles);
+            Console.WriteLine("Realtime Reflection Probes: " + QualitySettings.realtimeReflectionProbes);
+            Console.WriteLine("Resolution Scaling Fixed DPI Factor: " + QualitySettings.resolutionScalingFixedDPIFactor);
+
+            Console.WriteLine("*************************");
+            Console.WriteLine("Shadows: " + QualitySettings.shadows);
+            Console.WriteLine("Shadow Resolution: " + QualitySettings.shadowResolution);
+            Console.WriteLine("Shadow Projection: " + QualitySettings.shadowProjection);
+            Console.WriteLine("Shadow Cascades: " + QualitySettings.shadowCascades);
+            Console.WriteLine("Shadow Distance: " + QualitySettings.shadowDistance);
+            Console.WriteLine("Shadowmask Mode: " + QualitySettings.shadowmaskMode);
+            Console.WriteLine("Shadow Near Plane Offset: " + QualitySettings.shadowNearPlaneOffset);
+
+            Console.WriteLine("*************************");
+            Console.WriteLine("Blend Weights: " + QualitySettings.blendWeights);
+            Console.WriteLine("VSync Count: " + QualitySettings.vSyncCount);
+            Console.WriteLine("LOD Bias: " + QualitySettings.lodBias);
+            Console.WriteLine("Maximum LOD Level: " + QualitySettings.maximumLODLevel);
+            Console.WriteLine("Particle Raycast Budget: " + QualitySettings.particleRaycastBudget);
+            Console.WriteLine("Async Upload Time Slice: " + QualitySettings.asyncUploadTimeSlice);
+            Console.WriteLine("Async Upload Buffer Size: " + QualitySettings.asyncUploadBufferSize);
         }
-        static GameObject coins;
+
+        //Patch: Set up graphics menu
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init_Graphics(BumboController __instance)
+        {
+            GraphicsOptions.SetUpGraphicsOptions(__instance.app.view.menuView, true);
+            GraphicsOptions.CreateGraphicsMenu(__instance.app.view.menuView);
+        }
+
         //Patch: Hide coins and logo from title box on input
         [HarmonyPrefix, HarmonyPatch(typeof(TitleController), "Update")]
         static bool TitleController_Update(TitleController __instance, ref bool ___loading)
@@ -1531,6 +1122,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Update cutscene menu when progress is deleted
+        //Also resets win streak counter when deleting game progress
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "DeleteProgress")]
         static void TitleController_DeleteProgress(TitleController __instance)
         {
@@ -1550,6 +1142,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.menuObject.transform.Find("Cutscene Menu").Find("Credits Roll").GetComponent<Button>().interactable = false;
             //Disable Final ending
             __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").GetComponent<Button>().interactable = false;
+
+            //Reset win streak counter
+            WinStreakCounter.ResetStreak();
         }
 
         //Patch: Cutscene menu from main menu
@@ -1573,7 +1168,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         static bool RewatchingCutscene = false;
-        //Patch: Tracks whether player is rewatching a custcene from the main menu
+        //Patch: Tracks whether player is rewatching a cutscene from the main menu
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "PlayCutscene")]
         static void TitleController_PlayCutscene(TitleController __instance)
         {
@@ -1647,483 +1242,70 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
         //***************************************************
-    }
 
-    static class MapMenu
-    {
-        private static BumboApplication app;
-
-        private static GameObject mapMenuButton;
-        private static GameObject gamblingMapMenuButton;
-
-        public static GameObject mapMenuCanvas;
-        private static GameObject mapCanvasBackground;
-
-        private static GameObject mapCanvasHeader;
-        private static Vector2 headerStartPos;
-        private static RectTransform headerRectTransform;
-        private static float headerOffsetY = 230;
-
-        private static GameObject mapCanvasRoomContainer;
-        private static Vector2 roomContainerStartPos;
-        private static RectTransform roomContainerRectTransform;
-        private static float roomContainerOffsetX = -800;
-        private static float roomContainerOffsetY = 350;
-
-        private static GameObject mapCanvasExit;
-        private static Vector2 exitStartPos;
-        private static RectTransform exitRectTransform;
-        private static float exitOffsetY = -100;
-
-        private static GameObject mapCanvasMouse;
-
-        private static float opacityValue = 0.5f;
-
-        private static Ease mapTweeningEase = Ease.OutQuad;
-
-        private static Sprite bumboHead;
-
-        private static bool Gambling { get { return app.view.gamblingView != null; } }
-
-        public static void CreateMapMenu(BumboElement bumboElement)
+        //Patch: Apply custom graphics to game cameras
+        [HarmonyPostfix, HarmonyPatch(typeof(CameraView), "Awake")]
+        static void CameraView_Awake(CameraView __instance)
         {
-            FindApp(bumboElement);
-
-            if (app.model.characterSheet.currentFloor == 0) return;
-
-            GrabAssets();
-
-            if (mapMenuButton == null) CreateMapMenuButton();
-            else mapMenuButton = app.view.GUICamera.transform.Find("HUD").Find("Map Menu Button").gameObject;
-
-            if (mapMenuCanvas == null) CreateMapMenuCanvas();
-            else mapMenuCanvas = app.view.transform.Find("Map Menu Canvas").gameObject;
-        }
-
-        private static void FindApp(BumboElement bumboElement)
-        {
-            app = bumboElement.app;
-        }
-
-        private static void GrabAssets()
-        {
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
+            Camera camera = __instance.GetComponent<Camera>();
+            if (camera != null)
             {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-
-            //Grab Bum-bo head sprite
-            switch (app.model.characterSheet.bumboType)
-            {
-                case CharacterSheet.BumboType.TheBrave:
-                    bumboHead = assets.LoadAsset<Sprite>("Brave Head");
-                    break;
-                case CharacterSheet.BumboType.TheNimble:
-                    bumboHead = assets.LoadAsset<Sprite>("Nimble Head");
-                    break;
-                case CharacterSheet.BumboType.TheStout:
-                    bumboHead = assets.LoadAsset<Sprite>("Stout Head");
-                    break;
-                case CharacterSheet.BumboType.TheWeird:
-                    bumboHead = assets.LoadAsset<Sprite>("Weird Head");
-                    break;
-                case CharacterSheet.BumboType.TheDead:
-                    bumboHead = assets.LoadAsset<Sprite>("Dead Head");
-                    break;
-                case CharacterSheet.BumboType.Eden:
-                    bumboHead = assets.LoadAsset<Sprite>("Empty Head");
-                    break;
-                case CharacterSheet.BumboType.TheLost:
-                    bumboHead = assets.LoadAsset<Sprite>("Lost Head");
-                    break;
+                //Only apply depth of field if not GUI camera
+                GraphicsModifier.ApplyGraphicsToCamera(camera, true, !__instance.GetComponent<GUISide>());
             }
         }
 
-        private static void CreateMapMenuButton()
+        //Patch: Applies custom graphics to unlock camera
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboUnlockController), "Start")]
+        static void BumboUnlockController_Start(BumboUnlockController __instance)
         {
-            GameObject menuButton = app.view.GUICamera.transform.Find("HUD").Find("menu button").gameObject;
-
-            mapMenuButton = UnityEngine.Object.Instantiate(menuButton, new Vector3(1.21f, 2.09f, -4.71f), menuButton.transform.rotation, menuButton.transform.parent);
-
-            ButtonHoverAnimation mapHover = mapMenuButton.GetComponent<ButtonHoverAnimation>();
-            if (mapHover)
+            Camera camera = __instance.app.view.unlockCameraView.transform.GetChild(0).GetComponent<Camera>();
+            if (camera != null)
             {
-                UnityEngine.Object.Destroy(mapHover);
-                mapMenuButton.transform.localScale = Vector3.Scale(mapMenuButton.transform.localScale, new Vector3(0.7f, 1f, 0.7f));
-                mapMenuButton.AddComponent<ButtonHoverAnimation>();
-            }
-            mapMenuButton.name = "Map Menu Button";
-        }
-
-        public static void CreateGamblingMapMenuButton()
-        {
-            if (!Gambling) return;
-
-            GameObject menuButton = app.view.GUICamera.transform.Find("HUD").Find("menu button").gameObject;
-
-            gamblingMapMenuButton = UnityEngine.Object.Instantiate(menuButton, new Vector3(1.21f, 2.09f, -4.71f), menuButton.transform.rotation, menuButton.transform.parent);
-
-            ButtonHoverAnimation mapHover = gamblingMapMenuButton.GetComponent<ButtonHoverAnimation>();
-            if (mapHover)
-            {
-                UnityEngine.Object.Destroy(mapHover);
-                gamblingMapMenuButton.transform.localScale = Vector3.Scale(gamblingMapMenuButton.transform.localScale, new Vector3(0.7f, 1f, 0.7f));
-                gamblingMapMenuButton.AddComponent<ButtonHoverAnimation>();
-            }
-            gamblingMapMenuButton.name = "Gambling Map Menu Button";
-        }
-
-        private static void CreateMapMenuCanvas()
-        {
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-
-            //Canvas
-            GameObject mapMenuCanvasPrefab = assets.LoadAsset<GameObject>("Map Menu Canvas");
-            mapMenuCanvas = UnityEngine.Object.Instantiate(mapMenuCanvasPrefab);
-            mapMenuCanvas.transform.SetParent(app.view.transform);
-            mapMenuCanvas.transform.SetAsFirstSibling();
-            mapMenuCanvas.SetActive(false);
-
-            //Mouse
-            mapCanvasMouse = GameObject.Instantiate(app.view.menuView.transform.Find("Mouse").gameObject);
-            mapCanvasMouse.layer = 5;
-            mapCanvasMouse.transform.SetParent(mapMenuCanvas.transform);
-            mapCanvasMouse.transform.localScale = new Vector3(2.4f, 2.4f, 2.4f);
-
-            //Canvas children
-            mapCanvasBackground = mapMenuCanvas.transform.Find("Background").gameObject;
-
-            mapCanvasHeader = mapMenuCanvas.transform.Find("Header").gameObject;
-            headerRectTransform = mapCanvasHeader.GetComponent<RectTransform>();
-            headerStartPos = headerRectTransform.anchoredPosition;
-            headerRectTransform.anchoredPosition = new Vector2(headerRectTransform.anchoredPosition.x, headerRectTransform.anchoredPosition.y + headerOffsetY);
-
-            mapCanvasRoomContainer = mapMenuCanvas.transform.Find("Room Container").gameObject;
-            roomContainerRectTransform = mapCanvasRoomContainer.GetComponent<RectTransform>();
-            roomContainerStartPos = roomContainerRectTransform.anchoredPosition;
-            roomContainerRectTransform.anchoredPosition = new Vector2(roomContainerRectTransform.anchoredPosition.x, roomContainerRectTransform.anchoredPosition.y + roomContainerOffsetY);
-
-            mapCanvasExit = mapMenuCanvas.transform.Find("Exit").gameObject;
-            exitRectTransform = mapCanvasExit.GetComponent<RectTransform>();
-            exitStartPos = exitRectTransform.anchoredPosition;
-            exitRectTransform.anchoredPosition = new Vector2(exitRectTransform.anchoredPosition.x, exitRectTransform.anchoredPosition.y + exitOffsetY);
-
-            //Set up canvas elements
-            SetUpHeader();
-            SetUpRooms();
-            SetupExit();
-        }
-
-        private static void SetUpHeader()
-        {
-            int numberOfChapters;
-
-            Progression progression = app.model.progression;
-            if (!progression.unlocks[0]) numberOfChapters = 1;
-            else if (!progression.unlocks[1]) numberOfChapters = 2;
-            else if (!progression.unlocks[2]) numberOfChapters = 3;
-            else numberOfChapters = 4;
-
-            int lastActiveChapterIndex = (numberOfChapters * 4) - 3;
-
-            //Set active chapters
-            for (int childCounter = 0; childCounter < mapCanvasHeader.transform.childCount; childCounter++)
-            {
-                GameObject gameObject = mapCanvasHeader.transform.GetChild(childCounter).gameObject;
-
-                if (childCounter > lastActiveChapterIndex)
-                {
-                    gameObject.SetActive(false);
-                }
-                else
-                {
-                    gameObject.SetActive(true);
-                }
-            }
-
-            //Add button functionality
-            foreach (Button button in mapCanvasHeader.transform.GetComponentsInChildren<Button>(true))
-            {
-                UnityEngine.Events.UnityAction action = null;
-                bool isWoodenNickelButton = false;
-
-                int childIndex = button.transform.GetSiblingIndex();
-                switch (childIndex)
-                {
-                    default:
-                        isWoodenNickelButton = true;
-                        break;
-                    case 0:
-                        action = SwitchToChapter1;
-                        break;
-                    case 4:
-                        action = SwitchToChapter2;
-                        break;
-                    case 8:
-                        action = SwitchToChapter3;
-                        break;
-                    case 12:
-                        action = SwitchToChapter4;
-                        break;
-                }
-
-                if (!isWoodenNickelButton)
-                {
-                    button.onClick.AddListener(action);
-                    button.gameObject.AddComponent<ButtonHoverAnimation>();
-                }
-
-                //Add button hover functionality
-
-                //Event triggers
-                EventTrigger chapterButtonEventTrigger = button.gameObject.GetComponent<EventTrigger>();
-                //Mouse enter trigger
-                EventTrigger.Entry mouseEnter = new EventTrigger.Entry();
-                mouseEnter.eventID = EventTriggerType.PointerEnter;
-                mouseEnter.callback.AddListener((data) => { MouseEnterChapterButton((PointerEventData)data, button.gameObject); });
-                chapterButtonEventTrigger.triggers.Add(mouseEnter);
-                //Mouse exit trigger
-                EventTrigger.Entry mouseExit = new EventTrigger.Entry();
-                mouseExit.eventID = EventTriggerType.PointerExit;
-                mouseExit.callback.AddListener((data) => { MouseExitChapterButton((PointerEventData)data, button.gameObject); });
-                chapterButtonEventTrigger.triggers.Add(mouseExit);
-            }
-
-            //Set Bum-bo sprites
-            for (int childCounter = 0; childCounter < mapCanvasHeader.transform.childCount; childCounter++)
-            {
-                GameObject chapterMarker = mapCanvasHeader.transform.GetChild(childCounter).Find("Bum-bo Chapter Marker")?.gameObject;
-                if (chapterMarker)
-                {
-                    chapterMarker.GetComponent<Image>().sprite = bumboHead;
-                }
+                GraphicsModifier.ApplyGraphicsToCamera(camera, true, false);
             }
         }
 
-        private static void UpdateHeader()
+        //Patch: Applies custom graphics to mom ending camera
+        [HarmonyPostfix, HarmonyPatch(typeof(MomEndingController), "Start")]
+        static void MomEndingController_Start(MomEndingController __instance)
         {
-            //Move Bum-bo chapter marker
-            int currentChapterIndex = (app.model.characterSheet.currentFloor * 4) - (Gambling ? 5 : 3);
-
-            for (int chapterCounter = 0; chapterCounter < mapCanvasHeader.transform.childCount; chapterCounter++)
+            Camera camera = __instance.app.view.unlockCameraView.transform.GetChild(0).GetComponent<Camera>();
+            if (camera != null)
             {
-                GameObject chapterMarker = mapCanvasHeader.transform.GetChild(chapterCounter).Find("Bum-bo Chapter Marker")?.gameObject;
-                if (chapterMarker)
-                {
-                    chapterMarker.SetActive(chapterCounter == currentChapterIndex - 1);
-                }
+                GraphicsModifier.ApplyGraphicsToCamera(camera, true, false);
             }
         }
 
-        private static void MouseEnterChapterButton(PointerEventData data, GameObject button)
+        //Patch: Update win streak on game win
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "FinishFloor")]
+        static void BumboController_FinishFloor(BumboController __instance)
         {
-            button.transform.GetComponentInChildren<Text>(true).transform.parent.gameObject.SetActive(true);
-        }
-        private static void MouseExitChapterButton(PointerEventData data, GameObject button)
-        {
-            button.transform.GetComponentInChildren<Text>(true).transform.parent.gameObject.SetActive(false);
-        }
-
-        private static void SetUpRooms()
-        {
-            //Set Bum-bo sprites
-            for (int childCounter = 0; childCounter < mapCanvasRoomContainer.transform.childCount; childCounter++)
+            if (__instance.app.model.characterSheet.currentFloor == 5)
             {
-                GameObject roomMarker = mapCanvasRoomContainer.transform.GetChild(childCounter).Find("Bum-bo Room Marker")?.gameObject;
-                if (roomMarker)
-                {
-                    roomMarker.GetComponent<Image>().sprite = bumboHead;
-                }
+                WinStreakCounter.GameWon();
             }
         }
 
-        private static int currentSelectedChapter = 0;
-
-        private static Sequence changeChapterSequence;
-
-        private static float MapCanvasRoomContainerX { get { return roomContainerRectTransform.anchoredPosition.x; } set { roomContainerRectTransform.anchoredPosition = new Vector2(value, roomContainerRectTransform.anchoredPosition.y); } }
-
-        private static void SwitchToChapter1() { UpdateSelectedChapter(1, true); }
-        private static void SwitchToChapter2() { UpdateSelectedChapter(2, true); }
-        private static void SwitchToChapter3() { UpdateSelectedChapter(3, true); }
-        private static void SwitchToChapter4() { UpdateSelectedChapter(4, true); }
-        private static void UpdateSelectedChapter(int chapter, bool animate)
+        //Patch: Update win streak on game loss
+        [HarmonyPostfix, HarmonyPatch(typeof(GameOverEvent), "Execute")]
+        static void GameOverEvent_Execute(GameOverEvent __instance)
         {
-            if (chapter == currentSelectedChapter)
+            if (WindfallHelper.ChaptersUnlocked(__instance.app.model.progression) == 4)
             {
-                return;
+                WinStreakCounter.GameLost();
             }
-
-            float modifiedRoomContainerOffsetX = roomContainerOffsetX;
-            
-            //Reverse direction if selecting a lower chapter
-            if (chapter < currentSelectedChapter)
-            {
-                modifiedRoomContainerOffsetX = -roomContainerOffsetX;
-            }
-
-            //Halt current sequence if it hasn't completed
-            if (changeChapterSequence != null) frostedGlassSequence.Kill(false);
-
-            changeChapterSequence = DOTween.Sequence();
-
-            if (animate)
-            {
-                //Move room container to the side
-                changeChapterSequence.Append(DOTween.To(() => MapCanvasRoomContainerX, x => MapCanvasRoomContainerX = x, roomContainerStartPos.x + modifiedRoomContainerOffsetX, 0.4f));
-            }
-
-            //Update room visuals
-            changeChapterSequence.AppendCallback(delegate
-            {
-
-                MapRoom[] mapRooms = SearchMap.FindMapRooms(app.model.mapModel);
-
-                //Move Bum-bo room marker and change opacity of rooms
-                for (int roomCounter = 1; roomCounter < 7; roomCounter++)
-                {
-                    Transform roomTransform = mapCanvasRoomContainer.transform.Find("Room " + roomCounter.ToString());
-                    Transform arrowTransform = mapCanvasRoomContainer.transform.Find("Arrow " + roomCounter.ToString());
-
-                    Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((mapRooms[roomCounter - 1].visited) && !Gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
-
-                    if (roomTransform != null)
-                    {
-                        roomTransform.Find("Bum-bo Room Marker").gameObject.SetActive(chapter == app.model.characterSheet.currentFloor ? (mapRooms[roomCounter - 1] == app.model.mapModel.currentRoom && !Gambling) : false);
-
-                        if (roomTransform.GetComponent<Image>().color != null)
-                        {
-                            roomTransform.GetComponent<Image>().color = color;
-                        }
-                    }
-
-                    //Arrows are always at full opacity
-                    /*
-                    if (arrowTransform != null)
-                    {
-                        if (arrowTransform.GetComponent<Image>().color != null)
-                        {
-                            arrowTransform.GetComponent<Image>().color = color;
-                        }
-                    }
-                    */
-                }
-            });
-
-            if (animate)
-            {
-                changeChapterSequence.AppendCallback(delegate
-                {
-                    //Move room container to the opposite side
-                    MapCanvasRoomContainerX = roomContainerStartPos.x - modifiedRoomContainerOffsetX;
-                });
-            }
-
-            if (animate)
-            {
-                changeChapterSequence.AppendInterval(0.05f);
-
-                //Move room container back to the center
-                changeChapterSequence.Append(DOTween.To(() => MapCanvasRoomContainerX, x => MapCanvasRoomContainerX = x, roomContainerStartPos.x, 0.4f).SetEase(mapTweeningEase));
-            }
-
-            //Update selected chapter
-            currentSelectedChapter = chapter;
         }
 
-        private static void SetupExit()
+        //Patch: Reset win streak on new game (if a saved game is being overwritten)
+        [HarmonyPrefix, HarmonyPatch(typeof(FloorStartEvent), "Execute")]
+        static bool FloorStartEvent_Execute(FloorStartEvent __instance)
         {
-            Button button = mapCanvasExit.GetComponent<Button>();
-            button.onClick.AddListener(CloseMapMenu);
-            button.gameObject.AddComponent<ButtonHoverAnimation>();
-        }
-
-        private static Sequence frostedGlassSequence;
-        private static int FrostedGlassRadius { get { return mapCanvasBackground.GetComponent<Image>().material.GetInt("_Radius"); } set { mapCanvasBackground.GetComponent<Image>().material.SetInt("_Radius", value); } }
-        private static float MapCanvasHeaderY { get { return headerRectTransform.anchoredPosition.y; } set { headerRectTransform.anchoredPosition = new Vector2(headerRectTransform.anchoredPosition.x, value); } }
-        private static float MapCanvasRoomContainerY { get { return roomContainerRectTransform.anchoredPosition.y; } set { roomContainerRectTransform.anchoredPosition = new Vector2(roomContainerRectTransform.anchoredPosition.x, value); } }
-        private static float MapCanvasExitY { get { return exitRectTransform.anchoredPosition.y; } set { exitRectTransform.anchoredPosition = new Vector2(exitRectTransform.anchoredPosition.x, value); } }
-
-        public static void OpenMapMenu()
-        {
-            //Hide labels
-            foreach (Text labelText in mapCanvasHeader.GetComponentsInChildren<Text>(true))
+            if (UnityEngine.Object.FindObjectOfType<CharacterSheet>() == null && SavedStateController.HasSavedState() && (TitleController.startMode == TitleController.StartMode.NewGame || TitleController.startMode == TitleController.StartMode.Nothing))
             {
-                labelText.transform.parent.gameObject.SetActive(false);
+                WinStreakCounter.ResetStreak();
             }
-
-            //Open menu
-            UpdateHeader();
-            UpdateSelectedChapter(app.model.characterSheet.currentFloor, false);
-            mapMenuCanvas.SetActive(true);
-            app.model.paused = true;
-
-            //Initialize sequence
-            if (frostedGlassSequence != null) frostedGlassSequence.Kill(false);
-            frostedGlassSequence = DOTween.Sequence();
-
-            //Add blur
-            frostedGlassSequence.Append(DOTween.To(() => FrostedGlassRadius, x => FrostedGlassRadius = x, 7, 0.4f));
-
-            //Reveal foreground canvas elements
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y, 0.4f)).SetEase(mapTweeningEase);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y, 0.4f)).SetEase(mapTweeningEase);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y, 0.4f)).SetEase(mapTweeningEase);
-        }
-
-        private static void CloseMapMenu()
-        {
-            //Initialize sequence
-            if (frostedGlassSequence != null) frostedGlassSequence.Kill(false);
-            frostedGlassSequence = DOTween.Sequence();
-
-            //Remove blur
-            frostedGlassSequence.Append(DOTween.To(() => FrostedGlassRadius, x => FrostedGlassRadius = x, 0, 0.4f));
-
-            //Hide foreground canvas elements
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasHeaderY, x => MapCanvasHeaderY = x, headerStartPos.y + headerOffsetY, 0.4f)).SetEase(mapTweeningEase);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasRoomContainerY, x => MapCanvasRoomContainerY = x, roomContainerStartPos.y + roomContainerOffsetY, 0.4f)).SetEase(mapTweeningEase);
-            frostedGlassSequence.Insert(0, DOTween.To(() => MapCanvasExitY, x => MapCanvasExitY = x, exitStartPos.y + exitOffsetY, 0.4f)).SetEase(mapTweeningEase);
-
-            frostedGlassSequence.AppendCallback(delegate
-            {
-                //Close menu
-                mapMenuCanvas.SetActive(false);
-                app.model.paused = false;
-            });
-        }
-    }
-
-    static class SearchMap
-    {
-        public static MapRoom[] FindMapRooms(MapModel mapModel)
-        {
-            MapRoom[] mapRooms = new MapRoom[6];
-            MapRoom currentRoom = mapModel.rooms[5, 0];
-            for (int roomNumber = 0; roomNumber < 6; roomNumber++)
-            {
-                mapRooms[roomNumber] = currentRoom;
-                switch (currentRoom.exitDirection)
-                {
-                    default:
-                        currentRoom = mapModel.rooms[currentRoom.x, currentRoom.y + 1];
-                        break;
-                    case MapRoom.Direction.E:
-                        currentRoom = mapModel.rooms[currentRoom.x + 1, currentRoom.y];
-                        break;
-                    case MapRoom.Direction.W:
-                        currentRoom = mapModel.rooms[currentRoom.x - 1, currentRoom.y];
-                        break;
-                }
-            }
-            return mapRooms;
+            return true;
         }
     }
 }

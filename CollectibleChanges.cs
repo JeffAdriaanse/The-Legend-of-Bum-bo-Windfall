@@ -22,7 +22,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		public static float TrinketLuckModifier(CharacterSheet characterSheet)
         {
-			return 1 + ((characterSheet.getLuck() - 1) / 10);
+			return 1 + (characterSheet.getLuck() / 10);
 		}
 
 		public static int EffectActivationCounter(float effectValue)
@@ -523,6 +523,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 		//Patch: Allows Rat Heart effect to stack past 100% and incorporate Luck stat and Curio effect multiplier
+		//Also fixes Rat Heart activating a second time when reloading a save
 		//Also causes Small Box to stack non-independently and incoporate Curio effect multiplier
 		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "StartRoomWithTrinkets")]
 		static bool BumboController_StartRoomWithTrinkets(BumboController __instance)
@@ -534,8 +535,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 				short trinketCounter = 0;
 				while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 				{
-					//Chance: 1/4
-					RatHeartEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.RatHeart ? 0.25f : 0f;
+					//Prevent Rat Heart from triggering when reloading a save
+					if (!__instance.app.controller.savedStateController.IsLoading())
+                    {
+						//Chance: 1/4
+						RatHeartEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.RatHeart ? 0.25f : 0f;
+					}
 					SmallBoxEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SmallBox ? 1 : 0;
 					__instance.GetTrinket((int)trinketCounter).StartRoom();
 					trinketCounter += 1;
@@ -1491,130 +1496,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "Init")]
 		static bool Shop_Init(Shop __instance, ref List<TrinketName> ___needles, ref GameObject ___item1Pickup, ref GameObject ___item2Pickup, ref GameObject ___item3Pickup, ref GameObject ___item4Pickup, ref TrinketModel ___trinketModel)
 		{
-			if (PlayerPrefs.GetInt("loadGambling", 0) == 1)
-            {
-				//Load shop
-				XmlDocument lDoc = (XmlDocument)typeof(SavedStateController).GetField("lDoc", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance.app.controller.savedStateController);
+			//Load shop
+			WindfallSavedState.LoadStart(__instance.app);
+			bool loadShop = WindfallSavedState.LoadShop(__instance, ___trinketModel);
+			WindfallSavedState.LoadEnd();
 
-				if (lDoc != null)
-				{
-					XmlNode xmlNode = lDoc.SelectSingleNode("/save/gambling");
+			if (loadShop) return false;
 
-					if (xmlNode != null)
-					{
-						XmlNodeList xmlNodeList = xmlNode.SelectNodes("pickup");
-
-						bool[] savedPickups = new bool[4];
-
-						for (int i = 0; i < xmlNodeList.Count; i++)
-						{
-							XmlNode xmlNode2 = xmlNodeList.Item(i);
-
-							int index = Convert.ToInt32(xmlNode2.Attributes["index"].Value);
-							savedPickups[i] = true;
-
-							string type = xmlNode2.Attributes["type"].Value;
-
-							GameObject itemPickup = null;
-							GameObject item = null;
-							ItemPriceView itemPrice = null;
-							switch (index)
-							{
-								case 0:
-									item = __instance.item1;
-									itemPrice = __instance.item1Price;
-									break;
-								case 1:
-									item = __instance.item2;
-									itemPrice = __instance.item2Price;
-									break;
-								case 2:
-									item = __instance.item3;
-									itemPrice = __instance.item3Price;
-									break;
-								case 3:
-									item = __instance.item4;
-									itemPrice = __instance.item4Price;
-									break;
-							}
-
-							if (type == "heart")
-                            {
-								itemPickup = (GameObject)AccessTools.Method(typeof(Shop), "AddHeart").Invoke(__instance, new object[] { item, itemPrice });
-							}
-							else if (type == "trinket")
-                            {
-								TrinketName trinketName = (TrinketName)Enum.Parse(typeof(TrinketName), xmlNode2.Attributes["trinketName"].Value);
-
-								if (__instance.app.model.trinketModel.trinkets[trinketName].Category != TrinketElement.TrinketCategory.Prick)
-                                {
-									if (___trinketModel == null)
-                                    {
-										___trinketModel = __instance.gameObject.AddComponent<TrinketModel>();
-									}
-								}
-
-								itemPickup = (GameObject)AccessTools.Method(typeof(Shop), "AddTrinket").Invoke(__instance, new object[] { item, itemPrice });
-								int price = 7;
-								switch (trinketName)
-                                {
-									case TrinketName.ManaPrick:
-										price = 8;
-										break;
-									case TrinketName.DamagePrick:
-										price = 5;
-										break;
-									case TrinketName.ChargePrick:
-										price = 8;
-										break;
-									case TrinketName.ShufflePrick:
-										price = 2;
-										break;
-									case TrinketName.RandomPrick:
-										price = 5;
-										break;
-								}
-
-								TrinketPickupView trinketPickupView = itemPickup.GetComponent<TrinketPickupView>();
-								trinketPickupView.SetTrinket(trinketName, price);
-								itemPrice.SetPrice(price);
-								trinketPickupView.removePickup = true;
-
-								switch (index)
-								{
-									case 0:
-										 ___item1Pickup = itemPickup;
-										break;
-									case 1:
-										___item2Pickup = itemPickup;
-										break;
-									case 2:
-										___item3Pickup = itemPickup;
-										break;
-									case 3:
-										___item4Pickup = itemPickup;
-										break;
-								}
-							}
-						}
-
-						if (___item1Pickup != null)
-						{
-							___item1Pickup.GetComponent<TrinketPickupView>().shopIndex = 0;
-						}
-						if (___item2Pickup != null)
-						{
-							___item2Pickup.GetComponent<TrinketPickupView>().shopIndex = 1;
-						}
-						if (___item3Pickup != null)
-						{
-							___item3Pickup.GetComponent<TrinketPickupView>().shopIndex = 2;
-						}
-
-						return false;
-					}
-				}
-            }
 
 			___needles = new List<TrinketName>();
 			if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.Eden)
@@ -1668,11 +1556,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing shop generation");
 
-			if (PlayerPrefs.GetInt("loadGambling", 0) == 0)
-			{
-				//Save shop
-				SaveChanges.SaveShop(__instance);
-			}
+			//Save shop
+			WindfallSavedState.SaveShop(__instance);
 			return false;
 		}
 
@@ -2071,17 +1956,49 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static void HatPinSpell_Damage(HatPinSpell __instance, ref int __result)
 		{
 			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+        }
+
+        //Patch: Changes Rock description
+        [HarmonyPostfix, HarmonyPatch(typeof(RockSpell), MethodType.Constructor)]
+        static void RockSpell_Constructor(RockSpell __instance)
+        {
+            __instance.Name = "Hits the Furthest Enemy";
+        }
+
+		//Patch: Changes Yellow Belt description
+		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), MethodType.Constructor)]
+		static void YellowBeltSpell_Constructor(YellowBeltSpell __instance)
+		{
+			__instance.Name = "+5% to Dodge Attacks";
 		}
 
-		//Patch: Changes Rock description
-		[HarmonyPostfix, HarmonyPatch(typeof(RockSpell), MethodType.Constructor)]
-		static void RockSpell_Constructor(RockSpell __instance)
+		//Patch: Changes Yellow belt modifier to last for the room instead of only the current round
+		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), "CastSpell")]
+		static void YellowBeltSpell_CastSpell(YellowBeltSpell __instance, bool __result)
 		{
-			__instance.Name = "Hits the Furthest Enemy";
+			if (__result)
+            {
+				for (int i = 0; i < __instance.app.model.characterSheet.bumboModifierObjects.Count; i++)
+				{
+					//Detect whether there is a Yellow Belt modifier
+					if (__instance.app.model.characterSheet.bumboModifierObjects[i].spellName == __instance.spellName)
+					{
+						//Change modifier type if it is a round modifier
+						if (__instance.app.model.characterSheet.bumboModifierObjects[i].modifierType == CharacterSheet.BumboModifierObject.ModifierType.Round)
+                        {
+							//Change modifier type
+							__instance.app.model.characterSheet.bumboModifierObjects[i].modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
+						}
+
+						//Cap dodgeChance at 75%
+						if (__instance.app.model.characterSheet.bumboModifierObjects[i].dodgeChance > 0.75f) __instance.app.model.characterSheet.bumboModifierObjects[i].dodgeChance = 0.75f;
+					}
+				}
+			}
 		}
 	}
 
-	static class SpellManaCosts
+    static class SpellManaCosts
 	{
 		public static int GetManaCost(SpellElement spell)
         {

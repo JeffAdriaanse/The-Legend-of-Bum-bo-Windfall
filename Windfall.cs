@@ -12,7 +12,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         private const string modGUID = "org.bepinex.plugins.thelegendofbumbowindfall";
         private const string modName = "The Legend of Bum-bo: Windfall";
-        private const string modVersion = "1.0.3.0";
+        private const string modVersion = "1.0.4.0";
         private readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
 
         public static AssetBundle assetBundle;
@@ -37,7 +37,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         static void LoadAssets()
         {
-            assetBundle = AssetBundle.LoadFromFile(Directory.GetCurrentDirectory() + "\\Bepinex\\plugins\\The Legend of Bum-bo_Windfall\\windfall");
+            assetBundle = AssetBundle.LoadFromFile(Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfall");
         }
     }
 }
