@@ -25,7 +25,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             RectTransform winStreakCounterRect = winStreakCounter.GetComponent<RectTransform>();
             winStreakCounterRect.anchoredPosition = new Vector2(260, -50);
             winStreakCounterRect.localRotation = Quaternion.Euler(winStreakCounterRect.localRotation.eulerAngles.x, winStreakCounterRect.localRotation.eulerAngles.y, 350);
-            winStreakCounter.transform.Find("Streak").GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 50);
+            winStreakCounter.transform.Find("Streak").GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 55);
 
             UpdateWinStreakCounter();
         }

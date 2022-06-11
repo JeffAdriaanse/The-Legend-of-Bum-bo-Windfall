@@ -107,6 +107,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Saves the shop when the stat wheel finishes spinning
+        [HarmonyPostfix, HarmonyPatch(typeof(WheelSpin), "MakeWheelClickable")]
+        static void WheelSpin_MakeWheelClickable(WheelSpin __instance)
+        {
+            if (__instance.app.controller.gamblingController != null)
+            {
+                WindfallSavedState.SaveShop(__instance.app.controller.gamblingController.shop);
+            }
+        }
+
         //Patch: Saves coins when spending money at the Wooden Nickel
         [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), nameof(GamblingController.ModifyCoins))]
         static void GamblingController_ModifyCoins(GamblingController __instance)
