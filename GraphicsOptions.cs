@@ -192,7 +192,39 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallPersistentDataController.SaveData(windfallPersistentData);
 
             ChangeResolution();
+            UpdateCameras();
         }
+
+        private static List<Camera> cameras;
+        public static void TrackCamera(Camera camera)
+        {
+            if (cameras == null)
+            {
+                cameras = new List<Camera>();
+            }
+
+            if (camera != null)
+            {
+                cameras.Add(camera);
+            }
+
+            cameras.RemoveAll(delegate (Camera cameraComponent) { return cameraComponent == null; });
+        }
+
+        private static void UpdateCameras()
+        {
+            if (cameras != null)
+            {
+                foreach (Camera cameraComponent in cameras)
+                {
+                    if (cameraComponent != null)
+                    {
+                        GraphicsModifier.ApplyGraphicsToCamera(cameraComponent, false);
+                    }
+                }
+            }
+        }
+
         private static void LoadGraphicsOptions()
         {
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
@@ -348,8 +380,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     static class GraphicsModifier
     {
-        public static void ApplyGraphicsToCamera(Camera camera, bool antialiasing, bool depthOfField)
+        public static void ApplyGraphicsToCamera(Camera camera, bool trackCamera = true)
         {
+            if (camera == null)
+            {
+                return;
+            }
+
             //Load graphics settings
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
 
@@ -360,10 +397,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
+            //Only apply depth of field if the camera is the main game camera
+            bool mainGameCamera = camera.GetComponent<CameraView>() != null && camera.GetComponent<GUISide>() == null;
+
             //Depth of field effect
             DepthOfFieldEffect depthOfFieldEffect = camera.gameObject.GetComponent<DepthOfFieldEffect>();
 
-            if (windfallPersistentData.depthOfField && depthOfField)
+            if (windfallPersistentData.depthOfField && mainGameCamera)
             {
                 if (depthOfFieldEffect == null)
                 {
@@ -380,11 +420,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                 depthOfFieldEffect.enabled = false;
             }
 
-
             //Antialiasing effect
             FXAAEffect fxaaEffect = camera.gameObject.GetComponent<FXAAEffect>();
 
-            if (windfallPersistentData.antiAliasing && antialiasing)
+            if (windfallPersistentData.antiAliasing)
             {
                 if (fxaaEffect == null)
                 {
@@ -401,6 +440,23 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 fxaaEffect.enabled = false;
             }
+
+            //Motion blur effect
+            AmplifyMotionEffect amplifyMotionEffect = camera.gameObject.GetComponent<AmplifyMotionEffect>();
+
+            if (windfallPersistentData.motionBlur)
+            {
+                if (amplifyMotionEffect != null)
+                {
+                    amplifyMotionEffect.enabled = true;
+                }
+            }
+            else if (amplifyMotionEffect != null)
+            {
+                amplifyMotionEffect.enabled = false;
+            }
+
+            if (trackCamera) GraphicsOptions.TrackCamera(camera);
         }
     }
 }

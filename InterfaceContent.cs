@@ -1033,8 +1033,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             WinStreakCounter.CreateWinStreakCounter(__instance);
 
             //Apply graphics to cameras
-            GraphicsModifier.ApplyGraphicsToCamera(__instance.titleCamera.GetComponent<Camera>(), true, false);
-            GraphicsModifier.ApplyGraphicsToCamera(__instance.chooseCamera.GetComponent<Camera>(), true, false);
+            GraphicsModifier.ApplyGraphicsToCamera(__instance.titleCamera.GetComponent<Camera>());
+            GraphicsModifier.ApplyGraphicsToCamera(__instance.chooseCamera.GetComponent<Camera>());
 
             //Create graphics options
             GraphicsOptions.SetUpGraphicsOptions(__instance.menuObject, false);
@@ -1251,7 +1251,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (camera != null)
             {
                 //Only apply depth of field if not GUI camera
-                GraphicsModifier.ApplyGraphicsToCamera(camera, true, !__instance.GetComponent<GUISide>());
+                GraphicsModifier.ApplyGraphicsToCamera(camera);
             }
         }
 
@@ -1262,7 +1262,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Camera camera = __instance.app.view.unlockCameraView.transform.GetChild(0).GetComponent<Camera>();
             if (camera != null)
             {
-                GraphicsModifier.ApplyGraphicsToCamera(camera, true, false);
+                GraphicsModifier.ApplyGraphicsToCamera(camera);
             }
         }
 
@@ -1273,7 +1273,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Camera camera = __instance.app.view.unlockCameraView.transform.GetChild(0).GetComponent<Camera>();
             if (camera != null)
             {
-                GraphicsModifier.ApplyGraphicsToCamera(camera, true, false);
+                GraphicsModifier.ApplyGraphicsToCamera(camera);
             }
         }
 

@@ -70,7 +70,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             UpdateWinCount(streak);
         }
 
-        //Also need to reset streak when overwriting a saved game
         public static void ResetStreak()
         {
             UpdateWinCount(0);

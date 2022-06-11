@@ -15,7 +15,7 @@ using System.Collections;
 namespace The_Legend_of_Bum_bo_Windfall
 {
     //Saved state methods are high priority to avoid them being skipped
-    [HarmonyPriority(Priority.First)]
+    //[HarmonyPriority(Priority.First)]
     class SaveChanges
     {
         public static void Awake()
@@ -29,6 +29,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void SavedStateController_LoadStart(SavedStateController __instance)
         {
             WindfallSavedState.LoadStart(__instance.app);
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] LoadStart");
         }
 
         //Patch: Load end
@@ -36,6 +37,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void SavedStateController_LoadEnd()
         {
             WindfallSavedState.LoadEnd();
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] LoadEnd");
         }
 
         //Patch: Loads modified character sheet when loading into the Wooden Nickel
@@ -66,8 +68,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool FloorStartEvent_Execute_Prefix(FloorStartEvent __instance)
         {
             WindfallSavedState.LoadStart(__instance.app);
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] FloorStartEvent");
+
             if (WindfallSavedState.LoadIntoWoodenNickel(__instance.app))
             {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] FloorStartEvent: LoadIntoWoodenNickel");
+
                 //Abort loading into Wooden Nickel in the case of an incompatible save
                 if (!WindfallSavedState.IsLoading())
                 {
@@ -233,6 +240,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             return false;
         }
+
         //Patch: Overrides BumboController StartRoom
         //Saves the game when entering treasure rooms
         //Waits for rooms to be initialized before saving, which ensures that the puzzle board is saved properly
@@ -294,8 +302,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 __instance.app.view.boxes.shopRoom.GetComponent<ShopRoomView>().shop.Init();
             }
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] RoomStart");
+
             if (__instance.app.controller.savedStateController.IsLoading())
             {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Is Loading");
+
                 if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Boss)
                 {
                     if (__instance.app.model.characterSheet.currentFloor == 4)
@@ -311,6 +324,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             else if (__instance.app.model.characterSheet.currentFloor != 0 && (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.EnemyEncounter || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Boss || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Start || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure) && !__instance.app.model.mapModel.currentRoom.cleared)
             {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Isn't Loading");
+
                 if (moveIntoRoomEventSequence != null && moveIntoRoomEventSequence.IsPlaying())
                 {
                     //Wait for room to be initialized
