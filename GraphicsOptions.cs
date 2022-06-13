@@ -262,7 +262,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void InitializeButton(GameObject buttonObject, UnityAction unityAction)
         {
-            buttonObject.AddComponent<ButtonHoverAnimation>();
+            ButtonHoverAnimation buttonHoverAnimation = buttonObject.AddComponent<ButtonHoverAnimation>();
+            buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.Menu_ItemHover;
+            buttonHoverAnimation.clickSoundFx = SoundsView.eSound.Menu_ItemSelect;
 
             Button buttonComponent = buttonObject.GetComponent<Button>();
             buttonComponent.onClick.AddListener(unityAction);
@@ -270,12 +272,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void InitializeDropdown(GameObject dropdown, List<Dropdown.OptionData> options)
         {
-            dropdown.AddComponent<ButtonHoverAnimation>();
+            ButtonHoverAnimation buttonHoverAnimation = dropdown.AddComponent<ButtonHoverAnimation>();
+            buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.Menu_ItemHover;
+            buttonHoverAnimation.clickSoundFx = SoundsView.eSound.Menu_ItemSelect;
 
             Text[] dropdownItems = dropdown.transform.Find("Template").GetComponentsInChildren<Text>();
             foreach (Text item in dropdownItems)
             {
-                item.transform.parent.gameObject.AddComponent<ButtonHoverAnimation>();
+                ButtonHoverAnimation itemButtonHoverAnimation = item.transform.parent.gameObject.AddComponent<ButtonHoverAnimation>();
+                itemButtonHoverAnimation.hoverSoundFx = SoundsView.eSound.Menu_ItemHover;
+                itemButtonHoverAnimation.clickSoundFx = SoundsView.eSound.Menu_ItemSelect;
             }
 
             UpdateDropdown(dropdown, options);
