@@ -2043,18 +2043,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static Dictionary<SpellName, int> manaCosts = new Dictionary<SpellName, int>()
 		{
-			{ SpellName.TwentyTwenty, 7 },
-			{ SpellName.Pentagram, 7 },
 			{ SpellName.AttackFly, 7 },
-			{ SpellName.MamaFoot, 13 },
-			{ SpellName.Lemon, 5 },
-			{ SpellName.Pliers, 5 },
-			{ SpellName.Juiced, 6 },
-			{ SpellName.MagicMarker, 6 },
+			{ SpellName.BigSlurp, 11 },
 			{ SpellName.HairBall, 7 },
 			{ SpellName.HatPin, 8 },
+			{ SpellName.Juiced, 6 },
+			{ SpellName.Lemon, 5 },
+			{ SpellName.MagicMarker, 6 },
+			{ SpellName.MamaFoot, 13 },
+			{ SpellName.Pentagram, 7 },
+			{ SpellName.Pliers, 5 },
 			{ SpellName.TimeWalker, 16 },
-			{ SpellName.BigSlurp, 11 }
+			{ SpellName.TwentyTwenty, 5 }
 		};
 
 		public static int MinimumManaCost(SpellElement spell)
