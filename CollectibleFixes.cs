@@ -42,6 +42,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Fixes Trash Lid not restoring the second block when used while there is one block remaining
+        [HarmonyPostfix, HarmonyPatch(typeof(TrashLidSpell), nameof(TrashLidSpell.CastSpell))]
+        static void TrashLidSpell_CastSpell(TrashLidSpell __instance, ref bool __result)
+        {
+            if (__result)
+            {
+                CharacterSheet.BumboModifierObject trashLidObject = __instance.app.model.characterSheet.bumboModifierObjects.Find(delegate (CharacterSheet.BumboModifierObject bumboModifierObject) { return bumboModifierObject.spellName == SpellName.TrashLid; });
+                if (trashLidObject != null) trashLidObject.blockCounter = 2;
+            }
+        }
+
         //Patch: Fixes Breakfast activating a second time when reloading a save
         [HarmonyPostfix, HarmonyPatch(typeof(BreakfastTrinket), "AddToHealth")]
         static void BreakfastTrinket_AddToHealth(BreakfastTrinket __instance, ref float __result)
