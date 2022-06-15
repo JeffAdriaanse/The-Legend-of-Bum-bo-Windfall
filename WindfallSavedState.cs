@@ -92,7 +92,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//Abort loading if current vanilla saved state is different from previous vanilla saved state
 			if (windfallDoc != null)
             {
-				if (windfallDoc.SelectSingleNode("/save/vanilla") == null || app.controller.savedStateController == null)
+				if (windfallDoc.SelectSingleNode("/save/vanilla") == null || app.controller.savedStateController == null || !SavedStateController.HasSavedState())
                 {
 					Console.WriteLine("[The Legend of Bum-bo: Windfall] No vanilla saved state detected; aborting loading of Windfall saved state");
 					windfallDoc = null;

@@ -70,9 +70,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             UpdateWinCount(streak);
         }
 
-        public static void ResetStreak()
+        public static void ResetStreak(bool maintainNegativeStreak)
         {
-            UpdateWinCount(0);
+            if (maintainNegativeStreak)
+            {
+                if (WindfallPersistentDataController.LoadData().winCount > 0) UpdateWinCount(0);
+            }
+            else
+            {
+                UpdateWinCount(0);
+            }
         }
     }
 }

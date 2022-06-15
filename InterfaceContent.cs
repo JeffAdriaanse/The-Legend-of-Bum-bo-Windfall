@@ -1144,7 +1144,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.menuObject.transform.Find("Cutscene Menu").Find("Ending Final").GetComponent<Button>().interactable = false;
 
             //Reset win streak counter
-            WinStreakCounter.ResetStreak();
+            WinStreakCounter.ResetStreak(false);
         }
 
         //Patch: Cutscene menu from main menu
@@ -1303,7 +1303,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (UnityEngine.Object.FindObjectOfType<CharacterSheet>() == null && SavedStateController.HasSavedState() && (TitleController.startMode == TitleController.StartMode.NewGame || TitleController.startMode == TitleController.StartMode.Nothing))
             {
-                WinStreakCounter.ResetStreak();
+                WinStreakCounter.ResetStreak(true);
             }
             return true;
         }

@@ -2045,9 +2045,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			{ SpellName.AttackFly, 7 },
 			{ SpellName.BigSlurp, 11 },
+			{ SpellName.BlenderBlade, 5 },
 			{ SpellName.HairBall, 7 },
 			{ SpellName.HatPin, 8 },
 			{ SpellName.Juiced, 6 },
+			{ SpellName.KrampusCross, 5 },
 			{ SpellName.Lemon, 5 },
 			{ SpellName.MagicMarker, 6 },
 			{ SpellName.MamaFoot, 13 },
