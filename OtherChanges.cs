@@ -30,34 +30,34 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             __instance.turnOnDebugKey = true;
 
-            Progression progression = new Progression();
-            progression.braveMoneyWins = 1;
-            progression.braveWins = 2;
-            progression.chapter3NoDamageWins = 1;
-            progression.chapter4Wins = 4;
-            progression.completedTutorial = true;
-            for (int i = 0; i < progression.cutscenes.Length; i++)
-            {
-                progression.cutscenes[i] = true;
-            }
-            progression.deadMoneyWins = 1;
-            progression.deadWins = 2;
-            progression.emptyMoneyWins = 1;
-            progression.emptyWins = 2;
-            progression.lostMoneyWins = 1;
-            progression.lostWins = 2;
-            progression.nimbleMoneyWins = 1;
-            progression.nimbleWins = 2;
-            progression.stoutMoneyWins = 1;
-            progression.stoutWins = 2;
-            for (int i = 0; i < 43; i++)
-            {
-                progression.unlocks[i] = true;
-            }
-            progression.weirdMoneyWins = 1;
-            progression.weirdWins = 2;
-            progression.wins = 14;
-            ProgressionController.SaveProgression(progression);
+            //Progression progression = new Progression();
+            //progression.braveMoneyWins = 1;
+            //progression.braveWins = 2;
+            //progression.chapter3NoDamageWins = 1;
+            //progression.chapter4Wins = 4;
+            //progression.completedTutorial = true;
+            //for (int i = 0; i < progression.cutscenes.Length; i++)
+            //{
+            //    progression.cutscenes[i] = true;
+            //}
+            //progression.deadMoneyWins = 1;
+            //progression.deadWins = 2;
+            //progression.emptyMoneyWins = 1;
+            //progression.emptyWins = 2;
+            //progression.lostMoneyWins = 1;
+            //progression.lostWins = 2;
+            //progression.nimbleMoneyWins = 1;
+            //progression.nimbleWins = 2;
+            //progression.stoutMoneyWins = 1;
+            //progression.stoutWins = 2;
+            //for (int i = 0; i < 43; i++)
+            //{
+            //    progression.unlocks[i] = true;
+            //}
+            //progression.weirdMoneyWins = 1;
+            //progression.weirdWins = 2;
+            //progression.wins = 14;
+            //ProgressionController.SaveProgression(progression);
 
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu and unlocking everything");
         }

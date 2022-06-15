@@ -204,7 +204,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void SetUpHeader()
         {
-            int lastActiveChapterIndex = (WindfallHelper.ChaptersUnlocked(app.model.progression) * 4) - 3;
+            int lastActiveChapterIndex = (WindfallHelper.ChaptersUnlocked(app.model.progression) * 4) - 4;
 
             //Set active chapters
             for (int childCounter = 0; childCounter < mapCanvasHeader.transform.childCount; childCounter++)
