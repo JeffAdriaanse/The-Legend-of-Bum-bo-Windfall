@@ -359,13 +359,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 MapRoom[] mapRooms = SearchMap.FindMapRooms(app.model.mapModel);
 
+
+                bool visitedCurrentRoom = false;
                 //Move Bum-bo room marker and change opacity of rooms
                 for (int roomCounter = 1; roomCounter < 7; roomCounter++)
                 {
                     Transform roomTransform = mapCanvasRoomContainer.transform.Find("Room " + roomCounter.ToString());
                     Transform arrowTransform = mapCanvasRoomContainer.transform.Find("Arrow " + roomCounter.ToString());
 
-                    Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((mapRooms[roomCounter - 1].visited) && !Gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
+                    Color color = new Color(1, 1, 1, (chapter == app.model.characterSheet.currentFloor ? ((!visitedCurrentRoom) && !Gambling) : chapter < app.model.characterSheet.currentFloor) ? 1f : opacityValue);
 
                     if (roomTransform != null)
                     {
@@ -376,6 +378,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                             roomTransform.GetComponent<Image>().color = color;
                         }
                     }
+
+                    if (mapRooms[roomCounter - 1] == app.model.mapModel.currentRoom) visitedCurrentRoom = true;
                 }
             });
 
