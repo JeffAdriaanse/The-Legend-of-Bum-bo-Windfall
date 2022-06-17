@@ -1217,7 +1217,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "OnMouseDown")]
         static bool MenuButtonView_OnMouseDown(MenuButtonView __instance, bool ___clickable)
         {
-            if (__instance.name == ("Map Menu Button") || __instance.name ==  "Gambling Map Menu Button")
+            if ((__instance.name == ("Map Menu Button") || __instance.name ==  "Gambling Map Menu Button") && ___clickable)
             {
                 MapMenu.OpenMapMenu();
                 return false;
