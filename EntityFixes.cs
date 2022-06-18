@@ -4,6 +4,7 @@ using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -13,6 +14,20 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Harmony.CreateAndPatchAll(typeof(EntityFixes));
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity related bug fixes");
+        }
+
+        //Access child method
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(PooferEnemy), nameof(PooferEnemy.timeToDie))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void timeToDieDummy_MegaPooferEnemy(MegaPooferEnemy instance) { }
+        //Patch: Fixed Mega Poofers triggering a Poofer explosion alongside their regular explosion
+        [HarmonyPrefix, HarmonyPatch(typeof(MegaPooferEnemy), nameof(MegaPooferEnemy.timeToDie))]
+        static bool MegaPooferEnemy_timeToDie(MegaPooferEnemy __instance)
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Mega Poofer death");
+            timeToDieDummy_MegaPooferEnemy(__instance);
+            return false;
         }
 
         //Patch: Prevents vein from appearing on Keepers on Init
