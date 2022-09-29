@@ -147,7 +147,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     reward.GetComponent<BoxCollider>().enabled = false;
                     reward.gameObject.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
                     reward.transform.localScale = new Vector3(1.25f, 0f, 1.25f);
-                    notification = "You Won A Soul Heart!";
+                    notification = "GUI Notifications/WON_SOUL_HEART";
                     Sequence sequence2 = DOTween.Sequence();
                     TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence2, 1.25f), delegate ()
                     {
@@ -191,7 +191,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     coin_result += UnityEngine.Random.Range(-2, 3);
 
-                    notification = "You Won " + coin_result + (coin_result == 1 ? " Coin!" : " Coins!");
+                    __instance.app.view.gamblingView.gamblingBangView.paramsManager.SetParameterValue("AMOUNT", coin_result.ToString(), true);
+                    notification = "GUI Notifications/WON_COINS";
                     __instance.app.controller.gamblingController.ModifyCoins(coin_result);
                     Sequence sequence3 = DOTween.Sequence();
                     TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence3, 1.25f), delegate ()
@@ -226,7 +227,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 reward = __instance.app.controller.gamblingController.cupGamble.SetTrinket(__instance.app.model.gamblingModel.trinketReward, 1);
                 reward.transform.localScale = new Vector3(1f, 0f, 1f);
                 reward.transform.localPosition = __instance.app.controller.gamblingController.cupGamble.cups[__instance.app.model.gamblingModel.selectedCup].transform.position;
-                notification = "You Won A Trinket!";
+                notification = "GUI Notifications/WON_TRINKET";
                 flag = __instance.app.model.characterSheet.trinkets.Count == 4;
                 if (!flag)
                 {
@@ -252,7 +253,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 TweenSettingsExtensions.AppendCallback(sequence, delegate ()
                 {
-                    __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+                    __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent(0, true));
 
                     Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating trinket reward display");
                     GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Pickups/Trinket Pickup") as GameObject);
@@ -333,7 +334,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             SoundsView.Instance.PlaySound(SoundsView.eSound.Splash_Sign_Hide, SoundsView.eAudioSlot.Default, false);
             Sequence sequence = DOTween.Sequence();
-            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 1.5f*(1/animationSpeed)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.67f, 1f, 1.5f), 0.2f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.5f, 1f, 0.1f), 0.1f), Ease.InOutQuad)), delegate ()
+            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(sequence, 1.5f * (1 / animationSpeed)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.67f, 1f, 1.5f), 0.2f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.5f, 1f, 0.1f), 0.1f), Ease.InOutQuad)), delegate ()
             {
                 __instance.gameObject.SetActive(false);
             });
@@ -1041,35 +1042,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Create graphics menu
             GraphicsOptions.CreateGraphicsMenu(__instance.menuObject);
-
-
-            //Log quality settings
-            Console.WriteLine("Quality Level: " + QualitySettings.GetQualityLevel());
-            Console.WriteLine("Pixel Light Count: " + QualitySettings.pixelLightCount);
-            Console.WriteLine("Texture Quality: " + QualitySettings.masterTextureLimit);
-            Console.WriteLine("Anisotropic Textures: " + QualitySettings.anisotropicFiltering);
-            Console.WriteLine("AntiAliasing: " + QualitySettings.antiAliasing);
-            Console.WriteLine("Soft Particles: " + QualitySettings.softParticles);
-            Console.WriteLine("Realtime Reflection Probes: " + QualitySettings.realtimeReflectionProbes);
-            Console.WriteLine("Resolution Scaling Fixed DPI Factor: " + QualitySettings.resolutionScalingFixedDPIFactor);
-
-            Console.WriteLine("*************************");
-            Console.WriteLine("Shadows: " + QualitySettings.shadows);
-            Console.WriteLine("Shadow Resolution: " + QualitySettings.shadowResolution);
-            Console.WriteLine("Shadow Projection: " + QualitySettings.shadowProjection);
-            Console.WriteLine("Shadow Cascades: " + QualitySettings.shadowCascades);
-            Console.WriteLine("Shadow Distance: " + QualitySettings.shadowDistance);
-            Console.WriteLine("Shadowmask Mode: " + QualitySettings.shadowmaskMode);
-            Console.WriteLine("Shadow Near Plane Offset: " + QualitySettings.shadowNearPlaneOffset);
-
-            Console.WriteLine("*************************");
-            Console.WriteLine("Blend Weights: " + QualitySettings.blendWeights);
-            Console.WriteLine("VSync Count: " + QualitySettings.vSyncCount);
-            Console.WriteLine("LOD Bias: " + QualitySettings.lodBias);
-            Console.WriteLine("Maximum LOD Level: " + QualitySettings.maximumLODLevel);
-            Console.WriteLine("Particle Raycast Budget: " + QualitySettings.particleRaycastBudget);
-            Console.WriteLine("Async Upload Time Slice: " + QualitySettings.asyncUploadTimeSlice);
-            Console.WriteLine("Async Upload Buffer Size: " + QualitySettings.asyncUploadBufferSize);
         }
 
         //Patch: Set up graphics menu
@@ -1110,7 +1082,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 gameObject.GetComponent<Animator>().SetTrigger("OpenBox");
                 SoundsView.Instance.PlaySound(SoundsView.eSound.TitleScreenFade, SoundsView.eAudioSlot.Default, false);
                 Sequence sequence = DOTween.Sequence();
-                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Insert(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetDelay<Tweener>(TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(gameObject.transform, (-5.5f)*1.5f, (0.3f) * 1.5f, false), Ease.InQuad), 0.33333334f)), 0.33333334f, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(GameObject.Find("Logo").transform, (6.5f) * 1.5f, (0.3f) * 1.5f, false), Ease.InQuad)), 0.5f), delegate ()
+                TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Insert(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetDelay<Tweener>(TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(gameObject.transform, (-5.5f) * 1.5f, (0.3f) * 1.5f, false), Ease.InQuad), 0.33333334f)), 0.33333334f, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveY(GameObject.Find("Logo").transform, (6.5f) * 1.5f, (0.3f) * 1.5f, false), Ease.InQuad)), 0.5f), delegate ()
                 {
                     __instance.menuObject.SetActive(true);
                 }), delegate ()
@@ -1217,7 +1189,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "OnMouseDown")]
         static bool MenuButtonView_OnMouseDown(MenuButtonView __instance, bool ___clickable)
         {
-            if ((__instance.name == ("Map Menu Button") || __instance.name ==  "Gambling Map Menu Button") && ___clickable)
+            if ((__instance.name == ("Map Menu Button") || __instance.name == "Gambling Map Menu Button") && ___clickable)
             {
                 MapMenu.OpenMapMenu();
                 return false;

@@ -1,32 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using BepInEx;
 using HarmonyLib;
 using UnityEngine;
-using System.Reflection.Emit;
-using DG.Tweening;
 using System.Runtime.CompilerServices;
-using System.Xml;
-using System.Reflection;
 using TMPro;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    class CollectibleChanges
-    {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(CollectibleChanges));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
-        }
+	class CollectibleChanges
+	{
+		public static void Awake()
+		{
+			Harmony.CreateAndPatchAll(typeof(CollectibleChanges));
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
+		}
 
 		public static float TrinketLuckModifier(CharacterSheet characterSheet)
-        {
+		{
 			return 1 + (characterSheet.getLuck() / 10);
 		}
 
 		public static int EffectActivationCounter(float effectValue)
-        {
+		{
 			int floor = Mathf.FloorToInt(effectValue);
 			float remainder = effectValue - floor;
 
@@ -50,7 +45,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static bool CraftPaperSpell_AlterSpell(CraftPaperSpell __instance, int _spell_index)
 		{
 			if (__instance.app.model.characterSheet.spells[_spell_index].spellName == SpellName.CraftPaper)
-            {
+			{
 				return false;
 			}
 			return true;
@@ -82,23 +77,23 @@ namespace The_Legend_of_Bum_bo_Windfall
 				AAABatteryCount += __instance.GetTrinket((int)trinketCounter).trinketName == TrinketName.AAABattery ? 1 : 0;
 				trinketCounter += 1;
 			}
-			
+
 			if (HoofCount > 0)
-            {
+			{
 				HoofCount *= __instance.app.controller.trinketController.EffectMultiplier();
 
 				__instance.app.controller.ModifyActionPoint(HoofCount);
 			}
-			
+
 			if (AAABatteryCount > 0)
-            {
+			{
 				float movementChance = AAABatteryCount * activationChance * TrinketLuckModifier(__instance.app.model.characterSheet) * __instance.app.controller.trinketController.EffectMultiplier();
-				
+
 				int movementGain = EffectActivationCounter(movementChance);
 
 				//Trigger effect
 				if (movementGain > 0)
-                {
+				{
 					__instance.app.controller.ModifyActionPoint(movementGain);
 				}
 			}
@@ -132,17 +127,17 @@ namespace The_Legend_of_Bum_bo_Windfall
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
 				if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.AABattery)
-                {
+				{
 					//Chance: 1/4
 					AABatteryEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
 				}
 				else if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SoulBag)
-                {
+				{
 					//Chance: 1/4
 					SoulBagEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
 				}
-                else
-                {
+				else
+				{
 					OtherEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).ChanceOfGainingAPFromKill();
 				}
 				trinketCounter += 1;
@@ -177,7 +172,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 			//Additional effect if one of the trinkets was activated
 			if (effectTriggered)
-            {
+			{
 				__instance.app.controller.ShowActionPointGain();
 			}
 			return false;
@@ -205,7 +200,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				if (_immunity == Enemy.AttackImmunity.ReduceSpellDamage)
 				{
 					if (__instance.app.controller.GetTrinket((int)num).trinketName == TrinketName.BagOSucking)
-                    {
+					{
 						effectValue += activationChance;
 					}
 				}
@@ -309,7 +304,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.CurvedHorn)
 				{
 					//Chance: 1/3
-					effectValue += (float)1f/3f;
+					effectValue += (float)1f / 3f;
 				}
 				trinketCounter += 1;
 			}
@@ -364,7 +359,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
 				//Chance: 1/3
-				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Magnet ? (float)1f/3f : 0f;
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Magnet ? (float)1f / 3f : 0f;
 				trinketCounter += 1;
 			}
 			effectValue *= (float)__instance.trinketController.EffectMultiplier();
@@ -440,7 +435,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 
 			if (effectTriggered)
-            {
+			{
 				__instance.app.controller.SetActiveSpells(true, true);
 			}
 			return false;
@@ -473,7 +468,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
 				//Chance: 1/3
-				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Pinky ? 1/3 : 0f;
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Pinky ? 1 / 3 : 0f;
 				trinketCounter += 1;
 			}
 			effectValue *= (float)__instance.EffectMultiplier();
@@ -537,7 +532,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				{
 					//Prevent Rat Heart from triggering when reloading a save
 					if (!__instance.app.controller.savedStateController.IsLoading())
-                    {
+					{
 						//Chance: 1/4
 						RatHeartEffectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.RatHeart ? 0.25f : 0f;
 					}
@@ -557,16 +552,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 				int RatHeartActivationCounter = EffectActivationCounter(RatHeartEffectValue);
 
 				if (RatHeartActivationCounter > 0)
-                {
+				{
 					__instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 0.5f * RatHeartActivationCounter);
 				}
 
 				if (SmallBoxEffectValue > 0)
-                {
+				{
 					short[] array = new short[6];
-					
+
 					while (SmallBoxEffectValue > 0)
-                    {
+					{
 						SmallBoxEffectValue--;
 
 						List<ManaType> list = new List<ManaType>
@@ -607,16 +602,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 			while ((int)trinketCounter1 < __instance.app.model.characterSheet.trinkets.Count)
 			{
 				if (__instance.app.controller.GetTrinket((int)trinketCounter1).trinketName == TrinketName.RatTail)
-                {
+				{
 					firstRatTailIndex = trinketCounter1;
 				}
 				trinketCounter1 += 1;
 			}
 
 			if (firstRatTailIndex == -1 || __instance != __instance.app.controller.GetTrinket((int)firstRatTailIndex))
-            {
+			{
 				return;
-            }
+			}
 
 			//Return chance of all Rat Tail trinkets combined
 			float effectValue = 0f;
@@ -705,7 +700,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				short[] array = new short[6];
 
 				while (effectValue > 0)
-                {
+				{
 					effectValue--;
 
 					List<Block.BlockType> list = new List<Block.BlockType>();
@@ -913,22 +908,22 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{
 				//Record which spells are disabled
 				if (!__instance.app.view.spells[spellCounter].disableObject.activeSelf)
-                {
+				{
 					enabledSpells[spellCounter] = true;
-                }
-                else
-                {
+				}
+				else
+				{
 					enabledSpells[spellCounter] = false;
 				}
 
 				//Enable/disable spells
 				if (CalculateCostReduction(spellCounter, 0.15f, __instance.app, false) > 0)
-                {
+				{
 					__instance.app.view.spells[spellCounter].EnableSpell();
 					anyActiveSpells = true;
 				}
-                else
-                {
+				else
+				{
 					__instance.app.view.spells[spellCounter].DisableSpell();
 				}
 				spellCounter += 1;
@@ -936,7 +931,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 			//Abort if there are no viable spells
 			if (!anyActiveSpells)
-            {
+			{
 				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
 				{
 					if (enabledSpells[spellCounter2])
@@ -1053,7 +1048,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				CollectibleFixes.UseTrinket_Use_Postfix(currentTrinket);
 
 				switch (currentTrinket.trinketName)
-                {
+				{
 					case TrinketName.RainbowTick:
 						SpellElement spellElement = ___spell;
 
@@ -1078,11 +1073,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 							int totalCombinedCost = 0;
 							//Increase the reduced color's cost modifier if the spell's total cost (including modifier) would be reduced below minimum OR if the reduced color's cost (including modifier) would be reduced below zero
 							for (int costCounter = 0; costCounter < 6; costCounter++)
-                            {
+							{
 								totalCombinedCost += (short)(__instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[costCounter] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[costCounter]);
 							}
 							if (totalCombinedCost < SpellManaCosts.MinimumManaCost(__instance.app.model.characterSheet.spells[__instance.spellIndex]) || __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[randomColor] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] < 0)
-                            {
+							{
 								__instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] += 1;
 							}
 						}
@@ -1090,7 +1085,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					case TrinketName.BrownTick:
 						//Reduce recharge time
 						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge > 0)
-                        {
+						{
 							__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge--;
 						}
 						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge < __instance.app.model.characterSheet.spells[__instance.spellIndex].charge)
@@ -1130,7 +1125,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				__instance.app.model.spellModel.spellQueued = false;
 
 				if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
-                {
+				{
 					__instance.app.controller.eventsController.EndEvent();
 				}
 
@@ -1155,10 +1150,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			StartingSpell[] deadStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheDead].startingSpells;
 			for (int i = 0; i < deadStartingSpells.Length; i++)
-            {
+			{
 				StartingSpell deadStartingSpell = deadStartingSpells[i];
 				if (deadStartingSpell.spell == SpellName.AttackFly)
-                {
+				{
 					deadStartingSpell.toothCost = 5;
 				}
 			}
@@ -1396,14 +1391,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		public static int CalculateCostReduction(int _spell_index, float reductionPercentage, BumboApplication bumboApplication, bool temporaryCost)
-        {
+		{
 			//Calculate cost reduction
 			int totalManaCost = 0;
 			for (int i = 0; i < 6; i++)
 			{
 				totalManaCost += (int)bumboApplication.model.characterSheet.spells[_spell_index].Cost[i];
 				if (temporaryCost)
-                {
+				{
 					totalManaCost += (int)bumboApplication.model.characterSheet.spells[_spell_index].CostModifier[i];
 				}
 			}
@@ -1430,11 +1425,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 			//Enable spell if cost reduction is above zero
 			if (costReduction > 0)
-            {
+			{
 				__instance.app.view.spells[_spell_index].EnableSpell();
 			}
-            else
-            {
+			else
+			{
 				__instance.app.view.spells[_spell_index].DisableSpell();
 			}
 
@@ -1567,13 +1562,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 		//Permanent and temporary mana cost reduction is now preserved when rerolling spell costs
 		//Converter special mana cost generation is preserved when its mana cost is rerolled
 		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SetSpellCost", new Type[] { typeof(SpellElement), typeof(bool[]) })]
-        static bool BumboController_SetSpellCost(BumboController __instance, SpellElement _spell, bool[] _ignore_mana, ref SpellElement __result)
-        {
+		static bool BumboController_SetSpellCost(BumboController __instance, SpellElement _spell, bool[] _ignore_mana, ref SpellElement __result)
+		{
 			if (_spell.spellName.ToString().Contains("Converter"))
-            {
+			{
 				Block.BlockType blockType = Block.BlockType.Bone;
 				switch (_spell.spellName)
-                {
+				{
 					case SpellName.ConverterWhite:
 						blockType = Block.BlockType.Bone;
 						break;
@@ -1681,19 +1676,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 					//Reduce impact of weighted randomness
 					if (UnityEngine.Random.Range(0, 1f) < 0.5f)
-                    {
+					{
 						colorCount = Mathf.RoundToInt(rand);
 					}
 
 					//Failsafe
 					if (colorCount < minimumColorCount)
-                    {
+					{
 						colorCount = minimumColorCount;
-                    }
+					}
 					else if (colorCount > maximumColorCount)
-                    {
+					{
 						colorCount = maximumColorCount;
-                    }
+					}
 				}
 
 				List<short> spellCost = new List<short>();
@@ -1794,15 +1789,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__result = _spell;
 
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing spell mana cost generation");
-            return false;
-        }
+			return false;
+		}
 
-        //Patch: Pentagram no longer provides puzzle damage
-        [HarmonyPostfix, HarmonyPatch(typeof(PentagramSpell), "CastSpell")]
-        static void PentagramSpell_CastSpell(PentagramSpell __instance, bool __result)
-        {
+		//Patch: Pentagram no longer provides puzzle damage
+		[HarmonyPostfix, HarmonyPatch(typeof(PentagramSpell), "CastSpell")]
+		static void PentagramSpell_CastSpell(PentagramSpell __instance, bool __result)
+		{
 			if (__result)
-            {
+			{
 				__instance.app.model.characterSheet.bumboRoomModifiers.damage--;
 				//Item damage room modifier is not implemented in the base game and must be added in
 				__instance.app.model.characterSheet.bumboRoomModifiers.itemDamage++;
@@ -1860,7 +1855,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			rockCounter++;
 			_rock_number = 1;
 			if (rockCounter > __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier())
-            {
+			{
 				_rock_number = 4;
 				rockCounter = 0;
 			}
@@ -1893,9 +1888,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			float damage = 0.5f * __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier;
 			while (damage >= __instance.app.model.characterSheet.hitPoints + __instance.app.model.characterSheet.soulHearts)
-            {
+			{
 				damage -= 0.5f;
-            }
+			}
 
 			__instance.app.controller.TakeDamage(-damage / __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier, null);
 
@@ -1956,14 +1951,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static void HatPinSpell_Damage(HatPinSpell __instance, ref int __result)
 		{
 			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
-        }
+		}
 
-        //Patch: Changes Rock description
-        [HarmonyPostfix, HarmonyPatch(typeof(RockSpell), MethodType.Constructor)]
-        static void RockSpell_Constructor(RockSpell __instance)
-        {
-            __instance.Name = "Hits the Furthest Enemy";
-        }
+		//Patch: Changes Rock description
+		[HarmonyPostfix, HarmonyPatch(typeof(RockSpell), MethodType.Constructor)]
+		static void RockSpell_Constructor(RockSpell __instance)
+		{
+			__instance.Name = "Hits the Furthest Enemy";
+		}
 
 		//Patch: Changes Yellow Belt description
 		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), MethodType.Constructor)]
@@ -1977,7 +1972,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static void YellowBeltSpell_CastSpell(YellowBeltSpell __instance, bool __result)
 		{
 			if (__result)
-            {
+			{
 				for (int i = 0; i < __instance.app.model.characterSheet.bumboModifierObjects.Count; i++)
 				{
 					//Detect whether there is a Yellow Belt modifier
@@ -1985,7 +1980,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					{
 						//Change modifier type if it is a round modifier
 						if (__instance.app.model.characterSheet.bumboModifierObjects[i].modifierType == CharacterSheet.BumboModifierObject.ModifierType.Round)
-                        {
+						{
 							//Change modifier type
 							__instance.app.model.characterSheet.bumboModifierObjects[i].modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
 						}
@@ -1998,50 +1993,50 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 	}
 
-    static class SpellManaCosts
+	static class SpellManaCosts
 	{
 		public static int GetManaCost(SpellElement spell)
-        {
+		{
 			//New mana costs
 			int totalSpellCost = -1;
 
 			if (manaCosts.TryGetValue(spell.spellName, out int value))
 			{
 				totalSpellCost = value;
-            }
+			}
 
-            //Old mana costs
-            if (totalSpellCost == -1)
-            {
-                switch (spell.manaSize)
-                {
-                    case SpellElement.ManaSize.S:
-                        totalSpellCost = 2;
-                        break;
-                    case SpellElement.ManaSize.M:
-                        totalSpellCost = 4;
-                        break;
-                    case SpellElement.ManaSize.L:
-                        totalSpellCost = 6;
-                        break;
-                    case SpellElement.ManaSize.XL:
-                        totalSpellCost = 10;
-                        break;
-                    case SpellElement.ManaSize.XXL:
-                        totalSpellCost = 16;
-                        break;
-                    case SpellElement.ManaSize.XXXL:
-                        totalSpellCost = 20;
-                        break;
-                    default:
-                        totalSpellCost = 1;
-                        break;
-                }
-            }
+			//Old mana costs
+			if (totalSpellCost == -1)
+			{
+				switch (spell.manaSize)
+				{
+					case SpellElement.ManaSize.S:
+						totalSpellCost = 2;
+						break;
+					case SpellElement.ManaSize.M:
+						totalSpellCost = 4;
+						break;
+					case SpellElement.ManaSize.L:
+						totalSpellCost = 6;
+						break;
+					case SpellElement.ManaSize.XL:
+						totalSpellCost = 10;
+						break;
+					case SpellElement.ManaSize.XXL:
+						totalSpellCost = 16;
+						break;
+					case SpellElement.ManaSize.XXXL:
+						totalSpellCost = 20;
+						break;
+					default:
+						totalSpellCost = 1;
+						break;
+				}
+			}
 			return totalSpellCost;
-        }
+		}
 
-        public static Dictionary<SpellName, int> manaCosts = new Dictionary<SpellName, int>()
+		public static Dictionary<SpellName, int> manaCosts = new Dictionary<SpellName, int>()
 		{
 			{ SpellName.AttackFly, 7 },
 			{ SpellName.BigSlurp, 11 },
@@ -2060,9 +2055,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 		};
 
 		public static int MinimumManaCost(SpellElement spell)
-        {
+		{
 			return minimumManaCosts.TryGetValue(spell.spellName, out int value) ? value : Mathf.Max(2, Mathf.RoundToInt(GetManaCost(spell) / 2));
-        }
+		}
 
 		public static Dictionary<SpellName, int> minimumManaCosts = new Dictionary<SpellName, int>()
 		{

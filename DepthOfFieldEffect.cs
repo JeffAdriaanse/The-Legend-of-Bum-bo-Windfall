@@ -1,10 +1,9 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    public class DepthOfFieldEffect : MonoBehaviour
-    {
+	public class DepthOfFieldEffect : MonoBehaviour
+	{
 		const int circleOfConfusionPass = 0;
 		const int preFilterPass = 1;
 		const int bokehPass = 2;

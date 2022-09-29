@@ -1,6 +1,4 @@
-﻿
-
-namespace The_Legend_of_Bum_bo_Windfall
+﻿namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class WindfallHelper
     {

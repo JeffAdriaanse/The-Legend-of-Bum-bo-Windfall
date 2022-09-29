@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
-using DG.Tweening;
 using System.Runtime.CompilerServices;
 using System.Linq;
+using DG.Tweening;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -620,7 +619,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
 
-            flyCounter ++;
+            flyCounter++;
             if (flyCounter > 2)
             {
                 flyCounter = 0;

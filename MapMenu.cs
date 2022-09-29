@@ -253,8 +253,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     button.gameObject.AddComponent<ButtonHoverAnimation>();
                 }
 
-                //Add button hover functionality
-
                 //Event triggers
                 EventTrigger chapterButtonEventTrigger = button.gameObject.GetComponent<EventTrigger>();
                 //Mouse enter trigger

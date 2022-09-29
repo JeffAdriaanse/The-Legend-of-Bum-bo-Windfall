@@ -256,11 +256,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
+        //TODO: Playtest this patch!
         //Patch: Fixes holding 'r' to restart while in a treasure room causing the game to softlock
         [HarmonyPrefix, HarmonyPatch(typeof(TreasureChosenEvent), "Execute")]
         static bool TreasureChosenEvent_Execute(TreasureChosenEvent __instance)
         {
-            if (__instance.app.controller.loadingController != null)
+            if (UnityEngine.Object.FindObjectOfType<LoadingController>() != null)
             {
                 Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting treasure chosen event; game is loading");
                 return false;
@@ -325,19 +326,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
-        //Patch: Fixes a bug causing the 'options' sub-menu to not open in the Wooden Nickel
-        [HarmonyPrefix, HarmonyPatch(typeof(PauseButtonView), "Options")]
-        static bool PauseButtonView_Options(PauseButtonView __instance)
-        {
-            if (__instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent")
-            {
-                __instance.app.view.optionsController.Open(__instance.app.view.pauseItems, __instance.app.controller.gamblingController.levelMusicView.GetComponent<AudioSource>());
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Correcting location of audiosource retrieved by options menu; menu was opened in the Wooden Nickel");
-                return false;
-            }
-            return true;
-        }
-
         //Patch: Fixed toggle spell menu arrow persisting after leaving a treasure room if the treasure room was exited in a certain way
         [HarmonyPostfix, HarmonyPatch(typeof(RoomStartEvent), "Execute")]
         static void RoomStartEvent_Execute(RoomStartEvent __instance)
@@ -378,7 +366,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     popsicle = __instance.app.view.bumboThrow.transform.GetChild(childIndex).gameObject;
                 }
             }
-            
+
             if (popsicle != null)
             {
                 popsicle.SetActive(false);
@@ -732,6 +720,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
+        //TODO: Test patch
         //Patch: Fixes spell UI not appearing when quickly buying a trinket/needle after canceling a purchase, which could cause a softlock when buying a trinket
         //Patch also causes the shop clerk to wave when a trinket is purchased
         //Patch also hides shop price tag if the trinket is not a prick and the player has no empty trinket slots
@@ -740,30 +729,34 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (!__instance.app.model.paused)
             {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] 1");
                 if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" && __instance.app.model.characterSheet.trinkets.Count < 4)
                 {
-                    __instance.Acquire();
+                    __instance.Acquire(__instance.CancelAllowed);
                     __instance.app.controller.eventsController.EndEvent();
                     return false;
                 }
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] 2");
                 if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent")
                 {
                     __instance.app.model.trinketReward = __instance.trinket.trinketName;
-                    __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+                    __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent(__instance.shopIndex, __instance.CancelAllowed));
                     return false;
                 }
-                if (__instance.clickable)
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] 3");
+                if ((bool)AccessTools.Field(typeof(TrinketPickupView), "clickable").GetValue(__instance) == true)
                 {
                     if (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent")
                     {
                         __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().SetClickable(false);
                         if (__instance.app.model.characterSheet.trinkets.Count < 4)
                         {
-                            __instance.Acquire();
+                            __instance.Acquire(__instance.CancelAllowed);
                             return false;
                         }
                         __instance.app.model.trinketReward = __instance.trinket.trinketName;
-                        __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+                        __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent(__instance.shopIndex, __instance.CancelAllowed));
+                        Console.WriteLine("[The Legend of Bum-bo: Windfall] 4");
                         return false;
                     }
                     else if (__instance.app.view.gamblingView != null && __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent" && !__instance.app.view.sideGUI.activeSelf)
@@ -777,7 +770,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                             __instance.app.view.gamblingView.shopClerkView.Wave();
                             __instance.app.view.gamblingView.shopRegisterView.Pay(__instance.AdjustedPrice);
                             __instance.app.controller.ModifyCoins(-__instance.AdjustedPrice);
-                            __instance.Acquire();
+                            __instance.Acquire(__instance.CancelAllowed);
+                            Console.WriteLine("[The Legend of Bum-bo: Windfall] 5");
                         }
                         if (__instance.app.model.bumboEvent.GetType().ToString() != "SpellModifyEvent" && __instance.app.model.characterSheet.coins >= __instance.AdjustedPrice && __instance.app.model.characterSheet.trinkets.Count >= 4)
                         {
@@ -797,13 +791,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 {
                                     __instance.priceView.Hide();
                                 }
+                                Console.WriteLine("[The Legend of Bum-bo: Windfall] 6");
                             }
                             __instance.app.controller.ModifyCoins(-__instance.AdjustedPrice);
                             if (__instance.app.view.gamblingView == null)
                             {
                                 __instance.app.model.trinketReward = __instance.trinket.trinketName;
                             }
-                            __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent());
+                            __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent(__instance.shopIndex, __instance.CancelAllowed));
                             return false;
                         }
                     }

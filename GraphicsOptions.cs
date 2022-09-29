@@ -29,6 +29,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void SetUpGraphicsOptions(GameObject menuView, bool pauseMenu)
         {
+            //TODO: Implement graphics options
+            return;
+
             AssetBundle assets = Windfall.assetBundle;
             if (assets == null)
             {

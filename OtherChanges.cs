@@ -15,7 +15,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying other changes");
         }
 
-        
+
         //Patch: Enables debug menu
         [HarmonyPostfix, HarmonyPatch(typeof(DebugController), "Start")]
         static void DebugController_Start(DebugController __instance)
@@ -61,7 +61,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu and unlocking everything");
         }
-        
+
 
         //Patch: Heart tiles no longer appear naturally when playing as Bum-bo the Lost
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "nextBlock")]
@@ -254,7 +254,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         {
                             currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Spell;
                         }
-                        else if(__instance.app.model.characterSheet.currentFloor == 2)
+                        else if (__instance.app.model.characterSheet.currentFloor == 2)
                         {
                             currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Trinket;
                         }

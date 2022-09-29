@@ -9,9 +9,9 @@ using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    public static class WindfallSavedState
-    {
-        private static string FilePath { get { return Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfallstate.sav"; } }
+	public static class WindfallSavedState
+	{
+		private static string FilePath { get { return Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfallstate.sav"; } }
 
 		private static XmlDocument windfallDoc;
 
@@ -91,14 +91,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 			//Abort loading if current vanilla saved state is different from previous vanilla saved state
 			if (windfallDoc != null)
-            {
+			{
 				if (windfallDoc.SelectSingleNode("/save/vanilla") == null || app.controller.savedStateController == null || !SavedStateController.HasSavedState())
-                {
+				{
 					Console.WriteLine("[The Legend of Bum-bo: Windfall] No vanilla saved state detected; aborting loading of Windfall saved state");
 					windfallDoc = null;
 				}
 				else if (windfallDoc.SelectSingleNode("/save/vanilla").Attributes["bytes"].Value != (string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(app.controller.savedStateController, new object[] { }))
-                {
+				{
 					Console.WriteLine("[The Legend of Bum-bo: Windfall] Incompatible vanilla saved state detected; aborting loading of Windfall saved state");
 					windfallDoc = null;
 				}
@@ -142,7 +142,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			for (int trinketCounter = 0; trinketCounter < 4; trinketCounter++)
 			{
 				if (app.model.trinketIsFake[trinketCounter] && app.model.fakeTrinkets[trinketCounter] != null)
-                {
+				{
 					TrinketElement trinketElement = app.model.fakeTrinkets[trinketCounter];
 					XmlElement trinketInstanceElement = xmlDocument.CreateElement("trinket");
 					glitchedTrinketsElement.AppendChild(trinketInstanceElement);
@@ -319,7 +319,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				XmlNode glitchedTrinketNode = glitchedTrinketsNodeList[trinketCounter];
 				int index = Convert.ToInt16(glitchedTrinketNode.Attributes["index"].Value);
 				if (app.model.characterSheet.trinkets[index] != null && app.model.characterSheet.trinkets[index].trinketName == TrinketName.Glitch)
-                {
+				{
 					app.model.trinketIsFake[index] = true;
 					app.model.fakeTrinkets[index] = app.model.trinketModel.trinkets[(TrinketName)Enum.Parse(typeof(TrinketName), glitchedTrinketNode.Attributes["name"].Value)];
 					app.model.fakeTrinkets[index].uses = Convert.ToInt16(glitchedTrinketNode.Attributes["uses"].Value);
@@ -330,7 +330,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 
 		public static void LoadChampionEnemies(BumboApplication app)
-        {
+		{
 			//Loading Champions
 			if (windfallDoc == null)
 			{
@@ -388,11 +388,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		public static void LoadTreasure(TreasureRoom treasureRoom, List<GameObject> ___pickups)
-        {
+		{
 			if (windfallDoc == null)
-            {
+			{
 				return;
-            }
+			}
 
 			//Remove existing pickups
 			foreach (GameObject pickup in ___pickups)
@@ -434,7 +434,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		public static void LoadBoss()
-        {
+		{
 			if (windfallDoc == null)
 			{
 				return;
@@ -452,7 +452,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		public static void SaveDamageTaken(float damage)
-        {
+		{
 			XmlDocument xmlDocument = new XmlDocument();
 			xmlDocument.LoadXml(ReadXml());
 
@@ -481,11 +481,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		public static void LoadDamageTaken(BumboApplication app)
-        {
+		{
 			if (windfallDoc == null)
-            {
+			{
 				return;
-            }
+			}
 
 			XmlNode damageNode = windfallDoc.SelectSingleNode("/save/damageTaken");
 			if (damageNode == null)
@@ -726,7 +726,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		public static bool LoadShop(Shop __instance, TrinketModel ___trinketModel)
-        {
+		{
 			//Bug: Shop pickups not linked to shop when reloading a Wooden Nickel save
 
 			//Load shop
@@ -821,8 +821,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 					}
 				}
 
-				for(int index = 0; index < 3; index++)
-                {
+				for (int index = 0; index < 3; index++)
+				{
 					if (__instance.GetPickup(index) != null)
 					{
 						__instance.GetPickup(index).GetComponent<TrinketPickupView>().shopIndex = index;
@@ -840,12 +840,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		public static bool WoodenNickelSaveExists()
-        {
+		{
 			return windfallDoc == null ? false : windfallDoc.SelectSingleNode("/save/gambling") != null;
 		}
 
 		public static void LoadCharacterSheet(BumboApplication app)
-        {
+		{
 			if (windfallDoc == null)
 			{
 				return;

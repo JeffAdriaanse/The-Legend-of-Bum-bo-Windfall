@@ -8,13 +8,13 @@ using DG.Tweening;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    class EntityChanges
-    {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(EntityChanges));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity changes");
-        }
+	class EntityChanges
+	{
+		public static void Awake()
+		{
+			Harmony.CreateAndPatchAll(typeof(EntityChanges));
+			Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity changes");
+		}
 
 		//Changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
 		//Champions are now more common once the player has unlocked 'Everything Is Terrible!'
@@ -69,7 +69,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		//Patch: Equalizes the chances between lanes when Loaf is determining where to spawn Corn Dips
 		[HarmonyPrefix, HarmonyPatch(typeof(LoafBoss), "SpawnDips")]
 		static bool LoafBoss_SpawnDips(LoafBoss __instance, int _spawn_y, ref bool __result)
-        {
+		{
 			DipEnemy[] array = UnityEngine.Object.FindObjectsOfType<DipEnemy>();
 			int num = 0;
 			float num2 = (__instance.getHealth() <= (float)(__instance.initialHealth / 2)) ? 0.5f : 0.25f;
@@ -86,14 +86,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//Determine how many Dips will be spawned
 			bool[] dipSpawnLocations = new bool[3];
 			for (short num4 = -1; num4 < 2; num4 += 1)
-            {
+			{
 				//Check whether the space is available
 				if (__instance.position.x + (int)num4 >= 0 && __instance.position.x + (int)num4 < 3 && __instance.app.model.aiModel.battlefieldPositions[__instance.app.model.aiModel.battlefieldPositionIndex[__instance.position.x + (int)num4, _spawn_y]].owner_ground == null)
 				{
 					dipSpawnLocations[num4 + 1] = true;
 				}
-                else
-                {
+				else
+				{
 					dipSpawnLocations[num4 + 1] = false;
 				}
 			}
@@ -101,18 +101,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//Count Dips
 			int dipSpawnCount = 0;
 			foreach (bool spawnLocation in dipSpawnLocations)
-            {
+			{
 				if (spawnLocation == true)
-                {
+				{
 					dipSpawnCount++;
-                }
-            }
+				}
+			}
 
 			float spawnChance = 0f;
 
 			//Spawn chance is zero if there is already a Corn Dip
 			if (num == 0)
-            {
+			{
 				//Determine cumulative spawn chance
 				for (int i = 1; i <= dipSpawnCount; i++)
 				{
@@ -125,7 +125,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//Determine which lane to spawn Corn Dip in
 			int cornDipSpawnLane = -2;
 			if (UnityEngine.Random.Range(0f, 1f) < spawnChance)
-            {
+			{
 				cornDipSpawnLane = UnityEngine.Random.Range(-1, 2);
 			}
 
@@ -164,8 +164,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 		//Patch: Override enemy hurt method to modify damage resistance
 		//Also changes Mysterious Bag effect to stack past 100% and incorporate Luck stat
 		[HarmonyPrefix, HarmonyPatch(typeof(Enemy), "Hurt")]
-        static bool Enemy_Hurt(Enemy __instance, ref bool ___knockbackHappened, float damage, Enemy.AttackImmunity _immunity = Enemy.AttackImmunity.SuperAttack, StatusEffect _status_effects = null, int _column = -1)
-        {
+		static bool Enemy_Hurt(Enemy __instance, ref bool ___knockbackHappened, float damage, Enemy.AttackImmunity _immunity = Enemy.AttackImmunity.SuperAttack, StatusEffect _status_effects = null, int _column = -1)
+		{
 			//Chance: 1/4
 			float activationChance = 0.25f;
 
@@ -247,7 +247,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 					__instance.PuzzleResisted();
 					damage = Mathf.Floor(damage / 4);
 					if (damage > 0)
-                    {
+					{
 						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy puzzle damage resistance");
 					}
 				}
@@ -391,32 +391,32 @@ namespace The_Legend_of_Bum_bo_Windfall
 			___knockbackHappened = false;
 
 			return false;
-        }
+		}
 
-    }
+	}
 
 	public class BinomialDistribution
-    {
+	{
 		public static float CalculateBinomialDistribution(int numberOfEvents, int requiredSuccesses, float successProbability)
-        {
+		{
 			return CombinationFormula(numberOfEvents, requiredSuccesses) * (float)Math.Pow(successProbability, requiredSuccesses) * (float)Math.Pow(1 - successProbability, numberOfEvents - requiredSuccesses);
 		}
 
 		private static float CombinationFormula(int totalObjects, int objectsTaken)
-        {
+		{
 			if (totalObjects == objectsTaken) return 1;
 			else return Factorial(totalObjects) / (Factorial(objectsTaken) * Factorial(totalObjects - objectsTaken));
 		}
 
 		private static int Factorial(int input)
-        {
+		{
 			int output = input;
 			for (int i = input - 1; i >= 1; i--)
-            {
+			{
 				output *= i;
-            }
+			}
 			return output;
-        }
+		}
 
 	}
 }
