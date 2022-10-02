@@ -9,6 +9,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using System.Collections;
+using PathologicalGames;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -622,49 +623,74 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Adapts EventsController OnNotification to allow for cancel button functionality when replacing a trinket
-        //Also fixes cancel button in treasure rooms not working during BumboEvent
+        //NEW
         //Patch: Fixes canceling spells with temporarily reduced mana costs refunding more mana than they cost
         //Patch also counteracts reduction in mana refund from Sucker enemies
         //Patch: Add cancel functionality for use trinkets
+        //Patch: Fixes canceling actions that modify your spells causing both the puzzle board and the spell menu to be selectable at the same time when using gamepad or keyboard controls
         [HarmonyPrefix, HarmonyPatch(typeof(EventsController), "OnNotification")]
         static bool EventsController_OnNotification(EventsController __instance, string _event_path, object _target, params object[] _data)
         {
-            //Fixing cancel button in treasure rooms during BumboEvent
-            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "BumboEvent" && __instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
+            if (_event_path == "cancel.spell" && (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GrabBossRewardEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent"))
             {
-                DOTween.KillAll(true);
-                __instance.SetEvent(new TreasureChosenEvent());
-                return false;
-            }
-            if (_event_path == "cancel.spell" && (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "GrabBossRewardEvent"))
-            {
+                __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
+                __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Hide();
+                if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure)
+                {
+                    PoolManager.Pools["Spells"].GetComponent<GamepadTreasureRoomController>().Shutdown();
+                }
+                else if (__instance.app.view.gamblingView == null)
+                {
+                    __instance.app.view.bossRewardParents[0].transform.parent.GetComponent<GamepadTreasureRoomController>().Shutdown();
+                }
                 __instance.EndEvent();
                 return false;
             }
-            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && __instance.app.view.gamblingView != null)
+            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
             {
-                //TrinketReplaceEvent cancel when at Wooden Nickel
-                if (__instance.app.model.gamblingModel.cameraAt == 0)
+                TrinketReplaceEvent trinketReplaceEvent = __instance.app.model.bumboEvent as TrinketReplaceEvent;
+                __instance.app.controller.HideNotifications(false);
+                __instance.SetEvent(new TrinketReplaceCancelledEvent());
+                if (!__instance.app.model.iOS)
                 {
-                    __instance.app.controller.eventsController.SetEvent(new TrinketChosenToReplaceEvent(-1));
-                    return false;
+                    __instance.app.controller.HideGUI();
                 }
+                if (!__instance.app.model.iOS)
+                {
+                    __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
+                }
+                __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
+                __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
+                Sequence s = DOTween.Sequence();
+                s.Append(__instance.app.view.mainCameraView.transform.DOMove(new Vector3(0f, 0.46f, -3.27f), 1f, false).SetEase(Ease.InOutQuad));
+                s.Join(__instance.app.view.mainCameraView.transform.DORotate(new Vector3(-1.43f, 0f, 0f), 1f, RotateMode.Fast).SetEase(Ease.InOutQuad));
+                __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
+                if (__instance.app.view.gamblingView == null && __instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Treasure)
+                {
+                    __instance.app.view.bossRewardParents[0].transform.parent.GetComponent<GamepadTreasureRoomController>().Initialize(trinketReplaceEvent.index);
+                }
+                return false;
+            }
+            if (_event_path == "cancel.spell" && __instance.app.view.gamblingView != null)
+            {
                 __instance.app.controller.HideNotifications(false);
                 __instance.app.controller.gamblingController.CancelPickup();
                 __instance.SetEvent(new SpellModifyDelayEvent(false));
-                return false;
+                __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
             }
-            else
+            else if (_event_path == "cancel.spell" && __instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
             {
-                if (_event_path == "cancel.spell" && __instance.app.view.gamblingView != null)
+                if (__instance.app.model.bumboEvent.GetType() == typeof(TreasureSpellReplaceEvent) || __instance.app.model.bumboEvent.GetType() == typeof(TrinketReplaceEvent))
                 {
-                    __instance.app.controller.HideNotifications(false);
-                    __instance.app.controller.gamblingController.CancelPickup();
-                    __instance.SetEvent(new SpellModifyDelayEvent(false));
-                }
-                else if (_event_path == "cancel.spell" && __instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf)
-                {
+                    int index = 0;
+                    if (__instance.app.model.bumboEvent.GetType() == typeof(TreasureSpellReplaceEvent))
+                    {
+                        index = (__instance.app.model.bumboEvent as TreasureSpellReplaceEvent).index;
+                    }
+                    else if (__instance.app.model.bumboEvent.GetType() == typeof(TrinketReplaceEvent))
+                    {
+                        index = (__instance.app.model.bumboEvent as TrinketReplaceEvent).index;
+                    }
                     __instance.app.controller.HideNotifications(false);
                     __instance.SetEvent(new BumboEvent());
                     if (!__instance.app.model.iOS)
@@ -677,34 +703,26 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                     __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
                     __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
-                    __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().cancelView.Show(new Vector3(0.6f, -0.526f, -2.337f), true);
-                    Sequence sequence = DOTween.Sequence();
-                    TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.app.view.mainCameraView.transform, new Vector3(0f, 1f, -4.29f), 1f, false), Ease.InOutQuad));
-                    TweenSettingsExtensions.Join(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.app.view.mainCameraView.transform, new Vector3(8.2f, 1.33f, 0f), 1f, 0), Ease.InOutQuad));
-                    TweenSettingsExtensions.AppendCallback(sequence, delegate ()
+                    __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().cancelView.Show(new Vector3(0.6f, -0.55f, -2.29f), true);
+                    __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
+                    Sequence s2 = DOTween.Sequence();
+                    s2.Append(__instance.app.view.mainCameraView.transform.DOMove(new Vector3(0f, 1f, -4.29f), 1f, false).SetEase(Ease.InOutQuad));
+                    s2.Join(__instance.app.view.mainCameraView.transform.DORotate(new Vector3(8.2f, 1.33f, 0f), 1f, RotateMode.Fast).SetEase(Ease.InOutQuad));
+                    s2.AppendCallback(delegate
                     {
-                        __instance.SetEvent(new TreasureStartEvent());
+                        __instance.SetEvent(new TreasureStartEvent(index));
                     });
                 }
-                else if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
+            }
+            else if (_event_path == "cancel.spell")
+            {
+                if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
                 {
-                    //TrinketReplaceEvent cancel when not at Wooden Nickel
-                    __instance.SetEvent(new BumboEvent());
-                    __instance.app.controller.HideNotifications(false);
-                    if (!__instance.app.model.iOS)
-                    {
-                        __instance.app.controller.HideGUI();
-                    }
-                    __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
-                    __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
-                    __instance.app.view.bossCancelView.Show(new Vector3(-0.011f, 0.94f, -2.004f), true);
-                    __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
-                    __instance.SetEvent(new BossDyingEvent());
-                }
-                else if (_event_path == "cancel.spell")
-                {
+                    //Fixed canceling actions that modify your spells causing both the puzzle board and the spell menu to be selectable at the same time when using gamepad or keyboard controls
+                    __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
+
                     //Add cancel functionality for use trinkets
-                    if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent" && CollectibleChanges.currentTrinket != null)
+                    if (CollectibleChanges.currentTrinket != null)
                     {
                         for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
                         {
@@ -719,142 +737,148 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                         CollectibleChanges.currentTrinket = null;
                     }
+                }
 
-                    //Null check for spellViewUsed
-                    if (__instance.app.controller.trinketController.RerollSpellCost() && __instance.app.model.spellViewUsed != null)
+                //Null check for spellViewUsed
+                if (__instance.app.controller.trinketController.RerollSpellCost() && __instance.app.model.spellViewUsed != null)
+                {
+                    SpellView spellViewUsed = __instance.app.model.spellViewUsed;
+                    int spellIndex = spellViewUsed.spellIndex;
+                    if (!__instance.app.model.characterSheet.spells[spellIndex].IsChargeable)
                     {
-                        SpellView spellViewUsed = __instance.app.model.spellViewUsed;
-                        int spellIndex = spellViewUsed.spellIndex;
-                        if (!__instance.app.model.characterSheet.spells[spellIndex].IsChargeable)
+                        __instance.app.model.characterSheet.spells[spellIndex].Cost = __instance.app.model.spellUsedCost;
+                        __instance.app.controller.SetSpell(spellViewUsed.spellIndex, __instance.app.model.characterSheet.spells[spellIndex]);
+                    }
+                }
+                __instance.app.view.clickableColumnViews[1].TurnOffLights();
+                __instance.app.controller.RemoveTint();
+                __instance.app.view.bowlingArrowView.Hide();
+                __instance.app.controller.HideNotifications(false);
+                short num = 0;
+                while ((int)num < __instance.app.view.clickableColumnViews.Length)
+                {
+                    __instance.app.view.clickableColumnViews[(int)num].gameObject.SetActive(false);
+                    num += 1;
+                }
+                if (__instance.app.model.costRefundOverride)
+                {
+                    __instance.app.model.costRefundOverride = false;
+                    __instance.app.controller.UpdateMana(__instance.app.model.costRefundAmount, false);
+                }
+                //Null check for current spell
+                else if (__instance.app.model.spellModel.currentSpell != null)
+                {
+                    //UpdateMana replacement that doesn't factor Sucker mana reduction
+                    //Include cost modifier
+                    for (int colorCounter = 0; colorCounter < 6; colorCounter++)
+                    {
+                        short[] mana = __instance.app.model.mana;
+                        mana[colorCounter] += (short)(__instance.app.model.spellModel.currentSpell.Cost[colorCounter] + __instance.app.model.spellModel.currentSpell.CostModifier[colorCounter]);
+                        if (mana[colorCounter] > 9)
                         {
-                            __instance.app.model.characterSheet.spells[spellIndex].Cost = __instance.app.model.spellUsedCost;
-                            __instance.app.controller.SetSpell(spellViewUsed.spellIndex, __instance.app.model.characterSheet.spells[spellIndex]);
+                            mana[colorCounter] = 9;
                         }
-                    }
-                    __instance.app.view.clickableColumnViews[1].TurnOffLights();
-                    __instance.app.controller.RemoveTint();
-                    __instance.app.view.bowlingArrowView.Hide();
-                    __instance.app.controller.HideNotifications(false);
-                    short num = 0;
-                    while ((int)num < __instance.app.view.clickableColumnViews.Length)
-                    {
-                        __instance.app.view.clickableColumnViews[(int)num].gameObject.SetActive(false);
-                        num += 1;
-                    }
-                    if (__instance.app.model.costRefundOverride)
-                    {
-                        __instance.app.model.costRefundOverride = false;
-                        __instance.app.controller.UpdateMana(__instance.app.model.costRefundAmount, false);
-                    }
-                    //Null check for current spell
-                    else if (__instance.app.model.spellModel.currentSpell != null)
-                    {
-                        //UpdateMana replacement that doesn't factor Sucker mana reduction
-                        //Include cost modifier
-                        for (int colorCounter = 0; colorCounter < 6; colorCounter++)
+                        if (mana[colorCounter] < 0)
                         {
-                            short[] mana = __instance.app.model.mana;
-                            mana[colorCounter] += (short)(__instance.app.model.spellModel.currentSpell.Cost[colorCounter] + __instance.app.model.spellModel.currentSpell.CostModifier[colorCounter]);
-                            if (mana[colorCounter] > 9)
-                            {
-                                mana[colorCounter] = 9;
-                            }
-                            if (mana[colorCounter] < 0)
-                            {
-                                mana[colorCounter] = 0;
-                            }
-                            __instance.app.view.manaView.setManaText((ManaType)colorCounter, __instance.app.model.mana[(int)colorCounter]);
+                            mana[colorCounter] = 0;
                         }
+                        __instance.app.view.manaView.setManaText((ManaType)colorCounter, __instance.app.model.mana[(int)colorCounter]);
+                    }
 
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana cost refund");
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana cost refund");
 
-                        __instance.app.model.spellModel.currentSpell.FullCharge();
-                    }
-                    float transition_time = 1f * __instance.app.model.enemyAnimationSpeed;
-                    __instance.app.model.spellModel.currentSpell = null;
-                    __instance.app.model.spellModel.spellQueued = false;
-                    __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().ChangeLight(EnemyRoomView.RoomLightScheme.Default, transition_time, true);
-                    __instance.SetEvent(new ResetCameraEvent());
+                    __instance.app.model.spellModel.currentSpell.FullCharge();
                 }
-                if (_event_path == "acquire.needle" && ((GameObject)_target).GetComponent<NeedleView>().price <= __instance.app.model.characterSheet.coins)
-                {
-                    __instance.app.controller.ModifyCoins(-((GameObject)_target).GetComponent<NeedleView>().price);
-                    __instance.app.controller.needleController.UseNeedle(((GameObject)_target).GetComponent<NeedleView>().needleAppearance);
-                    ((GameObject)_target).GetComponent<NeedleView>().Disappear();
-                }
-                if (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent")
-                {
-                    __instance.EndEvent();
-                    return false;
-                }
-                if (__instance.app.model.bumboEvent.GetType().ToString() == "ShopStartEvent" && _event_path == "debug.done.shopping")
-                {
-                    __instance.app.view.boxes.shopRoom.GetComponent<ShopRoomView>().HideShelf();
-                    __instance.EndEvent();
-                    return false;
-                }
-                if (_event_path == "end.turn")
-                {
-                    __instance.EndEvent();
-                    return false;
-                }
-                if ((__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent") && _event_path == "spell.cast")
-                {
-                    if (__instance.app.model.actionPoints == 0)
-                    {
-                        __instance.app.controller.HideEndTurnSign();
-                    }
-                    if (__instance.app.model.iOS)
-                    {
-                        __instance.app.controller.IOSHideGUI();
-                    }
-                    __instance.app.model.spellModel.currentSpellIndex = ((SpellView)_target).spellIndex;
-                    __instance.app.model.spellModel.currentSpell = ((SpellView)_target).SpellObject;
-                    __instance.app.model.spellModel.currentSpell.SetSpellView((SpellView)_target);
-                    __instance.app.model.spellModel.currentSpell.CastSpell();
-                    return false;
-                }
-                if (__instance.app.model.bumboEvent.GetType().ToString() != "NavigationEvent" && _event_path == "navigation.move")
-                {
-                    MonoBehaviour.print("Trying to navigate but we are currently on the event " + __instance.app.model.bumboEvent.GetType().ToString());
-                    return false;
-                }
-                if (__instance.app.model.bumboEvent.GetType().ToString() == "NavigationEvent" && _event_path == "navigation.move")
-                {
-                    int num2;
-                    int num3;
-                    switch ((NavigationArrowView.Direction)_data[0])
-                    {
-                        case NavigationArrowView.Direction.Up:
-                            num2 = __instance.app.model.mapModel.currentRoom.x;
-                            num3 = __instance.app.model.mapModel.currentRoom.y + 1;
-                            goto IL_AFA;
-                        case NavigationArrowView.Direction.Down:
-                            num2 = __instance.app.model.mapModel.currentRoom.x;
-                            num3 = __instance.app.model.mapModel.currentRoom.y - 1;
-                            goto IL_AFA;
-                        case NavigationArrowView.Direction.Right:
-                            num2 = __instance.app.model.mapModel.currentRoom.x + 1;
-                            num3 = __instance.app.model.mapModel.currentRoom.y;
-                            goto IL_AFA;
-                    }
-                    num2 = __instance.app.model.mapModel.currentRoom.x - 1;
-                    num3 = __instance.app.model.mapModel.currentRoom.y;
-                IL_AFA:
-                    __instance.app.view.navigation.arrowNorth.SetActive(false);
-                    __instance.app.view.navigation.arrowSouth.SetActive(false);
-                    __instance.app.view.navigation.arrowEast.SetActive(false);
-                    __instance.app.view.navigation.arrowWest.SetActive(false);
-                    __instance.app.controller.mapController.SetCurrentRoom(__instance.app.model.mapModel.rooms[num2, num3]);
-                    __instance.SetEvent(new MoveToRoomEvent((NavigationArrowView.Direction)_data[0]));
-                    return false;
-                }
-                if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" && _event_path == "acquire.spell")
-                {
-                    __instance.EndEvent();
-                }
+
+                float transition_time = 1f * __instance.app.model.enemyAnimationSpeed;
+                __instance.app.model.spellModel.currentSpell = null;
+                __instance.app.model.spellModel.spellQueued = false;
+                __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().ChangeLight(EnemyRoomView.RoomLightScheme.Default, transition_time, true);
+                __instance.SetEvent(new ResetCameraEvent());
+            }
+            if (_event_path == "acquire.needle" && ((GameObject)_target).GetComponent<NeedleView>().price <= __instance.app.model.characterSheet.coins)
+            {
+                __instance.app.controller.ModifyCoins(-((GameObject)_target).GetComponent<NeedleView>().price);
+                __instance.app.controller.needleController.UseNeedle(((GameObject)_target).GetComponent<NeedleView>().needleAppearance);
+                ((GameObject)_target).GetComponent<NeedleView>().Disappear();
+            }
+            if (__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure)
+            {
+                //_event_path == "acquire.spell";
+            }
+            if (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent")
+            {
+                __instance.EndEvent();
                 return false;
             }
+            if (__instance.app.model.bumboEvent.GetType().ToString() == "ShopStartEvent" && _event_path == "debug.done.shopping")
+            {
+                __instance.app.view.boxes.shopRoom.GetComponent<ShopRoomView>().HideShelf();
+                __instance.EndEvent();
+                return false;
+            }
+            if (_event_path == "end.turn")
+            {
+                __instance.EndEvent();
+                return false;
+            }
+            if ((__instance.app.model.bumboEvent.GetType().ToString() == "IdleEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "ChanceToCastSpellEvent") && _event_path == "spell.cast")
+            {
+                if (__instance.app.model.actionPoints == 0)
+                {
+                    __instance.app.controller.HideEndTurnSign();
+                }
+                if (__instance.app.model.iOS)
+                {
+                    __instance.app.controller.IOSHideGUI();
+                }
+                __instance.app.model.spellModel.currentSpellIndex = ((SpellView)_target).spellIndex;
+                __instance.app.model.spellModel.currentSpell = ((SpellView)_target).SpellObject;
+                __instance.app.model.spellModel.currentSpell.SetSpellView((SpellView)_target);
+                __instance.app.model.spellModel.currentSpell.CastSpell();
+                return false;
+            }
+            if (__instance.app.model.bumboEvent.GetType().ToString() != "NavigationEvent" && _event_path == "navigation.move")
+            {
+                MonoBehaviour.print("Trying to navigate but we are currently on the event " + __instance.app.model.bumboEvent.GetType().ToString());
+                return false;
+            }
+            if (__instance.app.model.bumboEvent.GetType().ToString() == "NavigationEvent" && _event_path == "navigation.move")
+            {
+                int num2;
+                int num3;
+                switch ((NavigationArrowView.Direction)_data[0])
+                {
+                    case NavigationArrowView.Direction.Up:
+                        num2 = __instance.app.model.mapModel.currentRoom.x;
+                        num3 = __instance.app.model.mapModel.currentRoom.y + 1;
+                        break;
+                    case NavigationArrowView.Direction.Down:
+                        num2 = __instance.app.model.mapModel.currentRoom.x;
+                        num3 = __instance.app.model.mapModel.currentRoom.y - 1;
+                        break;
+                    default:
+                        num2 = __instance.app.model.mapModel.currentRoom.x - 1;
+                        num3 = __instance.app.model.mapModel.currentRoom.y;
+                        break;
+                    case NavigationArrowView.Direction.Right:
+                        num2 = __instance.app.model.mapModel.currentRoom.x + 1;
+                        num3 = __instance.app.model.mapModel.currentRoom.y;
+                        break;
+                }
+                __instance.app.view.navigation.arrowNorth.SetActive(false);
+                __instance.app.view.navigation.arrowSouth.SetActive(false);
+                __instance.app.view.navigation.arrowEast.SetActive(false);
+                __instance.app.view.navigation.arrowWest.SetActive(false);
+                __instance.app.controller.mapController.SetCurrentRoom(__instance.app.model.mapModel.rooms[num2, num3]);
+                __instance.SetEvent(new MoveToRoomEvent((NavigationArrowView.Direction)_data[0]));
+                return false;
+            }
+            if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" && _event_path == "acquire.spell")
+            {
+                __instance.EndEvent();
+            }
+            return false;
         }
 
         //Patch: Removes cancel button when trinket is replaced
