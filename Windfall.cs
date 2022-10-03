@@ -6,19 +6,19 @@ using System.IO;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    [BepInPlugin("org.bepinex.plugins.thelegendofbumbowindfall", "The_Legend_of_Bum-bo_Windfall", "1.1.0.0")]
+    [BepInPlugin(modGUID, modName, modVersion)]
     [BepInProcess("The Legend of Bum-bo.exe")]
     public class Windfall : BaseUnityPlugin
     {
         private const string modGUID = "org.bepinex.plugins.thelegendofbumbowindfall";
         private const string modName = "The Legend of Bum-bo: Windfall";
-        private const string modVersion = "1.1.0.0";
+        private const string modVersion = "1.1.0.1";
         private readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
 
         public static AssetBundle assetBundle;
         private void Awake()
         {
-            Logger.LogInfo($"Plugin {modGUID} is loaded!");
+            Logger.LogInfo($"Loaded {modGUID}");
 
             //Load assets
             LoadAssets();

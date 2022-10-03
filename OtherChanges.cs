@@ -15,54 +15,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying other changes");
         }
 
-
-        //Patch: Enables debug menu
-        [HarmonyPostfix, HarmonyPatch(typeof(DebugController), "Start")]
-        static void DebugController_Start(DebugController __instance)
-        {
-            __instance.turnOnDebugKey = true;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu");
-        }
-
-        //Patch: Enables title debug menu and grants 100% game completion
-        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
-        static void TitleController_Start(TitleController __instance)
-        {
-            __instance.turnOnDebugKey = true;
-
-            //Progression progression = new Progression();
-            //progression.braveMoneyWins = 1;
-            //progression.braveWins = 2;
-            //progression.chapter3NoDamageWins = 1;
-            //progression.chapter4Wins = 4;
-            //progression.completedTutorial = true;
-            //for (int i = 0; i < progression.cutscenes.Length; i++)
-            //{
-            //    progression.cutscenes[i] = true;
-            //}
-            //progression.deadMoneyWins = 1;
-            //progression.deadWins = 2;
-            //progression.emptyMoneyWins = 1;
-            //progression.emptyWins = 2;
-            //progression.lostMoneyWins = 1;
-            //progression.lostWins = 2;
-            //progression.nimbleMoneyWins = 1;
-            //progression.nimbleWins = 2;
-            //progression.stoutMoneyWins = 1;
-            //progression.stoutWins = 2;
-            //for (int i = 0; i < 43; i++)
-            //{
-            //    progression.unlocks[i] = true;
-            //}
-            //progression.weirdMoneyWins = 1;
-            //progression.weirdWins = 2;
-            //progression.wins = 14;
-            //ProgressionController.SaveProgression(progression);
-
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Enabling debug menu and unlocking everything");
-        }
-
-
         //Patch: Heart tiles no longer appear naturally when playing as Bum-bo the Lost
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "nextBlock")]
         static bool Puzzle_nextBlock(Puzzle __instance, ref int ___heartCounter)

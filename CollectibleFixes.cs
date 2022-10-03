@@ -807,19 +807,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             list.Add(new List<SpellName>(FastSpellRetrieval.UseSpells));
             list.Add(new List<SpellName>(FastSpellRetrieval.OtherSpells));
 
-            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
+            //Remove non valid spells
+            foreach (List<SpellName> spellList in list)
             {
-                //Remove spells for Bum-bo the Lost
-                foreach (List<SpellName> spellList in list)
-                {
-                    List<SpellName> bannedSpells = new List<SpellName>()
-                    {
-                        SpellName.TheRelic,
-                        SpellName.CatPaw,
-                        SpellName.PrayerCard
-                    };
-                    spellList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
-                }
+                spellList.RemoveAll((SpellName x) => !__instance.app.model.spellModel.validSpells.Contains(x));
             }
 
             List<SpellElement.SpellCategory> list2 = new List<SpellElement.SpellCategory>();
