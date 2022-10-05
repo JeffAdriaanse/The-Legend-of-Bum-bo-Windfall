@@ -5,6 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
 using TMPro;
+using I2.Loc;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -16,99 +17,109 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying corrections to typos");
         }
 
-        //Patch: Clarifies Bum-bo the Empty's unlock condition text
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboSelectView), "Start")]
-        static void BumboSelectView_Start(BumboSelectView __instance)
+        //Patch: Modify source data
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboIntroController), "Start")]
+        static void BumboIntroController_Start()
         {
-            if (__instance.bumboType == CharacterSheet.BumboType.Eden)
-            {
-                Transform unlockCondition = __instance.bumboSelect.transform.Find("Locked").Find("Unlock_Condition");
-                unlockCondition.localScale = Vector3.Scale(unlockCondition.localScale, new Vector3(1.22f, 1, 1));
-
-                Transform unlockText = unlockCondition.Find("Unlock Text");
-                unlockText.localScale = Vector3.Scale(unlockText.localScale, new Vector3(1 / 1.22f, 1, 1));
-                unlockText.GetComponent<TextMeshPro>().text = "beat the game twice with the first five characters.";
-            }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Updating Bum-bo the Empty's unlock condition text");
+            LocalizationModifier.ModifyLanguageSourceData();
         }
 
-        //Patch: Corrects a typo in one of Gizzarda's boss sign tips
-        [HarmonyPostfix, HarmonyPatch(typeof(BossSignView), "SetBosses")]
-        static void BossSignView_SetBosses(BossSignView __instance)
+        //Patch: Modify source data
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboAltIntroController), "Start")]
+        static void BumboAltIntroController_Start()
         {
-            foreach (GameObject tip in __instance.tips)
+            LocalizationModifier.ModifyLanguageSourceData();
+        }
+    }
+
+    static class LocalizationModifier
+    {
+        static bool triggered = false;
+        static LanguageSourceData languageSourceData;
+        public static void ModifyLanguageSourceData()
+        {
+            if (!triggered)
             {
-                TextMeshPro tipText = tip.GetComponent<TextMeshPro>();
-                if (tipText && tipText.text.Contains("shes is very resistant!"))
+                if (LocalizationManager.Sources.Count > 0)
                 {
-                    tipText.text = "\"she's very resistant!\nplan ahead!\"";
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Correcting typo in Gizzarda boss sign tip");
+                    languageSourceData = LocalizationManager.Sources[0];
+                }
+                if (languageSourceData == null)
+                {
+                    return;
+                }
+                triggered = true;
+
+                //Modify language
+                ModifyEnglish();
+            }
+        }
+
+        public static void ModifyEnglish()
+        {
+            foreach (string term in EnglishTextModifications.Keys)
+            {
+                TermData termData = languageSourceData.GetTermData(term);
+                if (termData == null)
+                {
+                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Term " + term + " is null");
+                    break;
+                }
+                else
+                {
+                    string[] languages = termData.Languages;
+                    int englishIndex = 0;
+                    for (int languageCounter = 0; languageCounter < languages.Length; languageCounter++)
+                    {
+                        if (languages[languageCounter].Equals("english", StringComparison.OrdinalIgnoreCase))
+                        {
+                            englishIndex = languageCounter;
+                        }
+                    }
+
+                    if (EnglishTextModifications.TryGetValue(term, out string value))
+                    {
+                        termData.SetTranslation(englishIndex, value);
+                    }
                 }
             }
         }
 
-        //Patch: Fixes various spell name typos
-        [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spellKA", MethodType.Getter)]
-        static void SpellModel_spellKA(ref Dictionary<SpellName, string> __result)
+        public static Dictionary<string, string> EnglishTextModifications
         {
-            Dictionary<SpellName, string> returnedDict = new Dictionary<SpellName, string>(__result);
+            get
+            {
+                Dictionary<string, string> modifications = new Dictionary<string, string>
+                {
+                    //Spells
+                    { "Spells/EXORCISM_KIT_NAME", "Exorcism Kit"},
+                    { "Spells/MALLET_NAME", "Mallet"},
+                    { "Spells/SLEIGHT_OF_HAND_NAME", "Sleight of Hand"},
+                    { "Spells/TINY_DICE_NAME", "Tiny Dice"},
 
-            returnedDict[SpellName.Mallot] = "Mallet";
-            returnedDict[SpellName.TinyDice] = "Tiny Dice";
-            returnedDict[SpellName.SleightOfHand] = "Sleight of Hand";
-            returnedDict[SpellName.ExorcismKit] = "Exorcism Kit";
+                    //Spell descriptions
+                    { "Spells/ROCK_FRIENDS_DESCRIPTION", "Hits Enemies = to Spell Damage"},
+                    { "Spells/STICK_DESCRIPTION", "Whack Away!"},
 
-            __result = returnedDict;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixing spell name typos");
-        }
+                    //Trinkets
+                    { "Trinkets/CURVED_HORN_NAME", "Curved Horn"},
+                    { "Trinkets/DRAKULA_TEETH_NAME", "Dracula Teeth"},
 
-        //Patch: Fixes Curved Horn trinket name typo
-        //Fixes Dracula Teeth trinket name typo
-        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "trinketKA", MethodType.Getter)]
-        static void TrinketModel_trinketKA(ref Dictionary<TrinketName, string> __result)
-        {
-            Dictionary<TrinketName, string> returnedDict = new Dictionary<TrinketName, string>(__result);
+                    //Trinket descriptions
+                    { "Trinkets/BAG_O_SUCKING_DESCRIPTION", "Gain Mana when You Hit!"},
+                    { "Trinkets/GLITCH_DESCRIPTION", "What Will It Be?"},
+                    { "Trinkets/NINE_VOLT_DESCRIPTION", "Items May Gain Charges"},
+                    { "Trinkets/PINKY_DESCRIPTION", "May Gain Wilds on Kills"},
+                    { "Trinkets/RAINBOW_TICK_DESCRIPTION", "Reduces Spell Cost"},
 
-            returnedDict[TrinketName.CurvedHorn] = "Curved Horn";
-            returnedDict[TrinketName.DrakulaTeeth] = "Dracula Teeth";
+                    //Gizzarda
+                    { "Bosses/GIZZARDA_TIP_2", "\"she's very resistant!\nplan ahead!\""},
 
-            __result = returnedDict;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixing Curved Horn name typo");
-        }
-
-        //Patch: Changes Stick description
-        [HarmonyPostfix, HarmonyPatch(typeof(StickSpell), MethodType.Constructor)]
-        static void StickSpell_Constructor(StickSpell __instance)
-        {
-            __instance.Name = "Whack Away!";
-        }
-
-        //Patch: Changes Bag-O-Sucking description 
-        [HarmonyPostfix, HarmonyPatch(typeof(BagOSuckingTrinket), MethodType.Constructor)]
-        static void BagOSuckingTrinket_Constructor(BagOSuckingTrinket __instance)
-        {
-            __instance.Name = "Gain Mana when You Hit!";
-        }
-
-        //Patch: Changes Glitch description 
-        [HarmonyPostfix, HarmonyPatch(typeof(GlitchTrinket), MethodType.Constructor)]
-        static void GlitchTrinket_Constructor(GlitchTrinket __instance)
-        {
-            __instance.Name = "What Will It Be?";
-        }
-
-        //Patch: Changes Nine Volt description 
-        [HarmonyPostfix, HarmonyPatch(typeof(NineVoltTrinket), MethodType.Constructor)]
-        static void NineVoltTrinket_Constructor(NineVoltTrinket __instance)
-        {
-            __instance.Name = "Items May Gain Charges";
-        }
-
-        //Patch: Changes Pinky description 
-        [HarmonyPostfix, HarmonyPatch(typeof(PinkyTrinket), MethodType.Constructor)]
-        static void PinkyTrinket_Constructor(PinkyTrinket __instance)
-        {
-            __instance.Name = "May Gain Wilds on Kills";
+                    //Characters
+                    { "Characters/EMPTY_UNLOCK", "beat the game twice with the first five characters."},
+                };
+                return modifications;
+            }
         }
     }
 }
