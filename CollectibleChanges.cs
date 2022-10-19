@@ -961,12 +961,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Rainbow Tick effect");
 			return false;
 		}
-		//Patch: Changes Rainbow Tick description 
-		[HarmonyPostfix, HarmonyPatch(typeof(RainbowTickTrinket), MethodType.Constructor)]
-		static void RainbowTickTrinket_Constructor(RainbowTickTrinket __instance)
-		{
-			__instance.Name = "Reduces Spell Cost";
-		}
 
 		//Patch: Allows the player to choose which spell to use Brown Tick on 
 		[HarmonyPrefix, HarmonyPatch(typeof(BrownTickTrinket), "Use")]
@@ -1133,13 +1127,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 				return false;
 			}
 			return true;
-		}
-
-		//Patch: Changes Thermos description 
-		[HarmonyPostfix, HarmonyPatch(typeof(ThermosTrinket), MethodType.Constructor)]
-		static void ThermosTrinket_Constructor(ThermosTrinket __instance)
-		{
-			__instance.Name = "Charge All Items + Heal";
 		}
 
 		//Patch: Changes starting stats and collectibles of characters
@@ -1496,8 +1483,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 			bool loadShop = WindfallSavedState.LoadShop(__instance, ___trinketModel);
 			WindfallSavedState.LoadEnd();
 
-			if (loadShop) return false;
-
+			if (loadShop)
+			{
+				((GamepadGamblingController)UnityEngine.Object.FindObjectsOfType(typeof(GamepadGamblingController))[0]).UpdateShopItems();
+				return false;
+			}
 
 			___needles = new List<TrinketName>();
 			if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.Eden)
@@ -1549,6 +1539,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{
 				___item3Pickup.GetComponent<TrinketPickupView>().shopIndex = 2;
 			}
+			((GamepadGamblingController)UnityEngine.Object.FindObjectsOfType(typeof(GamepadGamblingController))[0]).UpdateShopItems();
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing shop generation");
 
 			//Save shop
@@ -1861,12 +1852,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 			return true;
 		}
-		//Patch: Changes Rock Friends description
-		[HarmonyPostfix, HarmonyPatch(typeof(RockFriendsSpell), MethodType.Constructor)]
-		static void RockFriendsSpell_Constructor(RockFriendsSpell __instance)
-		{
-			__instance.Name = "Hits Enemies = to Spell Damage";
-		}
 
 		//Patch: Changes Attack Fly spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(AttackFlySpell), "Damage")]
@@ -1932,12 +1917,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
-		//Patch: Changes Dog Tooth description
-		[HarmonyPostfix, HarmonyPatch(typeof(DogToothSpell), MethodType.Constructor)]
-		static void DogToothSpell_Constructor(DogToothSpell __instance)
-		{
-			__instance.Name = "Attack that Heals You";
-		}
 
 		//Patch: Changes Hair Ball spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(HairBallSpell), "Damage")]
@@ -1951,20 +1930,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static void HatPinSpell_Damage(HatPinSpell __instance, ref int __result)
 		{
 			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
-		}
-
-		//Patch: Changes Rock description
-		[HarmonyPostfix, HarmonyPatch(typeof(RockSpell), MethodType.Constructor)]
-		static void RockSpell_Constructor(RockSpell __instance)
-		{
-			__instance.Name = "Hits the Furthest Enemy";
-		}
-
-		//Patch: Changes Yellow Belt description
-		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), MethodType.Constructor)]
-		static void YellowBeltSpell_Constructor(YellowBeltSpell __instance)
-		{
-			__instance.Name = "+5% to Dodge Attacks";
 		}
 
 		//Patch: Changes Yellow belt modifier to last for the room instead of only the current round

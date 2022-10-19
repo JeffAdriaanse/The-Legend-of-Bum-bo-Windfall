@@ -99,6 +99,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void CreateMapMenuButton()
         {
+            //Disabled
+            return;
+
             //Duplicate existing menu button
             GameObject menuButton = app.view.GUICamera.transform.Find("HUD").Find("menu button").gameObject;
 
@@ -128,6 +131,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void CreateGamblingMapMenuButton()
         {
+            //Disabled
+            return;
+
+
             if (!Gambling) return;
 
             GameObject menuButton = app.view.GUICamera.transform.Find("HUD").Find("menu button").gameObject;

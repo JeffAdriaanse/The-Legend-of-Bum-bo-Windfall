@@ -8,6 +8,7 @@ using TMPro;
 using DG.Tweening;
 using System.IO;
 using UnityEngine.UI;
+using System.Collections;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -583,6 +584,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Fixes the pause menu button remaining clickable while the pause menu is already open
         //Also hides the pause menu when the map is open
+        //Also enables the pause menu button when in treasure rooms
         [HarmonyPrefix, HarmonyPatch(typeof(MenuButtonView), "Update")]
         static bool MenuButtonView_Update(MenuButtonView __instance, bool ___showing)
         {
@@ -656,98 +658,56 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.view.menuView.SetActive(true);
                 SoundsView.Instance.PlaySound(SoundsView.eSound.Menu_Appear, SoundsView.eAudioSlot.Default, false);
             }
-            if (Input.GetKeyDown(KeyCode.Return) && __instance.app.view.menuView.activeSelf)
-            {
-                __instance.app.view.menuView.SetActive(false);
-                SoundsView.Instance.PlaySound(SoundsView.eSound.Menu_Close, SoundsView.eAudioSlot.Default, false);
-                __instance.app.model.paused = false;
-            }
             return false;
         }
 
-        //***************************************************
-        //**************Shop Trinket Pickups*****************
-        //***************************************************
-        //These patches prevent trinket/needle pickups from disappearing after quickly canceling a trinket/needle purchase
-
-        [HarmonyPrefix, HarmonyPatch(typeof(TrinketPickupView), "HopAndDisappear")]
-        static bool TrinketPickupView_HopAndDisappear(TrinketPickupView __instance)
-        {
-            Sequence sequence = DOTween.Sequence();
-            TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.Insert(TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.25f, 0.8f, 1.25f), 0.15f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.8f, 1.25f, 0.8f), 0.15f), Ease.InOutQuad)), 0.225f, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.transform, __instance.transform.position + new Vector3(0f, 0.5f, 0f), 0.15f, false), Ease.OutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, Vector3.one, 0.15f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.transform, __instance.transform.position + new Vector3(0f, 0f, 0f), 0.15f, false), Ease.InQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.5f, 0f, 1.5f), 0.075f), Ease.OutQuad)), delegate ()
-            {
-                __instance.gameObject.SetActive(false);
-            });
-            if (__instance.app.view.gamblingView != null)
-            {
-                sequence.SetId("TrinketPickup");
-            }
-            return false;
-        }
-
-        [HarmonyPrefix, HarmonyPatch(typeof(TrinketPickupView), "Reappear")]
-        static bool TrinketPickupView_Reappear(TrinketPickupView __instance)
-        {
-            if (__instance.app.view.gamblingView != null)
-            {
-                DOTween.Kill("TrinketPickup", true);
-            }
-            return true;
-        }
-
-        [HarmonyPrefix, HarmonyPatch(typeof(ItemPriceView), "Hide")]
-        static bool ItemPriceView_Hide(ItemPriceView __instance)
-        {
-            Sequence sequence = DOTween.Sequence();
-            TweenSettingsExtensions.Append(TweenSettingsExtensions.Append(TweenSettingsExtensions.Insert(sequence, 0.3f, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.25f, 0.8f, 1.25f), 0.15f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.8f, 1.25f, 0.8f), 0.15f), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOScale(__instance.transform, new Vector3(1.5f, 0f, 1.5f), 0.075f), Ease.OutQuad));
-            if (__instance.app.view.gamblingView != null)
-            {
-                sequence.SetId("ItemPrice");
-            }
-            return false;
-        }
-
-        [HarmonyPrefix, HarmonyPatch(typeof(ItemPriceView), "Show")]
-        static bool ItemPriceView_Show(ItemPriceView __instance)
-        {
-            if (__instance.app.view.gamblingView != null)
-            {
-                DOTween.Kill("ItemPrice", true);
-            }
-            return true;
-        }
-        //***************************************************
-        //***************************************************
-        //***************************************************
-
-        //TODO: Test patch
-        //Patch: Fixes spell UI not appearing when quickly buying a trinket/needle after canceling a purchase, which could cause a softlock when buying a trinket
+        //Patch: Fixes spell UI not appearing when quickly buying a trinket/needle after canceling a purchase
         //Patch also causes the shop clerk to wave when a trinket is purchased
-        //Patch also hides shop price tag if the trinket is not a prick and the player has no empty trinket slots
+        //Patch also disables treasure room pickups when taking a trinket
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketPickupView), "OnMouseDown")]
         static bool TrinketPickupView_OnMouseDown(TrinketPickupView __instance)
         {
             if (!__instance.app.model.paused)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] 1");
-                if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" && __instance.app.model.characterSheet.trinkets.Count < 4)
+                if ((__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent") && __instance.app.model.characterSheet.trinkets.Count < 4)
                 {
                     __instance.Acquire(__instance.CancelAllowed);
                     __instance.app.controller.eventsController.EndEvent();
                     return false;
                 }
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] 2");
-                if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent")
+                //Don't use boss room logic while clicking a trinket during TrinketReplaceCancelledEvent while in a treasure room
+                if ((__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent") && __instance.app.model?.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Boss && (bool)AccessTools.Field(typeof(TrinketPickupView), "clickable").GetValue(__instance) == true)
                 {
+                    //Disable boss room pickups
+                    GameObject[] bossRewardParents = __instance.app.view.bossRewardParents;
+                    if (bossRewardParents != null && bossRewardParents.Length > 1)
+                    {
+                        bossRewardParents[0]?.transform.GetChild(0)?.GetComponent<TrinketPickupView>()?.SetClickable(false);
+                        bossRewardParents[1]?.transform.GetChild(0)?.GetComponent<TrinketPickupView>()?.SetClickable(false);
+                    }
+
                     __instance.app.model.trinketReward = __instance.trinket.trinketName;
+                    SoundsView.Instance.PlaySound(SoundsView.eSound.Trinket_Sign_Away, __instance.transform.position, SoundsView.eAudioSlot.Default, false);
+                    if (__instance.shopIndex == 0) 
+                    {
+                        __instance.app.view.mainCameraView.transform.DOMove(new Vector3(-0.12f, 0.27f, -3.02f), 0.25f, false).SetEase(Ease.InOutQuad);
+                        __instance.app.view.mainCameraView.transform.DORotate(new Vector3(-1.43f, -19.54f, 0f), 0.25f, RotateMode.Fast).SetEase(Ease.InOutQuad);
+                    }
+                    else if (__instance.shopIndex == 1)
+                    {
+                        __instance.app.view.mainCameraView.transform.DOMove(new Vector3(0f, 0.27f, -3.02f), 0.25f, false).SetEase(Ease.InOutQuad);
+                        __instance.app.view.mainCameraView.transform.DORotate(new Vector3(-1.43f, 24.49f, 0f), 0.25f, RotateMode.Fast).SetEase(Ease.InOutQuad);
+                    }
                     __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent(__instance.shopIndex, __instance.CancelAllowed));
                     return false;
                 }
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] 3");
                 if ((bool)AccessTools.Field(typeof(TrinketPickupView), "clickable").GetValue(__instance) == true)
                 {
-                    if (__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent")
+                    //Allow clicking treasure room trinkets while in TrinketReplaceCancelledEvent
+                    //Player must be in a treasure room
+                    if ((__instance.app.model.bumboEvent.GetType().ToString() == "TreasureStartEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent") && __instance.app.model?.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Treasure)
                     {
+                        //Disable treasure room pickups
                         __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().SetClickable(false);
                         if (__instance.app.model.characterSheet.trinkets.Count < 4)
                         {
@@ -756,22 +716,27 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                         __instance.app.model.trinketReward = __instance.trinket.trinketName;
                         __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent(__instance.shopIndex, __instance.CancelAllowed));
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] 4");
                         return false;
                     }
-                    else if (__instance.app.view.gamblingView != null && __instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent" && !__instance.app.view.sideGUI.activeSelf)
+                    //Don't puchase if the sideGUI is moving
+                    //Allow trinket purchases during TrinketReplaceCancelledEvent
+                    else if (__instance.app.view.gamblingView != null && (__instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent") && !DOTween.IsTweening(__instance.app.view.sideGUI.transform, false))
                     {
                         if (__instance.app.model.characterSheet.coins >= __instance.AdjustedPrice && (__instance.app.model.characterSheet.trinkets.Count < 4 || __instance.trinket.Category == TrinketElement.TrinketCategory.Prick))
                         {
-                            if (__instance.app.model.gamblingModel.cameraAt != 2)
+                            if (__instance.app.view.gamblingView != null && (__instance.app.model.bumboEvent.GetType().ToString() == "GamblingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent"))
                             {
-                                return false;
+                                if (__instance.app.model.gamblingModel.cameraAt != 2)
+                                {
+                                    return false;
+                                }
+                                //Make prick pusher wave
+                                __instance.app.view.gamblingView.shopClerkView.Wave();
+                                __instance.app.view.gamblingView.shopRegisterView.Pay(__instance.AdjustedPrice);
+                                __instance.app.controller.ModifyCoins(-__instance.AdjustedPrice);
+                                __instance.Acquire(__instance.CancelAllowed);
                             }
-                            __instance.app.view.gamblingView.shopClerkView.Wave();
-                            __instance.app.view.gamblingView.shopRegisterView.Pay(__instance.AdjustedPrice);
-                            __instance.app.controller.ModifyCoins(-__instance.AdjustedPrice);
-                            __instance.Acquire(__instance.CancelAllowed);
-                            Console.WriteLine("[The Legend of Bum-bo: Windfall] 5");
+                            return false;
                         }
                         if (__instance.app.model.bumboEvent.GetType().ToString() != "SpellModifyEvent" && __instance.app.model.characterSheet.coins >= __instance.AdjustedPrice && __instance.app.model.characterSheet.trinkets.Count >= 4)
                         {
@@ -781,17 +746,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 {
                                     return false;
                                 }
+                                //Make prick pusher wave
                                 __instance.app.view.gamblingView.shopClerkView.Wave();
                                 __instance.app.view.gamblingView.shopRegisterView.Pay(__instance.AdjustedPrice);
                                 __instance.app.model.gamblingModel.trinketReward = __instance.trinket.trinketName;
                                 __instance.app.controller.gamblingController.selectedShopIdx = __instance.shopIndex;
-                                __instance.HopAndDisappear();
-                                SoundsView.Instance.PlaySound(SoundsView.eSound.Trinket_Sign_Away, __instance.transform.position, SoundsView.eAudioSlot.Default, false);
-                                if (__instance.priceView != null)
-                                {
-                                    __instance.priceView.Hide();
-                                }
-                                Console.WriteLine("[The Legend of Bum-bo: Windfall] 6");
                             }
                             __instance.app.controller.ModifyCoins(-__instance.AdjustedPrice);
                             if (__instance.app.view.gamblingView == null)
@@ -807,6 +766,176 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+        //Patch: Moves the camera during TrinketReplaceEvent while in treasure rooms
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketReplaceEvent), "Execute")]
+        static void TrinketReplaceEvent_Execute(TrinketReplaceEvent __instance)
+        {
+            if (__instance.app.view.gamblingView == null && __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Treasure)
+            {
+                if (__instance.index == 0)
+                {
+                    ShortcutExtensions.DOMove(__instance.app.view.mainCameraView.transform, new Vector3(0.04f, 0.55f, -3.89f), 0.25f, false).SetEase(Ease.InOutQuad);
+                    ShortcutExtensions.DORotate(__instance.app.view.mainCameraView.transform, new Vector3(0.94f, -45.2f, 0f), 0.25f, RotateMode.Fast).SetEase(Ease.InOutQuad);
+                }
+                else if (__instance.index == 1)
+                {
+                    ShortcutExtensions.DOMove(__instance.app.view.mainCameraView.transform, new Vector3(0.04f, 0.55f, -3.89f), 0.25f, false).SetEase(Ease.InOutQuad);
+                    ShortcutExtensions.DORotate(__instance.app.view.mainCameraView.transform, new Vector3(0.94f, 37.58f, 0f), 0.25f, RotateMode.Fast).SetEase(Ease.InOutQuad);
+                }
+            }
+        }
+        //Patch: Sets treasure trinket index
+        [HarmonyPostfix, HarmonyPatch(typeof(TreasureRoom), "SetTrinkets")]
+        static void TreasureRoom_SetTrinkets(TreasureRoom __instance, int _item_number)
+        {
+            List<GameObject> pickups = (List<GameObject>)AccessTools.Field(typeof(TreasureRoom), "pickups").GetValue(__instance);
+            if (pickups != null && pickups.Count > 0)
+            {
+                TrinketPickupView pickup = pickups[pickups.Count - 1]?.GetComponent<TrinketPickupView>();
+                if (pickup != null)
+                {
+                    pickup.shopIndex = _item_number - 1;
+                    AccessTools.Field(typeof(TreasureRoom), "pickups").SetValue(__instance, pickups);
+                }
+            }
+        }
+
+        //Patch: Keeps the game paused for one frame after exiting the pause menu
+        [HarmonyPostfix, HarmonyPatch(typeof(PauseButtonView), "Continue")]
+        static void PauseButtonView_Continue(PauseButtonView __instance)
+        {
+            __instance.app.model.paused = true;
+            __instance.app.StartCoroutine(UnPause(__instance.app));
+        }
+        static IEnumerator UnPause(BumboApplication app)
+        {
+            //wait one frame
+            yield return 0;
+            app.model.paused = false;
+        }
+
+        //Patch: Hide trinket prices
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketPickupView), "HopAndDisappear")]
+        static void TrinketPickupView_HopAndDisappear(TrinketPickupView __instance)
+        {
+            //Hide trinket price
+            if (__instance.priceView != null)
+            {
+                __instance.priceView.Hide();
+            }
+        }
+
+        //Patch: Prevents cancel view from disappearing immediately when hiding
+        //Also adjusts placement of boss cancel view
+        [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "Hide")]
+        static bool CancelView_Hide_Prefix(CancelView __instance, out bool __state)
+        {
+            if (__instance.animationSequence?.id as string == "hiding" || !__instance.gameObject.activeSelf)
+            {
+                __state = false;
+                return false;
+            }
+
+            if (__instance.name == "Boss Cancel View")
+            {
+                __instance.SetColliderActive(false);
+                __instance.animationSequence.Complete(true);
+                __instance.animationSequence = DOTween.Sequence();
+                __instance.animationSequence.Append(ShortcutExtensions.DOLocalMoveY(__instance.transform, 1.75f, 0.25f, false).SetEase(Ease.InOutQuad)).OnComplete(delegate
+                {
+                    __instance.gameObject.SetActive(false);
+                });
+
+                __state = true;
+                return false;
+            }
+            __state = true;
+            return true;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(CancelView), "Hide")]
+        static void CancelView_Hide_Postfix(CancelView __instance, bool __state)
+        {
+            if (__state)
+            {
+                __instance.animationSequence?.SetId("hiding");
+            }
+        }
+        //Patch: Forces easing for cancel view
+        [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "Show", new Type[] { typeof(Vector3), typeof(bool) })]
+        static void CancelView_Show(CancelView __instance, ref bool ease)
+        {
+            ease = true;
+        }
+        //Patch: Initialize boss cancel position
+        [HarmonyPostfix, HarmonyPatch(typeof(CancelView), "Awake")]
+        static void CancelView_Awake(CancelView __instance)
+        {
+            if (__instance.name == "Boss Cancel View")
+            {
+                __instance.transform.localPosition += new Vector3(0, 0.8f, 0);
+            }
+        }
+
+        //Patch: Allow gamepad controls in the Wooden Nickel after canceling replacing a trinket (ends TrinketReplaceCancelledEvent)
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketReplaceCancelledEvent), "Execute")]
+        static void TrinketReplaceCancelledEvent_Execute(TrinketReplaceCancelledEvent __instance)
+        {
+            if (__instance.app.view.gamblingView != null)
+            {
+                __instance.app.controller.eventsController.SetEvent(new GamblingEvent());
+            }
+        }
+
+        //Patch: Disables Wooden Nickel exit button while the game is paused
+        [HarmonyPrefix, HarmonyPatch(typeof(ExitGamblingView), "OnMouseDown")]
+        static bool ExitGamblingView_OnMouseDown(ExitGamblingView __instance)
+        {
+            if (__instance.app.model.paused)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Disables ExpandGUIView while the game is paused
+        [HarmonyPrefix, HarmonyPatch(typeof(ExpandGUIView), "OnMouseDown")]
+        static bool ExpandGUIView_OnMouseDown(ExpandGUIView __instance)
+        {
+            if (__instance.app.model.paused)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Fixes shop navigation arrows not appearing after quickly replacing a trinket while the trinket replacement UI is still opening, potentially resulting in a softlock
+        //Patch: Remove purchased trinket
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketView), "OnMouseDown")]
+        static bool TrinketView_OnMouseDown(TrinketView __instance)
+        {
+            if (DOTween.IsTweening(__instance.app.view.sideGUI.transform, false))
+            {
+                return false;
+            }
+
+            if (!__instance.app.model.paused && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && __instance.app.model.gamblingModel?.cameraAt != 0)
+            {
+                int index = (__instance.app.model.bumboEvent as TrinketReplaceEvent).index;
+
+                if (__instance.app.view.gamblingView != null && index >= 0)
+                {
+                    TrinketPickupView pickup = __instance.app.view.gamblingView.shop.GetPickup(index).GetComponent<TrinketPickupView>();
+                    if (pickup != null)
+                    {
+                        pickup.SetClickable(false);
+                        pickup.HopAndDisappear();
+                        SoundsView.Instance.PlaySound(SoundsView.eSound.Trinket_Sign_Away, __instance.transform.position, SoundsView.eAudioSlot.Default, false);
+                    }
+                }
+            }
+            return true;
+        }
+
         //***************************************************
         //************Shop Nav Arrow Clickability************
         //***************************************************
@@ -818,13 +947,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.MakeClickable(false);
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(GamblingNavigation), "Show")]
+        [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "Show")]
         static void GamblingNavigation_Show(GamblingNavigation __instance)
         {
-            __instance.MakeClickable(true);
+            if (!__instance.gameObject.activeSelf)
+            {
+                __instance.MakeClickable(true);
+            }
         }
 
         //Patch: Prevents arrows from being clickable while the game is paused
+        //Also plays navigation arrow clicked sound when triggered using gamepad controls
         [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "OnMouseDown")]
         static bool GamblingNavigation_OnMouseDown(GamblingNavigation __instance)
         {
@@ -832,22 +965,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return false;
             }
-            return true;
-        }
-        //***************************************************
-        //***************************************************
-        //***************************************************
-
-        //Patch: Fixes shop navigation arrows not appearing after quickly replacing a trinket while the trinket replacement UI is still opening, potentially resulting in a softlock
-        [HarmonyPrefix, HarmonyPatch(typeof(TrinketView), "OnMouseDown")]
-        static bool TrinketView_OnMouseDown(TrinketView __instance)
-        {
-            if (DOTween.IsTweening("ShowingGUI", false))
+            ButtonHoverAnimation buttonHoverAnimation = __instance.GetComponent<ButtonHoverAnimation>();
+            if (buttonHoverAnimation && InputManager.Instance.IsUsingGamepadInput())
             {
-                return false;
+                buttonHoverAnimation.Clicked();
             }
             return true;
         }
+        //***************************************************
+        //***************************************************
+        //***************************************************
 
         //Patch: Fixes room lights not illuminating properly when quickly transitioning to a choose lane event or enemy turn event when out of moves
         [HarmonyPrefix, HarmonyPatch(typeof(EnemyRoomView), "ChangeLight")]
@@ -1073,6 +1200,94 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
+        }
+    }
+
+    static class SoundsModification
+    {
+        public static void Awake()
+        {
+            Harmony.CreateAndPatchAll(typeof(SoundsModification));
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying sound related bug fixes");
+        }
+
+        //Stores sounds and their age (in frames)
+        static Dictionary<SoundsView.eSound, int> soundAges = new Dictionary<SoundsView.eSound, int>();
+
+        static readonly int muteDuration = 3;
+
+        //Patch: Increments sound ages
+        [HarmonyPostfix, HarmonyPatch(typeof(SoundsView), "Update")]
+        static void SoundsView_Update()
+        {
+            List<SoundsView.eSound> currentSounds = new List<SoundsView.eSound>();
+
+            //Copy current sounds
+            foreach (SoundsView.eSound sound in soundAges.Keys)
+            {
+                currentSounds.Add(sound);
+            }
+
+            foreach (SoundsView.eSound sound in currentSounds)
+            {
+                if (soundAges.TryGetValue(sound, out int currentAge))
+                {
+                    if (soundAges[sound] >= muteDuration)
+                    {
+                        //Remove sound when it is too old
+                        soundAges.Remove(sound);
+                    }
+                    else
+                    {
+                        //Increase age
+                        soundAges[sound] = currentAge + 1;
+                    }
+                }
+            }
+        }
+
+        //Patch: Aborts 2D sounds
+        [HarmonyPrefix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
+        [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(SoundsView.eAudioSlot), typeof(bool) })]
+        static bool SoundsView_PlaySound_Prefix(SoundsView.eSound Sound)
+        {
+            if (soundAges.ContainsKey(Sound))
+            {
+                Debug.Log("Cancelled " + Sound.ToString() + " sound. Age: " + soundAges[Sound].ToString());
+                return false;
+            }
+            Debug.Log("Didn't cancel " + Sound.ToString() + " sound");
+            return true;
+        }
+
+        //Patch: Aborts 3D sounds
+        [HarmonyPrefix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
+        [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(Vector3), typeof(SoundsView.eAudioSlot), typeof(bool) })]
+        static bool SoundsView_PlaySound_3D_Prefix(SoundsView.eSound Sound)
+        {
+            if (soundAges.ContainsKey(Sound))
+            {
+                Debug.Log("Cancelled " + Sound.ToString() + " 3D sound. Age: " + soundAges[Sound].ToString());
+                return false;
+            }
+            Debug.Log("Didn't cancel " + Sound.ToString() + " 3D sound");
+            return true;
+        }
+
+        //Patch: Tracks 2D sounds
+        [HarmonyPostfix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
+        [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(SoundsView.eAudioSlot), typeof(bool) })]
+        static void SoundsView_PlaySound(SoundsView.eSound Sound)
+        {
+            soundAges[Sound] = 0;
+        }
+
+        //Patch: Tracks 3D sounds
+        [HarmonyPostfix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
+        [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(Vector3), typeof(SoundsView.eAudioSlot), typeof(bool) })]
+        static void SoundsView_PlaySound_3D(SoundsView.eSound Sound)
+        {
+            soundAges[Sound] = 0;
         }
     }
 }

@@ -578,56 +578,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
-        //***************************************************
-        //***Adding cancel button when replacing a trinket***
-        //***************************************************
-
-        //Patch: Adds cancel button during TrinketReplaceEvent
-        //Also hides other cancel buttons
-        [HarmonyPostfix, HarmonyPatch(typeof(TrinketReplaceEvent), "Execute")]
-        static void TrinketReplaceEvent_Execute(TrinketReplaceEvent __instance)
-        {
-            __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Show(CancelView.Where.NextToSpells);
-            __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().cancelView.Hide();
-            __instance.app.view.bossCancelView.Hide();
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Adding cancel button during TrinketReplaceEvent");
-        }
-
-        //Patch: Changes location of cancel button during TrinketReplaceEvent
-        [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "Show", new Type[] { typeof(CancelView.Where) })]
-        static bool CancelView_Show(CancelView __instance, CancelView.Where _where)
-        {
-            TweenExtensions.Complete(__instance.animationSequence, true);
-            __instance.gameObject.SetActive(true);
-            __instance.SetColliderActive(true);
-
-            float num;
-            if (__instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
-            {
-                num = -0.12f;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing location of cancel button during TrinketReplaceEvent");
-            }
-            else
-            {
-                num = -0.44f;
-            }
-
-            __instance.animationSequence = DOTween.Sequence();
-            TweenSettingsExtensions.Append(__instance.animationSequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOLocalMoveY(__instance.transform, num, 0.5f, false), Ease.InOutQuad));
-            if (_where == CancelView.Where.OverSpells)
-            {
-                __instance.transform.localPosition = new Vector3(0.933f, __instance.transform.localPosition.y, __instance.transform.localPosition.z);
-                return false;
-            }
-            __instance.transform.localPosition = new Vector3(0.25f, __instance.transform.localPosition.y, __instance.transform.localPosition.z);
-            return false;
-        }
-
-        //NEW
         //Patch: Fixes canceling spells with temporarily reduced mana costs refunding more mana than they cost
         //Patch also counteracts reduction in mana refund from Sucker enemies
         //Patch: Add cancel functionality for use trinkets
         //Patch: Fixes canceling actions that modify your spells causing both the puzzle board and the spell menu to be selectable at the same time when using gamepad or keyboard controls
+        //Patch: Fixes camera moving incorrectly when canceling taking a trinket from a treasure room
         [HarmonyPrefix, HarmonyPatch(typeof(EventsController), "OnNotification")]
         static bool EventsController_OnNotification(EventsController __instance, string _event_path, object _target, params object[] _data)
         {
@@ -646,7 +601,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.EndEvent();
                 return false;
             }
-            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent")
+            //Only perform this trinket replace cancel in boss rooms or at the skull game
+            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && (__instance.app.model.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Boss || (__instance.app.view.gamblingView != null && __instance.app.model.gamblingModel?.cameraAt == 0)))
             {
                 TrinketReplaceEvent trinketReplaceEvent = __instance.app.model.bumboEvent as TrinketReplaceEvent;
                 __instance.app.controller.HideNotifications(false);
@@ -661,9 +617,25 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
                 __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
+
                 Sequence s = DOTween.Sequence();
                 s.Append(__instance.app.view.mainCameraView.transform.DOMove(new Vector3(0f, 0.46f, -3.27f), 1f, false).SetEase(Ease.InOutQuad));
                 s.Join(__instance.app.view.mainCameraView.transform.DORotate(new Vector3(-1.43f, 0f, 0f), 1f, RotateMode.Fast).SetEase(Ease.InOutQuad));
+
+                if (__instance.app.view.gamblingView == null)
+                {
+                    //Enable boss room pickups
+                    s.AppendCallback(delegate
+                    {
+                        GameObject[] bossRewardParents = __instance.app.view.bossRewardParents;
+                        if (bossRewardParents != null && bossRewardParents.Length > 1)
+                        {
+                            bossRewardParents[0]?.transform.GetChild(0)?.GetComponent<TrinketPickupView>()?.SetClickable(true);
+                            bossRewardParents[1]?.transform.GetChild(0)?.GetComponent<TrinketPickupView>()?.SetClickable(true);
+                        }
+                    });
+                }
+
                 __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
                 if (__instance.app.view.gamblingView == null && __instance.app.model.mapModel.currentRoom.roomType != MapRoom.RoomType.Treasure)
                 {
@@ -673,6 +645,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             if (_event_path == "cancel.spell" && __instance.app.view.gamblingView != null)
             {
+                __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
                 __instance.app.controller.HideNotifications(false);
                 __instance.app.controller.gamblingController.CancelPickup();
                 __instance.SetEvent(new SpellModifyDelayEvent(false));
@@ -881,6 +854,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+        //Patch: Allows cancel button to be pressed while in a treasure room after canceling taking a trinket
+        [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "OnMouseDown")]
+        static bool CancelView_OnMouseDown(CancelView __instance)
+        {
+            if (__instance.animationSequence == null || !__instance.animationSequence.IsActive() || __instance.animationSequence.IsComplete())
+            {
+                if (__instance.app.view.boxes.treasureRoom != null && __instance.app.view.boxes.treasureRoom.gameObject.activeSelf && __instance.app.model.bumboEvent.GetType() != typeof(TreasureSpellReplaceEvent) && __instance.app.model.bumboEvent.GetType() != typeof(TrinketReplaceEvent) && __instance.app.model.bumboEvent.GetType() != typeof(TreasureStartEvent) && __instance.app.model.bumboEvent.GetType() != typeof(TrinketChosenToReplaceEvent))
+                {
+                    return false;
+                }
+                __instance.app.Notify("cancel.spell", __instance, Array.Empty<object>());
+                __instance.Hide();
+            }
+            return false;
+        }
+
         //Patch: Removes cancel button when trinket is replaced
         //Patch also removes trinket display from the cup game
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketChosenToReplaceEvent), "Execute")]
@@ -909,6 +898,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
             if (__instance.app.view.gamblingView != null)
             {
+                __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
                 Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing trinket reward display and hiding cancel button");
                 GameObject gameObject = GameObject.Find("Trinket Display");
                 if (gameObject != null)
@@ -924,6 +914,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.view.gamblingView.gamblingCameraView.ShowArrows();
                 __instance.app.view.gamblingView.shopClerkView.TipHat();
                 __instance.app.controller.HideNotifications(false);
+
                 __instance.app.view.gamblingView.cupClerkView.AnimateIdle();
                 if (__instance.app.model.gamblingModel.cameraAt == 0)
                 {

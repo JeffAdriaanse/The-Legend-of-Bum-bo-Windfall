@@ -30,6 +30,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             LocalizationModifier.ModifyLanguageSourceData();
         }
+
+        //Patch: Fix Bag-O-Trash trinketKA
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "trinketKA", MethodType.Getter)]
+        static void TrinketModel_get_trinketKA(ref Dictionary<TrinketName, string> __result)
+        {
+            __result[TrinketName.BagOTrash] = "BAG_O_TRASH_NAME";
+        }
     }
 
     static class LocalizationModifier
@@ -98,6 +105,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Spells/TINY_DICE_NAME", "Tiny Dice"},
 
                     //Spell descriptions
+                    { "Spells/DOG_TOOTH_DESCRIPTION", "Attack that Heals You"},
+                    { "Spells/ROCK_DESCRIPTION", "Hits the Furthest Enemy"},
                     { "Spells/ROCK_FRIENDS_DESCRIPTION", "Hits Enemies = to Spell Damage"},
                     { "Spells/STICK_DESCRIPTION", "Whack Away!"},
 
@@ -111,6 +120,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Trinkets/NINE_VOLT_DESCRIPTION", "Items May Gain Charges"},
                     { "Trinkets/PINKY_DESCRIPTION", "May Gain Wilds on Kills"},
                     { "Trinkets/RAINBOW_TICK_DESCRIPTION", "Reduces Spell Cost"},
+                    { "Trinkets/THERMOS_DESCRIPTION", "Charge All Items + Heal"},
 
                     //Gizzarda
                     { "Bosses/GIZZARDA_TIP_2", "\"she's very resistant!\nplan ahead!\""},

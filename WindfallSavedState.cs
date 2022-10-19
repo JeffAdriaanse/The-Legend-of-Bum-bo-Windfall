@@ -815,7 +815,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 						TrinketPickupView trinketPickupView = itemPickup.GetComponent<TrinketPickupView>();
 						trinketPickupView.SetTrinket(trinketName, price);
 						itemPrice.SetPrice(price);
-						trinketPickupView.removePickup = true;
+						trinketPickupView.removePickup = trinketPickupView.trinket.Category == TrinketElement.TrinketCategory.Prick ? false : true;
 
 						__instance.SetPickup(itemPickup, index);
 					}
