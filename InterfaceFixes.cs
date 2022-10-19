@@ -877,11 +877,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Allow gamepad controls in the Wooden Nickel after canceling replacing a trinket (ends TrinketReplaceCancelledEvent)
+        //Also removes trinket reward display on cancel
         [HarmonyPostfix, HarmonyPatch(typeof(TrinketReplaceCancelledEvent), "Execute")]
         static void TrinketReplaceCancelledEvent_Execute(TrinketReplaceCancelledEvent __instance)
         {
             if (__instance.app.view.gamblingView != null)
             {
+                InterfaceContent.RemoveTrinketRewardDisplay();
                 __instance.app.controller.eventsController.SetEvent(new GamblingEvent());
             }
         }

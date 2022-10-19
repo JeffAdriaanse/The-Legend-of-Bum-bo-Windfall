@@ -899,17 +899,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.app.view.gamblingView != null)
             {
                 __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing trinket reward display and hiding cancel button");
-                GameObject gameObject = GameObject.Find("Trinket Display");
-                if (gameObject != null)
-                {
-                    UnityEngine.Object.Destroy(gameObject);
-                }
-                GameObject gameObject2 = GameObject.Find("Trinket Display Light");
-                if (gameObject2 != null)
-                {
-                    UnityEngine.Object.Destroy(gameObject2);
-                }
+
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Hiding cancel button");
+                RemoveTrinketRewardDisplay();
+
                 __instance.app.controller.gamblingController.shop.UpdatePrices();
                 __instance.app.view.gamblingView.gamblingCameraView.ShowArrows();
                 __instance.app.view.gamblingView.shopClerkView.TipHat();
@@ -931,6 +924,21 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.End();
 
             return false;
+        }
+
+        public static void RemoveTrinketRewardDisplay()
+        {
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing trinket reward display");
+            GameObject trinketRewardDisplay = GameObject.Find("Trinket Display");
+            if (trinketRewardDisplay != null)
+            {
+                UnityEngine.Object.Destroy(trinketRewardDisplay);
+            }
+            GameObject trinketDisplayLight = GameObject.Find("Trinket Display Light");
+            if (trinketDisplayLight != null)
+            {
+                UnityEngine.Object.Destroy(trinketDisplayLight);
+            }
         }
 
         //***************************************************
