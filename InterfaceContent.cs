@@ -256,18 +256,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     __instance.app.controller.eventsController.SetEvent(new TrinketReplaceEvent(0, true));
 
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating trinket reward display");
-                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Pickups/Trinket Pickup") as GameObject);
-                    gameObject.name = "Trinket Display";
-                    gameObject.transform.position = new Vector3(-1.35f, 0.87f, -5.54f);
-                    gameObject.transform.localRotation = Quaternion.Euler(0f, 135f, 0f);
-                    gameObject.transform.localScale = new Vector3(0.75f, 0.75f, 0.75f);
-                    gameObject.GetComponent<TrinketPickupView>().SetTrinket(__instance.app.model.gamblingModel.trinketReward, 0);
-                    gameObject.SetActive(true);
-                    gameObject.GetComponent<BoxCollider>().enabled = false;
-                    GameObject gameObject2 = new GameObject("Trinket Display Light");
-                    gameObject2.AddComponent<Light>();
-                    gameObject2.transform.position = new Vector3(-1.1f, 1.1f, -6f);
+                    //Create trinket reward display
+                    CreateTrinketRewardDisplay(__instance.app);
                 });
             }
             else
@@ -926,18 +916,54 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        public static void RemoveTrinketRewardDisplay()
+        static GameObject trinketRewardDisplay;
+        static readonly Vector3 trinketRewardDisplayPosition = new Vector3(-1.15f, 0.87f, -5.54f);
+        static readonly float trinketRewardDisplayOffsetY = 0.8f;
+        static readonly float displayLightIntensity = 1.1f;
+        static Sequence trinketRewardDisplaySequence;
+        static float displaySequenceDuration = 0.5f;
+
+        public static void CreateTrinketRewardDisplay(BumboApplication app)
         {
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing trinket reward display");
-            GameObject trinketRewardDisplay = GameObject.Find("Trinket Display");
             if (trinketRewardDisplay != null)
             {
-                UnityEngine.Object.Destroy(trinketRewardDisplay);
+                return;
             }
-            GameObject trinketDisplayLight = GameObject.Find("Trinket Display Light");
-            if (trinketDisplayLight != null)
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating trinket reward display");
+            trinketRewardDisplay = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Pickups/Trinket Pickup") as GameObject);
+            trinketRewardDisplay.name = "Trinket Display";
+            trinketRewardDisplay.transform.position = trinketRewardDisplayPosition;
+            trinketRewardDisplay.transform.localRotation = Quaternion.Euler(0f, 135f, 0f);
+            trinketRewardDisplay.transform.localScale = new Vector3(0.75f, 0.75f, 0.75f);
+            trinketRewardDisplay.GetComponent<TrinketPickupView>().SetTrinket(app.model.gamblingModel.trinketReward, 0);
+            trinketRewardDisplay.SetActive(true);
+            trinketRewardDisplay.GetComponent<BoxCollider>().enabled = false;
+            GameObject trinketDisplayLight = new GameObject("Trinket Display Light");
+            trinketDisplayLight.AddComponent<Light>().intensity = 0;
+            trinketDisplayLight.transform.position = new Vector3(-1.1f, 1.1f, -6f);
+            trinketDisplayLight.transform.SetParent(trinketRewardDisplay.transform);
+
+            trinketRewardDisplay.transform.position += new Vector3(0, trinketRewardDisplayOffsetY, 0);
+            trinketRewardDisplaySequence = DOTween.Sequence();
+            trinketRewardDisplaySequence.Append(trinketRewardDisplay.transform.DOLocalMoveY(trinketRewardDisplayPosition.y, displaySequenceDuration).SetEase(Ease.InOutQuad));
+            trinketRewardDisplaySequence.Join(trinketDisplayLight.GetComponent<Light>()?.DOIntensity(displayLightIntensity, displaySequenceDuration));
+        }
+
+        public static void RemoveTrinketRewardDisplay()
+        {
+            if (trinketRewardDisplaySequence != null)
             {
-                UnityEngine.Object.Destroy(trinketDisplayLight);
+                trinketRewardDisplaySequence.Kill(true);
+            }
+
+            Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing trinket reward display");
+            if (trinketRewardDisplay != null)
+            {
+                trinketRewardDisplaySequence = DOTween.Sequence();
+                trinketRewardDisplaySequence.Append(trinketRewardDisplay.transform.DOLocalMoveY(trinketRewardDisplayPosition.y + trinketRewardDisplayOffsetY, displaySequenceDuration).SetEase(Ease.InOutQuad));
+                trinketRewardDisplaySequence.Join(trinketRewardDisplay.transform.GetComponentInChildren<Light>()?.DOIntensity(0, displaySequenceDuration));
+                trinketRewardDisplaySequence.AppendCallback(delegate { UnityEngine.Object.Destroy(trinketRewardDisplay); });
             }
         }
 
