@@ -1277,7 +1277,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.charge = 0;
 			__instance.app.controller.UpdateSpellManaText();
 			__instance.app.controller.SetActiveSpells(true, true);
-			__instance.app.controller.GUINotification("Make\nSpells Easier\nTo Cast!", GUINotificationView.NotifyType.Spell, __instance, true);
+			__instance.app.controller.GUINotification("EASIER_SPELLS", GUINotificationView.NotifyType.Spell, __instance, true);
 			__instance.app.controller.eventsController.SetEvent(new IdleEvent());
 			__result = true;
 
@@ -1328,7 +1328,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 			__instance.app.controller.UpdateSpellManaText();
 			__instance.app.controller.SetActiveSpells(true, true);
-			__instance.app.controller.GUINotification("Spells\nCost Less\nIn Room!", GUINotificationView.NotifyType.Spell, __instance, true);
+			__instance.app.controller.GUINotification("CHEAPER_SPELLS_ROOM", GUINotificationView.NotifyType.Spell, __instance, true);
 			__instance.app.controller.eventsController.SetEvent(new IdleEvent());
 			SoundsView.Instance.PlaySound(SoundsView.eSound.Spell_LowerCost, SoundsView.eAudioSlot.Default, false);
 			__result = true;

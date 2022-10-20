@@ -349,15 +349,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 case 1:
                     __instance.app.model.characterSheet.addPuzzleDamage(1);
-                    __instance.app.controller.GUINotification("Gained Puzzle Damage!", GUINotificationView.NotifyType.Stats, null, true);
+                    __instance.app.controller.GUINotification("GAINED_PUZZLE_DAMAGE", GUINotificationView.NotifyType.Stats, null, true);
                     break;
                 case 2:
                     __instance.app.model.characterSheet.addItemDamage(1);
-                    __instance.app.controller.GUINotification("Gained Item Damage!", GUINotificationView.NotifyType.Stats, null, true);
+                    __instance.app.controller.GUINotification("GAINED_ITEM_DAMAGE", GUINotificationView.NotifyType.Stats, null, true);
                     break;
                 case 3:
                     __instance.app.model.characterSheet.addDex(1);
-                    __instance.app.controller.GUINotification("Gained Dexterity!", GUINotificationView.NotifyType.Stats, null, true);
+                    __instance.app.controller.GUINotification("GAINED_DEXTERITY", GUINotificationView.NotifyType.Stats, null, true);
                     break;
                 case 4:
                     if (__instance.app.model.characterSheet.bumboType.ToString() == "TheDead")
@@ -369,11 +369,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         __instance.app.model.characterSheet.addHitPoints(1);
                     }
-                    __instance.app.controller.GUINotification("Gained Hit Points!", GUINotificationView.NotifyType.Stats, null, true);
+                    __instance.app.controller.GUINotification("GAINED_HP", GUINotificationView.NotifyType.Stats, null, true);
                     break;
                 default:
                     __instance.app.model.characterSheet.addLuck(1);
-                    __instance.app.controller.GUINotification("Gained Luck!", GUINotificationView.NotifyType.Stats, null, true);
+                    __instance.app.controller.GUINotification("GAINED_LUCK", GUINotificationView.NotifyType.Stats, null, true);
                     break;
             }
             __instance.app.controller.AddCurse(1);
