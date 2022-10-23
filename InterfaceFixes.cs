@@ -257,8 +257,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
-        //TODO: Playtest this patch!
         //Patch: Fixes holding 'r' to restart while in a treasure room causing the game to softlock
+        //Also closes GamepadSpellSelector on TreasureChosenEvent
         [HarmonyPrefix, HarmonyPatch(typeof(TreasureChosenEvent), "Execute")]
         static bool TreasureChosenEvent_Execute(TreasureChosenEvent __instance)
         {
@@ -267,6 +267,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting treasure chosen event; game is loading");
                 return false;
             }
+
+            __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
             return true;
         }
 
@@ -825,6 +827,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Hide price discounts when losing steam sale
+        [HarmonyPostfix, HarmonyPatch(typeof(ItemPriceView), "ReducePrice")]
+        static void ItemPriceView_ReducePrice(ItemPriceView __instance, int discount)
+        {
+            if (discount == 0)
+            {
+                __instance.salesPrice.gameObject.SetActive(false);
+                __instance.salesPriceTag.SetActive(false);
+            }
+        }
+
         //Patch: Prevents cancel view from disappearing immediately when hiding
         //Also adjusts placement of boss cancel view
         [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "Hide")]
@@ -900,22 +913,34 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Disables ExpandGUIView while the game is paused
+        //Also disables ExpandGUIView while the spell menu is moving
         [HarmonyPrefix, HarmonyPatch(typeof(ExpandGUIView), "OnMouseDown")]
         static bool ExpandGUIView_OnMouseDown(ExpandGUIView __instance)
         {
-            if (__instance.app.model.paused)
+            if (__instance.app.model.paused || SpellMenuClickDisbled(__instance.app))
             {
                 return false;
             }
             return true;
         }
 
-        //Patch: Fixes shop navigation arrows not appearing after quickly replacing a trinket while the trinket replacement UI is still opening, potentially resulting in a softlock
+        //Patch: Prevents clicking spell slots while the spell menu is moving
+        [HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
+        static bool SpellView_OnMouseDown(SpellView __instance)
+        {
+            if (__instance.app.model.paused || SpellMenuClickDisbled(__instance.app) || MouseClickedWhileUsingGamepadControls(__instance.app))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Prevents clicking trinket slots while the spell menu is moving
         //Patch: Remove purchased trinket
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketView), "OnMouseDown")]
         static bool TrinketView_OnMouseDown(TrinketView __instance)
         {
-            if (DOTween.IsTweening(__instance.app.view.sideGUI.transform, false))
+            if (SpellMenuClickDisbled(__instance.app) || MouseClickedWhileUsingGamepadControls(__instance.app))
             {
                 return false;
             }
@@ -938,32 +963,121 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
+        //Patch: Prevents interacting with the spell menu using gamepad controls while the spell menu is moving
+        [HarmonyPrefix, HarmonyPatch(typeof(GamepadSpellSelector), "Update")]
+        static bool GamepadSpellSelector_Update(GamepadSpellSelector __instance)
+        {
+            if (SpellMenuClickDisbled(__instance.app))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        static bool SpellMenuClickDisbled(BumboApplication app)
+        {
+            return SpellMenuTransitioning() || TreasureCameraTransitioning(app);
+        }
+
+        static bool SpellMenuTransitioning()
+        {
+            return DOTween.IsTweening("ShowingGUI", false) || DOTween.IsTweening("HidingGUI", false);
+        }
+
+        static bool TreasureCameraTransitioning(BumboApplication app)
+        {
+            return DOTween.IsTweening(app.view.mainCameraView.transform, false) && app.model?.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Treasure;
+        }
+
+        static bool MouseClickedWhileUsingGamepadControls(BumboApplication app)
+        {
+            //UNUSED METHOD
+            return false;
+
+            GamepadSpellSelector gamepadSpellSelector = app.view.GUICamera?.GetComponent<GamepadSpellSelector>();
+
+            bool gamepadSpellSelectorActive = false;
+            if (gamepadSpellSelector != null && gamepadSpellSelector.IsActive)
+            {
+                gamepadSpellSelectorActive = true;
+            }
+
+            return (InputManager.Instance.IsUsingGamepadInput() && gamepadSpellSelectorActive);
+        }
+
         //***************************************************
         //************Shop Nav Arrow Clickability************
         //***************************************************
         //These patches disable shop navigation arrows when they are disappearing
 
-        [HarmonyPostfix, HarmonyPatch(typeof(GamblingNavigation), "Hide")]
-        static void GamblingNavigation_Hide(GamblingNavigation __instance)
+        static Sequence GamblingNavigationSequenceLeft;
+        static Sequence GamblingNavigationSequenceRight;
+
+        [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "Hide")]
+        static bool GamblingNavigation_Hide(GamblingNavigation __instance)
         {
-            __instance.MakeClickable(false);
+            if (__instance.gameObject.activeSelf)
+            {
+                AccessTools.Field(typeof(GamblingNavigation), "isHidden").SetValue(__instance, true);
+
+                if (__instance.direction > 0)
+                {
+                    HideNavigation(__instance, ref GamblingNavigationSequenceLeft);
+                }
+                else
+                {
+                    HideNavigation(__instance, ref GamblingNavigationSequenceRight);
+                }
+            }
+            return false;
+        }
+
+        static void HideNavigation(GamblingNavigation __instance, ref Sequence GamblingNavigationSequence)
+        {
+            if (GamblingNavigationSequence != null)
+            {
+                GamblingNavigationSequence.Kill(true);
+            }
+            GamblingNavigationSequence = DOTween.Sequence().Append(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.8f, 0.8f, 0.8f), 0.2f).SetEase(Ease.InOutQuad)).Append(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0f, 0f, 0.6f), 0.1f).SetEase(Ease.InOutQuad)).AppendCallback(delegate
+            {
+                __instance.gameObject.SetActive(false);
+            });
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "Show")]
-        static void GamblingNavigation_Show(GamblingNavigation __instance)
+        static bool GamblingNavigation_Show(GamblingNavigation __instance)
         {
-            if (!__instance.gameObject.activeSelf)
+            AccessTools.Field(typeof(GamblingNavigation), "isHidden").SetValue(__instance, false);
+
+            if (__instance.direction > 0)
             {
-                __instance.MakeClickable(true);
+                ShowNavigation(__instance, ref GamblingNavigationSequenceLeft);
             }
+            else
+            {
+                ShowNavigation(__instance, ref GamblingNavigationSequenceRight);
+            }
+            return false;
+        }
+
+        static void ShowNavigation(GamblingNavigation __instance, ref Sequence GamblingNavigationSequence)
+        {
+            if (GamblingNavigationSequence != null)
+            {
+                GamblingNavigationSequence.Kill(true);
+            }
+            __instance.gameObject.SetActive(true);
+            GamblingNavigationSequence = DOTween.Sequence().Append(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.8f, 0.8f, 0.6f), 0.2f).SetEase(Ease.InOutQuad)).Append(ShortcutExtensions.DOScale(__instance.transform, new Vector3(0.6f, 0.6f, 0.6f), 0.1f).SetEase(Ease.InOutQuad));
         }
 
         //Patch: Prevents arrows from being clickable while the game is paused
         //Also plays navigation arrow clicked sound when triggered using gamepad controls
+        //Also prevents arrows from being clickable while they are tweening
         [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "OnMouseDown")]
         static bool GamblingNavigation_OnMouseDown(GamblingNavigation __instance)
         {
-            if (__instance.app.model.paused)
+            Sequence GamblingNavigationSequence = __instance.direction < 0 ? GamblingNavigationSequenceLeft : GamblingNavigationSequenceRight;
+            if (__instance.app.model.paused || (GamblingNavigationSequence != null && GamblingNavigationSequence.IsPlaying()))
             {
                 return false;
             }
