@@ -29,9 +29,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void SetUpGraphicsOptions(GameObject menuView, bool pauseMenu)
         {
-            //TODO: Implement graphics options
-            return;
-
             AssetBundle assets = Windfall.assetBundle;
             if (assets == null)
             {
@@ -77,19 +74,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             //cancelTransform.localScale = Vector3.one;
 
             //Save graphics options
-            Transform saveTransform = menuView.transform.Find("Options Menu").transform.Find("Save");
+            Transform saveTransform = menuView.transform.Find("Graphics Menu").transform.Find("Save");
 
-            saveTransform.GetComponent<Button>().onClick.AddListener(SaveGraphicsOptions);
+            saveTransform.GetComponent<Button>()?.onClick.AddListener(SaveGraphicsOptions);
 
             //Load graphics options
             Button optionsMenuButton;
             if (!pauseMenu)
             {
-                optionsMenuButton = menuView?.transform.Find("Main Menu")?.Find("Options")?.GetComponent<Button>();
+                optionsMenuButton = menuView?.transform.Find("Options Menu PC")?.Find("Graphics Options")?.GetComponent<Button>();
             }
             else
             {
-                optionsMenuButton = menuView?.transform.Find("PauseItems")?.Find("Options")?.GetComponent<Button>();
+                optionsMenuButton = menuView?.transform.Find("Options Menu PC")?.Find("Graphics Options")?.GetComponent<Button>();
             }
 
             if (optionsMenuButton != null)
@@ -108,7 +105,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Create graphics menu
-            graphicsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Graphics Menu"), menuView.transform.Find("Options Menu"));
+            graphicsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Graphics Menu"), menuView.transform.Find("Graphics Menu"));
             graphicsMenu.transform.SetSiblingIndex(1);
             RectTransform graphicsMenuRect = graphicsMenu.GetComponent<RectTransform>();
             graphicsMenuRect.anchoredPosition = new Vector2(230, -190);
@@ -408,6 +405,20 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Only apply depth of field if the camera is the main game camera
             bool mainGameCamera = camera.GetComponent<CameraView>() != null && camera.GetComponent<GUISide>() == null;
+
+
+            //TEST
+            //Unity depth of field effect
+            UnityStandardAssets.ImageEffects.DepthOfField unityDepthOfFieldEffect = camera.gameObject.GetComponent<UnityStandardAssets.ImageEffects.DepthOfField>();
+
+            if (mainGameCamera)
+            {
+                if (unityDepthOfFieldEffect == null)
+                {
+                    UnityStandardAssets.ImageEffects.DepthOfField newUnitDepthOfFieldEffect = camera.gameObject.AddComponent<UnityStandardAssets.ImageEffects.DepthOfField>();
+                }
+            }
+
 
             //Depth of field effect
             DepthOfFieldEffect depthOfFieldEffect = camera.gameObject.GetComponent<DepthOfFieldEffect>();
