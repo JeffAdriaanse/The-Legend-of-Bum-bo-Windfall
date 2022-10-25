@@ -985,6 +985,37 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             GameObject cutscenesButton = UnityEngine.Object.Instantiate(__instance.debugMenu.transform.Find("Cutscenes").gameObject, __instance.mainMenu.transform);
             cutscenesButton.GetComponent<RectTransform>().SetSiblingIndex(4);
+
+            GamepadMenuOptionSelection cutscenesOptionSelection = cutscenesButton.AddComponent<GamepadMenuOptionSelection>();
+            if (cutscenesOptionSelection != null)
+            {
+                cutscenesOptionSelection.m_SelectionObjects = new GameObject[0];
+                cutscenesOptionSelection.m_InjectDots = GamepadMenuOptionSelection.eInjectDots.Both;
+            }
+
+            TextMeshProUGUI cutscenesTextMeshPro = cutscenesOptionSelection.GetComponent<TextMeshProUGUI>();
+            if (cutscenesTextMeshPro != null)
+            {
+                cutscenesTextMeshPro.enableWordWrapping = false;
+            }
+            
+            ButtonHoverAnimation cutscenesButtonHover = cutscenesButton.GetComponent<ButtonHoverAnimation>();
+            if (cutscenesButtonHover != null)
+            {
+                cutscenesButtonHover.hoverTextColor = Color.black;
+            }
+
+            GamepadMenuController gamepadMenuController = cutscenesButton.transform.parent.GetComponent<GamepadMenuController>();
+            if (gamepadMenuController != null)
+            {
+                List<GameObject> newButtons = new List<GameObject>();
+                newButtons.AddRange(gamepadMenuController.m_Buttons);
+                if (newButtons?.Count >= 4)
+                {
+                    newButtons.Insert(4, cutscenesButton);
+                }
+                gamepadMenuController.m_Buttons = newButtons.ToArray();
+            }
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Added cutscene menu button");
 
             //Reorder endings
