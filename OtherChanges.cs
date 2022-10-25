@@ -4,6 +4,8 @@ using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
+using Steamworks;
+using DG.Tweening;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -13,6 +15,56 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Harmony.CreateAndPatchAll(typeof(OtherChanges));
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying other changes");
+        }
+
+        //Patch: Fixes exiting to menu incorrectly deleting certain gameObjects
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "OnNotification")]
+        static bool BumboController_OnNotification(BumboController __instance, string _event_path)
+        {
+            if (_event_path == "gameover.exittomenu")
+            {
+                DOTween.KillAll(false);
+                LoadingController loadingController2 = LoadingController.Get();
+                loadingController2.gameObject.SetActive(true);
+                List<GameObject> list = new List<GameObject>();
+                list.AddRange(GameObject.FindGameObjectsWithTag("Loading"));
+                if (__instance.app.model.characterSheet.currentFloor == 0 && __instance.app.controller.tutorialController != null)
+                {
+                    __instance.app.model.progression.completedTutorial = true;
+                    ProgressionController.SaveProgression(__instance.app.model.progression);
+                }
+                loadingController2.gameObject.SetActive(true);
+                GameObject[] array = UnityEngine.Object.FindObjectsOfType<GameObject>();
+                for (int i = array.Length - 1; i >= 0; i--)
+                {
+                    if (array[i].name != "Timer" && array[i].name != "[DOTween]" && array[i] != PlatformManagerTemplate<PlatformManagerSteam>.Instance.gameObject && array[i] != InputManager.Instance.gameObject && array[i].name != "SteamManager" && array[i].name != "BepInEx_Manager" && array[i].name != "BepInEx_ThreadingHelper" && list.IndexOf(array[i]) == -1)
+                    {
+                        UnityEngine.Object.Destroy(array[i].gameObject);
+                    }
+                }
+                loadingController2.loadScene("titlescreen2", true);
+
+                return false;
+            }
+            return true;
+        }
+
+        //Patch: Log achievements
+        [HarmonyPrefix, HarmonyPatch(typeof(AchievementsSteam), "Unlock")]
+        static bool AchievementsSteam_Unlock(AchievementsSteam __instance, Achievements.eAchievement Achievement)
+        {
+            if (SteamManager.Initialized)
+            {
+                SteamUserStats.SetAchievement(Achievement.ToString());
+                SteamUserStats.StoreStats();
+
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Achievement " + Achievement.ToString() + " succeeded");
+            }
+            else
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] Achievement " + Achievement.ToString() + " failed");
+            }
+            return false;
         }
 
         //Patch: Heart tiles no longer appear naturally when playing as Bum-bo the Lost
@@ -43,8 +95,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(CharacterSheet), "addSoulHearts")]
         static bool CharacterSheet_addSoulHearts(CharacterSheet __instance, float _amount)
         {
-            _amount = Mathf.Clamp(_amount, 0f, 6f - __instance.bumboBaseInfo.hitPoints - __instance.soulHearts);
-            __instance.soulHearts += _amount;
+            float amount = Mathf.Clamp(_amount, 0f, 6f - __instance.bumboBaseInfo.hitPoints - __instance.soulHearts);
+            __instance.soulHearts += amount;
             if (__instance.soulHearts > 6f)
             {
                 __instance.soulHearts = 6f;
