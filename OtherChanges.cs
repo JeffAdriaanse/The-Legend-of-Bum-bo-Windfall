@@ -49,22 +49,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
-        //Patch: Log achievements
+        //Patch: Fixes jackpot unlocks triggering the wrong achievements
         [HarmonyPrefix, HarmonyPatch(typeof(AchievementsSteam), "Unlock")]
-        static bool AchievementsSteam_Unlock(AchievementsSteam __instance, Achievements.eAchievement Achievement)
+        static void AchievementsSteam_Unlock(AchievementsSteam __instance, ref Achievements.eAchievement Achievement)
         {
-            if (SteamManager.Initialized)
+            //Change achievement unlock index when using BumboUnlockController
+            BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
+            if (bumboUnlockController != null)
             {
-                SteamUserStats.SetAchievement(Achievement.ToString());
-                SteamUserStats.StoreStats();
-
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Achievement " + Achievement.ToString() + " succeeded");
+                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
+                {
+                    Achievement -= 21;
+                }
             }
-            else
-            {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Achievement " + Achievement.ToString() + " failed");
-            }
-            return false;
         }
 
         //Patch: Heart tiles no longer appear naturally when playing as Bum-bo the Lost
