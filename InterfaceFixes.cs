@@ -20,6 +20,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
+        [HarmonyPrefix, HarmonyPatch(typeof(UnlockImageView), "UnlockImage")]
+        static void UnlockImageView_UnlockImage_Prefix(float _unlock_index, out float __state)
+        {
+            __state = _unlock_index;
+        }
+        //Patch: Fixes achievements displaying the wrong text
+        [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageView), "UnlockImage")]
+        static void UnlockImageView_UnlockImage_Postfix(UnlockImageView __instance, float __state)
+        {
+            Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, __instance.unlockKeys[(int)__state]);
+        }
+
         //Patch: Disables main camera on ShowBossSignEvent
         [HarmonyPostfix, HarmonyPatch(typeof(ShowBossSignEvent), "Execute")]
         static void ShowBossSignEvent_Execute(ShowBossSignEvent __instance)
