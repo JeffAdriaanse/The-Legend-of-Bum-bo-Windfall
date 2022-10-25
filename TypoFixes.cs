@@ -59,6 +59,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Modify language
                 ModifyEnglish();
+                //Add language
+                AddEnglish();
             }
         }
 
@@ -90,6 +92,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
+        }
+
+        public static void AddEnglish()
+        {
+            foreach (string term in EnglishTextAdditions.Keys)
+            {
+                TermData termData = languageSourceData.AddTerm(term);
+
+                if (EnglishTextAdditions.TryGetValue(term, out string value))
+                {
+                    termData.SetTranslation(0, value);
+                }
+            }
+
         }
 
         public static Dictionary<string, string> EnglishTextModifications
@@ -130,6 +146,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                 };
                 return modifications;
             }
+        }
+
+        public static Dictionary<string, string> EnglishTextAdditions
+        {
+            get
+            {
+                Dictionary<string, string> additions = new Dictionary<string, string>
+                {
+                    //GUI Notifications
+                    { "GUI Notifications/NO_VIABLE_SPELLS", "No Viable Spells"},
+                };
+                return additions;
+            }
+
         }
     }
 }
