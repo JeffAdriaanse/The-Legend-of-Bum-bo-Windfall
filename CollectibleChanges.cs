@@ -943,7 +943,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 						__instance.app.view.spells[spellCounter2].DisableSpell();
 					}
 				}
-				__instance.app.controller.GUINotification("No Viable Spells", GUINotificationView.NotifyType.General, null, true);
+				__instance.app.controller.GUINotification("NO_VIABLE_SPELLS", GUINotificationView.NotifyType.General, null, true);
 				return false;
 			}
 
@@ -956,7 +956,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.app.model.spellViewUsed = null;
 
 			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
-			__instance.app.controller.GUINotification("Pick A Spell To Modify", GUINotificationView.NotifyType.Spell, null, false);
+			__instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
 
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Rainbow Tick effect");
 			return false;
@@ -1008,7 +1008,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 						__instance.app.view.spells[spellCounter2].DisableSpell();
 					}
 				}
-				__instance.app.controller.GUINotification("No Viable Spells", GUINotificationView.NotifyType.General, null, true);
+				__instance.app.controller.GUINotification("NO_VIABLE_SPELLS", GUINotificationView.NotifyType.General, null, true);
 				return false;
 			}
 
@@ -1021,7 +1021,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.app.model.spellViewUsed = null;
 
 			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
-			__instance.app.controller.GUINotification("Pick A Spell To Modify", GUINotificationView.NotifyType.Spell, null, false);
+			__instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
 
 			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Brown Tick effect");
 			return false;
