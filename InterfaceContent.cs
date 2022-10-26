@@ -1338,6 +1338,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                 WinStreakCounter.GameWon();
             }
         }
+        //Patch: Prevents the win streak from erroneously incrementing when changing floors using the debug menu while in The Basement
+        [HarmonyPrefix, HarmonyPatch(typeof(DebugController), "ChangeFloor")]
+        static void DebugController_ChangeFloor(DebugController __instance)
+        {
+            ref int currentFloor = ref __instance.app.model.characterSheet.currentFloor;
+            if (currentFloor == 4)
+            {
+                currentFloor--;
+            }
+        }
 
         //Patch: Update win streak on game loss
         [HarmonyPostfix, HarmonyPatch(typeof(GameOverEvent), "Execute")]
