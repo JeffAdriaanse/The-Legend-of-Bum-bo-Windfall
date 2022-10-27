@@ -914,10 +914,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Disables Wooden Nickel exit button while the game is paused
+        //Also disables Wooden Nickel exit button while the camera is rotating
         [HarmonyPrefix, HarmonyPatch(typeof(ExitGamblingView), "OnMouseDown")]
         static bool ExitGamblingView_OnMouseDown(ExitGamblingView __instance)
         {
-            if (__instance.app.model.paused)
+            if (__instance.app.model.paused || DOTween.IsTweening(__instance.view.gamblingCameraView.transform, true))
             {
                 return false;
             }
@@ -1022,8 +1023,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //These patches disable shop navigation arrows when they are disappearing
 
-        static Sequence GamblingNavigationSequenceLeft;
-        static Sequence GamblingNavigationSequenceRight;
+        static Sequence gamblingNavigationSequenceLeft;
+        static Sequence gamblingNavigationSequenceRight;
 
         [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "Hide")]
         static bool GamblingNavigation_Hide(GamblingNavigation __instance)
@@ -1034,11 +1035,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 if (__instance.direction > 0)
                 {
-                    HideNavigation(__instance, ref GamblingNavigationSequenceLeft);
+                    HideNavigation(__instance, ref gamblingNavigationSequenceLeft);
                 }
                 else
                 {
-                    HideNavigation(__instance, ref GamblingNavigationSequenceRight);
+                    HideNavigation(__instance, ref gamblingNavigationSequenceRight);
                 }
             }
             return false;
@@ -1063,11 +1064,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (__instance.direction > 0)
             {
-                ShowNavigation(__instance, ref GamblingNavigationSequenceLeft);
+                ShowNavigation(__instance, ref gamblingNavigationSequenceLeft);
             }
             else
             {
-                ShowNavigation(__instance, ref GamblingNavigationSequenceRight);
+                ShowNavigation(__instance, ref gamblingNavigationSequenceRight);
             }
             return false;
         }
@@ -1088,11 +1089,17 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(GamblingNavigation), "OnMouseDown")]
         static bool GamblingNavigation_OnMouseDown(GamblingNavigation __instance)
         {
-            Sequence GamblingNavigationSequence = __instance.direction < 0 ? GamblingNavigationSequenceLeft : GamblingNavigationSequenceRight;
-            if (__instance.app.model.paused || (GamblingNavigationSequence != null && GamblingNavigationSequence.IsPlaying()))
+            bool gamblingNavigationSequencePlaying = false;
+            if ((gamblingNavigationSequenceLeft != null && gamblingNavigationSequenceLeft.IsPlaying()) || (gamblingNavigationSequenceRight != null && gamblingNavigationSequenceRight.IsPlaying()))
+            {
+                gamblingNavigationSequencePlaying = true;
+            }
+
+            if (__instance.app.model.paused || gamblingNavigationSequencePlaying)
             {
                 return false;
             }
+
             ButtonHoverAnimation buttonHoverAnimation = __instance.GetComponent<ButtonHoverAnimation>();
             if (buttonHoverAnimation && InputManager.Instance.IsUsingGamepadInput())
             {
