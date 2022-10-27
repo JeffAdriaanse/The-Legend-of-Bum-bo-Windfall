@@ -1390,7 +1390,17 @@ namespace The_Legend_of_Bum_bo_Windfall
 				}
 			}
 
-			int costReduction = Mathf.RoundToInt((float)totalManaCost * reductionPercentage);
+			//Round down cost reduction when at midpoint, otherwise round to int
+			float costReductionFloat = (float)totalManaCost * reductionPercentage;
+			int costReduction;
+			if (costReductionFloat - Mathf.Floor(costReductionFloat) <= 0.5f)
+            {
+				costReduction = Mathf.FloorToInt(costReductionFloat);
+			}
+            else
+            {
+				costReduction = Mathf.CeilToInt(costReductionFloat);
+			}
 
 			//Do not reduce total cost below minimum
 			while (totalManaCost - costReduction < SpellManaCosts.MinimumManaCost(bumboApplication.model.characterSheet.spells[_spell_index]))
