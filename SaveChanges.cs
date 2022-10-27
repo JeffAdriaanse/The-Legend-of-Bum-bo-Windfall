@@ -52,17 +52,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
-        //Patch: Prevent music from playing (broken)
-        [HarmonyPrefix, HarmonyPatch(typeof(LevelMusicView), nameof(LevelMusicView.PlayLevelMusic))]
-        static bool LevelMusicView_PlayLevelMusic(LevelMusicView __instance)
-        {
-            if (WindfallSavedState.LoadIntoWoodenNickel(__instance.app))
-            {
-                return false;
-            }
-            return true;
-        }
-
         //Patch: Loads directly to the Wooden Nickel
         [HarmonyPrefix, HarmonyPatch(typeof(FloorStartEvent), nameof(FloorStartEvent.Execute))]
         static bool FloorStartEvent_Execute_Prefix(FloorStartEvent __instance)
@@ -85,6 +74,18 @@ namespace The_Legend_of_Bum_bo_Windfall
                 WindfallSavedState.LoadEnd();
 
                 __instance.app.controller.Init();
+
+                //Pause level music
+                LevelMusicView levelMusicView = __instance.app.view.levelMusicView;
+                if (levelMusicView != null)
+                {
+                    AudioSource audioSource = levelMusicView.gameObject.GetComponent<AudioSource>();
+                    if (audioSource != null)
+                    {
+                        audioSource.Pause();
+                    }
+                }
+
                 __instance.app.controller.savedStateController.LoadEnd();
                 __instance.app.controller.FinishFloor();
 
