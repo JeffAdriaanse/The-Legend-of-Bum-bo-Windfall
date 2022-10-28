@@ -108,8 +108,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             graphicsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Graphics Menu"), menuView.transform.Find("Graphics Menu"));
             graphicsMenu.transform.SetSiblingIndex(1);
             RectTransform graphicsMenuRect = graphicsMenu.GetComponent<RectTransform>();
-            graphicsMenuRect.anchoredPosition = new Vector2(230, -190);
-            graphicsMenuRect.localRotation = Quaternion.Euler(graphicsMenuRect.localRotation.eulerAngles.x, graphicsMenuRect.localRotation.eulerAngles.y, 353);
+            graphicsMenuRect.anchoredPosition = new Vector2(240, -30);
+            graphicsMenuRect.localRotation = Quaternion.Euler(graphicsMenuRect.localRotation.eulerAngles.x, graphicsMenuRect.localRotation.eulerAngles.y, 351);
 
             //Initialize buttons
             InitializeButton(graphicsMenu.transform.Find("Antialiasing").gameObject, ToggleAntiAliasing);
