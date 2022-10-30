@@ -155,152 +155,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
-        //Patch: Fixes enemies spawning with incorrect health amounts if enemies of the same type have already been defeated in previous rooms of the current chapter
-        //This patch overrides enemy starting health values and uses hard coded health instead
-        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), "Spawn")]
-        static void Enemy_Spawn(Enemy __instance)
-        {
-            int newHealthValue = 0;
-            switch (__instance.app.model.enemies[__instance.app.model.enemies.Count - 1].enemyName)
-            {
-                case EnemyName.Arsemouth:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.Butthead:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.Dip:
-                    newHealthValue = 1;
-                    break;
-                case EnemyName.Fly:
-                    newHealthValue = 1;
-                    break;
-                case EnemyName.Hopper:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.Pooter:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.Tado:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.Blib:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.WillOWisp:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.DigDig:
-                    newHealthValue = 1;
-                    break;
-                case EnemyName.Host:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.Longit:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.Imposter:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.MaskedImposter:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.BlueBoney:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.PurpleBoney:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.BoomFly:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.Larry:
-                    newHealthValue = 5;
-                    break;
-                case EnemyName.Burfer:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.GreenBlobby:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.Tader:
-                    newHealthValue = 8;
-                    break;
-                case EnemyName.CornyDip:
-                    newHealthValue = 1;
-                    break;
-                case EnemyName.Screecher:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.Sucker:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.Curser:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.Poofer:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.MegaPoofer:
-                    newHealthValue = 6;
-                    break;
-                case EnemyName.RedBlobby:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.BlackBlobby:
-                    newHealthValue = 5;
-                    break;
-                case EnemyName.Spookie:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.MirrorHauntLeft:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.MirrorHauntRight:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.Hanger:
-                    newHealthValue = 6;
-                    break;
-                case EnemyName.Isaacs:
-                    newHealthValue = 4;
-                    break;
-                case EnemyName.MeatGolem:
-                    newHealthValue = 7;
-                    break;
-                case EnemyName.FloatingCultist:
-                    newHealthValue = 5;
-                    break;
-                case EnemyName.WalkingCultist:
-                    newHealthValue = 5;
-                    break;
-                case EnemyName.Leechling:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.Greedling:
-                    newHealthValue = 3;
-                    break;
-                case EnemyName.RedCultist:
-                    newHealthValue = 5;
-                    break;
-                case EnemyName.Flipper:
-                    newHealthValue = 5;
-                    break;
-                case EnemyName.GreenBlib:
-                    newHealthValue = 2;
-                    break;
-                case EnemyName.ManaWisp:
-                    newHealthValue = 1;
-                    break;
-            }
-
-            if (newHealthValue != 0)
-            {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Overriding starting health of newly spawned " + __instance.app.model.enemies[__instance.app.model.enemies.Count - 1].enemyName);
-                __instance.app.model.enemies[__instance.app.model.enemies.Count - 1].health = newHealthValue;
-            }
-        }
-
         //Patch: Fixes a bug in the Tainted Peeper spawn blib logic; it now checks spaces on the y axis instead of the x axis
         [HarmonyPatch(typeof(PeepsBoss), "SpawnBlib")]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -330,5 +184,82 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Correcting Tainted Peeper spawn blib logic");
             return code;
         }
+
+        //Patch: Fixes enemies spawning with incorrect health amounts if enemies of the same type have already been defeated in previous rooms of the current chapter
+        //This patch overrides enemy starting health values and uses hard coded health instead
+        //Also fixes enemies incorrectly spawning with champion crowns if an enemy of the same type has already been defeated in a previous room of the current chapter
+        [HarmonyPostfix, HarmonyPatch(typeof(AIController), "DeleteEnemy")]
+        static void AIController_DeleteEnemy(AIController __instance, ref GameObject _enemy, bool _destroy)
+        {
+            if (_enemy != null && _destroy && !_enemy.activeSelf)
+            {
+                Enemy enemy = _enemy.GetComponent<Enemy>();
+
+                if (enemy != null && !enemy.boss)
+                {
+
+                    enemy.championType = Enemy.ChampionType.NotAChampion;
+
+                    if (EnemyBaseHealth.TryGetValue(enemy.enemyName, out int baseHealth))
+                    {
+                        enemy.health = baseHealth;
+                    }
+                }
+            }
+        }
+
+        public static Dictionary<EnemyName, int> EnemyBaseHealth
+        {
+            get
+            {
+                return new Dictionary<EnemyName, int>
+                {
+                    { EnemyName.Arsemouth, 4 },
+                    { EnemyName.Butthead, 3 },
+                    { EnemyName.Dip, 1 },
+                    { EnemyName.Fly, 1 },
+                    { EnemyName.Hopper, 2 },
+                    { EnemyName.Pooter, 2 },
+                    { EnemyName.Tado, 2 },
+                    { EnemyName.Blib, 2 },
+                    { EnemyName.WillOWisp, 3 },
+                    { EnemyName.DigDig, 1 },
+                    { EnemyName.Host, 4 },
+                    { EnemyName.Longit, 4 },
+                    { EnemyName.Imposter, 3 },
+                    { EnemyName.MaskedImposter, 2 },
+                    { EnemyName.BlueBoney, 3 },
+                    { EnemyName.PurpleBoney, 4 },
+                    { EnemyName.BoomFly, 2 },
+                    { EnemyName.Larry, 5 },
+                    { EnemyName.Burfer, 3 },
+                    { EnemyName.GreenBlobby, 3 },
+                    { EnemyName.Tader, 8 },
+                    { EnemyName.CornyDip, 1 },
+                    { EnemyName.Screecher, 2 },
+                    { EnemyName.Sucker, 2 },
+                    { EnemyName.Curser, 3 },
+                    { EnemyName.Poofer, 3 },
+                    { EnemyName.MegaPoofer, 6 },
+                    { EnemyName.RedBlobby, 4 },
+                    { EnemyName.BlackBlobby, 5 },
+                    { EnemyName.Spookie, 2 },
+                    { EnemyName.MirrorHauntLeft, 4 },
+                    { EnemyName.MirrorHauntRight, 4 },
+                    { EnemyName.Hanger, 6 },
+                    { EnemyName.Isaacs, 4 },
+                    { EnemyName.MeatGolem, 7 },
+                    { EnemyName.FloatingCultist, 5 },
+                    { EnemyName.WalkingCultist, 5 },
+                    { EnemyName.Leechling, 3 },
+                    { EnemyName.Greedling, 3 },
+                    { EnemyName.RedCultist, 5 },
+                    { EnemyName.Flipper, 5 },
+                    { EnemyName.GreenBlib, 2 },
+                    { EnemyName.ManaWisp, 1 },
+                };
+            }
+        }
+            
     }
 }
