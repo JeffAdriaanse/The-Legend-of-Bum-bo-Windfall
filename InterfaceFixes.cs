@@ -584,16 +584,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 navArrows[i].GetComponent<BoxCollider>().enabled = _enabled;
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling opposing navigation arrow on RotateCharacters setClick");
             return false;
         }
 
         //Patch: Fixes back button staying clickable after selecting a character
-        [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), "OnMouseDown")]
-        static void ChooseBumbo_OnMouseDown(ChooseBumbo __instance)
+        [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), "ConfirmSelection")]
+        static void ChooseBumbo_ConfirmSelection(ChooseBumbo __instance, bool __result)
         {
-            GameObject.Find("BackButton").GetComponent<SelectCharacterBackButton>().active = false;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Making back button unclickable after selecting a character");
+            if (__result)
+            {
+                //Disable OnClick
+                GameObject.Find("BackButton").GetComponent<SelectCharacterBackButton>().OnClick = new UnityEngine.Events.UnityEvent();
+            }
         }
 
         //Patch: Fixes the pause menu button remaining clickable while the pause menu is already open
