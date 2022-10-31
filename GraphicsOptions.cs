@@ -39,40 +39,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             toggleActive = assets.LoadAsset<Sprite>("UI Toggle Active Thick");
             toggleInactive = assets.LoadAsset<Sprite>("UI Toggle Inactive Thick");
 
-            ////Reorganize options menu
-            //VerticalLayoutGroup optionsVerticalLayout = titleController.optionsMenu.GetComponent<VerticalLayoutGroup>();
-            //optionsVerticalLayout.enabled = true;
-            //optionsVerticalLayout.spacing = 0;
-
-            //RectTransform optionsHeaderRect = titleController.optionsMenu.transform.Find("Image").GetComponent<RectTransform>();
-            //optionsHeaderRect.sizeDelta = new Vector2(optionsHeaderRect.sizeDelta.x, 60);
-
-            ////Load graphics options
-            //Button optionsMenuButton = titleController.mainMenu.transform.Find("Options").GetComponent<Button>();
-            //optionsMenuButton.onClick.AddListener(LoadGraphicsOptions);
-
-            ////Save/cancel layout
-            //Transform saveCancel = UnityEngine.Object.Instantiate(titleController.optionsMenu.transform.Find("Image (1)").gameObject, titleController.optionsMenu.transform).transform;
-            //saveCancel.SetAsLastSibling();
-            //foreach (Transform child in saveCancel)
-            //{
-            //    UnityEngine.Object.Destroy(child.gameObject);
-            //}
-            //saveCancel.gameObject.AddComponent<HorizontalLayoutGroup>();
-            //saveCancel.GetComponent<Image>().color = new Color(1, 1, 1, 0);
-            //saveCancel.localScale = Vector3.one;
-            //RectTransform saveCancelRect = saveCancel.GetComponent<RectTransform>();
-            //saveCancelRect.sizeDelta = new Vector2(250, saveCancelRect.sizeDelta.y);
-            ////Save
-            //Transform saveTransform = titleController.optionsMenu.transform.Find("Save");
-            //saveTransform.SetParent(saveCancel);
-            //saveTransform.localScale = Vector3.one;
-            //saveTransform.GetComponent<Button>().onClick.AddListener(SaveGraphicsOptions);
-            ////Cancel
-            //Transform cancelTransform = titleController.optionsMenu.transform.Find("Cancel");
-            //cancelTransform.SetParent(saveCancel);
-            //cancelTransform.localScale = Vector3.one;
-
             //Save graphics options
             Transform saveTransform = menuView.transform.Find("Graphics Menu").transform.Find("Save");
 
