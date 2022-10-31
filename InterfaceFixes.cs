@@ -1386,45 +1386,55 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Patch: Aborts 2D sounds
         [HarmonyPrefix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
         [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(SoundsView.eAudioSlot), typeof(bool) })]
-        static bool SoundsView_PlaySound_Prefix(SoundsView.eSound Sound)
+        static bool SoundsView_PlaySound_Prefix(SoundsView.eSound Sound, out bool __state)
         {
             if (soundAges.ContainsKey(Sound))
             {
                 Debug.Log("Cancelled " + Sound.ToString() + " sound. Age: " + soundAges[Sound].ToString());
+                __state = false;
                 return false;
             }
             Debug.Log("Didn't cancel " + Sound.ToString() + " sound");
+            __state = true;
             return true;
         }
 
         //Patch: Aborts 3D sounds
         [HarmonyPrefix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
         [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(Vector3), typeof(SoundsView.eAudioSlot), typeof(bool) })]
-        static bool SoundsView_PlaySound_3D_Prefix(SoundsView.eSound Sound)
+        static bool SoundsView_PlaySound_3D_Prefix(SoundsView.eSound Sound, out bool __state)
         {
             if (soundAges.ContainsKey(Sound))
             {
                 Debug.Log("Cancelled " + Sound.ToString() + " 3D sound. Age: " + soundAges[Sound].ToString());
+                __state = false;
                 return false;
             }
             Debug.Log("Didn't cancel " + Sound.ToString() + " 3D sound");
+            __state = true;
             return true;
         }
 
         //Patch: Tracks 2D sounds
         [HarmonyPostfix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
         [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(SoundsView.eAudioSlot), typeof(bool) })]
-        static void SoundsView_PlaySound(SoundsView.eSound Sound)
+        static void SoundsView_PlaySound(SoundsView.eSound Sound, bool __state)
         {
-            soundAges[Sound] = 0;
+            if (__state)
+            {
+                soundAges[Sound] = 0;
+            }
         }
 
         //Patch: Tracks 3D sounds
         [HarmonyPostfix, HarmonyPatch(typeof(SoundsView), "PlaySound")]
         [HarmonyPatch(new Type[] { typeof(SoundsView.eSound), typeof(Vector3), typeof(SoundsView.eAudioSlot), typeof(bool) })]
-        static void SoundsView_PlaySound_3D(SoundsView.eSound Sound)
+        static void SoundsView_PlaySound_3D(SoundsView.eSound Sound, bool __state)
         {
-            soundAges[Sound] = 0;
+            if (__state)
+            {
+                soundAges[Sound] = 0;
+            }
         }
     }
 }
