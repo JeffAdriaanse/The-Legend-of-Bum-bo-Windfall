@@ -1016,7 +1016,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 gamepadMenuController.m_Buttons = newButtons.ToArray();
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Added cutscene menu button");
+
+            //Recenter main menu
+            RectTransform mainMenuRectTransform = __instance.mainMenu.GetComponent<RectTransform>();
+            if (mainMenuRectTransform != null)
+            {
+                mainMenuRectTransform.anchoredPosition = new Vector2(mainMenuRectTransform.anchoredPosition.x, mainMenuRectTransform.anchoredPosition.y + 22);
+            }
 
             //Reorder endings
             __instance.cutsceneMenu.transform.Find("Weird Ending").SetSiblingIndex(4);
@@ -1067,6 +1073,33 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 //Disable Final ending
                 __instance.cutsceneMenu.transform.Find("Ending Final").GetComponent<Button>().interactable = false;
+            }
+
+            //Fix cutscene menu gamepad controls and visuals
+            GamepadMenuController cutsceneMenuGamepadMenuController = __instance.cutsceneMenu.GetComponent<GamepadMenuController>();
+            List<GameObject> newCutsceneMenuButtons = new List<GameObject>();
+            for (int childCounter = 0; childCounter < __instance.cutsceneMenu.transform.childCount; childCounter++)
+            {
+                Transform child = __instance.cutsceneMenu.transform.GetChild(childCounter);
+
+                GamepadMenuOptionSelection cutscenesButtonOptionSelection = child.gameObject.AddComponent<GamepadMenuOptionSelection>();
+                if (cutscenesButtonOptionSelection != null)
+                {
+                    cutscenesButtonOptionSelection.m_SelectionObjects = new GameObject[0];
+                    cutscenesButtonOptionSelection.m_InjectDots = GamepadMenuOptionSelection.eInjectDots.Both;
+                }
+
+                ButtonHoverAnimation buttonHoverAnimation = child.GetComponent<ButtonHoverAnimation>();
+                if (buttonHoverAnimation != null)
+                {
+                    buttonHoverAnimation.hoverTextColor = Color.black;
+                }
+
+                newCutsceneMenuButtons.Add(child.gameObject);
+            }
+            if (newCutsceneMenuButtons.Count > 0 && cutsceneMenuGamepadMenuController != null)
+            {
+                cutsceneMenuGamepadMenuController.m_Buttons = newCutsceneMenuButtons.ToArray();
             }
 
             //Title box coins
