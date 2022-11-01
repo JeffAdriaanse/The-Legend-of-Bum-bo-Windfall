@@ -143,6 +143,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     //Characters
                     { "Characters/EMPTY_UNLOCK", "beat the game twice with the first five characters."},
+
+                    //Unlocks
+                    { "Unlocks/BUMBO_SMASH", "BUM-BO SMASH"},
+                    { "Unlocks/BUMBO_THE_DEAD", "BUM-BO THE DEAD"},
+                    { "Unlocks/BUMBO_THE_EMPTY", "BUM-BO THE EMPTY"},
+                    { "Unlocks/BUMBO_THE_LOST", "BUM-BO THE LOST"},
+                    { "Unlocks/BUMBO_THE_NIMBLE", "BUM-BO THE NIMBLE"},
+                    { "Unlocks/BUMBO_THE_STOUT", "BUM-BO THE STOUT"},
+                    { "Unlocks/BUMBO_THE_WEIRD", "BUM-BO THE WEIRD"},
+                    { "Unlocks/NEEDLE", "NEEDLE"},
+                    { "Unlocks/STICK", "STICK"},
+                    { "Unlocks/TOOTHPICK", "TOOTHPICK"},
                 };
                 return modifications;
             }
@@ -156,6 +168,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     //GUI Notifications
                     { "GUI Notifications/NO_VIABLE_SPELLS", "No Viable Spells"},
+
+                    //Unlocks
+                    { "Unlocks/EVERYTHING_IS_TERRIBLE_NEW", "EVERYTHING IS TERRIBLE,"},
+                    { "Unlocks/THE_GAME_IS_HARDER", "THE GAME IS HARDER!"},
                 };
                 return additions;
             }

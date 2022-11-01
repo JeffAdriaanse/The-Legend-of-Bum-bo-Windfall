@@ -20,16 +20,68 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
+        static readonly float UnlockImageFontSize = 1.7f;
+
         [HarmonyPrefix, HarmonyPatch(typeof(UnlockImageView), "UnlockImage")]
         static void UnlockImageView_UnlockImage_Prefix(float _unlock_index, out float __state)
         {
             __state = _unlock_index;
         }
         //Patch: Fixes achievements displaying the wrong text
+        //Also formats unlock text
         [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageView), "UnlockImage")]
         static void UnlockImageView_UnlockImage_Postfix(UnlockImageView __instance, float __state)
         {
             Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, __instance.unlockKeys[(int)__state]);
+
+            //Unlock text
+            TextMeshPro unlockTextMeshPro = __instance.unlockText?.GetComponent<TextMeshPro>();
+
+            if (unlockTextMeshPro != null)
+            {
+                if (unlockTextMeshPro.fontSize == UnlockImageFontSize)
+                {
+                    //Abort if formatting has already been applied
+                    return;
+                }
+                unlockTextMeshPro.fontSize = UnlockImageFontSize;
+                unlockTextMeshPro.verticalAlignment = VerticalAlignmentOptions.Middle;
+            }
+
+            RectTransform unlockTextRectTransform = __instance.unlockText?.GetComponent<RectTransform>();
+            if (unlockTextRectTransform != null)
+            {
+                unlockTextRectTransform.anchoredPosition3D = new Vector3(unlockTextRectTransform.anchoredPosition3D.x, unlockTextRectTransform.anchoredPosition3D.y, 0.48f);
+            }
+
+            //Unlocked text
+            Transform unlockedText = __instance.transform.Find("Unlock Image View")?.Find("UnlockedText");
+
+            TextMeshPro unlockedTextMeshPro = unlockedText?.GetComponent<TextMeshPro>();
+            if (unlockedTextMeshPro != null)
+            {
+                unlockedTextMeshPro.fontSize = UnlockImageFontSize;
+                unlockedTextMeshPro.verticalAlignment = VerticalAlignmentOptions.Middle;
+                unlockedTextMeshPro.characterSpacing = 0;
+            }
+
+            RectTransform unlockedTextRectTransform = unlockedText?.GetComponent<RectTransform>();
+            if (unlockedTextRectTransform != null)
+            {
+                unlockedTextRectTransform.anchoredPosition3D = new Vector3(unlockedTextRectTransform.anchoredPosition3D.x, unlockedTextRectTransform.anchoredPosition3D.y, -0.48f);
+            }
+
+            //Change text for 'Everything is Terrible'
+            if (__state == 7)
+            {
+                Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, "EVERYTHING_IS_TERRIBLE_NEW");
+
+                Localization unlockedTextLocalization = unlockedText.GetComponent<Localization>();
+                if (unlockedTextLocalization != null)
+                {
+                    Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, "EVERYTHING_IS_TERRIBLE_NEW");
+                }
+            }
         }
 
         //Patch: Disables main camera on ShowBossSignEvent
