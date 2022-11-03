@@ -170,7 +170,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "GUI Notifications/NO_VIABLE_SPELLS", "No Viable Spells"},
 
                     //Unlocks
-                    { "Unlocks/EVERYTHING_IS_TERRIBLE_NEW", "EVERYTHING IS TERRIBLE,"},
+                    { "Unlocks/EVERYTHING_IS_TERRIBLE_NEW", "EVERYTHING IS TERRIBLE!"},
                     { "Unlocks/THE_GAME_IS_HARDER", "THE GAME IS HARDER!"},
                 };
                 return additions;

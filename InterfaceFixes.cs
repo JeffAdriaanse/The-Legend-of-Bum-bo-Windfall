@@ -9,6 +9,7 @@ using DG.Tweening;
 using System.IO;
 using UnityEngine.UI;
 using System.Collections;
+using I2.Loc;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -37,49 +38,68 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Unlock text
             TextMeshPro unlockTextMeshPro = __instance.unlockText?.GetComponent<TextMeshPro>();
 
+            //Unlocked text
+            Transform unlockedText = __instance.transform.Find("Unlock Image View")?.Find("UnlockedText");
+
+            //Change text for 'Everything is Terrible'
+            Localize unlockedTextLocalize = unlockedText?.GetComponent<Localize>();
+            if (__state == 7)
+            {
+                Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, "EVERYTHING_IS_TERRIBLE_NEW");
+
+                if (unlockedTextLocalize != null)
+                {
+                    LocalizationFontOverrides unlockedTextOverride = unlockedText.GetComponent<LocalizationFontOverrides>();
+                    if (unlockedTextOverride != null)
+                    {
+                        unlockedTextOverride.enabled = false;
+                    }
+                    Localization.SetKey(unlockedTextLocalize, eI2Category.Unlocks, "THE_GAME_IS_HARDER");
+                }
+            }
+            else
+            {
+                if (unlockedTextLocalize != null)
+                {
+                    Localization.SetKey(unlockedTextLocalize, eI2Category.Unlocks, "UNLOCKED");
+                }
+            }
+
+            bool formattingApplied = false;
             if (unlockTextMeshPro != null)
             {
                 if (unlockTextMeshPro.fontSize == UnlockImageFontSize)
                 {
                     //Abort if formatting has already been applied
-                    return;
+                    formattingApplied = true;
                 }
-                unlockTextMeshPro.fontSize = UnlockImageFontSize;
-                unlockTextMeshPro.verticalAlignment = VerticalAlignmentOptions.Middle;
-            }
-
-            RectTransform unlockTextRectTransform = __instance.unlockText?.GetComponent<RectTransform>();
-            if (unlockTextRectTransform != null)
-            {
-                unlockTextRectTransform.anchoredPosition3D = new Vector3(unlockTextRectTransform.anchoredPosition3D.x, unlockTextRectTransform.anchoredPosition3D.y, 0.48f);
-            }
-
-            //Unlocked text
-            Transform unlockedText = __instance.transform.Find("Unlock Image View")?.Find("UnlockedText");
-
-            TextMeshPro unlockedTextMeshPro = unlockedText?.GetComponent<TextMeshPro>();
-            if (unlockedTextMeshPro != null)
-            {
-                unlockedTextMeshPro.fontSize = UnlockImageFontSize;
-                unlockedTextMeshPro.verticalAlignment = VerticalAlignmentOptions.Middle;
-                unlockedTextMeshPro.characterSpacing = 0;
-            }
-
-            RectTransform unlockedTextRectTransform = unlockedText?.GetComponent<RectTransform>();
-            if (unlockedTextRectTransform != null)
-            {
-                unlockedTextRectTransform.anchoredPosition3D = new Vector3(unlockedTextRectTransform.anchoredPosition3D.x, unlockedTextRectTransform.anchoredPosition3D.y, -0.48f);
-            }
-
-            //Change text for 'Everything is Terrible'
-            if (__state == 7)
-            {
-                Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, "EVERYTHING_IS_TERRIBLE_NEW");
-
-                Localization unlockedTextLocalization = unlockedText.GetComponent<Localization>();
-                if (unlockedTextLocalization != null)
+                else
                 {
-                    Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, "EVERYTHING_IS_TERRIBLE_NEW");
+                    unlockTextMeshPro.fontSize = UnlockImageFontSize;
+                    unlockTextMeshPro.verticalAlignment = VerticalAlignmentOptions.Middle;
+
+                    RectTransform unlockTextRectTransform = __instance.unlockText?.GetComponent<RectTransform>();
+                    if (unlockTextRectTransform != null)
+                    {
+                        unlockTextRectTransform.anchoredPosition3D = new Vector3(unlockTextRectTransform.anchoredPosition3D.x, unlockTextRectTransform.anchoredPosition3D.y, 0.48f);
+                    }
+                }
+            }
+
+            if (!formattingApplied)
+            {
+                TextMeshPro unlockedTextMeshPro = unlockedText?.GetComponent<TextMeshPro>();
+                if (unlockedTextMeshPro != null)
+                {
+                    unlockedTextMeshPro.fontSize = UnlockImageFontSize;
+                    unlockedTextMeshPro.verticalAlignment = VerticalAlignmentOptions.Middle;
+                    unlockedTextMeshPro.characterSpacing = 0;
+                }
+
+                RectTransform unlockedTextRectTransform = unlockedText?.GetComponent<RectTransform>();
+                if (unlockedTextRectTransform != null)
+                {
+                    unlockedTextRectTransform.anchoredPosition3D = new Vector3(unlockedTextRectTransform.anchoredPosition3D.x, unlockedTextRectTransform.anchoredPosition3D.y, -0.52f);
                 }
             }
         }
