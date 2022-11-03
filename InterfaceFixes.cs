@@ -639,6 +639,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+        //Patch: Fixed navigation arrows remaining triggerable using gamepad controls after selecting a character
+        [HarmonyPrefix, HarmonyPatch(typeof(RotateCharacters), "Rotate")]
+        static bool RotateCharacters_Rotate(RotateCharacters __instance)
+        {
+            if (!__instance.clickable)
+            {
+                return false;
+            }
+            return true;
+        }
+
         //Patch: Fixes back button staying clickable after selecting a character
         [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), "ConfirmSelection")]
         static void ChooseBumbo_ConfirmSelection(ChooseBumbo __instance, bool __result)
@@ -1390,6 +1401,45 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
+
+        //Patch: Fixes attempting to use mouse and gamepad/keyboard controls at the same time causing the input manager to switch between them every frame
+        static readonly float inputTypeChangeDelay = 0.2f;
+        static bool allowInputTypeChange = true;
+        [HarmonyPrefix, HarmonyPatch(typeof(InputManager), "set_input_type")]
+        static bool InputManager_set_input_type(InputManager __instance, InputManager.eInputType Type)
+        {
+            if ((InputManager.eInputType)AccessTools.Field(typeof(InputManager), "m_InputType")?.GetValue(__instance) != Type && allowInputTypeChange)
+            {
+                Console.WriteLine("[The Legend of Bum-bo: Windfall] InputTypeChange");
+                allowInputTypeChange = false;
+                __instance.StartCoroutine(InputTypeChangeDelay());
+                return true;
+            }
+            return false;
+        }
+        static IEnumerator InputTypeChangeDelay()
+        {
+            yield return new WaitForSeconds(inputTypeChangeDelay);
+            allowInputTypeChange = true;
+        }
+
+        //public static LoadingController loadingController;
+        //[HarmonyPostfix, HarmonyPatch(typeof(LoadingController), "Start")]
+        //static void LoadingController_Start(LoadingController __instance)
+        //{
+        //    loadingController = __instance;
+        //}
+        ////Patch: Prevents gamepad input while the game is loading
+        //[HarmonyPrefix, HarmonyPatch(typeof(InputManager), "IsUsingGamepadInput")]
+        //static bool InputManager_IsUsingGamepadInput(InputManager __instance, ref bool __result)
+        //{
+        //    if (loadingController != null && loadingController.gameObject.activeSelf)
+        //    {
+        //        __result = false;
+        //        return false;
+        //    }
+        //    return true;
+        //}
     }
 
     static class SoundsModification
