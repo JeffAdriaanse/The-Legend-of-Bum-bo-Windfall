@@ -26,7 +26,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 				return true;
 			}
 
-			float[] array = new float[]
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
+            float[] array = new float[]
 			{
 				0f,
 				0.1f,
@@ -157,7 +162,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(PeepsBoss), "Init")]
 		static void PeepsBoss_Init(PeepsBoss __instance)
 		{
-			__instance.turns = 1;
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __instance.turns = 1;
 			__instance.app.view.GUICamera.GetComponent<GUISide>().bossHeartView.SetMoves(__instance.turns + 2);
 		}
 
@@ -246,7 +256,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 				{
 					__instance.PuzzleResisted();
 					damage = Mathf.Floor(damage / 4);
-					if (damage > 0)
+
+                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                    {
+                        damage = 0;
+                    }
+
+                    if (damage > 0)
 					{
 						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy puzzle damage resistance");
 					}
@@ -255,7 +271,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 				{
 					__instance.SpellResisted();
 					damage = Mathf.Floor(damage / 4);
-					if (damage > 0)
+
+                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                    {
+                        damage = 0;
+                    }
+
+                    if (damage > 0)
 					{
 						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy spell damage resistance");
 					}

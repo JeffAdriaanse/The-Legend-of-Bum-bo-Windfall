@@ -17,6 +17,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		public static float TrinketLuckModifier(CharacterSheet characterSheet)
 		{
+			if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			{
+				return 1;
+            }
 			return 1 + (characterSheet.getLuck() / 10);
 		}
 
@@ -32,7 +36,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(ExorcismKitSpell), "HurtAndHeal")]
 		static bool ExorcismKitSpell_HurtAndHeal(ExorcismKitSpell __instance, ref List<Enemy> enemies_to_heal, ref Enemy enemy_to_hurt)
 		{
-			for (int i = 0; i < enemies_to_heal.Count; i++)
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < enemies_to_heal.Count; i++)
 			{
 				enemies_to_heal[i].AddHealth(1f);
 			}
@@ -286,7 +295,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(BloodyBatteryTrinket), "ChanceOfGainingAPFromAttack")]
 		static void BloodyBatteryTrinket_ChanceOfGainingAPFromAttack(BloodyBatteryTrinket __instance, ref float __result)
 		{
-			__result = 0.15f;
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+            __result = 0.15f;
 		}
 
 		//Patch: Allows CurvedHorn effect to stack past 100% and incorporate Luck stat
@@ -884,8 +897,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{
 				if (list[(int)num] != null && list[(int)num].GetComponent<Enemy>().alive)
 				{
+					//Reduce damage
 					float damage = list[(int)num].boss ? 3f : list[(int)num].getHealth();
-					list[(int)num].GetComponent<Enemy>().Hurt(damage, Enemy.AttackImmunity.SuperAttack, null, -1);
+
+                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                    {
+                        damage = list[(int)num].getHealth();
+                    }
+
+                    list[(int)num].GetComponent<Enemy>().Hurt(damage, Enemy.AttackImmunity.SuperAttack, null, -1);
 				}
 				num += 1;
 			}
@@ -1135,7 +1155,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "Awake")]
 		static void CharacterSheet_Awake(CharacterSheet __instance)
 		{
-			StartingSpell[] deadStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheDead].startingSpells;
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+				return;
+            }
+
+            StartingSpell[] deadStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheDead].startingSpells;
 			for (int i = 0; i < deadStartingSpells.Length; i++)
 			{
 				StartingSpell deadStartingSpell = deadStartingSpells[i];
@@ -1235,7 +1260,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static bool CastSpellDummy_GoldenTickSpell(GoldenTickSpell instance) { return false; }
 		//Patch: Golden Tick rework
 		[HarmonyPrefix, HarmonyPatch(typeof(GoldenTickSpell), "CastSpell")]
-		static bool SleightOfHandSpell_CastSpell(GoldenTickSpell __instance, ref bool __result)
+		static bool GoldenTickSpell_CastSpell(GoldenTickSpell __instance, ref bool __result)
 		{
 			if (!CastSpellDummy_GoldenTickSpell(__instance))
 			{
@@ -1840,7 +1865,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(ConverterSpell), "ConvertMana")]
 		static bool ConverterSpell_ConvertMana(ConverterSpell __instance, Block.BlockType _type)
 		{
-			short[] array = new short[6];
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
+            short[] array = new short[6];
 			//Increase mana gain to 2
 			array[(int)_type] += 2;
 			__instance.app.controller.UpdateMana(array, true);
@@ -1853,7 +1883,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "DropRock")]
 		static bool RockFriendsSpell_DropRock(RockFriendsSpell __instance, ref int _rock_number)
 		{
-			rockCounter++;
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
+            rockCounter++;
 			_rock_number = 1;
 			if (rockCounter > __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier())
 			{
@@ -1867,7 +1902,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(AttackFlySpell), "Damage")]
 		static void AttackFlySpell_Damage(AttackFlySpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 		//Patch: Removes Bum-bo the Dead's special Attack Fly cost reroll
 		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SetSpellCostForTheDeadsAttackFly")]
@@ -1881,7 +1921,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(MamaFootSpell), "Reward")]
 		static bool MamaFootSpell_Reward(MamaFootSpell __instance)
 		{
-			float damage = 0.5f * __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier;
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
+            float damage = 0.5f * __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier;
 			while (damage >= __instance.app.model.characterSheet.hitPoints + __instance.app.model.characterSheet.soulHearts)
 			{
 				damage -= 0.5f;
@@ -1897,56 +1942,96 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(BrimstoneSpell), "Damage")]
 		static void BrimstoneSpell_Damage(BrimstoneSpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
 		//Patch: Changes Lemon spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(LemonSpell), "Damage")]
 		static void LemonSpell_Damage(LemonSpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
 		//Patch: Changes Pliers spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(PliersSpell), "Damage")]
 		static void PliersSpell_Damage(PliersSpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
 		//Patch: Changes Mama Shoe spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(MamaShoeSpell), "Damage")]
 		static void MamaShoeSpell_Damage(MamaShoeSpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
 		//Patch: Changes Dog Tooth spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(DogToothSpell), "Damage")]
 		static void DogToothSpell_Damage(DogToothSpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
 		//Patch: Changes Hair Ball spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(HairBallSpell), "Damage")]
 		static void HairBallSpell_Damage(HairBallSpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
 		//Patch: Changes Hat Pin spell damage to incorporate the player's spell damage stat
 		[HarmonyPostfix, HarmonyPatch(typeof(HatPinSpell), "Damage")]
 		static void HatPinSpell_Damage(HatPinSpell __instance, ref int __result)
 		{
-			__result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
 		//Patch: Changes Yellow belt modifier to last for the room instead of only the current round
 		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), "CastSpell")]
 		static void YellowBeltSpell_CastSpell(YellowBeltSpell __instance, bool __result)
 		{
-			if (__result)
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            if (__result)
 			{
 				for (int i = 0; i < __instance.app.model.characterSheet.bumboModifierObjects.Count; i++)
 				{
@@ -1975,7 +2060,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//New mana costs
 			int totalSpellCost = -1;
 
-			if (manaCosts.TryGetValue(spell.spellName, out int value))
+			if (manaCosts.TryGetValue(spell.spellName, out int value) && WindfallPersistentDataController.LoadData().implementBalanceChanges)
 			{
 				totalSpellCost = value;
 			}

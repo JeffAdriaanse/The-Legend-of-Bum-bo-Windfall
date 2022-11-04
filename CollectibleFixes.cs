@@ -391,13 +391,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if ((__instance.app.model.enemies[enemyCounter].alive || __instance.app.model.enemies[enemyCounter].enemyName == EnemyName.Shit) && !enemies_to_heal.Contains(__instance.app.model.enemies[enemyCounter]) && enemy_to_hurt != __instance.app.model.enemies[enemyCounter])
                 {
-                    __instance.app.model.enemies[enemyCounter].AddHealth(1f);
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Healing " + __instance.app.model.enemies[enemyCounter].enemyName + "; it should have been healed by ExorcismKit, but was skipped over");
+                    if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                    {
+                        __instance.app.model.enemies[enemyCounter].AddHealth(1f);
+                    }
+                    else
+                    {
+                        __instance.app.model.enemies[enemyCounter].AddHealth(2f);
+                    }
                 }
             }
         }
 
-        //Patch: Prevents Meat Hook from Peep Eyes
+        //Patch: Prevents Meat Hook from moving Peep Eyes
         [HarmonyPrefix, HarmonyPatch(typeof(MeatHookSpell), "RearrangeEnemies")]
         static bool ExorcismKitSpell_RearrangeEnemies(ExorcismKitSpell __instance, Transform _enemy_transform)
         {
@@ -461,6 +467,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "validTrinkets", MethodType.Getter)]
         static void TrinketModel_validTrinkets(TrinketModel __instance, ref List<TrinketName> __result)
         {
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
             List<TrinketName> returnedList = new List<TrinketName>(__result);
 
             //Changing Lost banned trinkets

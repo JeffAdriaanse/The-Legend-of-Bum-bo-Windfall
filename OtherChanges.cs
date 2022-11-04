@@ -68,6 +68,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "nextBlock")]
         static bool Puzzle_nextBlock(Puzzle __instance, ref int ___heartCounter)
         {
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
                 ___heartCounter = -1;
@@ -78,6 +83,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "StartingBlocks")]
         static void TrinketController_StartingBlocks(TrinketController __instance, ref int[] __result)
         {
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
                 if (__result[1] > 0)
