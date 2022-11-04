@@ -158,37 +158,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallPersistentDataController.SaveData(windfallPersistentData);
 
             ChangeResolution();
-            UpdateCameras();
-        }
-
-        private static List<Camera> cameras;
-        public static void TrackCamera(Camera camera)
-        {
-            if (cameras == null)
-            {
-                cameras = new List<Camera>();
-            }
-
-            if (camera != null)
-            {
-                cameras.Add(camera);
-            }
-
-            cameras.RemoveAll(delegate (Camera cameraComponent) { return cameraComponent == null; });
-        }
-
-        private static void UpdateCameras()
-        {
-            if (cameras != null)
-            {
-                foreach (Camera cameraComponent in cameras)
-                {
-                    if (cameraComponent != null)
-                    {
-                        GraphicsModifier.ApplyGraphicsToCamera(cameraComponent, false);
-                    }
-                }
-            }
+            GraphicsModifier.UpdateCameras();
         }
 
         private static void LoadGraphicsOptions()
@@ -352,6 +322,36 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     static class GraphicsModifier
     {
+        private static List<Camera> cameras;
+        public static void TrackCamera(Camera camera)
+        {
+            if (cameras == null)
+            {
+                cameras = new List<Camera>();
+            }
+
+            if (camera != null)
+            {
+                cameras.Add(camera);
+            }
+
+            cameras.RemoveAll(delegate (Camera cameraComponent) { return cameraComponent == null; });
+        }
+
+        public static void UpdateCameras()
+        {
+            if (cameras != null)
+            {
+                foreach (Camera cameraComponent in cameras)
+                {
+                    if (cameraComponent != null)
+                    {
+                        ApplyGraphicsToCamera(cameraComponent, false);
+                    }
+                }
+            }
+        }
+
         public static void ApplyGraphicsToCamera(Camera camera, bool trackCamera = true)
         {
             if (camera == null)
@@ -373,17 +373,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             bool mainGameCamera = camera.GetComponent<CameraView>() != null && camera.GetComponent<GUISide>() == null;
 
 
-            //TEST
-            //Unity depth of field effect
-            UnityStandardAssets.ImageEffects.DepthOfField unityDepthOfFieldEffect = camera.gameObject.GetComponent<UnityStandardAssets.ImageEffects.DepthOfField>();
+            ////TEST
+            ////Unity depth of field effect
+            //UnityStandardAssets.ImageEffects.DepthOfField unityDepthOfFieldEffect = camera.gameObject.GetComponent<UnityStandardAssets.ImageEffects.DepthOfField>();
 
-            if (mainGameCamera)
-            {
-                if (unityDepthOfFieldEffect == null)
-                {
-                    UnityStandardAssets.ImageEffects.DepthOfField newUnitDepthOfFieldEffect = camera.gameObject.AddComponent<UnityStandardAssets.ImageEffects.DepthOfField>();
-                }
-            }
+            //if (mainGameCamera)
+            //{
+            //    if (unityDepthOfFieldEffect == null)
+            //    {
+            //        UnityStandardAssets.ImageEffects.DepthOfField newUnityDepthOfFieldEffect = camera.gameObject.AddComponent<UnityStandardAssets.ImageEffects.DepthOfField>();
+            //    }
+            //}
 
 
             //Depth of field effect
@@ -442,7 +442,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 amplifyMotionEffect.enabled = false;
             }
 
-            if (trackCamera) GraphicsOptions.TrackCamera(camera);
+            if (trackCamera) GraphicsModifier.TrackCamera(camera);
         }
     }
 }
