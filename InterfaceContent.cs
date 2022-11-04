@@ -1150,19 +1150,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             GraphicsModifier.ApplyGraphicsToCamera(__instance.titleCamera.GetComponent<Camera>());
             GraphicsModifier.ApplyGraphicsToCamera(__instance.chooseCamera.GetComponent<Camera>());
 
-            //Create graphics options
-            GraphicsOptions.SetUpGraphicsOptions(__instance.menuObject, false);
+            //Set up windfall options
+            WindfallOptionsMenu.SetUpWindfallOptionsMenu(__instance.menuObject, false);
+            //GraphicsOptions.SetUpGraphicsOptions(__instance.menuObject, false);
 
-            //Create graphics menu
-            GraphicsOptions.CreateGraphicsMenu(__instance.menuObject);
+            //Create windfall options menu
+            WindfallOptionsMenu.CreateWindfallOptionsMenu(__instance.menuObject);
         }
 
         //Patch: Set up graphics menu
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
         static void BumboController_Init_Graphics(BumboController __instance)
         {
-            GraphicsOptions.SetUpGraphicsOptions(__instance.app.view.menuView, true);
-            GraphicsOptions.CreateGraphicsMenu(__instance.app.view.menuView);
+            //Set up windfall options
+            WindfallOptionsMenu.SetUpWindfallOptionsMenu(__instance.app.view.menuView, true);
+            //GraphicsOptions.SetUpGraphicsOptions(__instance.app.view.menuView, true);
+
+            //Create windfall options menu
+            WindfallOptionsMenu.CreateWindfallOptionsMenu(__instance.app.view.menuView);
+            //GraphicsOptions.CreateGraphicsMenu(__instance.app.view.menuView);
         }
 
         //Patch: Hide coins and logo from title box on input

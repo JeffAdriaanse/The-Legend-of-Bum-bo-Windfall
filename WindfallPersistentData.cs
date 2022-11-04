@@ -22,6 +22,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         public bool antiAliasing;
         public bool depthOfField;
         public bool motionBlur;
+
+        public bool implementBalanceChanges;
     }
 
     public static class WindfallPersistentDataController

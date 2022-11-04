@@ -8,6 +8,8 @@ using I2.Loc;
 using static UnityStandardAssets.ImageEffects.BloomOptimized;
 using UnityStandardAssets.ImageEffects;
 using ScionEngine;
+using UnityEngine.Assertions;
+using UnityEngine.TextCore;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -34,6 +36,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Add sprites
             toggleActive = assets.LoadAsset<Sprite>("UI Toggle Active Thick");
             toggleInactive = assets.LoadAsset<Sprite>("UI Toggle Inactive Thick");
+
+            ReorganizeVanillaOptionsMenu(menuView);
         }
 
         public static void ReorganizeVanillaOptionsMenu(GameObject menuView)
@@ -73,13 +77,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             RectTransform windfallOptionsRectTransform;
             Localize windfallOptionsLocalize;
-            TextMeshPro windfallOptionsTextMeshPro;
+            LocalizationFontOverrides windfallOptionsLocalization;
+            TextMeshProUGUI windfallOptionsTextMeshPro;
             Button windfallOptionsButton;
             if (windfallOptionsButtonObject != null)
             {
                 windfallOptionsRectTransform = windfallOptionsButtonObject.GetComponent<RectTransform>();
                 windfallOptionsLocalize = windfallOptionsButtonObject.GetComponent<Localize>();
-                windfallOptionsTextMeshPro = windfallOptionsButtonObject.GetComponent<TextMeshPro>();
+                windfallOptionsLocalization = windfallOptionsButtonObject.GetComponent<LocalizationFontOverrides>();
+                windfallOptionsTextMeshPro = windfallOptionsButtonObject.GetComponent<TextMeshProUGUI>();
                 windfallOptionsButton = windfallOptionsButtonObject.GetComponent<Button>();
 
                 if (windfallOptionsRectTransform != null)
@@ -89,19 +95,29 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 if (windfallOptionsLocalize != null)
                 {
-                    windfallOptionsLocalize.enabled = false;
-                    UnityEngine.Object.Destroy(windfallOptionsLocalize);
+                    Localization.SetKey(windfallOptionsLocalize, eI2Category.Menu, "WINDFALL_OPTIONS");
                 }
 
-                if (windfallOptionsTextMeshPro != null)
-                {
-                    windfallOptionsTextMeshPro.text = "Windfall Options";
-                }
+                //if (windfallOptionsLocalization != null)
+                //{
+                //    windfallOptionsLocalization.enabled = false;
+                //    UnityEngine.Object.Destroy(windfallOptionsLocalization);
+                //}
+
+                //if (windfallOptionsTextMeshPro != null)
+                //{
+                //    AssetBundle assets = Windfall.assetBundle;
+                //    TMP_FontAsset fontAsset = assets.LoadAsset<TMP_FontAsset>("TMP_EdFont SDF");
+                //    if (fontAsset != null)
+                //    {
+                //        windfallOptionsTextMeshPro.font = fontAsset;
+                //    }
+                //}
 
                 if (windfallOptionsButton != null)
                 {
                     windfallOptionsButton.onClick = new Button.ButtonClickedEvent();
-                    windfallOptionsButton.onClick.AddListener(LoadWindfallOptions);
+                    windfallOptionsButton.onClick.AddListener(OpenWindfallOptionsMenu);
                 }
             }
         }
@@ -117,6 +133,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Create windfall menu
             windfallOptionsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Windfall Menu"), menuView.transform);
+            windfallOptionsMenu.SetActive(false);
+            if (windfallOptionsMenu.transform.parent.childCount > 0)
+            {
+                windfallOptionsMenu.transform.SetSiblingIndex(windfallOptionsMenu.transform.parent.childCount - 2);
+            }
 
             RectTransform windfallMenuRect;
             if (windfallOptionsMenu != null)
@@ -234,6 +255,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallPersistentDataController.SaveData(windfallPersistentData);
 
             GraphicsModifier.UpdateCameras();
+
+            CloseWindfallOptionsMenu();
         }
 
         private static void LoadWindfallOptions()

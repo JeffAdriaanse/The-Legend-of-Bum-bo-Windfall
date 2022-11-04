@@ -172,6 +172,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Unlocks
                     { "Unlocks/EVERYTHING_IS_TERRIBLE_NEW", "EVERYTHING IS TERRIBLE!"},
                     { "Unlocks/THE_GAME_IS_HARDER", "THE GAME IS HARDER!"},
+
+                    //Menu
+                    { "Menu/WINDFALL_OPTIONS", "Windfall Options"},
                 };
                 return additions;
             }
