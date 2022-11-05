@@ -192,6 +192,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     coin_result += UnityEngine.Random.Range(-2, 3);
 
+                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                    {
+                        coin_result = UnityEngine.Random.Range(0f, 1f) < 0.5f ? 4 : 6;
+                    }
+
                     __instance.app.view.gamblingView.gamblingBangView.paramsManager.SetParameterValue("AMOUNT", coin_result.ToString(), true);
                     notification = "GUI Notifications/WON_COINS";
                     __instance.app.controller.gamblingController.ModifyCoins(coin_result);

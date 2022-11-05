@@ -68,6 +68,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             foreach (string term in EnglishTextModifications.Keys)
             {
+                if (term == "Spells/ROCK_FRIENDS_DESCRIPTION" && !WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                {
+                    continue;
+                }
+
                 TermData termData = languageSourceData.GetTermData(term);
                 if (termData == null)
                 {
@@ -105,7 +110,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     termData.SetTranslation(0, value);
                 }
             }
-
         }
 
         public static Dictionary<string, string> EnglishTextModifications

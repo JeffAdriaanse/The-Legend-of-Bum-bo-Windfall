@@ -1631,7 +1631,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 				_spell.Cost = array;
 				__result = _spell;
 
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Converter mana cost generation");
 				return false;
 			}
 
@@ -1691,19 +1690,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 				}
 				else
 				{
-					//Random float
-					float rand = UnityEngine.Random.Range((float)minimumColorCount - 0.5f, (float)maximumColorCount + 0.5f);
+                    //Random int
+                    int rand = UnityEngine.Random.Range(minimumColorCount, maximumColorCount + 1);
 
-					//Another random float
-					float rand2 = UnityEngine.Random.Range((float)minimumColorCount - 0.5f, (float)maximumColorCount + 0.5f);
+                    //Another random int
+                    int rand2 = UnityEngine.Random.Range(minimumColorCount, maximumColorCount + 1);
 
-					//Lower number is chosen, then rounded to the nearest integer; lower color counts are more likely
-					colorCount = Mathf.RoundToInt(rand < rand2 ? rand : rand2);
+					//Lower number is chosen; lower color counts are more likely
+					colorCount = rand < rand2 ? rand : rand2;
 
 					//Reduce impact of weighted randomness
 					if (UnityEngine.Random.Range(0, 1f) < 0.5f)
 					{
-						colorCount = Mathf.RoundToInt(rand);
+						colorCount = rand;
 					}
 
 					//Failsafe
@@ -2060,7 +2059,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//New mana costs
 			int totalSpellCost = -1;
 
-			if (manaCosts.TryGetValue(spell.spellName, out int value) && WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			if (rebalancedManaCosts.TryGetValue(spell.spellName, out int value) && WindfallPersistentDataController.LoadData().implementBalanceChanges)
 			{
 				totalSpellCost = value;
 			}
@@ -2096,7 +2095,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return totalSpellCost;
 		}
 
-		public static Dictionary<SpellName, int> manaCosts = new Dictionary<SpellName, int>()
+		public static Dictionary<SpellName, int> rebalancedManaCosts = new Dictionary<SpellName, int>()
 		{
 			{ SpellName.AttackFly, 7 },
 			{ SpellName.BigSlurp, 11 },

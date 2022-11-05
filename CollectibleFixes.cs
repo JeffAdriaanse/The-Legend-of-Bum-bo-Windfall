@@ -161,6 +161,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             __instance.app.model.costRefundOverride = true;
             __instance.app.model.costRefundAmount = new short[6];
+
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                __instance.app.model.costRefundAmount = __instance.Cost;
+            }
+
             SpellName spellName = (SpellName)UnityEngine.Random.Range(1, 139);
             while (spellName == SpellName.Metronome || !__instance.app.model.spellModel.spells.ContainsKey(spellName))
             {
@@ -442,22 +448,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Changing Lost banned spells
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
-                SpellName[] bannedSpells = new SpellName[]
+                if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
                 {
-                //Old
-                SpellName.TheRelic,
-                SpellName.CatPaw,
-                SpellName.PrayerCard /*(broken in original method)*/,
+                    SpellName[] bannedSpells = new SpellName[]
+                    {
+                        //Old
+                        SpellName.TheRelic,
+                        SpellName.CatPaw,
+                        SpellName.PrayerCard /*(broken in original method)*/,
 
-                //New
-                SpellName.CatHeart,
-                SpellName.Lard,
-                SpellName.RottenMeat,
-                SpellName.Snack,
-                SpellName.MomsLipstick,
-                SpellName.YumHeart
-                };
-                returnedList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
+                        //New
+                        SpellName.CatHeart,
+                        SpellName.Lard,
+                        SpellName.RottenMeat,
+                        SpellName.Snack,
+                        SpellName.MomsLipstick,
+                        SpellName.YumHeart
+                    };
+                    returnedList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
+                }
             }
 
             __result = returnedList;

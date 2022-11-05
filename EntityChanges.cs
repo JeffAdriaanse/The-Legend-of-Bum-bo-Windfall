@@ -40,7 +40,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				0.175f
 			};
 			float NegaCrownMultiplier = 1f;
-			float difficultyMultiplier = (!__instance.app.model.progression.unlocks[7]) ? 0.5f : 0.7f;
+			float difficultyMultiplier = (!__instance.app.model.progression.unlocks[7]) ? 0.4f : 0.5f;
 			for (int i = 0; i < __instance.app.model.characterSheet.trinkets.Count; i++)
 			{
 				NegaCrownMultiplier -= __instance.GetTrinket(i).ChampionChance();
