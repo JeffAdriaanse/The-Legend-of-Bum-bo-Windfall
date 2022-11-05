@@ -1006,16 +1006,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             GamepadMenuController gamepadMenuController = cutscenesButton.transform.parent.GetComponent<GamepadMenuController>();
-            if (gamepadMenuController != null)
-            {
-                List<GameObject> newButtons = new List<GameObject>();
-                newButtons.AddRange(gamepadMenuController.m_Buttons);
-                if (newButtons?.Count >= 4)
-                {
-                    newButtons.Insert(4, cutscenesButton);
-                }
-                gamepadMenuController.m_Buttons = newButtons.ToArray();
-            }
+
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController);
 
             //Recenter main menu
             RectTransform mainMenuRectTransform = __instance.mainMenu.GetComponent<RectTransform>();

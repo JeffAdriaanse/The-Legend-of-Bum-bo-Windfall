@@ -12,7 +12,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             winCount = 0;
 
-            antiAliasing = false;
+            implementBalanceChanges = true;
+
+            antiAliasing = true;
             depthOfField = false;
             motionBlur = true;
         }

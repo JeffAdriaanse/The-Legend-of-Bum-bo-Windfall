@@ -75,6 +75,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                 windfallOptionsButtonObject = UnityEngine.Object.Instantiate(graphicsOptionsButtonTransform.gameObject, graphicsOptionsButtonTransform.parent);
             }
 
+
+            int graphicsOptionsButtonIndex = graphicsOptionsButtonTransform.GetSiblingIndex();
+
+            if (graphicsOptionsButtonIndex + 1 < optionsMenuPcTransform.childCount)
+            {
+                windfallOptionsButtonObject.transform.SetSiblingIndex(graphicsOptionsButtonIndex + 1);
+            }
+
             RectTransform windfallOptionsRectTransform;
             Localize windfallOptionsLocalize;
             LocalizationFontOverrides windfallOptionsLocalization;
@@ -119,6 +127,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                     windfallOptionsButton.onClick = new Button.ButtonClickedEvent();
                     windfallOptionsButton.onClick.AddListener(OpenWindfallOptionsMenu);
                 }
+            }
+
+            GamepadMenuController optionsMenuPcGamepadMenuController = optionsMenuPcTransform.GetComponent<GamepadMenuController>();
+
+            if (optionsMenuPcGamepadMenuController != null)
+            {
+                WindfallHelper.UpdateGamepadMenuButtons(optionsMenuPcGamepadMenuController);
             }
         }
 
