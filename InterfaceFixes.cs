@@ -21,6 +21,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
+        [HarmonyPrefix, HarmonyPatch(typeof(UnlockImageViewGambling), "UnlockImage")]
+        static void UnlockImageViewGambling_UnlockImage_Prefix(float _unlock_index, out float __state)
+        {
+            __state = _unlock_index;
+        }
+        //Patch: Fixes Bum-bo the Lost unlock displaying the wrong text in the Wooden Nickel
+        [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageViewGambling), "UnlockImage")]
+        static void UnlockImageViewGambling_UnlockImage_Postfix(UnlockImageViewGambling __instance, float __state)
+        {
+            Localization.SetKey(__instance.unlockText, eI2Category.Unlocks, __instance.unlockKeys[(int)__state]);
+        }
+
         static readonly float UnlockImageFontSize = 1.7f;
 
         [HarmonyPrefix, HarmonyPatch(typeof(UnlockImageView), "UnlockImage")]
@@ -28,7 +40,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             __state = _unlock_index;
         }
-        //Patch: Fixes achievements displaying the wrong text
+        //Patch: Fixes unlocks displaying the wrong text
         //Also formats unlock text
         [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageView), "UnlockImage")]
         static void UnlockImageView_UnlockImage_Postfix(UnlockImageView __instance, float __state)
