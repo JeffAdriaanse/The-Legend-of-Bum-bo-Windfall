@@ -15,6 +15,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return numberOfChapters;
         }
 
+        //Method goes two children deep when searching for buttons
         public static void UpdateGamepadMenuButtons(GamepadMenuController gamepadMenuController)
         {
             if (gamepadMenuController == null)
@@ -24,6 +25,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             List<GameObject> newOptions = new List<GameObject>();
 
+            //Search for children with GamepadMenuOptionSelection
             for (int childCounter = 0; childCounter < gamepadMenuController.transform.childCount; childCounter++)
             {
                 Transform childTransform = gamepadMenuController.transform.GetChild(childCounter);
@@ -31,6 +33,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (childTransform.gameObject.activeSelf && childTransform.GetComponent<GamepadMenuOptionSelection>() != null)
                 {
                     newOptions.Add(childTransform.gameObject);
+                }
+
+                //Search for sub-children with GamepadMenuOptionSelection
+                for (int subChildCounter = 0; subChildCounter < childTransform.childCount; subChildCounter++)
+                {
+                    Transform subChildTransform = childTransform.GetChild(subChildCounter);
+
+                    if (subChildTransform.gameObject.activeSelf && subChildTransform.GetComponent<GamepadMenuOptionSelection>() != null)
+                    {
+                        newOptions.Add(subChildTransform.gameObject);
+                    }
                 }
             }
 
