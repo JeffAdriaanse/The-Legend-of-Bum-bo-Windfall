@@ -21,6 +21,57 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
+
+        //Patch: Fixes quickly skipping ending cutscenes causing the unlock scene to remain dark
+        [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageView), "ShowUnlock")]
+        static void UnlockImageView_ShowUnlock(UnlockImageView __instance)
+        {
+            ReintensifyUnlockSceneLights(__instance.app.view);
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageView), "RemoveUnlock")]
+        static void UnlockImageView_RemoveUnlock(UnlockImageView __instance)
+        {
+            ReintensifyUnlockSceneLights(__instance.app.view);
+        }
+        static void ReintensifyUnlockSceneLights(BumboUnlockView bumboUnlockView)
+        {
+            if (bumboUnlockView != null)
+            {
+                float targetKeyLightIntensity = bumboUnlockView is BumboCutsceneView ? 1f : 1.28f;
+                float targetFillLightIntensity = 1f;
+
+                Light bumboUnlockViewKeyLight = bumboUnlockView.keyLight;
+                Light bumboUnlockViewFillLight = bumboUnlockView.fillLight;
+                Sequence bumboUnlockViewCameraSequence = bumboUnlockView.cameraSequence;
+
+                if (bumboUnlockViewCameraSequence != null)
+                {
+                    if (bumboUnlockViewKeyLight != null)
+                    {
+                        float intensityDifference = targetKeyLightIntensity - bumboUnlockViewKeyLight.intensity;
+                        float intensifyDuration = 2f * Mathf.Abs(intensityDifference / targetKeyLightIntensity);
+
+                        if (intensifyDuration >= 0.05f)
+                        {
+                            bumboUnlockViewCameraSequence.Insert(0f, bumboUnlockViewKeyLight.DOIntensity(targetKeyLightIntensity, intensifyDuration));
+                        }
+                    }
+
+                    if (bumboUnlockViewFillLight != null)
+                    {
+                        float intensityDifference = targetFillLightIntensity - bumboUnlockViewFillLight.intensity;
+                        float intensifyDuration = 2f * Mathf.Abs(intensityDifference / targetFillLightIntensity);
+
+                        if (intensifyDuration >= 0.05f)
+                        {
+                            bumboUnlockViewCameraSequence.Insert(0f, bumboUnlockViewFillLight.DOIntensity(targetFillLightIntensity, intensifyDuration));
+
+                        }
+                    }
+                }
+            }
+        }
+
         [HarmonyPrefix, HarmonyPatch(typeof(UnlockImageViewGambling), "UnlockImage")]
         static void UnlockImageViewGambling_UnlockImage_Prefix(float _unlock_index, out float __state)
         {
