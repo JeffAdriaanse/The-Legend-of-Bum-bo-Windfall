@@ -10,6 +10,7 @@ using UnityStandardAssets.ImageEffects;
 using ScionEngine;
 using UnityEngine.Assertions;
 using UnityEngine.TextCore;
+using System.Linq;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -75,7 +76,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 windfallOptionsButtonObject = UnityEngine.Object.Instantiate(graphicsOptionsButtonTransform.gameObject, graphicsOptionsButtonTransform.parent);
             }
 
-
             int graphicsOptionsButtonIndex = graphicsOptionsButtonTransform.GetSiblingIndex();
 
             if (graphicsOptionsButtonIndex + 1 < optionsMenuPcTransform.childCount)
@@ -135,6 +135,32 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 WindfallHelper.UpdateGamepadMenuButtons(optionsMenuPcGamepadMenuController);
             }
+
+            //Fix Music/SFX labels acting as buttons
+            GameObject musicLabel = optionsMenuPcTransform?.Find("MusicLabel").gameObject;
+            ButtonHoverAnimation musicLabelButtonHoverAnimation = musicLabel?.GetComponent<ButtonHoverAnimation>();
+            if (musicLabelButtonHoverAnimation != null)
+            {
+                musicLabelButtonHoverAnimation.hoverSoundFx = SoundsView.eSound.NoSound;
+                musicLabelButtonHoverAnimation.clickSoundFx = SoundsView.eSound.NoSound;
+                musicLabelButtonHoverAnimation.scaleAmount = 1;
+            }
+
+            GameObject sfxLabel = optionsMenuPcTransform?.Find("SFXLabel").gameObject;
+            ButtonHoverAnimation sfxLabelButtonHoverAnimation = sfxLabel?.GetComponent<ButtonHoverAnimation>();
+            if (sfxLabelButtonHoverAnimation != null)
+            {
+                sfxLabelButtonHoverAnimation.hoverSoundFx = SoundsView.eSound.NoSound;
+                sfxLabelButtonHoverAnimation.clickSoundFx = SoundsView.eSound.NoSound;
+                sfxLabelButtonHoverAnimation.scaleAmount = 1;
+            }
+
+            List<GameObject> buttons = optionsMenuPcGamepadMenuController?.m_Buttons.ToList();
+            if (optionsMenuPcGamepadMenuController != null)
+            {
+                buttons.RemoveAll(button => button == musicLabel || button == sfxLabel);
+                optionsMenuPcGamepadMenuController.m_Buttons = buttons.ToArray();
+            }
         }
 
         public static void CreateWindfallOptionsMenu(GameObject menuView)
@@ -171,19 +197,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             GamepadMenuController gamepadMenuController = windfallOptionsMenu.AddComponent<GamepadMenuController>();
 
-            List<GameObject> buttons = new List<GameObject>();
-            for (int childCounter = 0; childCounter < windfallOptionsMenu.transform.childCount; childCounter++)
-            {
-                Transform child = windfallOptionsMenu.transform.GetChild(childCounter);
-                Button button = child.GetComponent<Button>();
-
-                if (button != null)
-                {
-                    buttons.Add(child.gameObject);
-                }
-            }
-
-            gamepadMenuController.m_Buttons = buttons.ToArray();
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController);
         }
 
         private static void InitializeButton(GameObject buttonObject, UnityAction unityAction)
