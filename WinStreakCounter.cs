@@ -8,11 +8,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static GameObject winStreakCounter;
         public static void CreateWinStreakCounter(TitleController titleController)
         {
-            if (WindfallHelper.ChaptersUnlocked(ProgressionController.LoadProgression()) != 4)
-            {
-                return;
-            }
-
             AssetBundle assets = Windfall.assetBundle;
             if (assets == null)
             {
@@ -34,16 +29,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (winStreakCounter != null)
             {
-                int streak = WindfallPersistentDataController.LoadData().winCount;
-                winStreakCounter.transform.Find("Streak").GetComponent<Text>().text = streak.ToString();
+                Text streakText = winStreakCounter.transform.Find("Streak").GetComponent<Text>();
 
                 if (WindfallHelper.ChaptersUnlocked(ProgressionController.LoadProgression()) != 4)
                 {
-                    winStreakCounter.SetActive(false);
+                    streakText.text = "-";
                 }
                 else
                 {
-                    winStreakCounter.SetActive(true);
+                    int streak = WindfallPersistentDataController.LoadData().winCount;
+                    streakText.text = streak.ToString();
                 }
             }
         }
