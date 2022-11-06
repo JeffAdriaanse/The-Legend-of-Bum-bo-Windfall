@@ -21,6 +21,33 @@ namespace The_Legend_of_Bum_bo_Windfall
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
+        static Tweener voAudioTweener;
+        static Tweener fxAudioTweener;
+        static Tweener musicAudioTweener;
+        //Patch: Fixes ending cutscene audio not pausing when unlock popups appear after the cutscene has been skipped
+        [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageView), "CompleteAnimation")]
+        static void UnlockImageView_CompleteAnimation(UnlockImageView __instance)
+        {
+            float fadeDuration = 2f;
+
+            AudioSource voAudio = __instance.app.view?.introPaperView?.voAudio;
+            if (voAudio != null && (voAudioTweener == null || !voAudioTweener.IsPlaying()))
+            {
+                voAudioTweener = __instance.app.view.introPaperView.voAudio.DOFade(0f, fadeDuration);
+            }
+
+            AudioSource fxAudio = __instance.app.view.introPaperView.fxAudio;
+            if (fxAudio != null && (fxAudioTweener == null || !fxAudioTweener.IsPlaying()))
+            {
+                fxAudioTweener = __instance.app.view.introPaperView.fxAudio.DOFade(0f, fadeDuration);
+            }
+
+            AudioSource musicAudio = __instance.app.view.introPaperView.musicAudio;
+            if (musicAudio != null && (musicAudioTweener == null || !musicAudioTweener.IsPlaying()))
+            {
+                musicAudioTweener = __instance.app.view.introPaperView.musicAudio.DOFade(0f, fadeDuration);
+            }
+        }
 
         //Patch: Fixes quickly skipping ending cutscenes causing the unlock scene to remain dark
         [HarmonyPostfix, HarmonyPatch(typeof(UnlockImageView), "ShowUnlock")]
