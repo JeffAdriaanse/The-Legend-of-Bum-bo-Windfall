@@ -235,7 +235,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void SyncAchievements()
         {
-            //TODO: Sync achievements
+            Progression progression = ProgressionController.LoadProgression();
+
+            for (int unlockCounter = 0; unlockCounter < progression.unlocks.Length; unlockCounter++)
+            {
+                if (progression.unlocks[unlockCounter])
+                {
+                    Achievements.Instance.Unlock((Achievements.eAchievement)unlockCounter);
+                }
+            }
         }
 
         public static void OpenWindfallOptionsMenu()
