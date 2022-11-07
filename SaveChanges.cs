@@ -11,6 +11,7 @@ using System.Text;
 using System.Reflection;
 using PathologicalGames;
 using System.Collections;
+using DG.Tweening.Plugins.Core.PathCore;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -22,6 +23,41 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Harmony.CreateAndPatchAll(typeof(SaveChanges));
             Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying save changes");
+        }
+
+        //Patch: Fixes copying old saves
+        [HarmonyPostfix, HarmonyPatch(typeof(SaveSystemPC), "update_save")]
+        static void SaveSystemPC_update_save(SaveSystemPC __instance, string Filename)
+        {
+            string newPath = __instance.GetSaveDirectory() + "/" + Filename;
+            string oldPath = Application.persistentDataPath + "/" + Filename;
+
+            if (File.Exists(newPath) && File.Exists(oldPath))
+            {
+                bool duplicateSave = false;
+
+                byte[] newPathBytes = File.ReadAllBytes(newPath);
+                byte[] oldPathBytes = File.ReadAllBytes(oldPath);
+
+                if (newPathBytes.Length == oldPathBytes.Length)
+                {
+                    duplicateSave = true;
+
+                    for (int i = 0; i < newPathBytes.Length; i++)
+                    {
+                        if (newPathBytes[i] != oldPathBytes[i])
+                        {
+                            duplicateSave = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (duplicateSave)
+                {
+                    File.Delete(oldPath);
+                }
+            }
         }
 
         //Patch: Load start
