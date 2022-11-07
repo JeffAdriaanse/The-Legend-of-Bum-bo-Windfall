@@ -737,37 +737,58 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Fixes the opposing navigation arrow remaining clickable while the character select screen is still rotating
-        [HarmonyPrefix, HarmonyPatch(typeof(RotateCharacters), "setClick")]
-        static bool RotateCharacters_setClick(bool _enabled)
-        {
-            RotateCharacters[] navArrows = UnityEngine.Object.FindObjectsOfType<RotateCharacters>();
-            for (int i = 0; i < navArrows.Length; i++)
-            {
-                navArrows[i].GetComponent<BoxCollider>().enabled = _enabled;
-            }
-            return false;
-        }
-
-        //Patch: Fixed navigation arrows remaining triggerable using gamepad controls after selecting a character
+        //Patch: Fixes the opposing navigation arrow remaining triggerable while the character select screen is still rotating
         [HarmonyPrefix, HarmonyPatch(typeof(RotateCharacters), "Rotate")]
         static bool RotateCharacters_Rotate(RotateCharacters __instance)
         {
-            if (!__instance.clickable)
+            bool charactersRotating = false;
+            RotateCharacters[] navArrows = __instance.transform.parent.GetComponentsInChildren<RotateCharacters>();
+            for (int navArrowCounter = 0; navArrowCounter < navArrows.Length; navArrowCounter++)
+            {
+                if (navArrows[navArrowCounter].RotationSequence != null && navArrows[navArrowCounter].RotationSequence.IsPlaying())
+                {
+                    charactersRotating = true;
+                }
+            }
+
+            if (charactersRotating)
             {
                 return false;
             }
             return true;
         }
 
-        //Patch: Fixes back button staying clickable after selecting a character
+        //Patch: Fixes back button remaining clickable after selecting a character
+        //Also fixes character select screen elements remaining triggerable using gamepad controls after selecting a character using mouse controls
         [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), "ConfirmSelection")]
         static void ChooseBumbo_ConfirmSelection(ChooseBumbo __instance, bool __result)
         {
             if (__result)
             {
+                ChooseYourBumbo chooseYourBumbo = __instance.transform.parent?.parent?.GetComponent<ChooseYourBumbo>();
+
+                if (chooseYourBumbo != null)
+                {
+                    AccessTools.Field(typeof(ChooseYourBumbo), "m_InputBlocked").SetValue(chooseYourBumbo, true);
+                }
+
                 //Disable OnClick
-                GameObject.Find("BackButton").GetComponent<SelectCharacterBackButton>().OnClick = new UnityEngine.Events.UnityEvent();
+                __instance.transform.parent.Find("BackButton").GetComponent<SelectCharacterBackButton>().OnClick = new UnityEngine.Events.UnityEvent();
+            }
+        }
+
+        //Fixes character select screen elements remaining triggerable using gamepad controls after exiting the character select screen using mouse controls
+        [HarmonyPrefix, HarmonyPatch(typeof(SelectCharacterBackButton), "OnMouseDown")]
+        static void SelectCharacterBackButton_OnMouseDown(SelectCharacterBackButton __instance)
+        {
+            if (__instance.gameObject.activeInHierarchy && __instance.active)
+            {
+                ChooseYourBumbo chooseYourBumbo = __instance.transform.parent?.parent?.GetComponent<ChooseYourBumbo>();
+
+                if (chooseYourBumbo != null)
+                {
+                    AccessTools.Field(typeof(ChooseYourBumbo), "m_InputBlocked").SetValue(chooseYourBumbo, true);
+                }
             }
         }
 
