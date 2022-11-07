@@ -188,19 +188,22 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //windfallMenuRect.localRotation = Quaternion.Euler(graphicsMenuRect.localRotation.eulerAngles.x, graphicsMenuRect.localRotation.eulerAngles.y, 351);
 
                 //Initialize buttons
-                InitializeButton(windfallOptionsMenu.transform.Find("Balance Changes").gameObject, ToggleBalanceChanges);
-                InitializeButton(windfallOptionsMenu.transform.Find("Antialiasing").gameObject, ToggleAntiAliasing);
-                InitializeButton(windfallOptionsMenu.transform.Find("Motion Blur").gameObject, ToggleMotionBlur);
-                InitializeButton(windfallOptionsMenu.transform.Find("Sync Achievements").gameObject, SyncAchievements);
-                InitializeButton(windfallOptionsMenu.transform.Find("Save").gameObject, SaveWindfallOptions);
-                InitializeButton(windfallOptionsMenu.transform.Find("Cancel").gameObject, CloseWindfallOptionsMenu);
+                InitializeButton(windfallOptionsMenu.transform.Find("Balance Changes").gameObject, ToggleBalanceChanges, LocalizationModifier.edFont, GamepadMenuOptionSelection.eInjectDots.Both);
+                InitializeButton(windfallOptionsMenu.transform.Find("Antialiasing").gameObject, ToggleAntiAliasing, LocalizationModifier.edFont, GamepadMenuOptionSelection.eInjectDots.Both);
+                InitializeButton(windfallOptionsMenu.transform.Find("Motion Blur").gameObject, ToggleMotionBlur, LocalizationModifier.edFont, GamepadMenuOptionSelection.eInjectDots.Both);
+                InitializeButton(windfallOptionsMenu.transform.Find("Sync Achievements").gameObject, SyncAchievements, LocalizationModifier.edFont, GamepadMenuOptionSelection.eInjectDots.Both);
+                InitializeButton(windfallOptionsMenu.transform.Find("Save").gameObject, SaveWindfallOptions, LocalizationModifier.edFont, GamepadMenuOptionSelection.eInjectDots.Both);
+                InitializeButton(windfallOptionsMenu.transform.Find("Cancel").gameObject, CloseWindfallOptionsMenu, LocalizationModifier.edFont, GamepadMenuOptionSelection.eInjectDots.Both);
+
+                //Change header font
+                ChangeFont(windfallOptionsMenu.transform.Find("Header").gameObject.GetComponent<TextMeshProUGUI>(), LocalizationModifier.edFont);
             }
             GamepadMenuController gamepadMenuController = windfallOptionsMenu.AddComponent<GamepadMenuController>();
 
             WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController);
         }
 
-        private static void InitializeButton(GameObject buttonObject, UnityAction unityAction)
+        private static void InitializeButton(GameObject buttonObject, UnityAction unityAction, TMP_FontAsset font, GamepadMenuOptionSelection.eInjectDots eInjectDots)
         {
             ButtonHoverAnimation buttonHoverAnimation = buttonObject.AddComponent<ButtonHoverAnimation>();
             buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.Menu_ItemHover;
@@ -213,8 +216,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             GamepadMenuOptionSelection gamepadMenuOptionSelection = buttonObject.AddComponent<GamepadMenuOptionSelection>();
-            gamepadMenuOptionSelection.m_InjectDots = GamepadMenuOptionSelection.eInjectDots.Both;
+            gamepadMenuOptionSelection.m_InjectDots = eInjectDots;
             gamepadMenuOptionSelection.m_SelectionObjects = new GameObject[0];
+
+            TextMeshProUGUI textMeshProUGUI = buttonObject.GetComponent<TextMeshProUGUI>();
+            ChangeFont(textMeshProUGUI, font);
+        }
+        private static void ChangeFont(TextMeshProUGUI textMeshProUGUI, TMP_FontAsset font)
+        {
+            if (font != null && textMeshProUGUI != null)
+            {
+                textMeshProUGUI.font = font;
+            }
         }
 
         private static void ToggleBalanceChanges()

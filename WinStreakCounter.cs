@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -20,7 +21,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             RectTransform winStreakCounterRect = winStreakCounter.GetComponent<RectTransform>();
             winStreakCounterRect.anchoredPosition = new Vector2(260, -50);
             winStreakCounterRect.localRotation = Quaternion.Euler(winStreakCounterRect.localRotation.eulerAngles.x, winStreakCounterRect.localRotation.eulerAngles.y, 350);
-            winStreakCounter.transform.Find("Streak").GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 55);
+            winStreakCounter.transform.Find("Streak").GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 62);
+
+            TextMeshProUGUI headerText = winStreakCounter.transform.Find("Header").GetComponent<TextMeshProUGUI>();
+            if (headerText != null && LocalizationModifier.edFont != null)
+            {
+                headerText.font = LocalizationModifier.edFont;
+            }
 
             UpdateWinStreakCounter();
         }

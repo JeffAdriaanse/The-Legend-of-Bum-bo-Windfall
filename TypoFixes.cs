@@ -57,6 +57,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 triggered = true;
 
+                //Acquire fonts
+                AcquireFonts(languageSourceData);
+
                 //Modify language
                 ModifyEnglish();
                 //Add language
@@ -64,7 +67,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        public static void ModifyEnglish()
+        public static TMP_FontAsset edFont;
+        private static void AcquireFonts(LanguageSourceData languageSourceData)
+        {
+            if (languageSourceData.Assets != null && languageSourceData.mAssetDictionary != null)
+            {
+                if (languageSourceData.mAssetDictionary.TryGetValue("EdmundMcMillen SDF", out UnityEngine.Object edFontValue))
+                {
+                    if (edFontValue is TMP_FontAsset)
+                    {
+                        edFont = edFontValue as TMP_FontAsset;
+                    }
+                }
+            }
+        }
+
+        private static void ModifyEnglish()
         {
             foreach (string term in EnglishTextModifications.Keys)
             {
