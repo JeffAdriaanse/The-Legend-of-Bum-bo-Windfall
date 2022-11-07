@@ -2025,32 +2025,44 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), "CastSpell")]
 		static void YellowBeltSpell_CastSpell(YellowBeltSpell __instance, bool __result)
 		{
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return;
-            }
-
             if (__result)
 			{
-				for (int i = 0; i < __instance.app.model.characterSheet.bumboModifierObjects.Count; i++)
-				{
-					//Detect whether there is a Yellow Belt modifier
-					if (__instance.app.model.characterSheet.bumboModifierObjects[i].spellName == __instance.spellName)
-					{
-						//Change modifier type if it is a round modifier
-						if (__instance.app.model.characterSheet.bumboModifierObjects[i].modifierType == CharacterSheet.BumboModifierObject.ModifierType.Round)
-						{
-							//Change modifier type
-							__instance.app.model.characterSheet.bumboModifierObjects[i].modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
-						}
+				int objectIndex = ModifyBumboModifierObjectType(__instance.spellName, ref __instance.app.model.characterSheet, false);
 
-						//Cap dodgeChance at 75%
-						if (__instance.app.model.characterSheet.bumboModifierObjects[i].dodgeChance > 0.75f) __instance.app.model.characterSheet.bumboModifierObjects[i].dodgeChance = 0.75f;
-					}
-				}
+				if (WindfallPersistentDataController.LoadData().implementBalanceChanges && objectIndex > -1)
+				{
+                    //Cap dodgeChance at 75%
+                    if (__instance.app.model.characterSheet.bumboModifierObjects[objectIndex].dodgeChance > 0.75f) __instance.app.model.characterSheet.bumboModifierObjects[objectIndex].dodgeChance = 0.75f;
+                }
 			}
 		}
-	}
+
+		static int ModifyBumboModifierObjectType(SpellName spellName, ref CharacterSheet characterSheet, bool _round)
+		{
+			if (characterSheet != null)
+			{
+                for (int objectCounter = 0; objectCounter < characterSheet.bumboModifierObjects.Count; objectCounter++)
+                {
+                    //Detect whether the modifier exists
+                    if (characterSheet.bumboModifierObjects[objectCounter].spellName == spellName)
+                    {
+                        //Change modifier type
+                        if (_round)
+                        {
+                            characterSheet.bumboModifierObjects[objectCounter].modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
+                        }
+                        else
+                        {
+                            characterSheet.bumboModifierObjects[objectCounter].modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
+                        }
+
+                        return objectCounter;
+                    }
+                }
+            }
+			return -1;
+        }
+    }
 
 	static class SpellManaCosts
 	{
