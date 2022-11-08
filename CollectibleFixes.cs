@@ -389,7 +389,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             Enemy enemy = _enemy_transform.GetComponent<Enemy>();
             if (enemy != null && (enemy.enemyName == EnemyName.PeepEye || enemy.enemyName == EnemyName.TaintedPeepEye))
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Meat Hook from moving " + enemy.enemyName.ToString());
                 return false;
             }
             return true;
@@ -490,7 +489,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             GameObject owner_ground = __instance.app.model.aiModel.battlefieldPositions[__instance.app.model.aiModel.battlefieldPositionIndex[_enemy.position.x, _enemy.position.y]].owner_ground;
             if (owner_ground != null && _enemy.enemyType == Enemy.EnemyType.Flying && owner_ground.GetComponent<Enemy>().boss)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting Ecoli spell effect; enemy is above a boss");
                 return false;
             }
             return true;
@@ -503,7 +501,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.app.model.aiModel.attackingEnemies.Count > 0 && (__instance.app.model.aiModel.attackingEnemies[0] == null || __instance.app.model.aiModel.attackingEnemies[0].health < 0f))
             {
                 //Null check has failed. End event
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Progressing to next event when counter damage attempts to target a null enemy");
                 __instance.End();
                 return false;
             }
@@ -557,7 +554,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 num += 1;
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Reworking Flush to prevent it from targeting null enemies");
             return false;
         }
 
@@ -571,7 +567,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void BumboController_RemoveSpell(BumboController __instance)
         {
             __instance.app.model.spellViewUsed = null;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing last used spell to null when removing spell");
         }
 
         //Patch: Prevents spell mana cost reroll (from Bag-O-Trash/Bum-bo the Dead) if the last used spell is null
@@ -585,7 +580,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.model.iAmSpelling = false;
             __instance.app.controller.trinketController.RechargeOnSpell();
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing spell mana cost reroll since last used spell is null");
             return false;
         }
         //***************************************************
@@ -650,7 +644,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     fly.SetActive(false);
                     __instance.app.controller.eventsController.EndEvent();
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Reworked Attack Fly Spell sequence");
                 }
             });
             return false;
@@ -673,7 +666,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.controller.ShowManaGain();
             __instance.app.Notify("reward.spell", null, new object[0]);
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Fish Hook from granting red mana");
             return false;
         }
 
@@ -728,7 +720,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     __instance.app.model.characterSheet.spells[l].ChargeSpell();
                     __instance.app.controller.eventsController.SetEvent(new IdleEvent());
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Fixed Paper Straw not interacting with ghost tiles");
                 }
             }
             return true;
@@ -767,7 +758,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             SoundsView.Instance.PlaySound(SoundsView.eSound.Spell_MovementDrain, SoundsView.eAudioSlot.Default, false);
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing additional Lose Move notification from being spawning when using Lard");
             return false;
         }
 
@@ -776,7 +766,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void TheDevilTrinket_Use(TheDevilTrinket __instance)
         {
             __instance.app.controller.UpdateStats();
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Updating player stats on The Devil use");
         }
 
         //***************************************************
@@ -787,9 +776,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(EmptyHiddenTrinket), "StartRoom")]
         static bool EmptyHiddenTrinket_StartRoom(EmptyHiddenTrinket __instance)
         {
-            if (__instance.app.controller.savedStateController.IsLoading())
+            if (__instance.app.controller.savedStateController.IsLoading()) //Save is loading
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Empty Hidden Trinket from rerolling spells when reloading a save");
                 return false;
             }
 
@@ -823,7 +811,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.controller.SetSpell(l, __instance.app.model.characterSheet.spells[l]);
             }
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of Empty Hidden Trinket");
             return false;
         }
 
@@ -832,9 +819,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(RainbowBagTrinket), "StartRoom")]
         static bool RainbowBagTrinket_StartRoom(RainbowBagTrinket __instance)
         {
-            if (__instance.app.controller.savedStateController.IsLoading())
+            if (__instance.app.controller.savedStateController.IsLoading()) //Save is loading
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Rainbow Bag from rerolling spells when reloading a save");
                 return false;
             }
 
@@ -868,7 +854,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.controller.SetSpell(l, __instance.app.model.characterSheet.spells[l]);
             }
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of Rainbow Bag");
             return false;
         }
 
@@ -902,7 +887,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             list.RemoveAll((SpellName x) => !__instance.app.model.spellModel.validSpells.Contains(x));
 
             __result = list;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Improving performance of BumboController SpellsFromCategory");
             return false;
         }
         //***************************************************
