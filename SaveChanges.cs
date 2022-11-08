@@ -28,6 +28,12 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(SaveSystemPC), "update_save")]
         static void SaveSystemPC_update_save(SaveSystemPC __instance, string Filename)
         {
+            //Only delete saved state, not progression
+            if (Filename != "state.sav" && Filename != "state.sav.xml")
+            {
+                return;
+            }
+
             string newPath = __instance.GetSaveDirectory() + "/" + Filename;
             string oldPath = Application.persistentDataPath + "/" + Filename;
 
