@@ -22,7 +22,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(SaveChanges));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying save changes");
         }
 
         //Patch: Fixes copying old saves
@@ -196,6 +195,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Log mainCamera tweens on MoveIntoRoomEvent
         [HarmonyPostfix, HarmonyPatch(typeof(MoveIntoRoomEvent), nameof(MoveIntoRoomEvent.Execute))]
         static void MoveIntoRoomEvent_Execute(MoveIntoRoomEvent __instance, NavigationArrowView.Direction ___direction)
         {
@@ -229,7 +229,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Track sequence
                 moveIntoRoomEventSequence = sequence;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Tracking WrapAround sequence");
             }
             else
             {
@@ -254,7 +253,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 });
                 //Track sequence
                 moveIntoRoomEventSequence = sequence;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Tracking HopInFront sequence");
             }
             else
             {
@@ -279,7 +277,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 });
                 //Track sequence
                 moveIntoRoomEventSequence = sequence;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Tracking HopInBack sequence");
             }
             else
             {
@@ -430,7 +427,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (WindfallSavedState.IsLoading())
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Loading treasure pickups");
                 WindfallSavedState.LoadTreasure(__instance, ___pickups);
             }
         }

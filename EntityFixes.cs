@@ -13,7 +13,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(EntityFixes));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity related bug fixes");
         }
 
         //Access child method
@@ -25,7 +24,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(MegaPooferEnemy), nameof(MegaPooferEnemy.timeToDie))]
         static bool MegaPooferEnemy_timeToDie(MegaPooferEnemy __instance)
         {
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Mega Poofer death");
             timeToDieDummy_MegaPooferEnemy(__instance);
             return false;
         }
@@ -37,7 +35,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.berserkView != null && __instance.championType != Enemy.ChampionType.ExtraMove)
             {
                 __instance.berserkView.gameObject.SetActive(false);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Deactivating vein icon on Hanger enemy");
             }
         }
 
@@ -49,7 +46,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return true;
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting enemy dust spawn; enemy is a champion");
             return false;
         }
 
@@ -61,7 +57,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.poisonView.transform.Translate(0f, 0f, -0.08f);
             __instance.blindObject.transform.Rotate(0f, 180f, 0f);
             __instance.blindObject.transform.Translate(0f, 0f, -0.08f);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Rotating status effects of " + __instance.enemyName);
         }
 
         //Patch: Fixes TadoEnemy init not setting turns 1 before baseinit
@@ -69,7 +64,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool TadoEnemy_Init(TadoEnemy __instance)
         {
             __instance.turns = 1;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Setting TadoEnemy turns amount on init to 1");
             return true;
         }
 
@@ -85,7 +79,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.healthState == GreenBlobbyEnemy.HealthState.half)
             {
                 __instance.healthState = GreenBlobbyEnemy.HealthState.full;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Overriding starting health state of newly spawned Blobby");
             }
         }
 
@@ -96,7 +89,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.healthState == RedBlobbyEnemy.HealthState.half)
             {
                 __instance.healthState = RedBlobbyEnemy.HealthState.full;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Overriding starting health state of newly spawned Red Blobby");
             }
         }
 
@@ -107,7 +99,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.healthState == BlackBlobbyEnemy.HealthState.half)
             {
                 __instance.healthState = BlackBlobbyEnemy.HealthState.full;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Overriding starting health state of newly spawned Black Blobby");
             }
         }
         //***************************************************
@@ -126,7 +117,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__result.ToString() == "NewRoundEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
             {
                 __result = new MonsterCounterEvent(new NewRoundEvent());
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing AttackFlyEvent return event to MonsterCounterEvent");
             }
         }
 
@@ -137,7 +127,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__result.ToString() == "NextComboEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
             {
                 __result = new MonsterCounterEvent(new NextComboEvent());
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing BoneMegaAttackEvent return event to MonsterCounterEvent");
             }
         }
 
@@ -148,7 +137,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__result.ToString() == "NextComboEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
             {
                 __result = new MonsterCounterEvent(new NextComboEvent());
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing ToothMegaAttackEvent return event to MonsterCounterEvent");
             }
         }
         //***************************************************
@@ -181,7 +169,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Correcting Tainted Peeper spawn blib logic");
             return code;
         }
 

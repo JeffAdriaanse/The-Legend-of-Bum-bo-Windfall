@@ -18,7 +18,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(InterfaceContent));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Implementing interface related mod content");
         }
 
         //Patch: Add trinket glitches on GUISide Awake
@@ -27,8 +26,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             GameObject[] trinkets = __instance.trinkets;
             CreateTrinketGlitches(trinkets);
-
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating trinket glitches");
         }
         public static GameObject[] trinketGlitches = new GameObject[4];
         public static void CreateTrinketGlitches(GameObject[] trinkets)
@@ -112,8 +109,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool CupGameResultEvent_Execute(CupGameResultEvent __instance)
         {
             Sequence sequence = DOTween.Sequence();
-            sequence.timeScale *= animationSpeed;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game result animation");
+            sequence.timeScale *= animationSpeed; //Change speed of cup game result animation
             float num = UnityEngine.Random.Range(0f, 1f);
             bool flag = false;
             if (num > 0.66f)
@@ -299,9 +295,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             SoundsView.Instance.PlaySound(SoundsView.eSound.SkullGame_Start, SoundsView.eAudioSlot.Default, false);
             Sequence sequence2 = DOTween.Sequence();
 
+            //Change speed of cup game startup animation
             sequence.timeScale *= animationSpeed;
             sequence2.timeScale *= animationSpeed;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game startup animation");
 
             TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.Append(sequence2, __instance.app.controller.gamblingController.cupGamble.cups[1].GetComponent<SkullCup>().LiftCup()), 1.25f);
             float num = TweenExtensions.Duration(sequence2, true);
@@ -321,7 +317,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void CupClerkView_Shuffle(CupClerkView __instance, ref Sequence ___animation)
         {
             ___animation.timeScale *= animationSpeed;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of cup game shuffle animation");
         }
 
         //Patch: Applies animation speed setting to GamblingBangView Disappear
@@ -344,7 +339,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             __instance.controller.ModifyCoins(-15);
             __instance.wheelView.gamblingCameraView.HideArrows();
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stat wheel result to not include maxed stats");
+
+            //Prevent the stat wheel from increasing maxed stats
             bool flag = __instance.app.model.characterSheet.bumboBaseInfo.hitPoints < 6f;
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheDead)
             {
@@ -402,8 +398,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             ___isSpinning = true;
             Sequence sequence = __instance.wheelView.Spin(wheelReward, _pay);
 
-            sequence.timeScale *= animationSpeed;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of wheel spin animation");
+            sequence.timeScale *= animationSpeed; //Change speed of the wheel spin animation
 
             TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.AppendInterval(sequence, 0.25f), delegate ()
             {
@@ -423,8 +418,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.view.soundsView.PlaySound(SoundsView.eSound.WheelSpinResult, __instance.wheelView.transform.position, SoundsView.eAudioSlot.Default, false);
             Sequence sequence = DOTween.Sequence();
 
-            sequence.timeScale *= animationSpeed;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing speed of wheel reward animation");
+            sequence.timeScale *= animationSpeed; //Change speed of wheel reward animation
 
             TweenSettingsExtensions.Join(TweenSettingsExtensions.Append(sequence, TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMove(__instance.wheelView.gamblingCameraView.transform, new Vector3(0f, 1f, -5.68f), 1f, false), Ease.InOutQuad)), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DORotate(__instance.wheelView.gamblingCameraView.transform, Vector3.zero, 1f, 0), Ease.InOutQuad));
             switch (_reward)
@@ -736,6 +730,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Null check for current spell
                 else if (__instance.app.model.spellModel.currentSpell != null)
                 {
+                    //Mana cost refund
                     //UpdateMana replacement that doesn't factor Sucker mana reduction
                     //Include cost modifier
                     for (int colorCounter = 0; colorCounter < 6; colorCounter++)
@@ -752,8 +747,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                         __instance.app.view.manaView.setManaText((ManaType)colorCounter, __instance.app.model.mana[(int)colorCounter]);
                     }
-
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana cost refund");
 
                     __instance.app.model.spellModel.currentSpell.FullCharge();
                 }
@@ -890,12 +883,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 __instance.app.view.mainCamera.transitionToPerspective(CameraView.PerspectiveType.Full, 0.5f);
             }
+
+            //Hide cancel button
             __instance.app.view.GUICamera.GetComponent<GUISide>().cancelView.Hide();
             if (__instance.app.view.gamblingView != null)
             {
                 __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Show();
 
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Hiding cancel button");
+                //Remove trinket reward display
                 RemoveTrinketRewardDisplay();
 
                 __instance.app.controller.gamblingController.shop.UpdatePrices();

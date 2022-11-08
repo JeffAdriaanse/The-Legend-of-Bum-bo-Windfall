@@ -14,7 +14,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(TypoFixes));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying corrections to typos");
         }
 
         //Patch: Modify source data
@@ -94,7 +93,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 TermData termData = languageSourceData.GetTermData(term);
                 if (termData == null)
                 {
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Term " + term + " is null");
+                    Debug.LogWarning("[The Legend of Bum-bo: Windfall] Term " + term + " is null");
                     break;
                 }
                 else

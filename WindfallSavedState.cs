@@ -598,10 +598,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 						pickupElement.SetAttribute("trinketName", pickup.GetComponent<TrinketPickupView>().trinket.trinketName.ToString());
 					}
 				}
-				else
-				{
-					Console.WriteLine("[The Legend of Bum-bo: Windfall] Null pickup at index " + pickupCounter);
-				}
 			}
 
 			//Save character sheet

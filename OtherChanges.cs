@@ -14,7 +14,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(OtherChanges));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying other changes");
         }
 
         //Patch: Fixes exiting to menu incorrectly deleting certain gameObjects
@@ -76,7 +75,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
                 ___heartCounter = -1;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing heart tiles from spawning when playing as Bum-bo the Lost");
             }
             return true;
         }
@@ -95,7 +93,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __result[1]--;
                 }
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing starting heart tile from spawning when playing as Bum-bo the Lost");
         }
 
         //Patch: Fixes a bug in CharacterSheet addSoulHearts logic that permitted granting soul health past the maximum of six total hearts
@@ -108,7 +105,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 __instance.soulHearts = 6f;
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing addSoulHearts from granting soul health past the maximum of six total hearts");
             return false;
         }
 
@@ -120,7 +116,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 __instance.soulHearts -= 0.5f;
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing overflowing soul health after gaining a red heart container");
         }
 
         //Patch: Fixes a bug in the Mega Boner tile combo logic; it no longer incorrectly breaks out of the for statements that look for enemies
@@ -170,7 +165,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 num += 1;
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Reworking Mega Chomper attack to prevent it from targeting null enemies");
             return false;
         }
 
@@ -292,7 +286,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                     }
                 }
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing floor room generation");
             }
         }
     }

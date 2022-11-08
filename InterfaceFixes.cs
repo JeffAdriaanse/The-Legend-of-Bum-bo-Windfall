@@ -18,7 +18,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(InterfaceFixes));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying interface related bug fixes");
         }
 
         static Tweener voAudioTweener;
@@ -401,7 +400,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (__instance.max_health == Enemy.HealthType.INVINCIBLE)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting healing of " + __instance.enemyName + "; enemy is invincible");
                 return false;
             }
             return true;
@@ -414,7 +412,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.indicatorPosition == Vector3.zero)
             {
                 __instance.indicatorPosition = new Vector3(0, __instance.enemyType != Enemy.EnemyType.Ground ? 1.25f : 0.5f, -0.5f);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Correcting " + __instance.enemyName + " healing icon spawn location");
             }
             return true;
         }
@@ -426,7 +423,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (_z_offset == 0.2f)
             {
                 _z_offset += 0.1f;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Offsetting position of " + __instance.enemyName + " spawn dust to avoid z-fighting");
             }
             return true;
         }
@@ -438,7 +434,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (UnityEngine.Object.FindObjectOfType<LoadingController>() != null)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting treasure chosen event; game is loading");
                 return false;
             }
 
@@ -458,7 +453,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.trinket.Category == TrinketElement.TrinketCategory.Use)
             {
                 __instance.trinketUses.text = __instance.trinket.uses.ToString();
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Updating trinket pickup use display");
             }
         }
 
@@ -469,7 +463,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.trinket.Category == TrinketElement.TrinketCategory.Use)
             {
                 __instance.trinketUses.text = __instance.trinket.uses.ToString();
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Updating shop trinket pickup use display");
             }
         }
         //***************************************************
@@ -481,7 +474,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void SpellPickup_OnMouseDown(SpellPickup __instance)
         {
             __instance.app.view.boxes.treasureRoom.GetComponent<TreasureRoom>().SetClickable(false);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling treasure room pickups on spell pickup click");
         }
 
         //Patch: Disables the end turn sign collider when it spawns, preventing it from being clicked while above the play area
@@ -489,7 +481,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void EndTurnView_Start(EndTurnView __instance)
         {
             __instance.GetComponent<BoxCollider>().enabled = false;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling end turn sign collider on start");
         }
 
         //Patch: Prevents end turn sign from being clicked while the game is paused
@@ -507,8 +498,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(RoomStartEvent), "Execute")]
         static void RoomStartEvent_Execute(RoomStartEvent __instance)
         {
-            __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Hide();
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Hiding expandGUIView on room start");
+            __instance.app.view.GUICamera.GetComponent<GUISide>().expandGUIView.Hide();// Hide expandGUIView on room start
         }
 
         //Patch: Fixed spell HUD clipping into the camera during boss VS screens if the spell HUD was open when exiting the treasure room
@@ -527,7 +517,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
                 }
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing spell HUD from clipping into the camera");
             return code;
         }
 
@@ -547,7 +536,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (popsicle != null)
             {
                 popsicle.SetActive(false);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Hiding Bum-bo popsicle stick during Mega Chomper tile combo animation");
                 Sequence sequence = DOTween.Sequence();
                 sequence.AppendInterval(2f);
                 sequence.AppendCallback(delegate ()
@@ -561,11 +549,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(RoomEndEvent), "Execute")]
         static void RoomEndEvent_Execute(RoomEndEvent __instance)
         {
+            //Change to default light scheme on room clear
             if (!__instance.app.model.defaultLightOn)
             {
                 __instance.app.view.boxes.enemyRoom3x3.GetComponent<EnemyRoomView>().ChangeLight(EnemyRoomView.RoomLightScheme.Default, 0.2f, true);
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing to default light scheme on room clear");
         }
 
         //Patch: Fixes boss room darkening when opening the spell menu while choosing a trinket if the boss was defeated during ChanceToCastSpellEvent
@@ -574,7 +562,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent")
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting ShowEndTurnSign; current event is BossDyingEvent");
+                //Abort ShowEndTurnSign; current event is BossDyingEvent
                 return false;
             }
             return true;
@@ -599,7 +587,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (__instance.app.view.spells[(int)num2].spellContainer.GetComponent<MeshRenderer>().material.GetTextureOffset("_MainTex") != new Vector2(0f, -0.5f))
                     {
                         __instance.app.view.spells[(int)num2].spellContainer.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0f, -0.5f));
-                        if (__instance.app.view.sideGUI.activeSelf)
+
+                        if (__instance.app.view.sideGUI.activeSelf) //Require SideGUI to be expanded for spell ready notification to appear
                         {
                             __instance.app.view.spellReadyView.spellReady[(int)num2].SetActive(true);
                             DOTween.Kill("spellready" + num2, false);
@@ -611,10 +600,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                             {
                                 __instance.HideAllSpellReady();
                             });
-                        }
-                        else
-                        {
-                            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing spell ready notification from appearing; SideGUI is not expanded");
                         }
                     }
                 }
@@ -1313,7 +1298,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if ((__instance.app.model.bumboEvent.GetType().ToString() == "SelectSpellColumn" || __instance.app.model.bumboEvent.GetType().ToString() == "StartMonsterTurnEvent") && _scheme == EnemyRoomView.RoomLightScheme.EndTurn)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing room light scheme from being changed to EndTurn during SelectSpellColumn or StartMonsterTurnEvent");
+                //Prevent room light scheme from being changed to EndTurn during SelectSpellColumn or StartMonsterTurnEvent
                 return false;
             }
             return true;
@@ -1328,7 +1313,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.readyToPlay = true;
                 __instance.gameObject.GetComponent<BoxCollider>().enabled = true;
                 __instance.MakeSkullsUnclickable();
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Cup Game from erroneously ending current event");
+                //Prevent Cup Game from erroneously ending current event
                 return false;
             }
             return true;
@@ -1341,7 +1326,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.app.view.gamblingView != null && __instance.app.model.gamblingModel.cameraAt == 2)
             {
                 __instance.app.view.gamblingView.shopClerkView.TipHat();
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Triggering Prick Pusher tip hat animation on trinket purchase");
             }
         }
 
@@ -1353,7 +1337,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 __instance.app.view.gamblingView.shopClerkView.Idle();
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Triggering Prick Pusher idle animation on cancel purchase");
         }
 
         //Patch: Fixes characters sometimes desyncing on character select screen; Bum-bo carousel no longer resets when returning from the main menu
@@ -1363,7 +1346,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (__instance.bumboObjects != null && __instance.bumboObjects.Count > 0)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Aborting SelectCharacterView CreateObjects; character objects have already been created");
+                //Abort SelectCharacterView CreateObjects; character objects have already been created
                 return false;
             }
             ___index = 1;
@@ -1386,7 +1369,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 charDescView.ChangeText(CharacterSheet.BumboType.TheBrave);
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Resetting Bum-bo carousel on progress deletion");
         }
 
         //Patch: Changes the color of the heart symbol on the cup game sign from red to blue; the cup game provides soul health, not red health
@@ -1404,7 +1386,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             var texture = assets.LoadAsset<Texture2D>("Cash Register");
 
             cupGameSign.GetComponent<MeshRenderer>().material.mainTexture = texture;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing cup game register texture");
         }
 
         //Patch: Changes the color of the heart symbol on the stat wheel when playing as Bum-bo the Dead; the wheel provides soul health, not red health
@@ -1427,7 +1408,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             var texture = assets.LoadAsset<Texture2D>("Wheel");
 
             wheelSliceHeart.GetComponent<MeshRenderer>().material.mainTexture = texture;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stat wheel heart texture");
         }
 
         //Patch: Changes wheel back mesh to remove red spot
@@ -1462,7 +1442,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             var iconMesh = assets.LoadAsset<Mesh>("Use_Spell_Icon");
 
             useIcon.GetComponent<MeshFilter>().mesh = iconMesh;
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mesh of spell container use spell icon");
         }
 
         //Patch: Corrects character stats on the character select screen that do not match in game values
@@ -1482,16 +1461,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             var textureStout = assets.LoadAsset<Texture2D>("Stout Stats");
             if (stoutStatsObject != null && textureStout != null)
             {
+                //Change stout stats texture
                 stoutStatsObject.GetComponent<MeshRenderer>().material.mainTexture = textureStout;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing stout stats texture");
             }
 
             GameObject deadStatsObject = __instance.dead.transform.Find("Bumbo The Dead").Find("bumbo_select").Find("bumbo_select_stats").gameObject;
             var textureDead = assets.LoadAsset<Texture2D>("Dead Stats");
             if (deadStatsObject != null && textureDead != null)
             {
+                //Change dead stats texture
                 deadStatsObject.GetComponent<MeshRenderer>().material.mainTexture = textureDead;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing dead stats texture");
             }
         }
 
@@ -1527,7 +1506,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (emptyHandTexture != null)
                     {
                         component.material.mainTexture = emptyHandTexture;
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing color of Bum-bo the Empty's throwing hand");
                     }
                 }
             }
@@ -1578,7 +1556,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(SoundsModification));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying sound related bug fixes");
         }
 
         //Stores sounds and their age (in frames)

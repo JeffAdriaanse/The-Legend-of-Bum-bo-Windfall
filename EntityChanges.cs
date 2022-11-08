@@ -13,7 +13,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 		public static void Awake()
 		{
 			Harmony.CreateAndPatchAll(typeof(EntityChanges));
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying entity changes");
 		}
 
 		//Changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
@@ -125,16 +124,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 				}
 			}
 
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Cumulative Corn Dip spawn chance: " + spawnChance.ToString());
-
 			//Determine which lane to spawn Corn Dip in
 			int cornDipSpawnLane = -2;
 			if (UnityEngine.Random.Range(0f, 1f) < spawnChance)
 			{
 				cornDipSpawnLane = UnityEngine.Random.Range(-1, 2);
 			}
-
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Corn Dip spawned: " + (cornDipSpawnLane != -2 ? "True" : "False"));
 
 			//Spawn Dips
 			for (short num4 = -1; num4 < 2; num4 += 1)
@@ -144,7 +139,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 					if (num4 == cornDipSpawnLane)
 					{
 						__instance.Spawn("CornyDip", __instance.position.x + (int)num4, _spawn_y, false);
-						Console.WriteLine("[The Legend of Bum-bo: Windfall] Corn Dip spawned in lane " + (cornDipSpawnLane).ToString());
 					}
 					else
 					{
@@ -255,32 +249,26 @@ namespace The_Legend_of_Bum_bo_Windfall
 				if (_immunity == Enemy.AttackImmunity.ReducePuzzleDamage)
 				{
 					__instance.PuzzleResisted();
+
+					//Change damage dealt
 					damage = Mathf.Floor(damage / 4);
 
                     if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
                     {
                         damage = 0;
                     }
-
-                    if (damage > 0)
-					{
-						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy puzzle damage resistance");
-					}
 				}
 				else if (_immunity == Enemy.AttackImmunity.ReduceSpellDamage)
 				{
 					__instance.SpellResisted();
-					damage = Mathf.Floor(damage / 4);
+
+                    //Change damage dealt
+                    damage = Mathf.Floor(damage / 4);
 
                     if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
                     {
                         damage = 0;
                     }
-
-                    if (damage > 0)
-					{
-						Console.WriteLine("[The Legend of Bum-bo: Windfall] Reducing strength of enemy spell damage resistance");
-					}
 				}
 			}
 			bool flag = __instance.app.model.characterSheet.Critical(__instance);
