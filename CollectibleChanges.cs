@@ -12,7 +12,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 		public static void Awake()
 		{
 			Harmony.CreateAndPatchAll(typeof(CollectibleChanges));
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible changes");
 		}
 
 		public static float TrinketLuckModifier(CharacterSheet characterSheet)
@@ -838,8 +837,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 				__instance.app.controller.UpdateMana(array, false);
 				__instance.app.controller.ShowManaGain();
 				__instance.app.controller.SetActiveSpells(true, true);
-
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing tweezers from granting red mana");
 			}
 			return false;
 		}
@@ -978,7 +975,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
 			__instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
 
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Rainbow Tick effect");
 			return false;
 		}
 
@@ -1043,7 +1039,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
 			__instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
 
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Brown Tick effect");
 			return false;
 		}
 
@@ -1143,7 +1138,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 					__instance.app.controller.eventsController.EndEvent();
 				}
 
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Implementing trinket modify spell effect");
 				return false;
 			}
 			return true;
@@ -1306,7 +1300,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.app.controller.eventsController.SetEvent(new IdleEvent());
 			__result = true;
 
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Golden Tick effect");
 			return false;
 		}
 
@@ -1358,7 +1351,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			SoundsView.Instance.PlaySound(SoundsView.eSound.Spell_LowerCost, SoundsView.eAudioSlot.Default, false);
 			__result = true;
 
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Sleight of Hand effect");
 			return false;
 		}
 
@@ -1370,7 +1362,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			if (spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean || spellElement.spellName == SpellName.PuzzleFlick)
 			{
 				__instance.app.view.spells[_spell_index].DisableSpell();
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling attack spell that won't be affected by damage needle");
 			}
 		}
 		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddDamagePrick")]
@@ -1387,7 +1378,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 				}
 				num += 1;
 			}
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing damage needle appearance condition");
 			return false;
 		}
 
@@ -1398,7 +1388,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			if (__instance.app.model.characterSheet.spells[_spell_index].requiredCharge == 0)
 			{
 				__instance.app.view.spells[_spell_index].DisableSpell();
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling item that won't be affected by charge needle");
 			}
 		}
 
@@ -1454,8 +1443,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{
 				__instance.app.view.spells[_spell_index].DisableSpell();
 			}
-
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle spell qualification");
 		}
 		[HarmonyPrefix, HarmonyPatch(typeof(ManaPrickTrinket), "UpdateSpell")]
 		static bool ManaPrickTrinket_UpdateSpell(ManaPrickTrinket __instance, int _spell_index)
@@ -1484,7 +1471,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
 			__instance.app.view.spells[_spell_index].spellParticles.Play();
 
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle effect");
 			return false;
 		}
 		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddManaPrick")]
@@ -1497,12 +1483,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 				if (costReduction > 0)
 				{
 					___needles.Add(TrinketName.ManaPrick);
-					Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle appearance condition");
 					return false;
 				}
 				num += 1;
 			}
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing mana needle appearance condition");
 			return false;
 		}
 
@@ -1575,7 +1559,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 				___item3Pickup.GetComponent<TrinketPickupView>().shopIndex = 2;
 			}
 			((GamepadGamblingController)UnityEngine.Object.FindObjectsOfType(typeof(GamepadGamblingController))[0]).UpdateShopItems();
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing shop generation");
 
 			//Save shop
 			WindfallSavedState.SaveShop(__instance);
@@ -1813,7 +1796,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 			__result = _spell;
 
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing spell mana cost generation");
 			return false;
 		}
 
@@ -1823,11 +1805,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			if (__result)
 			{
+				//Remove general damage increase
 				__instance.app.model.characterSheet.bumboRoomModifiers.damage--;
-				//Item damage room modifier is not implemented in the base game and must be added in
-				__instance.app.model.characterSheet.bumboRoomModifiers.itemDamage++;
-				__instance.app.controller.UpdateStats();
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Pentagram from granting puzzle damage");
+				//Add spell damage increase instead
+				__instance.app.model.characterSheet.bumboRoomModifiers.itemDamage++; //Item damage room modifier is not implemented in the base game and must be added in
+                __instance.app.controller.UpdateStats();
 			}
 		}
 
@@ -1916,7 +1898,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		//Patch: Prevents Mama Foot from killing the player (broken)
+		//Patch: Prevents Mama Foot from killing the player
 		[HarmonyPrefix, HarmonyPatch(typeof(MamaFootSpell), "Reward")]
 		static bool MamaFootSpell_Reward(MamaFootSpell __instance)
 		{
@@ -1925,15 +1907,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return true;
             }
 
-            float damage = 0.5f * __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier;
-			while (damage >= __instance.app.model.characterSheet.hitPoints + __instance.app.model.characterSheet.soulHearts)
+			if (__instance.app.model.characterSheet.hitPoints + __instance.app.model.characterSheet.soulHearts >= 1f)
 			{
-				damage -= 0.5f;
+				return true;
 			}
 
-			__instance.app.controller.TakeDamage(-damage / __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier, null);
-
-			__instance.app.Notify("reward.spell", null, new object[0]);
 			return false;
 		}
 
@@ -2121,19 +2099,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		public static Dictionary<SpellName, int> rebalancedManaCosts = new Dictionary<SpellName, int>()
 		{
-			{ SpellName.AttackFly, 7 },
+			{ SpellName.AttackFly, 6 },
 			{ SpellName.BigSlurp, 11 },
 			{ SpellName.BlenderBlade, 5 },
-			{ SpellName.HairBall, 7 },
-			{ SpellName.HatPin, 8 },
-			{ SpellName.Juiced, 6 },
+			{ SpellName.HairBall, 5 },
+			{ SpellName.Juiced, 5 },
 			{ SpellName.KrampusCross, 5 },
 			{ SpellName.Lemon, 5 },
 			{ SpellName.MagicMarker, 6 },
 			{ SpellName.MamaFoot, 13 },
 			{ SpellName.Pentagram, 7 },
-			{ SpellName.Pliers, 5 },
-			{ SpellName.TimeWalker, 16 },
+            { SpellName.Pliers, 5 },
+            { SpellName.RockFriends, 5 },
+            { SpellName.TimeWalker, 16 },
 			{ SpellName.TwentyTwenty, 5 }
 		};
 

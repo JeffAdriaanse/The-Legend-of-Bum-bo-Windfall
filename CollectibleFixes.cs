@@ -14,7 +14,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(CollectibleFixes));
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Applying collectible related bug fixes");
         }
 
         //Patch: Prevents glitched trinkets from randomizing a second time when starting a chapter or reloading a save
@@ -28,17 +27,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return false;
             }
             return true;
-        }
-
-        //Patch: Logs glitched trinkets
-        [HarmonyPostfix, HarmonyPatch(typeof(GlitchTrinket), nameof(GlitchTrinket.ChangeTrinket))]
-        static void GlitchTrinket_ChangeTrinket(GlitchTrinket __instance, int _index)
-        {
-            TrinketElement[] fakeTrinkets = __instance.app.model.fakeTrinkets;
-            if (fakeTrinkets != null && fakeTrinkets[_index] != null)
-            {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Fake trinket at index " + _index + ": " + fakeTrinkets[_index].Name);
-            }
         }
 
         //Patch: Fixes Trash Lid not restoring the second block when used while there is one block remaining
@@ -58,7 +46,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (__instance.app.controller.savedStateController.IsLoading())
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Breakfast from granting health when reloading a save");
                 __result = 0f;
             }
         }
@@ -68,7 +55,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool PinkBowTrinket_EndChapter(PinkBowTrinket __instance)
         {
             __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, (float)__instance.app.controller.trinketController.EffectMultiplier());
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Pink Bow effect such that it doesn't grant soul health past the maximum of six total hearts");
             return false;
         }
 
@@ -81,7 +67,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.model.characterSheet.soulHearts -= 0.5f;
             }
             __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing D20 from granting soul health past the maximum of six total hearts");
         }
 
         //Patch: Fixes Prayer Card granting soul health past the maximum of six total hearts
@@ -93,7 +78,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.model.characterSheet.soulHearts -= 0.5f;
             }
             __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Prayer Card from granting soul health past the maximum of six total hearts");
         }
 
         //Patch: Fixes The Relic granting soul health past the maximum of six total hearts
@@ -105,7 +89,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.model.characterSheet.soulHearts -= 0.5f;
             }
             __instance.app.view.hearts.GetComponent<HealthController>().UpdateHearts(true);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing The Relic from granting soul health past the maximum of six total hearts");
         }
 
         //Patch: Fixes Glitch trinket not reducing shop prices when acting as Steam Sale
@@ -186,7 +169,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Removes fake trinket when a fake trinket replaced
+        //Patch: Removes fake trinket when a fake trinket is replaced
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketChosenToReplaceEvent), "Execute")]
         static bool TrinketChosenToReplaceEvent_Execute(TrinketChosenToReplaceEvent __instance, int ___trinketIndex)
         {
@@ -195,7 +178,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Remove fake trinket
                 __instance.app.model.fakeTrinkets[___trinketIndex] = null;
                 __instance.app.model.trinketIsFake[___trinketIndex] = false;
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; fake trinket was replaced");
             }
             return true;
         }
@@ -212,10 +194,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (trinket.Category == TrinketElement.TrinketCategory.Use)
                     {
                         __instance.app.view.GUICamera.GetComponent<GUISide>().trinketUsesCount[(int)num].text = trinket.uses + string.Empty;
-                        if (__instance.app.model.trinketIsFake[num])
-                        {
-                            Console.WriteLine("[The Legend of Bum-bo: Windfall] Displaying number of uses of activated Glitch trinket");
-                        }
                     }
                 }
             }
@@ -236,7 +214,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         //Remove fake trinket
                         __instance.app.model.fakeTrinkets[num] = null;
                         __instance.app.model.trinketIsFake[num] = false;
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a 1up!");
                     }
 
                     //Reposition trinkets in fake trinket array
@@ -250,7 +227,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                             //Clear fake trinket from old position
                             __instance.app.model.fakeTrinkets[i] = null;
                             __instance.app.model.trinketIsFake[i] = false;
-                            Console.WriteLine("[The Legend of Bum-bo: Windfall] Repositioning fake trinket");
                         }
                     }
 
@@ -265,6 +241,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return;
         }
 
+        //Patch: Removes fake trinkets when they are used while acting as activated trinkets
         public static void UseTrinket_Use_Prefix(UseTrinket __instance, int _index)
         {
             //Check whether trinket will run out of uses
@@ -276,7 +253,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Remove fake trinket
                     __instance.app.model.fakeTrinkets[_index] = null;
                     __instance.app.model.trinketIsFake[_index] = false;
-                    Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing fake trinket; Glitch was used and expired while impersonating a use trinket");
                 }
 
                 //Reposition trinkets in fake trinket array
@@ -290,7 +266,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         //Clear fake trinket from old position
                         __instance.app.model.fakeTrinkets[i] = null;
                         __instance.app.model.trinketIsFake[i] = false;
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Repositioning fake trinket");
                     }
                 }
             }
@@ -331,8 +306,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(ExperimentalTrinket), "Use")]
         static bool ExperimentalTrinket_Use(ExperimentalTrinket __instance, int _index)
         {
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Changing Experimental result");
-
             //Base use method
             UseTrinket_Use_Prefix(__instance, _index);
 
@@ -345,7 +318,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.app.model.characterSheet.bumboType.ToString() == "TheLost")
             {
                 num = UnityEngine.Random.Range(0, 4);
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Lost");
+                //Prevent Experimental from granting red heart containers to Bum-bo the Lost
             }
             else
             {
@@ -369,7 +342,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (__instance.app.model.characterSheet.bumboType.ToString() == "TheDead")
                     {
                         __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 1f);
-                        Console.WriteLine("[The Legend of Bum-bo: Windfall] Preventing Experimental from granting red heart container to Bum-bo the Dead; granting soul heart instead");
+                        //Prevent Experimental from granting red heart containers to Bum-bo the Dead (grant soul heart instead)
                     }
                     else
                     {
