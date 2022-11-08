@@ -2021,12 +2021,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
-		//Patch: Changes Yellow belt modifier to last for the room instead of only the current round
+		//Patch: Changes Yellow Belt modifier to last for the room instead of only the current round
 		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), "CastSpell")]
 		static void YellowBeltSpell_CastSpell(YellowBeltSpell __instance, bool __result)
 		{
             if (__result)
 			{
+				//Change modifier type
 				int objectIndex = ModifyBumboModifierObjectType(__instance.spellName, ref __instance.app.model.characterSheet, false);
 
 				if (WindfallPersistentDataController.LoadData().implementBalanceChanges && objectIndex > -1)
@@ -2037,7 +2038,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 		}
 
-		static int ModifyBumboModifierObjectType(SpellName spellName, ref CharacterSheet characterSheet, bool _round)
+        //Patch: Changes Old Pillow modifier to last for the room instead of only the current round
+        [HarmonyPostfix, HarmonyPatch(typeof(OldPillowSpell), "CastSpell")]
+        static void OldPillowSpell_CastSpell(OldPillowSpell __instance, bool __result)
+        {
+            if (__result)
+            {
+                //Change modifier type
+                ModifyBumboModifierObjectType(__instance.spellName, ref __instance.app.model.characterSheet, false);
+            }
+        }
+
+        static int ModifyBumboModifierObjectType(SpellName spellName, ref CharacterSheet characterSheet, bool _round)
 		{
 			if (characterSheet != null)
 			{
