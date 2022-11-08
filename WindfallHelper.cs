@@ -16,7 +16,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Method goes two children deep when searching for buttons
-        public static void UpdateGamepadMenuButtons(GamepadMenuController gamepadMenuController)
+        public static void UpdateGamepadMenuButtons(GamepadMenuController gamepadMenuController, GameObject cancelButton)
         {
             if (gamepadMenuController == null)
             {
@@ -50,6 +50,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (newOptions.Count > 0)
             {
                 gamepadMenuController.m_Buttons = newOptions.ToArray();
+            }
+
+            //Add cancel button
+            if (cancelButton != null)
+            {
+                gamepadMenuController.m_CancelButton = cancelButton;
             }
         }
     }

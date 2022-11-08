@@ -930,7 +930,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Creating trinket reward display");
             trinketRewardDisplay = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Pickups/Trinket Pickup") as GameObject);
             trinketRewardDisplay.name = "Trinket Display";
             trinketRewardDisplay.transform.position = trinketRewardDisplayPosition;
@@ -957,7 +956,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 trinketRewardDisplaySequence.Kill(true);
             }
 
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Removing trinket reward display");
             if (trinketRewardDisplay != null)
             {
                 trinketRewardDisplaySequence = DOTween.Sequence();
@@ -1007,7 +1005,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             GamepadMenuController gamepadMenuController = cutscenesButton.transform.parent.GetComponent<GamepadMenuController>();
 
-            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController);
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, null);
 
             //Recenter main menu
             RectTransform mainMenuRectTransform = __instance.mainMenu.GetComponent<RectTransform>();
@@ -1236,7 +1234,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             __instance.cutsceneMenu.SetActive(true);
             __instance.mainMenu.SetActive(false);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Cutscene menu from main menu");
             return false;
         }
 
@@ -1246,7 +1243,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             __instance.cutsceneMenu.SetActive(false);
             __instance.mainMenu.SetActive(true);
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Cutscene menu from main menu");
             return false;
         }
 
@@ -1284,7 +1280,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __instance.app.view.goodEnding = true;
                 }
             }
-            Console.WriteLine("[The Legend of Bum-bo: Windfall] Disabling achievements when rewatching cutscenes from the main menu");
             return true;
         }
 

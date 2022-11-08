@@ -133,7 +133,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (optionsMenuPcGamepadMenuController != null)
             {
-                WindfallHelper.UpdateGamepadMenuButtons(optionsMenuPcGamepadMenuController);
+                WindfallHelper.UpdateGamepadMenuButtons(optionsMenuPcGamepadMenuController, null);
             }
 
             //Fix Music/SFX labels acting as buttons
@@ -200,7 +200,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             GamepadMenuController gamepadMenuController = windfallOptionsMenu.AddComponent<GamepadMenuController>();
 
-            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController);
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, windfallOptionsMenu.transform.Find("Cancel")?.gameObject);
         }
 
         private static void InitializeButton(GameObject buttonObject, UnityAction unityAction, TMP_FontAsset font, GamepadMenuOptionSelection.eInjectDots eInjectDots)
