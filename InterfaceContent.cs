@@ -166,27 +166,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     component.transform.localScale = new Vector3(1.25f, 0f, 1.25f);
                     reward = component.gameObject;
 
-                    int coin_result;
-
-                    float randomCoinResult = UnityEngine.Random.Range(0f, 1f);
-                    if (randomCoinResult > 0.95f)
-                    {
-                        coin_result = 25;
-                    }
-                    else if (randomCoinResult > 0.80f)
-                    {
-                        coin_result = 15;
-                    }
-                    else if (randomCoinResult > 0.55f)
-                    {
-                        coin_result = 10;
-                    }
-                    else
-                    {
-                        coin_result = 3;
-                    }
-
-                    coin_result += UnityEngine.Random.Range(-2, 3);
+                    int coin_result = UnityEngine.Random.Range(8, 11);
 
                     if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
                     {
