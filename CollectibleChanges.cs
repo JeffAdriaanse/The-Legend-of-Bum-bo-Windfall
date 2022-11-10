@@ -2155,7 +2155,23 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		public static int MinimumManaCost(SpellElement spell)
 		{
-			return minimumManaCosts.TryGetValue(spell.spellName, out int value) ? value : Mathf.Max(2, Mathf.RoundToInt(GetManaCost(spell) / 2));
+			if (minimumManaCosts.TryGetValue(spell.spellName, out int value))
+			{
+				return value;
+            }
+
+            float minimumManaCostFloat = (float)GetManaCost(spell) / 2f;
+            int minimumManaCost;
+            if (minimumManaCostFloat - Mathf.Floor(minimumManaCostFloat) <= 0.5f)
+            {
+                minimumManaCost = Mathf.FloorToInt(minimumManaCostFloat);
+            }
+            else
+            {
+                minimumManaCost = Mathf.CeilToInt(minimumManaCostFloat);
+            }
+
+			return Mathf.Max(2, minimumManaCost);
 		}
 
 		public static Dictionary<SpellName, int> minimumManaCosts = new Dictionary<SpellName, int>()
