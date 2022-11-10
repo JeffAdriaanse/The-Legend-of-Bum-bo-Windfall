@@ -31,8 +31,45 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return UnityEngine.Random.Range(0f, 1f) < remainder ? floor + 1 : floor;
 		}
 
-		//Patch: Reduces ExorcismKit enemy heal from 2 to 1
-		[HarmonyPrefix, HarmonyPatch(typeof(ExorcismKitSpell), "HurtAndHeal")]
+        //Patch: Orange Belt effect now stacks when activating the spell multiple times in one turn
+		//Orange Belt now deals two damage per use
+        [HarmonyPrefix, HarmonyPatch(typeof(OrangeBeltSpell), "CastSpell")]
+        static void OrangeBeltSpell_CastSpell_Prefix(OrangeBeltSpell __instance, out bool __state)
+        {
+			//Track wether this is the first use
+            __state = true;
+            if (__instance.app.controller.ModifierObjectExists(__instance.spellName))
+			{
+				__state = false;
+            }
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(OrangeBeltSpell), "CastSpell")]
+        static void OrangeBeltSpell_CastSpell_Postfix(OrangeBeltSpell __instance, bool __result, bool __state)
+        {
+			if (__result && WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			{
+				CharacterSheet characterSheet = __instance.app.model.characterSheet;
+
+				if (characterSheet == null || characterSheet.bumboModifierObjects == null)
+				{
+					return;
+				}
+
+				float damageIncrease = 2f;
+				if (__state) damageIncrease = 1f;
+
+                for (int modifierCounter = 0; modifierCounter < characterSheet.bumboModifierObjects.Count; modifierCounter++)
+                {
+                    if (characterSheet.bumboModifierObjects[modifierCounter].spellName == __instance.spellName)
+                    {
+						characterSheet.bumboModifierObjects[modifierCounter].counterDamage += damageIncrease;
+                    }
+                }
+            }
+        }
+
+        //Patch: Reduces ExorcismKit enemy heal from 2 to 1
+        [HarmonyPrefix, HarmonyPatch(typeof(ExorcismKitSpell), "HurtAndHeal")]
 		static bool ExorcismKitSpell_HurtAndHeal(ExorcismKitSpell __instance, ref List<Enemy> enemies_to_heal, ref Enemy enemy_to_hurt)
 		{
             if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
@@ -2107,8 +2144,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{ SpellName.KrampusCross, 5 },
 			{ SpellName.Lemon, 5 },
 			{ SpellName.MagicMarker, 6 },
-			{ SpellName.MamaFoot, 13 },
-			{ SpellName.Pentagram, 7 },
+            { SpellName.MamaFoot, 13 },
+            { SpellName.OrangeBelt, 3 },
+            { SpellName.Pentagram, 7 },
             { SpellName.Pliers, 5 },
             { SpellName.RockFriends, 5 },
             { SpellName.TimeWalker, 16 },
