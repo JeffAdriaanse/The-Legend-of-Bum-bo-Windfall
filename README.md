@@ -1,21 +1,29 @@
 # The Legend of Bum-bo: Windfall
 The Legend of Bum-bo: Windfall is a mod for the Legend of Bum-bo that fixes bugs, adds new features, and adjusts game balance.
 
-To see the change list, visit the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
+To see mod updates and change lists, visit the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
+
+The Legend of Bum-bo does not have official modding support. This mod requires BepInEx, a modding framework that allows for patching games made in the Unity engine.
 
 ## Installation
-1. Follow these [instructions](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_mono.html) to install BepInEx in The Legend of Bum-bo game folder (The Legend of Bum-bo has a 64-bit executable). If you have the Steam version of The Legend of Bum-bo, you can find the game root folder by clicking `Browse local files` in the options menu on the game's page in your Steam library.
-2. Download `The.Legend.of.Bum-bo_Windfall.zip` file from the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
-3. Unzip the mod file and move the folder entitled `The Legend of Bum-bo_Windfall` into the `Bepinex/Plugins` directory in the game folder.
+If you already have BepInEx 5.4 installed for The Legend of Bum-bo, skip steps 1-3.
 
-To uninstall the mod, simply remove the mod folder from `Bepinex/Plugins`.
+1. Download `BepInEx_x64_5.4.21.0.zip` from the [BepInEx 5.4.21 release page](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.21).
+2. Extract the contents of `BepInEx_x64_5.4.21.0.zip` into The Legend of Bum-bo root folder. You can find the root folder by clicking `Manage > Browse local files` in the options menu on the game's page in your Steam library.
+3. Run the game once. This generates BepInEx configuration files.
+4. Download `The.Legend.of.Bum-bo_Windfall.zip` from the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
+5. Extract the contents of `The.Legend.of.Bum-bo_Windfall.zip` into the `Bepinex/Plugins` directory in the game folder. Replace files if prompted.
 
-## Saved State
-The Legend of Bum-bo: Windfall changes how the game saves and loads your run. This can sometimes cause issues if a run is saved in vanilla and continued in Windfall or vice versa. If your saved run doesn't work after switching versions, switching back to the game version you started the run with will fix the issue.
+To update the mod, repeat steps 4 and 5 with the new mod release.
 
-To avoid this altogether, I recommend finishing your current run before installing or uninstalling The Legend of Bum-bo: Windfall.
+To uninstall the mod, remove `The Legend of Bum-bo_Windfall` folder from `Bepinex/Plugins`.
 
-Your permanent progression (achievements and unlockables) is not modified by The Legend of Bum-bo: Windfall and will not be lost when switching versions.
+## Disclaimers
+The Legend of Bum-bo: Windfall is made for the Steam version of the vanilla game. It has not been tested with the GOG or Epic Games versions, and might not work properly with them.
+
+Text that is added or modified by The Legend of Bum-bo: Windfall is not translated and will only display in the English language.
+
+Credit to Jasper Flick for anti-aliasing post processing assets used in the mod (catlikecoding.com).
 
 ## Bug Reports
 If you encounter a bug, please report it by opening an issue on the [Issues](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/issues) page or by contacting me (see below).
