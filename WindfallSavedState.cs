@@ -487,6 +487,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 				return;
 			}
 
+			if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			{
+                return;
+            }
+
 			XmlNode damageNode = windfallDoc.SelectSingleNode("/save/damageTaken");
 			if (damageNode == null)
 			{
