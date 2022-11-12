@@ -1121,9 +1121,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
 		static bool SpellView_OnMouseDown(SpellView __instance, bool ___exit, SpellElement ___spell)
 		{
-			if (!__instance.app.model.paused && !___exit && ___spell != null && !__instance.disableObject.activeSelf && __instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent" && currentTrinket != null)
+			if (!__instance.app.model.paused && __instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent" && currentTrinket != null)
 			{
 				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.Button, SoundsView.eAudioSlot.Default, false);
+
+				if (___exit || ___spell == null || __instance.disableObject.activeSelf)
+				{
+					return false;
+				}
 
 				CollectibleFixes.UseTrinket_Use_Prefix(currentTrinket, currentTrinketIndex);
 				CollectibleFixes.UseTrinket_Use_Base_Method(currentTrinket, currentTrinketIndex);
