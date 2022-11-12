@@ -1529,7 +1529,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPostfix, HarmonyPatch(typeof(ManaPrickTrinket), "QualifySpell")]
 		static void ManaPrickTrinket_QualifySpell(ManaPrickTrinket __instance, int _spell_index)
 		{
-			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app, false);
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+
+            int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app, false);
 
 			//Enable spell if cost reduction is above zero
 			if (costReduction > 0)
@@ -1544,7 +1549,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(ManaPrickTrinket), "UpdateSpell")]
 		static bool ManaPrickTrinket_UpdateSpell(ManaPrickTrinket __instance, int _spell_index)
 		{
-			SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
+            SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
 
 			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app, false);
 
@@ -1573,6 +1583,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddManaPrick")]
 		static bool Shop_AddManaPrick(Shop __instance, ref List<TrinketName> ___needles)
 		{
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+			}
+
 			short num = 0;
 			while ((int)num < __instance.app.model.characterSheet.spells.Count)
 			{
@@ -1617,7 +1632,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 				AccessTools.Method(typeof(Shop), "AddChargePrick").Invoke(__instance, null);
 				AccessTools.Method(typeof(Shop), "AddRandomPrick").Invoke(__instance, null);
 				//Mana Needle
-				AccessTools.Method(typeof(Shop), "AddManaPrick").Invoke(__instance, null);
+				if (WindfallPersistentDataController.LoadData().implementBalanceChanges || __instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.TheDead)
+				{
+					AccessTools.Method(typeof(Shop), "AddManaPrick").Invoke(__instance, null);
+				}
 
 				if (___needles.Count > 0)
 				{
