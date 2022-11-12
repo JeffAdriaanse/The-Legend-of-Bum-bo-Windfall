@@ -976,7 +976,28 @@ namespace The_Legend_of_Bum_bo_Windfall
 				}
 
 				//Enable/disable spells
-				if (CalculateCostReduction(spellCounter, 0.15f, __instance.app, false) > 0)
+				bool enableSpell;
+				if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+				{
+                    enableSpell = false;
+                    SpellElement spellElement = __instance.app.model.characterSheet.spells[spellCounter];
+                    if (!spellElement.IsChargeable)
+                    {
+                        for (int costCounter = 0; costCounter < 6; costCounter++)
+                        {
+                            if (spellElement.Cost[costCounter] > 2)
+                            {
+								enableSpell = true;
+                            }
+                        }
+                    }
+                }
+                else
+				{
+					enableSpell = CalculateCostReduction(spellCounter, 0.15f, __instance.app, false) > 0;
+                }
+
+				if (enableSpell)
 				{
 					__instance.app.view.spells[spellCounter].EnableSpell();
 					anyActiveSpells = true;
@@ -1101,9 +1122,33 @@ namespace The_Legend_of_Bum_bo_Windfall
 				switch (currentTrinket.trinketName)
 				{
 					case TrinketName.RainbowTick:
+
 						SpellElement spellElement = ___spell;
 
-						int costReduction = CalculateCostReduction(__instance.spellIndex, 0.15f, __instance.app, false);
+                        if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                        {
+                            if (!spellElement.IsChargeable)
+                            {
+								List<int> availableManaTypeIndices = new List<int>();
+
+                                for (int costCounter = 0; costCounter < 6; costCounter++)
+                                {
+                                    if (spellElement.Cost[costCounter] > 2)
+                                    {
+                                        availableManaTypeIndices.Add(costCounter);
+                                    }
+                                }
+
+								if (availableManaTypeIndices.Count > 0)
+								{
+                                    int index = UnityEngine.Random.Range(0, availableManaTypeIndices.Count);
+									spellElement.Cost[index] -= 1;
+                                }
+                            }
+                            break;
+                        }
+
+                        int costReduction = CalculateCostReduction(__instance.spellIndex, 0.15f, __instance.app, false);
 
 						for (int j = costReduction; j > 0; j--)
 						{
