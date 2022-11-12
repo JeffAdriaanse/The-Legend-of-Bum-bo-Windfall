@@ -35,6 +35,8 @@ The Legend of Bum-bo: Windfall is made for the Steam version of the vanilla game
 
 Text that is added or modified by The Legend of Bum-bo: Windfall is not translated and will only display in the English language.
 
+Starting a new game without finishing your saved game will reset your win streak.
+
 Credit to Jasper Flick for anti-aliasing post processing assets used in the mod (catlikecoding.com).
 
 ## Bug Reports
