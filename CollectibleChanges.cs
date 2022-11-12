@@ -2035,7 +2035,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SetSpellCostForTheDeadsAttackFly")]
 		static bool BumboController_SetSpellCostForTheDeadsAttackFly(BumboController __instance, SpellElement _spell, bool[] _ignore_mana, ref SpellElement __result)
 		{
-			__result = __instance.SetSpellCost(_spell, _ignore_mana);
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return true;
+            }
+
+            __result = __instance.SetSpellCost(_spell, _ignore_mana);
 			return false;
 		}
 
