@@ -1060,8 +1060,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 					enabledSpells[spellCounter] = false;
 				}
 
-				//Enable/disable spells
-				if (__instance.app.model.characterSheet.spells[spellCounter].IsChargeable && __instance.app.model.characterSheet.spells[spellCounter].requiredCharge > 0)
+                int minimumCharge;
+                if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                {
+                    minimumCharge = 0;
+                }
+                else
+                {
+                    minimumCharge = 1;
+                }
+
+                //Enable/disable spells
+                if (__instance.app.model.characterSheet.spells[spellCounter].IsChargeable && __instance.app.model.characterSheet.spells[spellCounter].requiredCharge > minimumCharge)
 				{
 					__instance.app.view.spells[spellCounter].EnableSpell();
 					anyActiveSpells = true;
@@ -1179,8 +1189,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 						}
 						break;
 					case TrinketName.BrownTick:
-						//Reduce recharge time
-						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge > 0)
+
+                        int minimumCharge;
+                        if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                        {
+                            minimumCharge = 0;
+                        }
+                        else
+                        {
+                            minimumCharge = 1;
+                        }
+
+                        //Reduce recharge time
+                        if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge > minimumCharge)
 						{
 							__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge--;
 						}
