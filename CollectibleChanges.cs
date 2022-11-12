@@ -1404,6 +1404,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(SleightOfHandSpell), "CastSpell")]
 		static bool SleightOfHandSpell_CastSpell(SleightOfHandSpell __instance, ref bool __result)
 		{
+			if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			{
+				return true;
+			}
+
 			if (!CastSpellDummy_SleightOfHandSpell(__instance))
 			{
 				__result = false;
