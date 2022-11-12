@@ -5,6 +5,18 @@ To see mod updates and change lists, visit the [Releases](https://github.com/Shp
 
 The Legend of Bum-bo does not have official modding support. This mod requires BepInEx, a modding framework that allows for patching games made in the Unity engine.
 
+## Features
+* Win streak counter
+* Ability to rewatch cutscenes from the main menu
+* Improvements to the save and continue system for in progress runs
+* Many balance changes, and the option to disable them
+* Fixes for over 100 bugs, including...
+  * Achievements not unlocking
+  * Unlock popups displaying the wrong text
+  * Price Tag (and other spells) softlocking the game
+  * The user interface breaking in a variety of situations
+  * And many other bugs!
+
 ## Installation
 If you already have BepInEx 5.4 installed for The Legend of Bum-bo, skip steps 1-3.
 
