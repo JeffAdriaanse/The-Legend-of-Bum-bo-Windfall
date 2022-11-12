@@ -1615,6 +1615,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SetSpellCost", new Type[] { typeof(SpellElement), typeof(bool[]) })]
 		static bool BumboController_SetSpellCost(BumboController __instance, SpellElement _spell, bool[] _ignore_mana, ref SpellElement __result)
 		{
+			if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			{
+				return true;
+			}
+
 			if (_spell.spellName.ToString().Contains("Converter"))
 			{
 				Block.BlockType blockType = Block.BlockType.Bone;
