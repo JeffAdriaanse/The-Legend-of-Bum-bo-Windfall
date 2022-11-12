@@ -1298,6 +1298,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 		[HarmonyPrefix, HarmonyPatch(typeof(GoldenTickSpell), "CastSpell")]
 		static bool GoldenTickSpell_CastSpell(GoldenTickSpell __instance, ref bool __result)
 		{
+			if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			{
+				return true;
+			}
+
 			if (!CastSpellDummy_GoldenTickSpell(__instance))
 			{
 				__result = false;
