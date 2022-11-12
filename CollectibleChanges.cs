@@ -28,8 +28,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 			int floor = Mathf.FloorToInt(effectValue);
 			float remainder = effectValue - floor;
 
-			return UnityEngine.Random.Range(0f, 1f) < remainder ? floor + 1 : floor;
-		}
+			if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
+			{
+                return UnityEngine.Random.Range(0f, 1f) < remainder ? floor + 1 : floor;
+            }
+
+			return floor > 0 || UnityEngine.Random.Range(0f, 1f) < remainder ? 1 : 0;
+        }
 
         //Patch: Orange Belt effect now stacks when activating the spell multiple times in one turn
 		//Orange Belt now deals two damage per use
