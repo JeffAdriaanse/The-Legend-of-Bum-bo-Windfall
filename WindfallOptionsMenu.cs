@@ -196,7 +196,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 InitializeButton(windfallOptionsMenu.transform.Find("Cancel").gameObject, CloseWindfallOptionsMenu, LocalizationModifier.edFont, GamepadMenuOptionSelection.eInjectDots.Both);
 
                 //Change header font
-                ChangeFont(windfallOptionsMenu.transform.Find("Header").gameObject.GetComponent<TextMeshProUGUI>(), LocalizationModifier.edFont);
+                LocalizationModifier.ChangeFont(windfallOptionsMenu.transform.Find("Header").gameObject.GetComponent<TextMeshProUGUI>(), null, LocalizationModifier.edFont);
             }
             GamepadMenuController gamepadMenuController = windfallOptionsMenu.AddComponent<GamepadMenuController>();
 
@@ -220,14 +220,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             gamepadMenuOptionSelection.m_SelectionObjects = new GameObject[0];
 
             TextMeshProUGUI textMeshProUGUI = buttonObject.GetComponent<TextMeshProUGUI>();
-            ChangeFont(textMeshProUGUI, font);
-        }
-        private static void ChangeFont(TextMeshProUGUI textMeshProUGUI, TMP_FontAsset font)
-        {
-            if (font != null && textMeshProUGUI != null)
-            {
-                textMeshProUGUI.font = font;
-            }
+            LocalizationModifier.ChangeFont(textMeshProUGUI, null, font);
         }
 
         private static void ToggleBalanceChanges()

@@ -81,6 +81,21 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        public static void ChangeFont(TextMeshProUGUI textMeshProUGUI, TextMeshPro textMeshPro, TMP_FontAsset font)
+        {
+            if (font != null)
+            {
+                if (textMeshProUGUI != null)
+                {
+                    textMeshProUGUI.font = font;
+                }
+                else if (textMeshPro != null)
+                {
+                    textMeshPro.font = font;
+                }
+            }
+        }
+
         private static void ModifyEnglish()
         {
             foreach (string term in EnglishTextModifications.Keys)
