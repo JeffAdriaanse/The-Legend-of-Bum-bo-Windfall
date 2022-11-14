@@ -3,6 +3,7 @@ using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using System.IO;
+using System.Collections.Generic;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -39,7 +40,31 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         static void LoadAssets()
         {
-            assetBundle = AssetBundle.LoadFromFile(Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfall");
+            foreach (string path in AssetBundlePaths)
+            {
+                if (File.Exists(path))
+                {
+                    assetBundle = AssetBundle.LoadFromFile(Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfall");
+                }
+                if (assetBundle != null)
+                {
+                    break;
+                }
+            }
+        }
+
+        static List<string> AssetBundlePaths
+        {
+            get
+            {
+                List<string> paths = new List<string>()
+                {
+                    Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfall",
+                    Directory.GetCurrentDirectory() + "/Bepinex/plugins/windfall",
+                };
+
+                return paths;
+            }
         }
     }
 }
