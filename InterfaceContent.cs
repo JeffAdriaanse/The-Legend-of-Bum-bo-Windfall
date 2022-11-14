@@ -85,13 +85,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             for (short num = 0; num < 4; num += 1)
             {
-                if ((int)num < __instance.app.model.characterSheet.trinkets.Count)
+                if (trinketGlitches[num] != null)
                 {
-                    trinketGlitches[num].SetActive(__instance.app.model.trinketIsFake[num]);
-                }
-                else
-                {
-                    trinketGlitches[num].SetActive(false);
+                    if ((int)num < __instance.app.model.characterSheet.trinkets.Count)
+                    {
+                        trinketGlitches[num].SetActive(__instance.app.model.trinketIsFake[num]);
+                    }
+                    else
+                    {
+                        trinketGlitches[num].SetActive(false);
+                    }
                 }
             }
         }
