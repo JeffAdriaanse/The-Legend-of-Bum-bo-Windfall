@@ -20,6 +20,23 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(InterfaceContent));
         }
 
+        //Patch: Get app for bumbo modifier display (test)
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init_ModifierDisplay(BumboController __instance)
+        {
+            BumboModifierIndication.GetApp(__instance.app);
+        }
+
+        //Patch: Display bumbo modifiers (test)
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellElement), "CastSpell")]
+        static void SpellElement_CastSpell(SpellElement __instance, bool __result)
+        {
+            if (__result)
+            {
+                __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
+            }
+        }
+
         //Patch: Add trinket glitches on GUISide Awake
         [HarmonyPostfix, HarmonyPatch(typeof(GUISide), "Awake")]
         static void GUISide_Awake(GUISide __instance)
@@ -1288,7 +1305,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Set up map menu
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
-        static void BumboController_Init(BumboController __instance)
+        static void BumboController_Init_MapMenu(BumboController __instance)
         {
             MapMenu.CreateMapMenu(__instance);
         }
