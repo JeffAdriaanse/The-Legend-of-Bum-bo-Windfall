@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Assertions;
-using static CharacterSheet;
+using UnityEngine.UIElements;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -17,11 +18,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         static List<BumboModifier> bumboModifiers;
 
-        static readonly Vector3 baseDisplayPosition = new Vector3(-0.42f, 0.21f, 0.70f);
+        static readonly Vector3 baseDisplayPosition = new Vector3(-0.42f, 0.25f, 0.70f);
         static readonly float displayIndexOffset = 0.12f;
 
         static readonly Color outlineColor = Color.white;
-        static readonly float outlineWidth = 10f;
+        static readonly float outlineWidth = 0.3f;
 
         //Make UpdateModifiers method
         //Call it after the following methods:
@@ -165,8 +166,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (_value == null)
                 {
                     bumboModifiers.Remove(existingModifier);
-                    UnityEngine.Object.Destroy(existingModifier.displayObject);
-                    existingModifier = null;
+                    existingModifier.HideModifier();
                     return null;
                 }
 
@@ -194,13 +194,30 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
+            bool newModifier = false;
             if (bumboModifier.displayObject == null)
             {
                 CreateModifierDisplay(bumboModifier);
+                newModifier = true;
             }
 
             //Update modifier display elements and position
             UpdateModifierDisplay(bumboModifier, index);
+
+            Transform modifierDisplayTransform = bumboModifier.displayObject?.transform;
+            if (modifierDisplayTransform != null)
+            {
+                Vector3 targetPostition = new Vector3(modifierDisplayTransform.localPosition.x, baseDisplayPosition.y - (displayIndexOffset * index), modifierDisplayTransform.localPosition.z);
+                if (newModifier)
+                {
+                    modifierDisplayTransform.localPosition = targetPostition;
+                    bumboModifier.ShowModifier();
+                }
+                else
+                {
+                    bumboModifier.MoveModifier(targetPostition);
+                }
+            }
         }
 
         static void CreateModifierDisplay(BumboModifier bumboModifier)
@@ -210,12 +227,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             Transform modifierDisplayTransform = bumboModifier.displayObject.transform;
             modifierDisplayTransform.localPosition = baseDisplayPosition;
-            modifierDisplayTransform.localEulerAngles = new Vector3(7f, 180f, 0.71f);
+            modifierDisplayTransform.localEulerAngles = new Vector3(0f, 180f, 0f);
             modifierDisplayTransform.localScale = new Vector3(0.05f, 0.05f, 0.07f);
 
             bumboModifier.modifierDisplayCollectibleTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("ModifierDisplayCollectible"));
             bumboModifier.modifierDisplayBackTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("ModifierDisplayBack"));
             bumboModifier.modifierDisplayIconTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("ModifierDisplayIcon"));
+            bumboModifier.modifierDisplayValueTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("Value"));
             bumboModifier.effectValueTransform = bumboModifier?.displayObject?.transform.Find("EffectValue");
 
             //Set effect value
@@ -237,7 +255,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Material iconMaterial = new Material(app.model.spellModel.Icon(spellElement.Category, true, spellElement.texturePage));
                 if (iconMaterial != null)
                 {
-                    iconMaterial.SetTextureOffset("_MainTex", new Vector2(0f, -0.5f));
+                    iconMaterial.SetTextureOffset("_MainTex", spellElement.IconPosition);
                     newMaterials.Add(iconMaterial);
                 }
 
@@ -281,12 +299,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (bumboModifier == null)
             {
                 return;
-            }
-
-            Transform modifierDisplayTransform = bumboModifier.displayObject?.transform;
-            if (modifierDisplayTransform != null)
-            {
-                modifierDisplayTransform.localPosition = new Vector3(modifierDisplayTransform.localPosition.x, baseDisplayPosition.y - (displayIndexOffset * index), modifierDisplayTransform.localPosition.z);
             }
 
             TextMeshPro effectValueTextMeshPro = bumboModifier.effectValueTransform.GetComponent<TextMeshPro>();
@@ -358,6 +370,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     class BumboModifier
     {
+        static readonly float horizontalOffset = 0.4f;
+        static readonly float tweenDuration = 0.3f;
+
         public enum ModifierCategory
         {
             None,
@@ -379,9 +394,73 @@ namespace The_Legend_of_Bum_bo_Windfall
         public Transform modifierDisplayCollectibleTransform;
         public Transform modifierDisplayBackTransform;
         public Transform modifierDisplayIconTransform;
+        public Transform modifierDisplayValueTransform;
         public Transform effectValueTransform;
 
         public Transform modifierDisplayIconObjectTransform;
+
+        public Sequence movementSequence;
+
+        public void ShowModifier()
+        {
+            if (displayObject == null)
+            {
+                return;
+            }
+
+            if (movementSequence != null && movementSequence.IsPlaying())
+            {
+                movementSequence.Kill(true);
+            }
+            Vector3 oldPosition = displayObject.transform.localPosition;
+            displayObject.transform.localPosition -= new Vector3(horizontalOffset, 0f, 0f);
+
+            movementSequence = DOTween.Sequence();
+            movementSequence.Append(displayObject.transform.DOLocalMove(oldPosition, tweenDuration).SetEase(Ease.InOutQuad));
+        }
+
+        public void HideModifier()
+        {
+            if (displayObject == null)
+            {
+                return;
+            }
+            
+            if (movementSequence != null && movementSequence.IsPlaying())
+            {
+                movementSequence.Kill(true);
+            }
+
+            Vector3 position = displayObject.transform.localPosition + new Vector3(-horizontalOffset, 0f, 0f);
+
+            movementSequence.Append(displayObject.transform.DOLocalMove(position, tweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.AppendCallback(delegate
+            {
+                UnityEngine.Object.Destroy(displayObject);
+            });
+        }
+
+        public void MoveModifier(Vector3 newLocalPosition)
+        {
+            if (displayObject == null)
+            {
+                return;
+            }
+
+            if (movementSequence != null && movementSequence.IsPlaying())
+            {
+                movementSequence.Kill(true);
+            }
+            movementSequence = DOTween.Sequence();
+
+            Vector3 position = newLocalPosition;
+            if (position == Vector3.zero)
+            {
+                position = displayObject.transform.localPosition;
+            }
+
+            movementSequence.Append(displayObject.transform.DOLocalMove(position, tweenDuration).SetEase(Ease.InOutQuad));
+        }
 
         public BumboModifier(string _source, SpellName _spellSource, TrinketName _trinketSource, string _value)
         {
