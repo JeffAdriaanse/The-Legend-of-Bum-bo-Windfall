@@ -16,6 +16,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(CollectibleFixes));
         }
 
+        //Patch: Removes ChargeSpell from BossDyingEvent (function is being moved to GrabBossRewardEvent)
+        [HarmonyPrefix, HarmonyPatch(typeof(BossDyingEvent), nameof(BossDyingEvent.NextEvent))]
+        static bool BossDyingEvent_NextEvent(BossDyingEvent __instance, ref BumboEvent __result)
+        {
+            __result = new GrabBossRewardEvent();
+            return false;
+        }
+        //Patch: Adds ChargeSpell to GrabBossRewardEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(GrabBossRewardEvent), nameof(GrabBossRewardEvent.Execute))]
+        static void GrabBossRewardEvent_Execute(GrabBossRewardEvent __instance)
+        {
+            int spellCounter = 0;
+            while (spellCounter < __instance.app.model.characterSheet.spells.Count)
+            {
+                __instance.app.model.characterSheet.spells[spellCounter].ChargeSpell();
+                spellCounter += 1;
+            }
+        }
+
         //Patch: Prevents glitched trinkets from randomizing a second time when starting a chapter or reloading a save
         //Specifically, the method will be aborted if 'goIdle' is true (which is the case when roomStartEvent is triggered by floorStartEvent, not moveIntoRoomEvent)
         //Also prevents glitched trinkets from randomizing the first time when reloading a save so as to not overwrite loaded glitched trinkets
