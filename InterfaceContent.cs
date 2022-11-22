@@ -20,21 +20,51 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(InterfaceContent));
         }
 
-        //Patch: Get app for bumbo modifier display (test)
+        //Patch: Get app for bumbo modifier display
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
         static void BumboController_Init_ModifierDisplay(BumboController __instance)
         {
             BumboModifierIndication.GetApp(__instance.app);
         }
 
-        //Patch: Display bumbo modifiers (test)
+        //Patch: Display bumbo modifiers on RoomStartEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(RoomStartEvent), "Execute")]
+        static void RoomStartEvent_Execute_ModifierDisplay(RoomStartEvent __instance)
+        {
+            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
+        }
+        //Patch: Display bumbo modifiers on NewRoundEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(NewRoundEvent), "Execute")]
+        static void NewRoundEvent_Execute_ModifierDisplay(NewRoundEvent __instance)
+        {
+            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
+        }
+        //Patch: Display bumbo modifiers on CastSpell
         [HarmonyPostfix, HarmonyPatch(typeof(SpellElement), "CastSpell")]
-        static void SpellElement_CastSpell(SpellElement __instance, bool __result)
+        static void SpellElement_CastSpell_ModifierDisplay(SpellElement __instance, bool __result)
         {
             if (__result)
             {
                 __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
             }
+        }
+        //Patch: Display bumbo modifiers on TakeDamage
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "TakeDamage")]
+        static void BumboController_TakeDamage_ModifierDisplay(BumboController __instance)
+        {
+            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
+        }
+        //Patch: Display bumbo modifiers on Enemy Hurt
+        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), "Hurt")]
+        static void Enemy_Hurt_ModifierDisplay(Enemy __instance)
+        {
+            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
+        }
+        //Patch: Display bumbo modifiers on NextComboEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(NextComboEvent), "NextEvent")]
+        static void NextComboEvent_NextEvent_ModifierDisplay(NextComboEvent __instance)
+        {
+            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
         }
 
         //Patch: Add trinket glitches on GUISide Awake

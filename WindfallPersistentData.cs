@@ -12,6 +12,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             winCount = 0;
 
+            expandModifiers = true;
+
             implementBalanceChanges = true;
 
             antiAliasing = true;
@@ -21,11 +23,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public int winCount;
 
+        public bool expandModifiers;
+
+        public bool implementBalanceChanges;
+
         public bool antiAliasing;
         public bool depthOfField;
         public bool motionBlur;
-
-        public bool implementBalanceChanges;
     }
 
     public static class WindfallPersistentDataController
