@@ -36,8 +36,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return floor > 0 || UnityEngine.Random.Range(0f, 1f) < remainder ? 1 : 0;
         }
 
+		//Patch: Fixes Dead Dove having a preset mana cost
+        [HarmonyPostfix, HarmonyPatch(typeof(DeadDoveSpell), MethodType.Constructor)]
+        static void DeadDoveSpell_Constructor(DeadDoveSpell __instance)
+        {
+            __instance.manaSize = SpellElement.ManaSize.M;
+            __instance.setCost = true;
+        }
+
         //Patch: Orange Belt effect now stacks when activating the spell multiple times in one turn
-		//Orange Belt now deals two damage per use
+        //Orange Belt now deals two damage per use
         [HarmonyPrefix, HarmonyPatch(typeof(OrangeBeltSpell), "CastSpell")]
         static void OrangeBeltSpell_CastSpell_Prefix(OrangeBeltSpell __instance, out bool __state)
         {
