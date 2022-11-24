@@ -159,9 +159,27 @@ namespace The_Legend_of_Bum_bo_Windfall
             short num = 0;
             while (num < list.Count)
             {
-                if (list[num] != null && (list[num].GetComponent<Enemy>().alive || list[num].GetComponent<Enemy>().isPoop))
+                if (list[num] != null && (list[num].alive || list[num].isPoop))
                 {
-                    list[num].GetComponent<Enemy>().Hurt(__instance.app.model.characterSheet.getPuzzleDamage() + 3, Enemy.AttackImmunity.ReducePuzzleDamage, null, -1);
+                    list[num].Hurt(__instance.app.model.characterSheet.getPuzzleDamage() + 3, Enemy.AttackImmunity.ReducePuzzleDamage, null, -1);
+                }
+                num += 1;
+            }
+            return false;
+        }
+
+        //Patch: Fixes Mega Boogie tile combo sometimes not boogering enemies when used in conjunction with Sinus Infection (it would modify the Enemies list while looping through it)
+        [HarmonyPrefix, HarmonyPatch(typeof(BoogerMegaAttackEvent), "AttackEnemy")]
+        static bool BoogerMegaAttackEvent_AttackEnemy(BoogerMegaAttackEvent __instance)
+        {
+            List<Enemy> list = new List<Enemy>();
+            list.AddRange(__instance.app.model.enemies);
+            short num = 0;
+            while (num < list.Count)
+            {
+                if (list[num] != null && list[num].alive)
+                {
+                    list[num].Booger(2);
                 }
                 num += 1;
             }
