@@ -6,14 +6,14 @@ To see mod updates and change lists, visit the [Releases](https://github.com/Shp
 The Legend of Bum-bo does not have official modding support. This mod requires BepInEx, a modding framework that allows for patching games made in the Unity engine.
 
 ## Features
-* Win streak counter
-* Ability to rewatch cutscenes from the main menu
+* A win streak counter
+* The ability to rewatch cutscenes from the main menu
 * Improvements to the save and continue system for in progress runs
-* Many balance changes, and the option to disable them
+* Many [balance changes](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/wiki/Balance-Changes), and the option to disable them
 * Fixes for over 100 bugs, including...
   * Achievements not unlocking
   * Unlock popups displaying the wrong text
-  * Price Tag (and other spells) softlocking the game
+  * Price Tag softlocking the game
   * The user interface breaking in a variety of situations
   * And many other bugs!
 
@@ -31,7 +31,7 @@ To update the mod, repeat steps 4 and 5 with the new mod release.
 To uninstall the mod, remove `The Legend of Bum-bo_Windfall` folder from `Bepinex/Plugins`.
 
 ## Disclaimers
-The Legend of Bum-bo: Windfall is made for the Steam version of the vanilla game. It has not been tested with the GOG or Epic Games versions, and might not work properly with them.
+The Legend of Bum-bo: Windfall is made for the Steam version of the vanilla game, although it should work with the GOG and Epic Games versions as well.
 
 Text that is added or modified by The Legend of Bum-bo: Windfall is not translated and will only display in the English language.
 
@@ -43,6 +43,5 @@ Credit to Jasper Flick for anti-aliasing post processing assets used in the mod 
 If you encounter a bug, please report it by opening an issue on the [Issues](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/issues) page or by contacting me (see below).
 If possible, try to submit images and/or video demonstrating the bug.
 
-You can also view the console log while the game is running by editing the text file entitled `Bepinex` in the `Bepinex/config` directory and changing `Enabled` to `true` under `[Logging.Console]`. If an error occurs, it will show up in red text in the console.
 ## Contact
 Have questions or comments? Send me an Email at jeff.adriaanse@gmail.com or contact me through Discord at Shpim#0573.
