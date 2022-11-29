@@ -167,6 +167,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		//Patch: Override enemy hurt method to modify damage resistance
 		//Also changes Mysterious Bag effect to stack past 100% and incorporate Luck stat
+		//Also prevents knockback from happening if the enemy is dying
 		[HarmonyPrefix, HarmonyPatch(typeof(Enemy), "Hurt")]
 		static bool Enemy_Hurt(Enemy __instance, ref bool ___knockbackHappened, float damage, Enemy.AttackImmunity _immunity = Enemy.AttackImmunity.SuperAttack, StatusEffect _status_effects = null, int _column = -1)
 		{
@@ -329,10 +330,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 					break;
 				}
 			}
-			if (!___knockbackHappened && (__instance.PermanentKnockback || __instance.app.controller.trinketController.WillKnockback() || _status_effects.knockback >= UnityEngine.Random.Range(0f, 1f)))
-			{
-				__instance.Knockback();
-			}
 			if (_immunity == __instance.attackImmunity && damage > (float)__instance.reducedDamage)
 			{
 				damage = (float)__instance.reducedDamage;
@@ -397,12 +394,21 @@ namespace The_Legend_of_Bum_bo_Windfall
 			if (__instance.alive && __instance.boogerCounter == 0 && __instance.getHealth() > 0f)
 			{
 				__instance.Counter();
-			}
-			___knockbackHappened = false;
+            }
+
+            //Moved knockback below timeToDie
+            if (__instance.app.model.enemies.Contains(__instance) && __instance.getHealth() > 0f)
+			{
+                if (!___knockbackHappened && (__instance.PermanentKnockback || __instance.app.controller.trinketController.WillKnockback() || _status_effects.knockback >= UnityEngine.Random.Range(0f, 1f)))
+                {
+                    __instance.Knockback();
+                }
+            }
+
+            ___knockbackHappened = false;
 
 			return false;
 		}
-
 	}
 
 	public class BinomialDistribution
