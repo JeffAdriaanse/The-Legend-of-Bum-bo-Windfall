@@ -40,7 +40,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(DeadDoveSpell), MethodType.Constructor)]
         static void DeadDoveSpell_Constructor(DeadDoveSpell __instance)
         {
-            __instance.manaSize = SpellElement.ManaSize.M;
             __instance.setCost = true;
         }
 
@@ -2260,8 +2259,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 		{
 			{ SpellName.AttackFly, 6 },
 			{ SpellName.BigSlurp, 11 },
-			{ SpellName.BlenderBlade, 5 },
-			{ SpellName.HairBall, 5 },
+            { SpellName.BlenderBlade, 5 },
+            { SpellName.DeadDove, 4 },
+            { SpellName.HairBall, 5 },
 			{ SpellName.Juiced, 5 },
 			{ SpellName.KrampusCross, 5 },
 			{ SpellName.Lemon, 5 },
