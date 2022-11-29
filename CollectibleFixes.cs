@@ -514,10 +514,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes a softlock that occurs when attempting to counter a null enemy
+        //Also prevents countering dead enemies
         [HarmonyPrefix, HarmonyPatch(typeof(BumboCounterEvent), "Execute")]
         static bool BumboCounterEvent_Execute(BumboCounterEvent __instance)
         {
-            if (__instance.app.model.aiModel.attackingEnemies.Count > 0 && (__instance.app.model.aiModel.attackingEnemies[0] == null || __instance.app.model.aiModel.attackingEnemies[0].health < 0f))
+            if (__instance.app.model.aiModel.attackingEnemies.Count > 0 && (__instance.app.model.aiModel.attackingEnemies[0] == null || __instance.app.model.aiModel.attackingEnemies[0].health <= 0f))
             {
                 //Null check has failed. End event
                 __instance.End();
