@@ -330,10 +330,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 					break;
 				}
 			}
-			if (_immunity == __instance.attackImmunity && damage > (float)__instance.reducedDamage)
-			{
-				damage = (float)__instance.reducedDamage;
-			}
 			damage = (float)__instance.app.model.aiModel.battlefieldEffects[__instance.app.model.aiModel.battlefieldPositionIndex[__instance.position.x, __instance.position.y]].AffectDamage((int)damage);
 			__instance.health -= damage;
 			__instance.app.view.soundsView.PlaySound(SoundsView.eSound.EnemiesHurt, __instance.transform.position, SoundsView.eAudioSlot.Default, true);
