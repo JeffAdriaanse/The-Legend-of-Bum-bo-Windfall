@@ -1033,6 +1033,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Prevents cancel view from disappearing immediately when hiding
         //Also adjusts placement of boss cancel view
+        //Also forces treasure cancel to raise higher when hiding
         [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "Hide")]
         static bool CancelView_Hide_Prefix(CancelView __instance, out bool __state)
         {
@@ -1055,6 +1056,21 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __state = true;
                 return false;
             }
+            else if (__instance.transform.parent.name == "Treasure Room")
+            {
+                __instance.SetColliderActive(false);
+                __instance.animationSequence.Complete(true);
+                __instance.animationSequence = DOTween.Sequence();
+                __instance.animationSequence.Append(ShortcutExtensions.DOLocalMoveY(__instance.transform, 1.75f, 0.25f, false).SetEase(Ease.InOutQuad)).OnComplete(delegate
+                {
+                    __instance.gameObject.SetActive(false);
+                });
+                __instance.animationSequence.timeScale = 0.5f;
+
+                __state = true;
+                return false;
+            }
+
             __state = true;
             return true;
         }
@@ -1071,6 +1087,15 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void CancelView_Show(CancelView __instance, ref bool ease)
         {
             ease = true;
+        }
+        //Patch: Slows treasure room show sequence
+        [HarmonyPostfix, HarmonyPatch(typeof(CancelView), "Show", new Type[] { typeof(Vector3), typeof(bool) })]
+        static void CancelView_Show_Postfix(CancelView __instance, ref bool ease)
+        {
+            if (__instance.transform.parent.name == "Treasure Room")
+            {
+                __instance.animationSequence.timeScale = 0.5f;
+            }
         }
         //Patch: Initialize boss cancel position
         [HarmonyPostfix, HarmonyPatch(typeof(CancelView), "Awake")]
