@@ -36,7 +36,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return floor > 0 || UnityEngine.Random.Range(0f, 1f) < remainder ? 1 : 0;
         }
 
-		//Patch: Fixes Dead Dove having a preset mana cost
+        //Patch: Causes all retaliatory damage effects to always trigger against attacking enemies, regardless of whether Bum-bo was hit
+        //Also fixes Stray Barb effectively having a reduced trigger chance the player has does not also deal retaliatory damage through other effects
+        //Also changes all retaliatory damage effects such that they always deal spell damage
+        [HarmonyPrefix, HarmonyPatch(typeof(EnemiesAttackEvent), "NextEvent")]
+        static void EnemiesAttackEvent_NextEvent(EnemiesAttackEvent __instance)
+        {
+            __instance.app.model.counterAttackType = BumboModel.eCounterAttackType.Spell;
+        }
+
+        //Patch: Fixes Dead Dove having a preset mana cost
         [HarmonyPostfix, HarmonyPatch(typeof(DeadDoveSpell), MethodType.Constructor)]
         static void DeadDoveSpell_Constructor(DeadDoveSpell __instance)
         {
