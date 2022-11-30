@@ -42,7 +42,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(EnemiesAttackEvent), "NextEvent")]
         static void EnemiesAttackEvent_NextEvent(EnemiesAttackEvent __instance)
         {
-            __instance.app.model.counterAttackType = BumboModel.eCounterAttackType.Spell;
+			//Prevent Brown Belt from triggering if Bum-bo wasn't hit
+			foreach (CharacterSheet.BumboModifierObject bumboModifierObject in __instance.app.model.characterSheet.bumboModifierObjects.FindAll(modifierObject => modifierObject.spellName == SpellName.BrownBelt))
+			{
+				bumboModifierObject.blockAndCounter = !__instance.app.model.poopHit;
+			}
+
+			__instance.app.model.counterAttackType = BumboModel.eCounterAttackType.Spell;
         }
 
         //Patch: Fixes Dead Dove having a preset mana cost
