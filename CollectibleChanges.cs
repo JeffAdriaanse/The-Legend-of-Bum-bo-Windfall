@@ -51,6 +51,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 			__instance.app.model.counterAttackType = BumboModel.eCounterAttackType.Spell;
         }
 
+        //Patch: Fixes the enemy phase sometimes briefly pausing before ending if Bum-bo took damage during the enemy phase
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboCounterEvent), "NextEvent")]
+        static void BumboCounterEvent_NextEvent_(BumboCounterEvent __instance)
+        {
+            __instance.app.model.aiModel.returnBumboHurt = false;
+        }
+
         //Patch: Fixes Dead Dove having a preset mana cost
         [HarmonyPostfix, HarmonyPatch(typeof(DeadDoveSpell), MethodType.Constructor)]
         static void DeadDoveSpell_Constructor(DeadDoveSpell __instance)
