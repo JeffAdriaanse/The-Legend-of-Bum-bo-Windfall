@@ -2267,13 +2267,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{ SpellName.Lemon, 5 },
 			{ SpellName.MagicMarker, 6 },
             { SpellName.MamaFoot, 13 },
+            { SpellName.MissingPiece, 8 },
             { SpellName.OrangeBelt, 3 },
-            { SpellName.Pentagram, 7 },
             { SpellName.Pliers, 5 },
             { SpellName.RockFriends, 5 },
             { SpellName.TimeWalker, 16 },
-			{ SpellName.TwentyTwenty, 5 }
-		};
+            { SpellName.TwentyTwenty, 5 },
+            { SpellName.WoodenSpoon, 13 },
+        };
 
 		public static int MinimumManaCost(SpellElement spell)
 		{
