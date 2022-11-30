@@ -105,43 +105,46 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
-        //***************************************************
-        //*****************Green fog fixes*******************
-        //***************************************************
-        //These patches cause the game to check for triggered fog more often, preventing triggered fog from lingering
-
-        //Patch: Changing AttackFlyEvent such that it checks for countering enemies when all AttackFlyEvents are finished; consequently, remaining green fog will always be triggered at the end of the enemy phase
-        [HarmonyPostfix, HarmonyPatch(typeof(AttackFlyEvent), "NextEvent")]
-        static void AttackFlyEvent_NextEvent(AttackFlyEvent __instance, ref BumboEvent __result)
+        //Patch: Prevents MonsterCounterEvent from occuring if there are no living enemies
+        [HarmonyPrefix, HarmonyPatch(typeof(MonsterCounterEvent), "Execute")]
+        static bool MonsterCounterEvent_Execute(MonsterCounterEvent __instance)
         {
-            if (__result.ToString() == "NewRoundEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
+            if (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering)
             {
-                __result = new MonsterCounterEvent(new NewRoundEvent());
-            }
-        }
+                bool anyAliveEnemy = false;
+                foreach (Enemy enemy in __instance.app.model.enemies)
+                {
+                    if (enemy.boss)
+                    {
+                        if (enemy.getHealth() > 0f)
+                        {
+                            anyAliveEnemy = true;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (enemy.alive)
+                        {
+                            anyAliveEnemy = true;
+                            break;
+                        }
+                    }
+                }
 
-        //Patch: Changing BoneMegaAttackEvent such that it checks for countering enemies
-        [HarmonyPostfix, HarmonyPatch(typeof(BoneMegaAttackEvent), "NextEvent")]
-        static void BoneMegaAttackEvent_NextEvent(BoneMegaAttackEvent __instance, ref BumboEvent __result)
-        {
-            if (__result.ToString() == "NextComboEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
-            {
-                __result = new MonsterCounterEvent(new NextComboEvent());
-            }
-        }
+                if (!anyAliveEnemy)
+                {
+                    __instance.app.model.isFogCountering = false;
+                    __instance.app.model.isEnemyCountering = false;
+                    __instance.app.model.counteringEnemy = null;
+                    __instance.app.model.counteringFog.Clear();
 
-        //Patch: Changing ToothMegaAttackEvent such that it checks for countering enemies
-        [HarmonyPostfix, HarmonyPatch(typeof(ToothMegaAttackEvent), "NextEvent")]
-        static void ToothMegaAttackEvent_NextEvent(ToothMegaAttackEvent __instance, ref BumboEvent __result)
-        {
-            if (__result.ToString() == "NextComboEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
-            {
-                __result = new MonsterCounterEvent(new NextComboEvent());
+                    __instance.app.controller.eventsController.SetEvent((BumboEvent)AccessTools.Field(typeof(MonsterCounterEvent), "nextEvent").GetValue(__instance));
+                    return false;
+                }
             }
+            return true;
         }
-        //***************************************************
-        //***************************************************
-        //***************************************************
 
         //Patch: Fixes a bug in the Tainted Peeper spawn blib logic; it now checks spaces on the y axis instead of the x axis
         [HarmonyPatch(typeof(PeepsBoss), "SpawnBlib")]
