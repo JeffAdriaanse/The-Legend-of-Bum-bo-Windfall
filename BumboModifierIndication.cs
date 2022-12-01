@@ -175,7 +175,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     return (barbedWireModifierObject != null && barbedWireModifierObject.damageOnHit > 0) ? barbedWireModifierObject.damageOnHit.ToString() : null;
                 case SpellName.BrownBelt:
                     CharacterSheet.BumboModifierObject brownBeltModifierObject = bumboModifierObjects.Find(modifierObject => modifierObject.spellName == _spellSource);
-                    return (brownBeltModifierObject != null && brownBeltModifierObject.blockAndCounter) ? app.model.characterSheet.getItemDamage().ToString() : null;
+                    return (brownBeltModifierObject != null) ? app.model.characterSheet.getItemDamage().ToString() : null;
                 case SpellName.Euthanasia:
                     CharacterSheet.BumboModifierObject euthanasiaModifierObject = bumboModifierObjects.Find(modifierObject => modifierObject.spellName == _spellSource);
                     return (euthanasiaModifierObject != null && euthanasiaModifierObject.damageOnHit > 0) ? euthanasiaModifierObject.damageOnHit.ToString() : null;

@@ -45,17 +45,25 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//Prevent Brown Belt from triggering if Bum-bo wasn't hit
 			foreach (CharacterSheet.BumboModifierObject bumboModifierObject in __instance.app.model.characterSheet.bumboModifierObjects.FindAll(modifierObject => modifierObject.spellName == SpellName.BrownBelt))
 			{
-				bumboModifierObject.blockAndCounter = !__instance.app.model.poopHit;
+				bumboModifierObject.blockAndCounter = (__instance.app.model.counterAttackType == BumboModel.eCounterAttackType.Spell);
 			}
 
-			__instance.app.model.counterAttackType = BumboModel.eCounterAttackType.Spell;
+            //Trigger retaliatory damage effects
+            __instance.app.model.counterAttackType = BumboModel.eCounterAttackType.Spell;
         }
 
         //Patch: Fixes the enemy phase sometimes briefly pausing before ending if Bum-bo took damage during the enemy phase
+		//Also re-enables Brown Belt
         [HarmonyPostfix, HarmonyPatch(typeof(BumboCounterEvent), "NextEvent")]
-        static void BumboCounterEvent_NextEvent_(BumboCounterEvent __instance)
+        static void BumboCounterEvent_NextEvent(BumboCounterEvent __instance)
         {
             __instance.app.model.aiModel.returnBumboHurt = false;
+
+            //Re-enable Brown Belt
+            foreach (CharacterSheet.BumboModifierObject bumboModifierObject in __instance.app.model.characterSheet.bumboModifierObjects.FindAll(modifierObject => modifierObject.spellName == SpellName.BrownBelt))
+            {
+                bumboModifierObject.blockAndCounter = true;
+            }
         }
 
         //Patch: Fixes Dead Dove having a preset mana cost
