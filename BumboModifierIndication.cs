@@ -34,7 +34,21 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         static GameObject expansionToggle;
-        static Vector3 togglePosition = new Vector3(-0.64f, 0.45f, 1.15f);
+        static Vector3 togglePosition = new Vector3(-0.73f, 0.42f, 1.15f);
+
+        private static void UpdateExpansionToggle()
+        {
+            if (expansionToggle == null)
+            {
+                CreateExpansionToggle();
+            }
+
+            ExpansionToggle expansionToggleComponent = expansionToggle.GetComponent<ExpansionToggle>();
+            if (expansionToggleComponent != null)
+            {
+                expansionToggleComponent.DisplayAnimation(bumboModifiers.Count > 0);
+            }
+        }
 
         public static void CreateExpansionToggle()
         {
@@ -43,17 +57,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            string expansionTogglePath = "Use_Spell_Icon";
+            string expansionTogglePath = "Shield";
             if (Windfall.assetBundle.Contains(expansionTogglePath))
             {
                 expansionToggle = ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset(expansionTogglePath), app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
+                expansionToggle.layer = 5;
+                expansionToggle.SetActive(false);
                 expansionToggle.AddComponent<ExpansionToggle>();
 
                 BoxCollider boxCollider = expansionToggle.AddComponent<BoxCollider>();
-                boxCollider.size = new Vector3(0.1f, 0.1f, 0.1f);
+                boxCollider.size = new Vector3(0.02f, 0.02f, 0.02f);
                 boxCollider.isTrigger = true;
 
                 expansionToggle.transform.localPosition = togglePosition;
+                expansionToggle.transform.localScale = Vector3.zero;
             }
         }
 
@@ -80,8 +97,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            CreateExpansionToggle();
-
             int modifierDispayCounter = 0;
 
             //Get modifiers
@@ -89,12 +104,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             CharacterSheet.BumboRoomModifiers bumboRoomModifiers = app.model.characterSheet.bumboRoomModifiers;
             List<CharacterSheet.BumboModifierObject> bumboModifierObjects = app.model.characterSheet.bumboModifierObjects;
 
+            //Block order:
+            //Brown Belt
+            //Trash Lid
+            //Old Pillow
+            //Holy Mantle
+
             //List order determines modifier display order
             List<SpellName> trackedSpells = new List<SpellName>
             {
-                SpellName.OldPillow, //Modifier object
-                SpellName.TrashLid, //Modifier object
                 SpellName.BrownBelt, //Modifier object
+                SpellName.TrashLid, //Modifier object
+                SpellName.OldPillow, //Modifier object
 
                 SpellName.BarbedWire, //Modifier object
                 SpellName.Euthanasia, //Modifier object
@@ -124,6 +145,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     modifierDispayCounter++;
                 }
             }
+
+            UpdateExpansionToggle();
         }
 
         static string SpellConversionValue(SpellName _spellSource, CharacterSheet.BumboRoundModifiers bumboRoundModifiers, CharacterSheet.BumboRoomModifiers bumboRoomModifiers, List<CharacterSheet.BumboModifierObject> bumboModifierObjects)
@@ -443,10 +466,24 @@ namespace The_Legend_of_Bum_bo_Windfall
     class ExpansionToggle : MonoBehaviour
     {
         private Sequence toggleSequence;
-        private float tweenDuration = 0.3f;
+        private Sequence displaySequence;
+        private readonly float tweenDuration = 0.3f;
+
+        public readonly Vector3 showingRotation = new Vector3(0f, 180f, 90f);
+        public readonly Vector3 hidingRotation = new Vector3(0f, 180f, 270f);
+
+        ExpansionToggle()
+        {
+            transform.localEulerAngles = TargetRotation();
+        }
 
         void OnMouseDown()
         {
+            if (toggleSequence != null && toggleSequence.IsPlaying())
+            {
+                return;
+            }
+
             BumboModifierIndication.ToggleModifierExpansion();
 
             ToggleAnimation();
@@ -460,9 +497,39 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             toggleSequence = DOTween.Sequence();
 
-            Vector3 rotation = WindfallPersistentDataController.LoadData().expandModifiers ? Vector3.zero : new Vector3(0f, 90f, 0f);
+            toggleSequence.Append(transform.DOLocalRotate(TargetRotation(), tweenDuration).SetEase(Ease.InOutQuad));
+        }
 
-            toggleSequence.Append(transform.DOLocalRotate(rotation, tweenDuration).SetEase(Ease.InOutQuad));
+        private Vector3 TargetRotation()
+        {
+            return WindfallPersistentDataController.LoadData().expandModifiers ? showingRotation : hidingRotation;
+        }
+
+        public void DisplayAnimation(bool _active)
+        {
+            if (displaySequence != null && displaySequence.IsPlaying())
+            {
+                displaySequence.Kill(true);
+            }
+            displaySequence = DOTween.Sequence();
+
+            if (_active != gameObject.activeSelf)
+            {
+                float scale = _active ? 5f : 0f;
+                if (_active)
+                {
+                    gameObject.SetActive(true);
+                    displaySequence.Append(transform.DOScale(new Vector3(scale, scale, scale), tweenDuration).SetEase(Ease.OutBack));
+                }
+                else
+                {
+                    displaySequence.Append(transform.DOScale(new Vector3(scale, scale, scale), tweenDuration).SetEase(Ease.InBack));
+                    displaySequence.AppendCallback(delegate
+                    {
+                        gameObject.SetActive(false);
+                    });
+                }
+            }
         }
     }
 
@@ -475,7 +542,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static readonly float punchScale = 0.012f;
         static readonly float tweenDuration = 0.3f;
 
-        public static readonly Vector3 baseDisplayPosition = new Vector3(-0.64f, 0.4f, 1.15f);
+        public static readonly Vector3 baseDisplayPosition = new Vector3(-0.64f, 0.3f, 1.15f);
         static readonly float displayIndexOffset = 0.2f;
 
         public enum ModifierCategory
