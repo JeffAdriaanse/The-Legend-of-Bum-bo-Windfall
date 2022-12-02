@@ -197,6 +197,38 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
+        //Patch: Fixes Meat Hook breaking enemies (bug caused by above patch)
+        [HarmonyPrefix, HarmonyPatch(typeof(MeatHookSpell), "RearrangeEnemies")]
+        static bool MeatHookSpell_RearrangeEnemies(MeatHookSpell __instance, Transform _enemy_transform)
+        {
+            Enemy enemy = _enemy_transform.GetComponent<Enemy>();
+            if (enemy != null && __instance.app.model.enemies.Contains(enemy))
+            {
+                return true;
+            }
+            return false;
+        }
+        //Patch: Fixes Quake attacking dead enemies (bug caused by above patch)
+        [HarmonyPrefix, HarmonyPatch(typeof(QuakeSpell), "DropRock")]
+        static void QuakeSpell_DropRock(QuakeSpell __instance)
+        {
+            List<Enemy> enemiesToHit = (List<Enemy>)AccessTools.Field(typeof(QuakeSpell), "enemies_to_hit").GetValue(__instance);
+
+            if (enemiesToHit.Count > 0)
+            {
+                Enemy enemyToHit = enemiesToHit[0];
+
+                if (enemyToHit != null)
+                {
+                    if (!__instance.app.model.enemies.Contains(enemyToHit))
+                    {
+                        List<Enemy> enemiesToHitReplacement = enemiesToHit;
+                        enemiesToHitReplacement[0] = null;
+                        AccessTools.Field(typeof(QuakeSpell), "enemies_to_hit").SetValue(__instance, enemiesToHitReplacement);
+                    }
+                }
+            }
+        }
 
         public static Dictionary<EnemyName, int> EnemyBaseHealth
         {
