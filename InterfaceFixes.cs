@@ -193,20 +193,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        //Patch: Disables main camera on ShowBossSignEvent
+        //Patch: Moves main camera on ShowBossSignEvent
         [HarmonyPostfix, HarmonyPatch(typeof(ShowBossSignEvent), "Execute")]
         static void ShowBossSignEvent_Execute(ShowBossSignEvent __instance)
         {
-            __instance.app.view.bossSignView.camera.clearFlags = CameraClearFlags.Color;
-            __instance.app.view.bossSignView.camera.backgroundColor = Color.black;
-            __instance.app.view.mainCamera.gameObject.SetActive(false);
-        }
-        //Patch: Re-enables main camera
-        [HarmonyPrefix, HarmonyPatch(typeof(ShowBossSignEvent), "NextEvent")]
-        static bool ShowBossSignEvent_NextEvent(ShowBossSignEvent __instance)
-        {
-            __instance.app.view.mainCamera.gameObject.SetActive(true);
-            return true;
+            if (__instance.app.view.mainCameraView != null)
+            {
+                __instance.app.view.mainCameraView.transform.position += new Vector3(0f, 20f, 0f);
+            }
         }
 
         //Patch: Fixes treasure rooms always having room art of the Sewers of Dross, even when Bum-bo is in a different Chapter
