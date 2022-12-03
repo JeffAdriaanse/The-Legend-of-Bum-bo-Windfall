@@ -381,14 +381,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Wait for room to be initialized
                     moveIntoRoomEventSequence.OnComplete(delegate
                     {
-                        __instance.app.controller.savedStateController.Save();
                         Console.WriteLine("[The Legend of Bum-bo: Windfall] Waited for room to initialize before saving");
+                        __instance.app.controller.savedStateController.Save();
                     });
                 }
                 else
                 {
-                    __instance.app.controller.savedStateController.Save();
                     Console.WriteLine("[The Legend of Bum-bo: Windfall] Didn't wait for room to initialize before saving");
+                    __instance.app.controller.savedStateController.Save();
                 }
             }
             return false;
@@ -399,21 +399,21 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(SavedStateController), "Save")]
         static bool SavedStateController_Save(SavedStateController __instance)
         {
-            EnemyLayout enemyLayout = __instance.app.model.mapModel.currentRoomEnemyLayout;
-            if (enemyLayout == null)
+            //Enemy layout
+            if (__instance.app.model.mapModel.currentRoomEnemyLayout == null)
             {
-                enemyLayout = new EnemyLayout();
+                __instance.app.model.mapModel.currentRoomEnemyLayout = new EnemyLayout();
             }
 
-            List<List<EnemyName>> groundEnemies = __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies;
-            if (groundEnemies == null)
+            //Ground enemies
+            if (__instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies == null)
             {
-                groundEnemies = new List<List<EnemyName>>();
+                __instance.app.model.mapModel.currentRoomEnemyLayout.groundEnemies = new List<List<EnemyName>>();
             }
-            List<List<EnemyName>> airEnemies = __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies;
-            if (airEnemies == null)
+            //Air enemies
+            if (__instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies == null)
             {
-                airEnemies = new List<List<EnemyName>>();
+                __instance.app.model.mapModel.currentRoomEnemyLayout.airEnemies = new List<List<EnemyName>>();
             }
 
             return true;
