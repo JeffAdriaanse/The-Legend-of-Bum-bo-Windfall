@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Experimental.Rendering;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -69,8 +71,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                 boxCollider.size = new Vector3(0.02f, 0.02f, 0.02f);
                 boxCollider.isTrigger = true;
 
-                expansionToggle.transform.localPosition = togglePosition;
-                expansionToggle.transform.localScale = Vector3.zero;
+                expansionToggle.transform.localPosition = expansionToggle.GetComponent<ExpansionToggle>().HidingPosition();
+                expansionToggle.transform.localScale = new Vector3(5f, 5f, 5f);
+
+                ButtonHoverAnimation buttonHoverAnimation = expansionToggle.AddComponent<ButtonHoverAnimation>();
+                buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.NoSound;
+                buttonHoverAnimation.clickSoundFx = SoundsView.eSound.NoSound;
             }
         }
 
@@ -472,6 +478,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         public readonly Vector3 showingRotation = new Vector3(0f, 180f, 90f);
         public readonly Vector3 hidingRotation = new Vector3(0f, 180f, 270f);
 
+        public readonly Vector3 showingPosition = new Vector3(-0.73f, 0.42f, 1.15f);
+
         ExpansionToggle()
         {
             transform.localEulerAngles = TargetRotation();
@@ -498,6 +506,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             toggleSequence = DOTween.Sequence();
 
             toggleSequence.Append(transform.DOLocalRotate(TargetRotation(), tweenDuration).SetEase(Ease.InOutQuad));
+
+            SoundsView.Instance.PlaySound(SoundsView.eSound.PuzzleSlideIn, SoundsView.eAudioSlot.Default, false);
         }
 
         private Vector3 TargetRotation()
@@ -507,29 +517,42 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public void DisplayAnimation(bool _active)
         {
+            if (_active == gameObject.activeSelf)
+            {
+                return;
+            }
+
+            Vector3 targetPosition = _active ? showingPosition : HidingPosition();
+
+            if (targetPosition == transform.localPosition)
+            {
+                return;
+            }
+
             if (displaySequence != null && displaySequence.IsPlaying())
             {
                 displaySequence.Kill(true);
             }
             displaySequence = DOTween.Sequence();
 
-            if (_active != gameObject.activeSelf)
+            if (_active)
             {
-                float scale = _active ? 5f : 0f;
-                if (_active)
-                {
-                    gameObject.SetActive(true);
-                    displaySequence.Append(transform.DOScale(new Vector3(scale, scale, scale), tweenDuration).SetEase(Ease.OutBack));
-                }
-                else
-                {
-                    displaySequence.Append(transform.DOScale(new Vector3(scale, scale, scale), tweenDuration).SetEase(Ease.InBack));
-                    displaySequence.AppendCallback(delegate
-                    {
-                        gameObject.SetActive(false);
-                    });
-                }
+                gameObject.SetActive(true);
+                displaySequence.Append(transform.DOLocalMove(targetPosition, tweenDuration).SetEase(Ease.InOutQuad));
             }
+            else
+            {
+                displaySequence.Append(transform.DOLocalMove(targetPosition, tweenDuration).SetEase(Ease.InOutQuad));
+                displaySequence.AppendCallback(delegate
+                {
+                    gameObject.SetActive(false);
+                });
+            }
+        }
+
+        public Vector3 HidingPosition()
+        {
+            return showingPosition + new Vector3(-0.3f, 0f, 0f);
         }
     }
 
