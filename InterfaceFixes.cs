@@ -32,7 +32,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             ReplaceSpellIconMaterials(__instance.app);
             ReplaceTrinketIconMaterials(__instance.app);
-
         }
         private static void ReplaceTrinketIconMaterials(BumboApplication app)
         {
@@ -61,7 +60,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Find list for current trinket category
-                if (app.model.trinketModel.trinketMaterial[trinketCategory] != null)
+                if (app.model.trinketModel.trinketMaterial.ContainsKey(trinketCategory) && app.model.trinketModel.trinketMaterial[trinketCategory] != null)
                 {
                     //Access materials for each page of current trinket category
                     for (int materialCounter = 0; materialCounter < app.model.trinketModel.trinketMaterial[trinketCategory].Count; materialCounter++)
