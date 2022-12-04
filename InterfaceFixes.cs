@@ -10,6 +10,7 @@ using System.IO;
 using UnityEngine.UI;
 using System.Collections;
 using I2.Loc;
+using System.Linq;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -18,6 +19,210 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(InterfaceFixes));
+        }
+
+        private static readonly string collectible_page_ambient_occlusion_path = "Collectible_page_ambient_occlusion";
+        private static readonly string collectible_page_height_path = "Collectible_page_height";
+        private static readonly string collectible_page_normal_path = "Collectible_page_normal";
+        private static readonly string spell_use_metallic_path = "Spell_use_metallic_V3";
+        private static readonly string trinket_page_metallic_path = "Trinket_Page_metallic";
+        //Patch: Fixes collectible texture maps
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init_Collectible_Textures(BumboController __instance)
+        {
+            ReplaceSpellIconMaterials(__instance.app);
+            ReplaceTrinketIconMaterials(__instance.app);
+
+        }
+        private static void ReplaceTrinketIconMaterials(BumboApplication app)
+        {
+            TrinketElement.TrinketCategory[] trinketCategories = new TrinketElement.TrinketCategory[]
+            {
+                TrinketElement.TrinketCategory.Special,
+            };
+
+            foreach (TrinketElement.TrinketCategory trinketCategory in trinketCategories)
+            {
+                bool replaceAmbientOcclusion = false;
+                bool replaceHeight = false;
+                bool replaceNormal = false;
+                string metallicPath = null;
+
+                switch (trinketCategory)
+                {
+                    case TrinketElement.TrinketCategory.Special:
+                        replaceAmbientOcclusion = true;
+                        replaceHeight = true;
+                        replaceNormal = true;
+                        metallicPath = trinket_page_metallic_path;
+                        break;
+                    default:
+                        break;
+                }
+
+                //Find list for current trinket category
+                if (app.model.trinketModel.trinketMaterial[trinketCategory] != null)
+                {
+                    //Access materials for each page of current trinket category
+                    for (int materialCounter = 0; materialCounter < app.model.trinketModel.trinketMaterial[trinketCategory].Count; materialCounter++)
+                    {
+                        Material material = app.model.trinketModel.trinketMaterial[trinketCategory][materialCounter];
+                        if (material != null)
+                        {
+                            //Replace each material
+                            string[] texturePropertyNames = material.GetTexturePropertyNames();
+
+                            //Ambient Occlusion
+                            if (replaceAmbientOcclusion && texturePropertyNames.Contains("_OcclusionMap") && Windfall.assetBundle.Contains(collectible_page_ambient_occlusion_path))
+                            {
+                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_ambient_occlusion_path);
+
+                                if (texture != null)
+                                {
+                                    material.SetTexture("_OcclusionMap", texture);
+                                }
+                            }
+
+                            //Height
+                            if (replaceHeight && texturePropertyNames.Contains("_ParallaxMap") && Windfall.assetBundle.Contains(collectible_page_height_path))
+                            {
+                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_height_path);
+
+                                if (texture != null)
+                                {
+                                    material.SetTexture("_ParallaxMap", texture);
+                                }
+                            }
+
+                            //Normal
+                            if (replaceNormal && texturePropertyNames.Contains("_BumpMap") && Windfall.assetBundle.Contains(collectible_page_normal_path))
+                            {
+                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_normal_path);
+
+                                if (texture != null)
+                                {
+                                    material.SetTexture("_BumpMap", texture);
+                                }
+                            }
+
+                            //Metallic
+                            if (metallicPath != null && texturePropertyNames.Contains("_MetallicGlossMap") && Windfall.assetBundle.Contains(metallicPath))
+                            {
+                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(metallicPath);
+
+                                if (texture != null)
+                                {
+                                    material.SetTexture("_MetallicGlossMap", texture);
+                                }
+                            }
+
+                            app.model.trinketModel.trinketMaterial[trinketCategory][materialCounter] = material;
+                        }
+                    }
+                }
+            }
+        }
+        private static void ReplaceSpellIconMaterials(BumboApplication app)
+        {
+            SpellElement.SpellCategory[] spellCategories = new SpellElement.SpellCategory[]
+            {
+                SpellElement.SpellCategory.Attack,
+                SpellElement.SpellCategory.Puzzle,
+                SpellElement.SpellCategory.Use,
+            };
+
+            foreach (SpellElement.SpellCategory spellCategory in spellCategories)
+            {
+                bool replaceAmbientOcclusion = false;
+                bool replaceHeight = false;
+                bool replaceNormal = false;
+                string metallicPath = null;
+
+                switch (spellCategory)
+                {
+                    case SpellElement.SpellCategory.Attack:
+                        replaceNormal = true;
+                        break;
+                    case SpellElement.SpellCategory.Puzzle:
+                        replaceAmbientOcclusion = true;
+                        replaceHeight = true;
+                        replaceNormal = true;
+                        break;
+                    case SpellElement.SpellCategory.Use:
+                        replaceAmbientOcclusion = true;
+                        replaceHeight = true;
+                        replaceNormal = true;
+                        metallicPath = spell_use_metallic_path;
+                        break;
+                    default:
+                        break;
+                }
+
+                //Loop through spell model material arrays
+                for (int spellMaterialCounter = 0; spellMaterialCounter < app.model.spellModel.spellMaterial.Length; spellMaterialCounter++)
+                {
+                    //Find array for current spell category
+                    if (app.model.spellModel.spellMaterial[spellMaterialCounter] != null && app.model.spellModel.spellMaterial[spellMaterialCounter].category == spellCategory)
+                    {
+                        //Access inactive materials for each page of current spell category
+                        for (int materialCounter = 0; materialCounter < app.model.spellModel.spellMaterial[spellMaterialCounter].inactive.Count; materialCounter++)
+                        {
+                            Material material = app.model.spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter];
+                            if (material != null)
+                            {
+                                //Replace each material
+                                string[] texturePropertyNames = material.GetTexturePropertyNames();
+
+                                //Ambient Occlusion
+                                if (replaceAmbientOcclusion && texturePropertyNames.Contains("_OcclusionMap") && Windfall.assetBundle.Contains(collectible_page_ambient_occlusion_path))
+                                {
+                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_ambient_occlusion_path);
+
+                                    if (texture != null)
+                                    {
+                                        material.SetTexture("_OcclusionMap", texture);
+                                    }
+                                }
+
+                                //Height
+                                if (replaceHeight && texturePropertyNames.Contains("_ParallaxMap") && Windfall.assetBundle.Contains(collectible_page_height_path))
+                                {
+                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_height_path);
+
+                                    if (texture != null)
+                                    {
+                                        material.SetTexture("_ParallaxMap", texture);
+                                    }
+                                }
+
+                                //Normal
+                                if (replaceNormal && texturePropertyNames.Contains("_BumpMap") && Windfall.assetBundle.Contains(collectible_page_normal_path))
+                                {
+                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_normal_path);
+
+                                    if (texture != null)
+                                    {
+                                        material.SetTexture("_BumpMap", texture);
+                                    }
+                                }
+
+                                //Metallic
+                                if (metallicPath != null && texturePropertyNames.Contains("_MetallicGlossMap") && Windfall.assetBundle.Contains(metallicPath))
+                                {
+                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(metallicPath);
+
+                                    if (texture != null)
+                                    {
+                                        material.SetTexture("_MetallicGlossMap", texture);
+                                    }
+                                }
+
+                                app.model.spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter] = material;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         static Tweener voAudioTweener;
