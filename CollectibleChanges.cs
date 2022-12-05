@@ -99,17 +99,22 @@ namespace The_Legend_of_Bum_bo_Windfall
 				float damageIncrease = 1f;
 				if (__state) damageIncrease -= 1f;
 
-				float maximumDamage = 2 + __instance.app.model.characterSheet.getItemDamage();
+				float maximumDamage = 3 + __instance.app.model.characterSheet.getItemDamage();
 
                 for (int modifierCounter = 0; modifierCounter < characterSheet.bumboModifierObjects.Count; modifierCounter++)
                 {
                     if (characterSheet.bumboModifierObjects[modifierCounter].spellName == __instance.spellName)
                     {
-                        characterSheet.bumboModifierObjects[modifierCounter].counterDamage += damageIncrease;
+                        //Don't increase damage if aready at max damage
+                        if (characterSheet.bumboModifierObjects[modifierCounter].counterDamage < maximumDamage)
+                        {
+                            characterSheet.bumboModifierObjects[modifierCounter].counterDamage += damageIncrease;
 
-                        if (characterSheet.bumboModifierObjects[modifierCounter].counterDamage > maximumDamage)
-						{
-							characterSheet.bumboModifierObjects[modifierCounter].counterDamage = maximumDamage;
+                            //Reduce damage to max if it goes over
+                            if (characterSheet.bumboModifierObjects[modifierCounter].counterDamage > maximumDamage)
+                            {
+                                characterSheet.bumboModifierObjects[modifierCounter].counterDamage = maximumDamage;
+                            }
                         }
                     }
                 }
