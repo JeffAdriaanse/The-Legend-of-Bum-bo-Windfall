@@ -39,9 +39,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Patch: Causes all retaliatory damage effects to always trigger against attacking enemies, regardless of whether Bum-bo was hit
         //Also fixes Stray Barb effectively having a reduced trigger chance the player has does not also deal retaliatory damage through other effects
         //Also changes all retaliatory damage effects such that they always deal spell damage
+		//Also implements The Virus rework
         [HarmonyPrefix, HarmonyPatch(typeof(EnemiesAttackEvent), "NextEvent")]
         static void EnemiesAttackEvent_NextEvent(EnemiesAttackEvent __instance)
         {
+			//Implement The Virus
+			if (__instance.app.model.aiModel.attackingEnemies.Count > 0 && __instance.app.model.characterSheet.bumboRoundModifiers.poisonRounds > 0)
+			{
+				__instance.app.model.aiModel.attackingEnemies[0].Poison(1);
+            }
+
 			//Prevent Brown Belt from triggering if Bum-bo wasn't hit
 			foreach (CharacterSheet.BumboModifierObject bumboModifierObject in __instance.app.model.characterSheet.bumboModifierObjects.FindAll(modifierObject => modifierObject.spellName == SpellName.BrownBelt))
 			{
@@ -193,6 +200,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                         characterSheet.bumboModifierObjects[modifierCounter].damageOnHit = 5;
                     }
                 }
+            }
+        }
+
+        //Patch: Reworked The Virus
+        [HarmonyPostfix, HarmonyPatch(typeof(TheVirusSpell), "CastSpell")]
+        static void TheVirusSpell_CastSpell_Postfix(TheVirusSpell __instance, bool __result)
+        {
+            if (__result && WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                __instance.app.model.characterSheet.bumboRoomModifiers.poisonOnHit = false;
+                __instance.app.model.characterSheet.bumboRoundModifiers.poisonRounds++;
             }
         }
 
