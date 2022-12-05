@@ -73,6 +73,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: The Virus now expires at the start of each turn
+        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet.BumboRoundModifiers), "NewRound")]
+        static void CharacterSheet_BumboRoundModifiers_NewRound(CharacterSheet.BumboRoundModifiers __instance)
+        {
+			__instance.poisonRounds = 0;
+        }
+
         //Patch: Fixes Dead Dove having a preset mana cost
         [HarmonyPostfix, HarmonyPatch(typeof(DeadDoveSpell), MethodType.Constructor)]
         static void DeadDoveSpell_Constructor(DeadDoveSpell __instance)
@@ -210,7 +217,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__result && WindfallPersistentDataController.LoadData().implementBalanceChanges)
             {
                 __instance.app.model.characterSheet.bumboRoomModifiers.poisonOnHit = false;
-                __instance.app.model.characterSheet.bumboRoundModifiers.poisonRounds++;
+                __instance.app.model.characterSheet.bumboRoundModifiers.poisonRounds = 1;
             }
         }
 
