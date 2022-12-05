@@ -116,6 +116,58 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Barbed Wire effect now stacks when activating the spell multiple times
+        //Barbed Wire effect now lasts for the current room instead of only for the current turn
+        [HarmonyPrefix, HarmonyPatch(typeof(BarbedWireSpell), "CastSpell")]
+        static void BarbedWireSpell_CastSpell_Prefix(BarbedWireSpell __instance, out bool __state)
+        {
+            //Track whether this is the first use
+            __state = true;
+            if (__instance.app.controller.ModifierObjectExists(__instance.spellName))
+            {
+                __state = false;
+            }
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(BarbedWireSpell), "CastSpell")]
+        static void BarbedWireSpell_CastSpell_Postfix(BarbedWireSpell __instance, bool __result, bool __state)
+        {
+            if (__result && WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                CharacterSheet characterSheet = __instance.app.model.characterSheet;
+
+                if (characterSheet == null || characterSheet.bumboModifierObjects == null)
+                {
+                    return;
+                }
+
+                int damageIncrease = 1;
+                if (__state) damageIncrease -= 1;
+
+                int maximumDamage = 3 + __instance.app.model.characterSheet.getItemDamage();
+
+                for (int modifierCounter = 0; modifierCounter < characterSheet.bumboModifierObjects.Count; modifierCounter++)
+                {
+                    if (characterSheet.bumboModifierObjects[modifierCounter].spellName == __instance.spellName)
+                    {
+						//Change type to Room
+						characterSheet.bumboModifierObjects[modifierCounter].modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
+
+                        //Don't increase damage if aready at max damage
+                        if (characterSheet.bumboModifierObjects[modifierCounter].damageOnHit < maximumDamage)
+						{
+                            characterSheet.bumboModifierObjects[modifierCounter].damageOnHit += damageIncrease;
+
+                            //Reduce damage to max if it goes over
+                            if (characterSheet.bumboModifierObjects[modifierCounter].damageOnHit > maximumDamage)
+                            {
+                                characterSheet.bumboModifierObjects[modifierCounter].damageOnHit = maximumDamage;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         //Patch: Reduced Euthanasia damage
         [HarmonyPostfix, HarmonyPatch(typeof(EuthanasiaSpell), "CastSpell")]
         static void EuthanasiaSpell_CastSpell_Postfix(EuthanasiaSpell __instance, bool __result)
