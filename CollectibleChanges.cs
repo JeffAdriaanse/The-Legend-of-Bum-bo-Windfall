@@ -78,7 +78,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(OrangeBeltSpell), "CastSpell")]
         static void OrangeBeltSpell_CastSpell_Prefix(OrangeBeltSpell __instance, out bool __state)
         {
-			//Track wether this is the first use
+			//Track whether this is the first use
             __state = true;
             if (__instance.app.controller.ModifierObjectExists(__instance.spellName))
 			{
@@ -97,14 +97,21 @@ namespace The_Legend_of_Bum_bo_Windfall
 					return;
 				}
 
-				float damageIncrease = 2f;
-				if (__state) damageIncrease = 1f;
+				float damageIncrease = 1f;
+				if (__state) damageIncrease -= 1f;
+
+				float maximumDamage = 2 + __instance.app.model.characterSheet.getItemDamage();
 
                 for (int modifierCounter = 0; modifierCounter < characterSheet.bumboModifierObjects.Count; modifierCounter++)
                 {
                     if (characterSheet.bumboModifierObjects[modifierCounter].spellName == __instance.spellName)
                     {
-						characterSheet.bumboModifierObjects[modifierCounter].counterDamage += damageIncrease;
+                        characterSheet.bumboModifierObjects[modifierCounter].counterDamage += damageIncrease;
+
+                        if (characterSheet.bumboModifierObjects[modifierCounter].counterDamage > maximumDamage)
+						{
+							characterSheet.bumboModifierObjects[modifierCounter].counterDamage = maximumDamage;
+                        }
                     }
                 }
             }
