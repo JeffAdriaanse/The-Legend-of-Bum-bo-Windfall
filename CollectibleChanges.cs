@@ -74,7 +74,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Orange Belt effect now stacks when activating the spell multiple times in one turn
-        //Orange Belt now deals two damage per use
         [HarmonyPrefix, HarmonyPatch(typeof(OrangeBeltSpell), "CastSpell")]
         static void OrangeBeltSpell_CastSpell_Prefix(OrangeBeltSpell __instance, out bool __state)
         {
@@ -112,6 +111,29 @@ namespace The_Legend_of_Bum_bo_Windfall
 						{
 							characterSheet.bumboModifierObjects[modifierCounter].counterDamage = maximumDamage;
                         }
+                    }
+                }
+            }
+        }
+
+        //Patch: Reduced Euthanasia damage
+        [HarmonyPostfix, HarmonyPatch(typeof(EuthanasiaSpell), "CastSpell")]
+        static void EuthanasiaSpell_CastSpell_Postfix(EuthanasiaSpell __instance, bool __result)
+        {
+            if (__result && WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                CharacterSheet characterSheet = __instance.app.model.characterSheet;
+
+                if (characterSheet == null || characterSheet.bumboModifierObjects == null)
+                {
+                    return;
+                }
+
+                for (int modifierCounter = 0; modifierCounter < characterSheet.bumboModifierObjects.Count; modifierCounter++)
+                {
+                    if (characterSheet.bumboModifierObjects[modifierCounter].spellName == __instance.spellName)
+                    {
+                        characterSheet.bumboModifierObjects[modifierCounter].damageOnHit = 5;
                     }
                 }
             }
