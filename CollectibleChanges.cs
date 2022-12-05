@@ -2384,7 +2384,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{ SpellName.MagicMarker, 6 },
             { SpellName.MamaFoot, 13 },
             { SpellName.MissingPiece, 8 },
-            { SpellName.OrangeBelt, 3 },
             { SpellName.Pliers, 5 },
             { SpellName.RockFriends, 5 },
             { SpellName.TimeWalker, 16 },
