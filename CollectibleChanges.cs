@@ -221,6 +221,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Pause effect no longer stacks
+        [HarmonyPostfix, HarmonyPatch(typeof(PauseSpell), "CastSpell")]
+        static void PauseSpell_CastSpell_Postfix(PauseSpell __instance, bool __result)
+        {
+            if (__result && WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                if (__instance.app.model.characterSheet.bumboRoundModifiers.skipEnemyTurns > 1)
+				{
+					__instance.app.model.characterSheet.bumboRoundModifiers.skipEnemyTurns = 1;
+                }
+            }
+        }
+
         //Patch: Reduces ExorcismKit enemy heal from 2 to 1
         [HarmonyPrefix, HarmonyPatch(typeof(ExorcismKitSpell), "HurtAndHeal")]
 		static bool ExorcismKitSpell_HurtAndHeal(ExorcismKitSpell __instance, ref List<Enemy> enemies_to_heal, ref Enemy enemy_to_hurt)
