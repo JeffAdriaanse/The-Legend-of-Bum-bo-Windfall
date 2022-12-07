@@ -44,7 +44,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (File.Exists(path))
                 {
-                    assetBundle = AssetBundle.LoadFromFile(Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfall");
+                    assetBundle = AssetBundle.LoadFromFile(path);
                 }
                 if (assetBundle != null)
                 {
