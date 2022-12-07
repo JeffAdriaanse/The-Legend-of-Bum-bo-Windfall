@@ -157,10 +157,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Spells/TINY_DICE_NAME", "Tiny Dice"},
 
                     //Spell descriptions
+                    { "Spells/BARBED_WIRE_DESCRIPTION", "Damage Attackers In Room"},
                     { "Spells/DOG_TOOTH_DESCRIPTION", "Attack that Heals You"},
                     { "Spells/ROCK_DESCRIPTION", "Hits the Furthest Enemy"},
                     { "Spells/ROCK_FRIENDS_DESCRIPTION", "Hits Enemies = to Spell Damage"},
                     { "Spells/STICK_DESCRIPTION", "Whack Away!"},
+                    { "Spells/THE_VIRUS_DESCRIPTION", "Poisons Attacking Enemies"},
+                    { "Spells/YELLOW_BELT_DESCRIPTION", "+5% to Dodge Attacks"},
+
+                    //Spell GUI Notifications
+                    //{ "GUI Notifications/ATTACKERS_GET_HURT", "Attackers\nIn Room\nGet Hurt!" }, //Barbed Wire (unchanged)
+                    { "GUI Notifications/HURT_NEXT_ENEMY", "Hurt Next\nAttacking Enemy!" }, //Euthanasia
+                    { "GUI Notifications/GAINED_ITEM_DAMAGE", "Gained Spell Damage!" }, //Experimental, spell damage up
+                    { "GUI Notifications/SUPER_LIKELY_DODGE", "Super Likely\nTo Dodge\nNext Wave!" }, //Smoke Machine
+                    { "GUI Notifications/TRY_DODGE_ATTACK", "Bum-bo\nTry To Dodge\nAttacks!" }, //Yellow Belt
 
                     //Trinkets
                     { "Trinkets/CURVED_HORN_NAME", "Curved Horn"},
@@ -172,6 +182,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Trinkets/NINE_VOLT_DESCRIPTION", "Items May Gain Charges"},
                     { "Trinkets/PINKY_DESCRIPTION", "May Gain Wilds on Kills"},
                     { "Trinkets/RAINBOW_TICK_DESCRIPTION", "Reduces Spell Cost"},
+                    { "Trinkets/STRAY_BARB_DESCRIPTION", "Attackers May Take Damage"},
                     { "Trinkets/THERMOS_DESCRIPTION", "Charge All Items + Heal"},
 
                     //Gizzarda
