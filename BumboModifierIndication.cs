@@ -161,19 +161,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 //Round modifiers
                 case SpellName.Pause:
-                    return bumboRoundModifiers.skipEnemyTurns > 0 ? "0" : null;
+                    return bumboRoundModifiers.skipEnemyTurns > 0 ? bumboRoundModifiers.skipEnemyTurns.ToString() : null;
                 case SpellName.RoidRage:
                     return bumboRoundModifiers.crit ? "100%" : null;
                 case SpellName.StopWatch:
                     return bumboRoundModifiers.slow ? "1" : null;
                 case SpellName.TwentyTwenty:
-                    return bumboRoundModifiers.repeatComboCount > 0 ? "x2" : null;
+                    return bumboRoundModifiers.repeatComboCount > 0 ? bumboRoundModifiers.repeatComboCount.ToString() : null;
 
                 //Room modifiers
                 case SpellName.BlindRage:
                     return bumboRoomModifiers.damageMultiplier > 1 ? "x" + bumboRoomModifiers.damageMultiplier.ToString() : null;
                 case SpellName.TheVirus:
-                    return bumboRoomModifiers.poisonOnHit ? "1" : null;
+                    return bumboRoundModifiers.poisonRounds > 0 ? "1" : null;
 
                 //Modifier objects
                 case SpellName.BarbedWire:
@@ -740,7 +740,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 switch (_spellSource)
                 {
                     case SpellName.BarbedWire:
-                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
+                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.Retaliate;
                         valueDisplayType = ValueDisplayType.Hurt;
                         iconObjectName = "Retaliate";
@@ -814,7 +814,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     case SpellName.TwentyTwenty:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
                         modifierCategory = ModifierCategory.None;
-                        valueDisplayType = ValueDisplayType.Standard;
+                        valueDisplayType = ValueDisplayType.None;
                         iconObjectName = "ComboMultiplier";
                         break;
                     case SpellName.YellowBelt:
