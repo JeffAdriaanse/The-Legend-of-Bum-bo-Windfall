@@ -198,16 +198,34 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
         //Patch: Fixes Meat Hook breaking enemies (bug caused by above patch)
+        //Also prevents Meat Hook from moving Peep Eyes
+        //Also fixes Meat Hook sometimes moving enemies to the wrong positions and causing enemy visuals to be desynced from their actual positions
         [HarmonyPrefix, HarmonyPatch(typeof(MeatHookSpell), "RearrangeEnemies")]
         static bool MeatHookSpell_RearrangeEnemies(MeatHookSpell __instance, Transform _enemy_transform)
         {
-            Enemy enemy = _enemy_transform.GetComponent<Enemy>();
-            if (enemy != null && __instance.app.model.enemies.Contains(enemy))
+            Enemy enemy = _enemy_transform?.GetComponent<Enemy>();
+            if (enemy == null)
             {
-                return true;
+                return false;
             }
-            return false;
+
+            //Abort if the enemy is dead
+            if (!__instance.app.model.enemies.Contains(enemy) || !enemy.alive || enemy.health <= 0f)
+            {
+                return false;
+            }
+
+            //Abort if used against Peeper Eyes
+            if (enemy.enemyName == EnemyName.PeepEye || enemy.enemyName == EnemyName.TaintedPeepEye)
+            {
+                return false;
+            }
+
+            //Prevent effect from considering the hit enemy itself
+            __instance.app.controller.ClearOwner(enemy);
+            return true;
         }
+
         //Patch: Fixes Quake attacking dead enemies (bug caused by above patch)
         [HarmonyPrefix, HarmonyPatch(typeof(QuakeSpell), "DropRock")]
         static void QuakeSpell_DropRock(QuakeSpell __instance)
