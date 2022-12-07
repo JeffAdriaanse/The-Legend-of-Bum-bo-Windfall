@@ -35,6 +35,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
         private static void ReplaceTrinketIconMaterials(BumboApplication app)
         {
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+
             TrinketElement.TrinketCategory[] trinketCategories = new TrinketElement.TrinketCategory[]
             {
                 TrinketElement.TrinketCategory.Special,
@@ -72,9 +79,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                             string[] texturePropertyNames = material.GetTexturePropertyNames();
 
                             //Ambient Occlusion
-                            if (replaceAmbientOcclusion && texturePropertyNames.Contains("_OcclusionMap") && Windfall.assetBundle.Contains(collectible_page_ambient_occlusion_path))
+                            if (replaceAmbientOcclusion && texturePropertyNames.Contains("_OcclusionMap") && assets.Contains(collectible_page_ambient_occlusion_path))
                             {
-                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_ambient_occlusion_path);
+                                Texture texture = assets.LoadAsset<Texture>(collectible_page_ambient_occlusion_path);
 
                                 if (texture != null)
                                 {
@@ -83,9 +90,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                             }
 
                             //Height
-                            if (replaceHeight && texturePropertyNames.Contains("_ParallaxMap") && Windfall.assetBundle.Contains(collectible_page_height_path))
+                            if (replaceHeight && texturePropertyNames.Contains("_ParallaxMap") && assets.Contains(collectible_page_height_path))
                             {
-                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_height_path);
+                                Texture texture = assets.LoadAsset<Texture>(collectible_page_height_path);
 
                                 if (texture != null)
                                 {
@@ -94,9 +101,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                             }
 
                             //Normal
-                            if (replaceNormal && texturePropertyNames.Contains("_BumpMap") && Windfall.assetBundle.Contains(collectible_page_normal_path))
+                            if (replaceNormal && texturePropertyNames.Contains("_BumpMap") && assets.Contains(collectible_page_normal_path))
                             {
-                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_normal_path);
+                                Texture texture = assets.LoadAsset<Texture>(collectible_page_normal_path);
 
                                 if (texture != null)
                                 {
@@ -105,9 +112,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                             }
 
                             //Metallic
-                            if (metallicPath != null && texturePropertyNames.Contains("_MetallicGlossMap") && Windfall.assetBundle.Contains(metallicPath))
+                            if (metallicPath != null && texturePropertyNames.Contains("_MetallicGlossMap") && assets.Contains(metallicPath))
                             {
-                                Texture texture = Windfall.assetBundle.LoadAsset<Texture>(metallicPath);
+                                Texture texture = assets.LoadAsset<Texture>(metallicPath);
 
                                 if (texture != null)
                                 {
@@ -123,6 +130,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
         private static void ReplaceSpellIconMaterials(BumboApplication app)
         {
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+
             SpellElement.SpellCategory[] spellCategories = new SpellElement.SpellCategory[]
             {
                 SpellElement.SpellCategory.Attack,
@@ -173,9 +187,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 string[] texturePropertyNames = material.GetTexturePropertyNames();
 
                                 //Ambient Occlusion
-                                if (replaceAmbientOcclusion && texturePropertyNames.Contains("_OcclusionMap") && Windfall.assetBundle.Contains(collectible_page_ambient_occlusion_path))
+                                if (replaceAmbientOcclusion && texturePropertyNames.Contains("_OcclusionMap") && assets.Contains(collectible_page_ambient_occlusion_path))
                                 {
-                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_ambient_occlusion_path);
+                                    Texture texture = assets.LoadAsset<Texture>(collectible_page_ambient_occlusion_path);
 
                                     if (texture != null)
                                     {
@@ -184,9 +198,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 }
 
                                 //Height
-                                if (replaceHeight && texturePropertyNames.Contains("_ParallaxMap") && Windfall.assetBundle.Contains(collectible_page_height_path))
+                                if (replaceHeight && texturePropertyNames.Contains("_ParallaxMap") && assets.Contains(collectible_page_height_path))
                                 {
-                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_height_path);
+                                    Texture texture = assets.LoadAsset<Texture>(collectible_page_height_path);
 
                                     if (texture != null)
                                     {
@@ -195,9 +209,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 }
 
                                 //Normal
-                                if (replaceNormal && texturePropertyNames.Contains("_BumpMap") && Windfall.assetBundle.Contains(collectible_page_normal_path))
+                                if (replaceNormal && texturePropertyNames.Contains("_BumpMap") && assets.Contains(collectible_page_normal_path))
                                 {
-                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(collectible_page_normal_path);
+                                    Texture texture = assets.LoadAsset<Texture>(collectible_page_normal_path);
 
                                     if (texture != null)
                                     {
@@ -206,9 +220,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 }
 
                                 //Metallic
-                                if (metallicPath != null && texturePropertyNames.Contains("_MetallicGlossMap") && Windfall.assetBundle.Contains(metallicPath))
+                                if (metallicPath != null && texturePropertyNames.Contains("_MetallicGlossMap") && assets.Contains(metallicPath))
                                 {
-                                    Texture texture = Windfall.assetBundle.LoadAsset<Texture>(metallicPath);
+                                    Texture texture = assets.LoadAsset<Texture>(metallicPath);
 
                                     if (texture != null)
                                     {
