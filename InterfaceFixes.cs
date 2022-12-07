@@ -21,6 +21,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(InterfaceFixes));
         }
 
+        //Patch: Fixes map base being visible when transitioning between rooms
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init_MapView(BumboController __instance)
+        {
+            __instance.app.view.mapView.gameObject.SetActive(false);
+        }
+
         private static readonly string collectible_page_ambient_occlusion_path = "Collectible_page_ambient_occlusion";
         private static readonly string collectible_page_height_path = "Collectible_page_height";
         private static readonly string collectible_page_normal_path = "Collectible_page_normal";
