@@ -4,6 +4,7 @@ using HarmonyLib;
 using UnityEngine;
 using System.Runtime.CompilerServices;
 using TMPro;
+using static CharacterSheet;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -34,6 +35,33 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
 			return floor > 0 || UnityEngine.Random.Range(0f, 1f) < remainder ? 1 : 0;
+        }
+
+        //Patch: Disables Brown Belt effect upon blocking an attack; this prevents the effect from blocking multiple hits from a multi-attack
+		//Also removes brown belt effect if damage is blocked and there isn't going to be a counterattack
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "BlockDamage")]
+        static void BumboController_BlockDamage(BumboController __instance)
+        {
+			List<CharacterSheet.BumboModifierObject> objectsToRemove = new List<CharacterSheet.BumboModifierObject>();
+
+            foreach (CharacterSheet.BumboModifierObject bumboModifierObject in __instance.app.model.characterSheet.bumboModifierObjects.FindAll(modifierObject => modifierObject.spellName == SpellName.BrownBelt))
+            {
+				//Disable
+                bumboModifierObject.blockAndCounter = false;
+
+				//Mark for removal
+				if (__instance.app.model.bumboEvent.GetType().ToString() != "EnemiesAttackEvent")
+				{
+                    objectsToRemove.Add(bumboModifierObject);
+				}
+			}
+
+            //Remove
+            foreach (CharacterSheet.BumboModifierObject bumboModifierObject in objectsToRemove)
+			{
+                bumboModifierObject.DestroyMe();
+                __instance.app.model.characterSheet.bumboModifierObjects.Remove(bumboModifierObject);
+            }
         }
 
         //Patch: Causes all retaliatory damage effects to always trigger against attacking enemies, regardless of whether Bum-bo was hit
