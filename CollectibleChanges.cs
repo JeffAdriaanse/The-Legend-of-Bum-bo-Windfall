@@ -101,6 +101,20 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Roid Rage effect no longer expires at the start of each turn
+        [HarmonyPrefix, HarmonyPatch(typeof(CharacterSheet.BumboRoundModifiers), "NewRound")]
+        static void CharacterSheet_BumboRoundModifiers_NewRound(CharacterSheet.BumboRoundModifiers __instance, out bool __state)
+        {
+			//Track crit state
+            __state = __instance.crit;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet.BumboRoundModifiers), "NewRound")]
+        static void CharacterSheet_BumboRoundModifiers_NewRound_Postfix(CharacterSheet.BumboRoundModifiers __instance, bool __state)
+        {
+			//Transfer crit state
+			__instance.crit = __state;
+        }
+
         //Patch: Fixes Dead Dove having a preset mana cost
         [HarmonyPostfix, HarmonyPatch(typeof(DeadDoveSpell), MethodType.Constructor)]
         static void DeadDoveSpell_Constructor(DeadDoveSpell __instance)
