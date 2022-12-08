@@ -782,7 +782,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         iconObjectName = "Slow";
                         break;
                     case SpellName.RoidRage:
-                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
+                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.Standard;
                         iconObjectName = "Critical";
