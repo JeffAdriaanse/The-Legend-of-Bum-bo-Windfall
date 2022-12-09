@@ -105,6 +105,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
+        //Patch: Changing AttackFlyEvent such that it checks for countering enemies when all AttackFlyEvents are finished; consequently, remaining green fog will always be triggered at the end of the enemy phase
+        [HarmonyPostfix, HarmonyPatch(typeof(AttackFlyEvent), "NextEvent")]
+        static void AttackFlyEvent_NextEvent(AttackFlyEvent __instance, ref BumboEvent __result)
+        {
+            if (__result.ToString() == "NewRoundEvent" && (__instance.app.model.isEnemyCountering || __instance.app.model.isFogCountering))
+            {
+                __result = new MonsterCounterEvent(new NewRoundEvent());
+            }
+        }
+
         //Patch: Prevents MonsterCounterEvent from occuring if there are no living enemies
         [HarmonyPrefix, HarmonyPatch(typeof(MonsterCounterEvent), "Execute")]
         static bool MonsterCounterEvent_Execute(MonsterCounterEvent __instance)
