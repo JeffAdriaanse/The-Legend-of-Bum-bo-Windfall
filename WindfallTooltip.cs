@@ -271,6 +271,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             anchor = tooltipTransform.Find("Anchor");
             tooltipBack = anchor.Find("Tooltip").gameObject;
             textMeshPro = tooltipTransform.GetComponentInChildren<TextMeshPro>();
+            LocalizationModifier.ChangeFont(null, textMeshPro, LocalizationModifier.edFont);
 
             return tooltip;
         }
