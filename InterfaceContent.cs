@@ -20,11 +20,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(InterfaceContent));
         }
 
-        //Patch: Get app for bumbo modifier display
+        //Patch: Get app
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
-        static void BumboController_Init_ModifierDisplay(BumboController __instance)
+        static void BumboController_Init_GetApp(BumboController __instance)
         {
             BumboModifierIndication.GetApp(__instance.app);
+            WindfallTooltipController.GetApp(__instance.app);
+        }
+
+        //Patch: Update Windfall Tooltip
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Update")]
+        static void BumboController_Update(BumboController __instance)
+        {
+            WindfallTooltipController.UpdateTooltips();
         }
 
         //Patch: Display bumbo modifiers on RoomStartEvent

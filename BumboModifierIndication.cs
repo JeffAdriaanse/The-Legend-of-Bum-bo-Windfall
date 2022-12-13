@@ -9,12 +9,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Experimental.Rendering;
+using static The_Legend_of_Bum_bo_Windfall.BumboModifier;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     static class BumboModifierIndication
     {
-        static BumboApplication app;
+        public static BumboApplication app;
 
         static List<BumboModifier> bumboModifiers;
 
@@ -62,7 +63,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             string expansionTogglePath = "Shield";
             if (Windfall.assetBundle.Contains(expansionTogglePath))
             {
-                expansionToggle = ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset(expansionTogglePath), app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
+                expansionToggle = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset(expansionTogglePath), app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
                 expansionToggle.layer = 5;
                 expansionToggle.SetActive(false);
                 expansionToggle.AddComponent<ExpansionToggle>();
@@ -266,7 +267,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return null;
             }
 
-            BumboModifier bumboModifier = new BumboModifier(_source, _spellSource, _trinketSource, _value, _index);
+            BumboModifier bumboModifier = UnityEngine.Object.Instantiate(Windfall.assetBundle?.LoadAsset<GameObject>("Modifier Display"), app.view.GUICamera.transform.Find("HUD")).AddComponent<BumboModifier>();
+            bumboModifier.Init(_source, _spellSource, _trinketSource, _value, _index);
 
             bumboModifiers.Add(bumboModifier);
 
@@ -281,16 +283,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             bool newModifier = false;
-            if (bumboModifier.displayObject == null)
+            if (!bumboModifier.displayInitialized)
             {
-                CreateModifierDisplay(bumboModifier);
+                InitializeModifierDisplay(bumboModifier);
                 newModifier = true;
             }
 
             //Update modifier display elements and position
             UpdateModifierDisplay(bumboModifier);
 
-            Transform modifierDisplayTransform = bumboModifier.displayObject?.transform;
+            Transform modifierDisplayTransform = bumboModifier.gameObject.transform;
             if (modifierDisplayTransform != null)
             {
                 if (newModifier)
@@ -304,26 +306,34 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        static void CreateModifierDisplay(BumboModifier bumboModifier)
+        static void InitializeModifierDisplay(BumboModifier bumboModifier)
         {
-            //Create modifier display
-            bumboModifier.displayObject = UnityEngine.Object.Instantiate(Windfall.assetBundle?.LoadAsset<GameObject>("Modifier Display"), app.view.GUICamera.transform.Find("HUD"));
+            if (bumboModifier == null)
+            {
+                return;
+            }
 
-            bumboModifier.objectTinter = bumboModifier.displayObject.AddComponent<ObjectTinter>();
+            bumboModifier.displayInitialized = true;
 
-            bumboModifier.boxCollider = bumboModifier.displayObject.GetComponent<BoxCollider>();
+            bumboModifier.objectTinter = bumboModifier.gameObject.AddComponent<ObjectTinter>();
 
-            Transform modifierDisplayTransform = bumboModifier.displayObject.transform;
+            bumboModifier.gameObject.AddComponent<WindfallTooltip>();
+
+            bumboModifier.boxCollider = bumboModifier.gameObject.GetComponent<BoxCollider>();
+
+            Transform modifierDisplayTransform = bumboModifier.transform;
             modifierDisplayTransform.localPosition = BumboModifier.baseDisplayPosition;
             modifierDisplayTransform.localEulerAngles = new Vector3(0f, 180f, 0f);
             modifierDisplayTransform.localScale = new Vector3(0.09f, 0.09f, 0.11f);
 
-            bumboModifier.modifierDisplayCollectibleTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("ModifierDisplayCollectible"));
-            bumboModifier.modifierDisplayBackTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("ModifierDisplayBack"));
-            bumboModifier.modifierDisplayIconTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("ModifierDisplayIcon"));
-            bumboModifier.modifierDisplayValueTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("Value"));
-            bumboModifier.effectValueTransform = bumboModifier?.displayObject?.transform.Find("EffectValue");
-            bumboModifier.timerTransform = ResetShader(bumboModifier?.displayObject?.transform.Find("Temporary"));
+            WindfallHelper.ResetShader(modifierDisplayTransform);
+
+            bumboModifier.modifierDisplayCollectibleTransform = modifierDisplayTransform.Find("ModifierDisplayCollectible");
+            bumboModifier.modifierDisplayBackTransform = modifierDisplayTransform.Find("ModifierDisplayBack");
+            bumboModifier.modifierDisplayIconTransform = modifierDisplayTransform.Find("ModifierDisplayIcon");
+            bumboModifier.modifierDisplayValueTransform = modifierDisplayTransform.Find("Value");
+            bumboModifier.effectValueTransform = modifierDisplayTransform.Find("EffectValue");
+            bumboModifier.timerTransform = modifierDisplayTransform.Find("Temporary");
 
             //Set effect value
             TextMeshPro effectValueTextMeshPro = bumboModifier.effectValueTransform.GetComponent<TextMeshPro>();
@@ -358,29 +368,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 Debug.Log("Materials Set: " + newMaterials.Count);
             }
-        }
-
-        static Shader defaultShader;
-        static Transform ResetShader(Transform transform)
-        {
-            MeshRenderer meshRenderer = transform?.GetComponent<MeshRenderer>();
-
-            if (meshRenderer != null)
-            {
-                if (defaultShader == null)
-                {
-                    defaultShader = Shader.Find("Standard");
-                }
-
-                if (meshRenderer?.material?.shader != null && defaultShader != null)
-                {
-                    meshRenderer.material.shader = defaultShader;
-                }
-
-                meshRenderer.material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
-            }
-
-            return transform;
         }
 
         static void UpdateModifierDisplay(BumboModifier bumboModifier)
@@ -458,7 +445,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     bumboModifier.modifierDisplayIconObjectTransform = UnityEngine.Object.Instantiate(iconObject, bumboModifier.modifierDisplayIconTransform).transform;
 
-                    ResetShader(bumboModifier.modifierDisplayIconObjectTransform);
+                    WindfallHelper.ResetShader(bumboModifier.modifierDisplayIconObjectTransform);
 
                     bumboModifier.modifierDisplayIconObjectTransform.localEulerAngles = Vector3.zero;
                     bumboModifier.modifierDisplayIconObjectTransform.localPosition = Vector3.zero;
@@ -556,8 +543,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
     }
 
-    class BumboModifier
+    class BumboModifier : MonoBehaviour
     {
+        public bool displayInitialized = false;
+
         static Color hiddenTintColor = new Color(0.2f, 0.2f, 0.2f);
 
         static readonly float removalHorizontalOffset = 0.6f;
@@ -597,8 +586,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public int index;
 
-        public GameObject displayObject;
-
         public ObjectTinter objectTinter;
 
         public BoxCollider boxCollider;
@@ -615,11 +602,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         public Sequence movementSequence;
         public Sequence updateSequence;
 
-        bool Expanded()
+        public bool Expanded()
         {
             return WindfallPersistentDataController.LoadData().expandModifiers;
         }
-        public Vector3 TargetPosition()
+        Vector3 TargetPosition()
         {
             return Expanded() ? ShowingPosition() : HidingPosition();
         }
@@ -634,6 +621,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         Vector3 RemovalPosition()
         {
             return ShowingPosition() + new Vector3(-removalHorizontalOffset, 0, 0);
+        }
+
+        public Vector3 TooltipPosition()
+        {
+            return TargetPosition() + new Vector3(0.17f, 0f, 0f);
         }
 
         public void UpdateTint()
@@ -653,52 +645,37 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public void AddModifierAnimation()
         {
-            if (displayObject == null)
-            {
-                return;
-            }
-
             if (movementSequence != null && movementSequence.IsPlaying())
             {
                 movementSequence.Kill(true);
             }
 
-            displayObject.transform.localPosition = RemovalPosition();
+            transform.localPosition = RemovalPosition();
 
             movementSequence = DOTween.Sequence();
-            movementSequence.Append(displayObject.transform.DOLocalMove(TargetPosition(), tweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.Append(transform.DOLocalMove(TargetPosition(), tweenDuration).SetEase(Ease.InOutQuad));
 
             UpdateTint();
         }
 
         public void RemoveModifierAnimation()
         {
-            if (displayObject == null)
-            {
-                return;
-            }
-
             if (movementSequence != null && movementSequence.IsPlaying())
             {
                 movementSequence.Kill(true);
             }
 
-            movementSequence.Append(displayObject.transform.DOLocalMove(RemovalPosition(), tweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.Append(transform.DOLocalMove(RemovalPosition(), tweenDuration).SetEase(Ease.InOutQuad));
             movementSequence.AppendCallback(delegate
             {
-                UnityEngine.Object.Destroy(displayObject);
+                UnityEngine.Object.Destroy(gameObject);
             });
         }
 
         public void MoveModifierAnimation()
         {
-            if (displayObject == null)
-            {
-                return;
-            }
-
             Vector3 targetPosition = TargetPosition();
-            if (targetPosition == Vector3.zero || targetPosition == displayObject.transform.localPosition)
+            if (targetPosition == Vector3.zero || targetPosition == transform.localPosition)
             {
                 return;
             }
@@ -709,27 +686,79 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             movementSequence = DOTween.Sequence();
 
-            movementSequence.Append(displayObject.transform.DOLocalMove(targetPosition, tweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.Append(transform.DOLocalMove(targetPosition, tweenDuration).SetEase(Ease.InOutQuad));
             movementSequence.AppendCallback(delegate{ UpdateTint(); });
         }
 
         public void UpdateModifierAnimation()
         {
-            if (displayObject == null)
-            {
-                return;
-            }
-
             if (updateSequence != null && updateSequence.IsPlaying())
             {
                 updateSequence.Kill(true);
             }
 
             updateSequence = DOTween.Sequence();
-            updateSequence.Append(displayObject.transform.DOPunchScale(new Vector3(punchScale, punchScale, punchScale), tweenDuration, 1, 0));
+            updateSequence.Append(transform.DOPunchScale(new Vector3(punchScale, punchScale, punchScale), tweenDuration, 1, 0));
         }
 
-        public BumboModifier(string _source, SpellName _spellSource, TrinketName _trinketSource, string _value, int _index)
+        public string Description()
+        {
+            if (value == null)
+            {
+                return "";
+            }
+
+            string description = string.Empty;
+
+            switch (modifierCategory)
+            {
+                case ModifierCategory.Block:
+                    if (value == "1")
+                    {
+                        description = "Blocks an attack";
+                    }
+                    else
+                    {
+                        description = "Blocks " + value + " attacks";
+                    }
+                    break;
+                case ModifierCategory.Dodge:
+                    description = "Increases chance to dodge attacks by " + value;
+                    break;
+                case ModifierCategory.Retaliate:
+                    description = "Inflicts " + value + " damage to attacking enemies";
+                    break;
+            }
+
+            switch (spellSource)
+            {
+                case SpellName.BrownBelt:
+                    description = "Blocks an attack and counters for " + value + " damage";
+                    break;
+                case SpellName.BlindRage:
+                    description = "Multiplies damage taken by " + value;
+                    break;
+                case SpellName.Pause:
+                    description = "Skips the next enemy phase";
+                    break;
+                case SpellName.RoidRage:
+                    description = "Increases crit chance by " + value;
+                    break;
+                case SpellName.StopWatch:
+                    description = "Limits each enemy's moves to 1 next enemy phase";
+                    break;
+                case SpellName.TheVirus:
+                    description = "Poisons attacking enemies";
+                    break;
+                case SpellName.TwentyTwenty:
+                    description = "Duplicates the next tile combo effect";
+                    break;
+            }
+
+            return description;
+        }
+
+        public void Init(string _source, SpellName _spellSource, TrinketName _trinketSource, string _value, int _index)
         {
             if (_source != null && _source != string.Empty)
             {

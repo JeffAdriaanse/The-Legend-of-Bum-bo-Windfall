@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -57,6 +58,35 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 gamepadMenuController.m_CancelButton = cancelButton;
             }
+        }
+
+        static Shader defaultShader;
+        public static Transform ResetShader(Transform transform)
+        {
+            if (transform == null)
+            {
+                return null;
+            }
+
+            foreach (MeshRenderer meshRenderer in transform.GetComponentsInChildren<MeshRenderer>())
+            {
+                if (meshRenderer != null && !meshRenderer.GetComponent<TextMeshPro>())
+                {
+                    if (defaultShader == null)
+                    {
+                        defaultShader = Shader.Find("Standard");
+                    }
+
+                    if (meshRenderer?.material?.shader != null && defaultShader != null)
+                    {
+                        meshRenderer.material.shader = defaultShader;
+                    }
+
+                    meshRenderer.material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
+                }
+            }
+
+            return transform;
         }
     }
 }
