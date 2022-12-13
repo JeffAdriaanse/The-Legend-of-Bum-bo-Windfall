@@ -37,7 +37,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         static GameObject expansionToggle;
-        static Vector3 togglePosition = new Vector3(-0.73f, 0.42f, 1.15f);
 
         private static void UpdateExpansionToggle()
         {
@@ -226,6 +225,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 bumboModifiers = new List<BumboModifier>();
             }
+
+            bumboModifiers.RemoveAll(modifier => modifier == null || modifier.gameObject == null);
 
             BumboModifier existingModifier = null;
 
