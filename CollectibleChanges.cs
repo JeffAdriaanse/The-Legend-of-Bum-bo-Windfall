@@ -4,7 +4,6 @@ using HarmonyLib;
 using UnityEngine;
 using System.Runtime.CompilerServices;
 using TMPro;
-using static CharacterSheet;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -36,6 +35,24 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 			return floor > 0 || UnityEngine.Random.Range(0f, 1f) < remainder ? 1 : 0;
         }
+
+		public static Dictionary<SpellName, float> SpellEffectStackingCap
+		{
+			get
+			{
+				if (WindfallHelper.app == null)
+				{
+					return new Dictionary<SpellName, float>();
+                }
+
+				return new Dictionary<SpellName, float>()
+				{
+                    { SpellName.BarbedWire, 3 + WindfallHelper.app.model.characterSheet.getItemDamage() },
+                    { SpellName.OrangeBelt, 3 + WindfallHelper.app.model.characterSheet.getItemDamage() },
+                    { SpellName.YellowBelt, 0.75f },
+                };
+			}
+		}
 
         //Patch: Disables Brown Belt effect upon blocking an attack; this prevents the effect from blocking multiple hits from a multi-attack
 		//Also removes brown belt effect if damage is blocked and there isn't going to be a counterattack
@@ -148,7 +165,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 				float damageIncrease = 1f;
 				if (__state) damageIncrease -= 1f;
 
-				float maximumDamage = 3 + __instance.app.model.characterSheet.getItemDamage();
+				float maximumDamage = 100;
+				if (SpellEffectStackingCap.TryGetValue(SpellName.OrangeBelt, out float cap))
+				{
+					maximumDamage = cap;
+                }
 
                 for (int modifierCounter = 0; modifierCounter < characterSheet.bumboModifierObjects.Count; modifierCounter++)
                 {
@@ -197,7 +218,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 int damageIncrease = 1;
                 if (__state) damageIncrease -= 1;
 
-                int maximumDamage = 3 + __instance.app.model.characterSheet.getItemDamage();
+                float maximumDamage = 100;
+                if (SpellEffectStackingCap.TryGetValue(SpellName.BarbedWire, out float cap))
+                {
+                    maximumDamage = cap;
+                }
 
                 for (int modifierCounter = 0; modifierCounter < characterSheet.bumboModifierObjects.Count; modifierCounter++)
                 {
@@ -214,7 +239,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             //Reduce damage to max if it goes over
                             if (characterSheet.bumboModifierObjects[modifierCounter].damageOnHit > maximumDamage)
                             {
-                                characterSheet.bumboModifierObjects[modifierCounter].damageOnHit = maximumDamage;
+                                characterSheet.bumboModifierObjects[modifierCounter].damageOnHit = (int)maximumDamage;
                             }
                         }
                     }
@@ -2357,8 +2382,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 				if (WindfallPersistentDataController.LoadData().implementBalanceChanges && objectIndex > -1)
 				{
+					float maximumDodge = 1f;
+                    if (SpellEffectStackingCap.TryGetValue(SpellName.YellowBelt, out float cap))
+                    {
+                        maximumDodge = cap;
+                    }
+
                     //Cap dodgeChance at 75%
-                    if (__instance.app.model.characterSheet.bumboModifierObjects[objectIndex].dodgeChance > 0.75f) __instance.app.model.characterSheet.bumboModifierObjects[objectIndex].dodgeChance = 0.75f;
+                    if (__instance.app.model.characterSheet.bumboModifierObjects[objectIndex].dodgeChance > maximumDodge) __instance.app.model.characterSheet.bumboModifierObjects[objectIndex].dodgeChance = maximumDodge;
                 }
 			}
 		}

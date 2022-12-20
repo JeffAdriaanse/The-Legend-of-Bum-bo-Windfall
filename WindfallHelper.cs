@@ -6,6 +6,24 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class WindfallHelper
     {
+        public static BumboApplication app;
+        public static void GetApp(BumboApplication _app)
+        {
+            if (app != null)
+            {
+                return;
+            }
+
+            if (_app != null)
+            {
+                app = _app;
+            }
+            else
+            {
+                app = GameObject.FindObjectOfType<BumboApplication>();
+            }
+        }
+
         public static int ChaptersUnlocked(Progression progression)
         {
             int numberOfChapters;
