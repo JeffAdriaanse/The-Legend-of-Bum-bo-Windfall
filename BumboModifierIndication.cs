@@ -336,6 +336,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             bumboModifier.effectValueTransform = modifierDisplayTransform.Find("EffectValue");
             bumboModifier.timerTransform = modifierDisplayTransform.Find("Temporary");
 
+            bumboModifier.timerTransform.gameObject.AddComponent<BumboModifierTemporary>().bumboModifier = bumboModifier;
+            bumboModifier.timerTransform.gameObject.AddComponent<WindfallTooltip>();
+
             //Set effect value
             TextMeshPro effectValueTextMeshPro = bumboModifier.effectValueTransform.GetComponent<TextMeshPro>();
             if (effectValueTextMeshPro != null)
@@ -863,6 +866,17 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             value = _value;
             index = _index;
+        }
+    }
+
+    class BumboModifierTemporary : MonoBehaviour
+    {
+        public BumboModifier bumboModifier;
+        public readonly string description = "Effect will be lost at the start of your next turn";
+
+        public Vector3 TooltipPosition()
+        {
+            return bumboModifier.TooltipPosition();
         }
     }
 }
