@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using TMPro;
@@ -88,8 +89,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static GameObject tooltip;
 
         private static Transform anchor;
-        private static GameObject tooltipBack;
-        private static TextMeshPro textMeshPro;
+
+        private static TextMeshPro hiddenLabel;
+        private static List<TextMeshPro> labels;
 
         private static GameObject defaultTooltipObject;
         private static DefaultTooltipMode defaultTooltip = DefaultTooltipMode.Disabled;
@@ -201,109 +203,87 @@ namespace The_Legend_of_Bum_bo_Windfall
                 tooltip.SetActive(true);
             }
 
+            ResizeTooltip(windfallTooltip);
+
             Camera hudCamera = app.view.GUICamera.cam;
+            Vector3 hudCameraForward = hudCamera.transform.forward;
             Vector3 cameraPosition = hudCamera.transform.position;
-            Vector3 targetdisplayPosition = windfallTooltip.displayAtMouse ? windfallTooltip.displayPosition : hudCamera.transform.TransformPoint(windfallTooltip.displayPosition);
 
-            Plane plane = new Plane(hudCamera.transform.forward, cameraPosition + (hudCamera.transform.forward * 0.8f));
+            //Place tooltip display pane at a set distance from the camera
+            Plane tooltipDisplayPlane = new Plane(hudCameraForward, cameraPosition + (hudCameraForward * 0.8f));
 
-            Ray ray = new Ray(cameraPosition, (targetdisplayPosition - cameraPosition).normalized);
+            //Get target display position
+            Vector3 targetdisplayPosition = windfallTooltip.displayPosition;
+            Vector3 targetdisplayDirection = (targetdisplayPosition - cameraPosition).normalized;
 
-            if (plane.Raycast(ray, out float enter))
+            //The target display position is slightly too wide when getting the position from world space
+            //Consequently, the tooltip display direction must be adjusted to compensate
+            if (!windfallTooltip.displayAtMouse)
             {
-                tooltip.transform.position = ray.GetPoint(enter);
-                anchor.localPosition = AnchorOffset(windfallTooltip);
+                targetdisplayDirection = Vector3.Lerp(hudCameraForward, targetdisplayDirection, 0.93f);
             }
 
-            if (textMeshPro != null)
+            //Cast a ray through to the target position and place the tooltip at the intersection point on the plane
+            Ray targetDisplayRay = new Ray(cameraPosition, targetdisplayDirection);
+            if (tooltipDisplayPlane.Raycast(targetDisplayRay, out float enter))
             {
-                textMeshPro.text = windfallTooltip.displayDescription;
-                ResizeTooltip();
+                tooltip.transform.position = targetDisplayRay.GetPoint(enter);
+                //Apply anchor offset
+                anchor.localPosition = AnchorOffset(windfallTooltip);
             }
         }
 
-        private static readonly List<String> tooltipPaths = new List<string>()
+        private static void ResizeTooltip(WindfallTooltip windfallTooltip)
         {
-            "Tooltip Size 1",
-            "Tooltip Size 2",
-            "Tooltip Size 3",
-            "Tooltip Size 4",
-            "Tooltip Size 5",
-        };
-
-        private static Dictionary<Mesh, Texture2D> tooltipSizes;
-
-        private static void ResizeTooltip()
-        {
-            if (tooltipSizes == null)
+            if (labels == null || labels.Count < 1)
             {
-                tooltipSizes = new Dictionary<Mesh, Texture2D>();
-
-                foreach (string path in tooltipPaths)
-                {
-                    if (Windfall.assetBundle.Contains(path))
-                    {
-                        tooltipSizes.Add(Windfall.assetBundle.LoadAsset<Mesh>(path), Windfall.assetBundle.LoadAsset<Texture2D>(path));
-                    }
-                }
+                return;
+            }
+            if (hiddenLabel == null)
+            {
+                return;
             }
 
-            Bounds textBounds = textMeshPro.textBounds;
-            float padding = 1.6f;
-            float targetHeight = textBounds.extents.y * padding;
-
-            Mesh tooltipMesh = null;
-            Texture2D tooltipTexture = null;
-            float tooltipMeshHeight = 0;
-
-            Mesh largestMesh = null;
-            Texture2D largestTexture = null;
-            float largestHeight = 0;
-
-            foreach (Mesh mesh in tooltipSizes.Keys)
+            int linecount = -1;
+            if (windfallTooltip != null && windfallTooltip.displayDescription != null)
             {
-                float heightMultiplier = 13.6f;
-                float height = (mesh.bounds.extents.x * heightMultiplier) + (0.168f * heightMultiplier);
-                if (height > targetHeight && (tooltipMeshHeight == 0 || height < tooltipMeshHeight))
-                {
-                    tooltipMeshHeight = height;
-                    tooltipMesh = mesh;
-
-                    if (tooltipSizes.TryGetValue(mesh, out Texture2D texture2D))
-                    {
-                        tooltipTexture = texture2D;
-                    }
-                }
-
-                float meshHeight = mesh.bounds.extents.x;
-                if (largestHeight == 0 || largestHeight > meshHeight)
-                {
-                    largestHeight = meshHeight;
-                    largestMesh = mesh;
-
-                    if (tooltipSizes.TryGetValue(mesh, out Texture2D texture2D))
-                    {
-                        largestTexture = texture2D;
-                    }
-                }
+                hiddenLabel.SetText(windfallTooltip.displayDescription);
+                hiddenLabel.ForceMeshUpdate();
+                TMP_TextInfo textInfo = hiddenLabel.textInfo;
+                linecount = textInfo.lineCount;
             }
 
-            if (tooltipMesh == null || tooltipTexture == null)
+            for (int labelCounter = 0; labelCounter < labels.Count; labelCounter++)
             {
-                tooltipMesh = largestMesh;
-                tooltipTexture = largestTexture;
+                GameObject tooltipBack = labels[labelCounter].transform.parent.gameObject;
+
+                bool active = false;
+                if (linecount >= 0 && tooltipBack.name.Contains(linecount.ToString()))
+                {
+                    active = true;
+                }
+                tooltipBack.SetActive(active);
+                MeshRenderer meshRenderer = tooltipBack.GetComponent<MeshRenderer>();
+                meshRenderer.enabled = active;
+
+                labels[labelCounter].SetText(hiddenLabel.text);
             }
-
-            tooltipBack.GetComponent<MeshFilter>().mesh = tooltipMesh;
-            tooltipBack.GetComponent<MeshRenderer>().material.mainTexture = tooltipTexture;
-
-            tooltipBack.transform.localPosition = Vector3.zero;
         }
 
         private static readonly float anchorOffsetDistance = 0.1f;
         private static Vector3 AnchorOffset(WindfallTooltip windfallTooltip)
         {
             Vector3 offset;
+
+            GameObject tooltipBack = null;
+            foreach (TextMeshPro textMeshPro in labels)
+            {
+                GameObject currentTooltipBack = textMeshPro.transform.parent.gameObject;
+                if (currentTooltipBack.activeSelf)
+                {
+                    tooltipBack = currentTooltipBack;
+                }
+            }
 
             MeshRenderer meshRenderer = tooltipBack?.GetComponent<MeshRenderer>();
 
@@ -316,8 +296,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             float height;
             if (meshRenderer != null)
             {
-                width = meshRenderer.bounds.size.x * 4.8f;
-                height = meshRenderer.bounds.size.y * 6;
+                width = meshRenderer.bounds.size.x * 0.48f;
+                height = meshRenderer.bounds.size.y * 0.6f;
             }
             else
             {
@@ -373,16 +353,27 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             Transform tooltipTransform = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>(tooltipPath), app.view.GUICamera.transform.Find("HUD")).transform);
-            tooltip = tooltipTransform.gameObject;
 
-            tooltipTransform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+            tooltipTransform.localScale = new Vector3(1f, 1f, 1f);
 
             anchor = tooltipTransform.Find("Anchor");
-            tooltipBack = anchor.Find("Tooltip").gameObject;
-            textMeshPro = tooltipTransform.GetComponentInChildren<TextMeshPro>();
-            LocalizationModifier.ChangeFont(null, textMeshPro, LocalizationModifier.edFont);
 
-            return tooltip;
+            hiddenLabel = anchor.Find("Hidden Label").GetComponent<TextMeshPro>();
+            LocalizationModifier.ChangeFont(null, hiddenLabel, LocalizationModifier.edFont);
+
+            labels = tooltipTransform.GetComponentsInChildren<TextMeshPro>(true).ToList();
+            if (labels.Contains(hiddenLabel))
+            {
+                labels.Remove(hiddenLabel);
+            }
+
+            foreach (TextMeshPro textMeshPro in labels)
+            {
+                LocalizationModifier.ChangeFont(null, textMeshPro, LocalizationModifier.edFont);
+            }
+
+
+            return tooltipTransform.gameObject;
         }
     }
 }

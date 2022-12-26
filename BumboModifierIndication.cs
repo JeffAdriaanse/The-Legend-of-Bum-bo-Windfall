@@ -105,11 +105,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             int modifierDispayCounter = 0;
 
-            //Get modifiers
-            CharacterSheet.BumboRoundModifiers bumboRoundModifiers = app.model.characterSheet.bumboRoundModifiers;
-            CharacterSheet.BumboRoomModifiers bumboRoomModifiers = app.model.characterSheet.bumboRoomModifiers;
-            List<CharacterSheet.BumboModifierObject> bumboModifierObjects = app.model.characterSheet.bumboModifierObjects;
-
             //Block order:
             //Brown Belt
             //Trash Lid
@@ -146,7 +141,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             for (int spellCounter = 0; spellCounter < trackedSpells.Count; spellCounter++)
             {
-                if (ConvertModifier(null, trackedSpells[spellCounter], TrinketName.None, SpellConversionValue(trackedSpells[spellCounter], bumboRoundModifiers, bumboRoomModifiers, bumboModifierObjects), modifierDispayCounter))
+                if (ConvertModifier(null, trackedSpells[spellCounter], TrinketName.None, SpellConversionValue(trackedSpells[spellCounter], app), modifierDispayCounter))
                 {
                     modifierDispayCounter++;
                 }
@@ -155,8 +150,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             UpdateExpansionToggle();
         }
 
-        static string SpellConversionValue(SpellName _spellSource, CharacterSheet.BumboRoundModifiers bumboRoundModifiers, CharacterSheet.BumboRoomModifiers bumboRoomModifiers, List<CharacterSheet.BumboModifierObject> bumboModifierObjects)
+        static string SpellConversionValue(SpellName _spellSource, BumboApplication app)
         {
+            CharacterSheet.BumboRoundModifiers bumboRoundModifiers = app.model.characterSheet.bumboRoundModifiers;
+            CharacterSheet.BumboRoomModifiers bumboRoomModifiers = app.model.characterSheet.bumboRoomModifiers;
+            List<CharacterSheet.BumboModifierObject> bumboModifierObjects = app.model.characterSheet.bumboModifierObjects;
+
             switch (_spellSource)
             {
                 //Round modifiers
@@ -629,7 +628,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public Vector3 TooltipPosition()
         {
-            return TargetPosition() + new Vector3(0.17f, 0f, 0f);
+            return transform.parent.TransformPoint(TargetPosition() + new Vector3(0.12f, -0.02f, 0f));
         }
 
         public void UpdateTint()
@@ -727,7 +726,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                     break;
                 case ModifierCategory.Dodge:
-                    description = "Increases chance to dodge attacks by " + value;
+                    description = "Increases dodge chance by " + value;
                     break;
                 case ModifierCategory.Retaliate:
                     description = "Inflicts " + value + " damage to attacking enemies";
@@ -740,19 +739,22 @@ namespace The_Legend_of_Bum_bo_Windfall
                     description = "Blocks an attack and counters for " + value + " damage";
                     break;
                 case SpellName.BlindRage:
-                    description = "Multiplies damage taken by " + value;
+                    description = "Multiplies damage taken by " + value.Remove(0, 1);
+                    break;
+                case SpellName.Euthanasia:
+                    description = "Inflicts " + value + " damage to the next attacking enemy";
                     break;
                 case SpellName.Pause:
                     description = "Skips the next enemy phase";
                     break;
                 case SpellName.RoidRage:
-                    description = "Increases crit chance by " + value;
+                    description = "Next attack will crit";
                     break;
                 case SpellName.StopWatch:
-                    description = "Limits each enemy's moves to 1 next enemy phase";
+                    description = "Each enemy can only act once during the next enemy phase";
                     break;
                 case SpellName.TheVirus:
-                    description = "Poisons attacking enemies";
+                    description = "Poisons attacking enemies during the next enemy phase";
                     break;
                 case SpellName.TwentyTwenty:
                     description = "Duplicates the next tile combo effect";
@@ -872,7 +874,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     class BumboModifierTemporary : MonoBehaviour
     {
         public BumboModifier bumboModifier;
-        public readonly string description = "Effect will be lost at the start of your next turn";
+        public readonly string description = "Effect wears off next turn";
 
         public Vector3 TooltipPosition()
         {
