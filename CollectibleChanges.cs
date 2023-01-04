@@ -2227,8 +2227,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		static int rockCounter = 0;
-		//Patch: Rock Friends now drops a number of rocks equal to the player's spell damage stat
-		[HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "DropRock")]
+        [HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "AttackAnimation")]
+        static void RockFriendsSpell_AttackAnimation(RockFriendsSpell __instance)
+        {
+			rockCounter = 0;
+        }
+        //Patch: Rock Friends now drops a number of rocks equal to the player's spell damage stat
+        [HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "DropRock")]
 		static bool RockFriendsSpell_DropRock(RockFriendsSpell __instance, ref int _rock_number)
 		{
             if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
