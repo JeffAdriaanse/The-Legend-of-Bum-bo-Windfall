@@ -38,6 +38,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             UpdateDisplayData();
         }
 
+        //void OnMouseEnter()
+        //{
+        //    //Play Sound
+        //}
+
         public void UpdateDisplayData()
         {
             active = true;
@@ -71,6 +76,22 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayPosition = bumboModifierTemporary.TooltipPosition();
                 displayAnchor = Anchor.Left;
                 displayDescription = bumboModifierTemporary.description;
+                return;
+            }
+
+            BumboModifierStacking bumboModifierStacking = gameObject.GetComponent<BumboModifierStacking>();
+            if (bumboModifierStacking != null)
+            {
+                if (!bumboModifierStacking.bumboModifier.Expanded())
+                {
+                    active = false;
+                    return;
+                }
+
+                displayAtMouse = false;
+                displayPosition = bumboModifierStacking.TooltipPosition();
+                displayAnchor = Anchor.Left;
+                displayDescription = bumboModifierStacking.bumboModifier.StackingDescription();
                 return;
             }
         }
@@ -220,7 +241,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Consequently, the tooltip display direction must be adjusted to compensate
             if (!windfallTooltip.displayAtMouse)
             {
-                targetdisplayDirection = Vector3.Lerp(hudCameraForward, targetdisplayDirection, 0.93f);
+                //TEST targetdisplayDirection = Vector3.Lerp(hudCameraForward, targetdisplayDirection, 0.93f);
             }
 
             //Cast a ray through to the target position and place the tooltip at the intersection point on the plane

@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Experimental.Rendering;
 using static The_Legend_of_Bum_bo_Windfall.BumboModifier;
+using UnityEngine.UIElements;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -59,20 +60,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            string expansionTogglePath = "Shield";
+            string expansionTogglePath = "Toggle";
             if (Windfall.assetBundle.Contains(expansionTogglePath))
             {
-                expansionToggle = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset(expansionTogglePath), app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
+                expansionToggle = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset<GameObject>(expansionTogglePath), app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
                 expansionToggle.layer = 5;
                 expansionToggle.SetActive(false);
                 expansionToggle.AddComponent<ExpansionToggle>();
 
                 BoxCollider boxCollider = expansionToggle.AddComponent<BoxCollider>();
-                boxCollider.size = new Vector3(0.02f, 0.02f, 0.02f);
+                boxCollider.size = new Vector3(1f, 1f, 1f);
                 boxCollider.isTrigger = true;
 
                 expansionToggle.transform.localPosition = expansionToggle.GetComponent<ExpansionToggle>().HidingPosition();
-                expansionToggle.transform.localScale = new Vector3(5f, 5f, 5f);
+                expansionToggle.transform.localScale = new Vector3(0.08f, 0.08f, 0.08f);
 
                 ButtonHoverAnimation buttonHoverAnimation = expansionToggle.AddComponent<ButtonHoverAnimation>();
                 buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.NoSound;
@@ -267,7 +268,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return null;
             }
 
-            BumboModifier bumboModifier = UnityEngine.Object.Instantiate(Windfall.assetBundle?.LoadAsset<GameObject>("Modifier Display"), app.view.GUICamera.transform.Find("HUD")).AddComponent<BumboModifier>();
+            BumboModifier bumboModifier = UnityEngine.Object.Instantiate(Windfall.assetBundle?.LoadAsset<GameObject>("Modifier Display V2"), app.view.GUICamera.transform.Find("HUD")).AddComponent<BumboModifier>();
             bumboModifier.Init(_source, _spellSource, _trinketSource, _value, _index);
 
             bumboModifiers.Add(bumboModifier);
@@ -324,17 +325,21 @@ namespace The_Legend_of_Bum_bo_Windfall
             Transform modifierDisplayTransform = bumboModifier.transform;
             modifierDisplayTransform.localPosition = BumboModifier.baseDisplayPosition;
             modifierDisplayTransform.localEulerAngles = new Vector3(0f, 180f, 0f);
-            modifierDisplayTransform.localScale = new Vector3(0.09f, 0.09f, 0.11f);
+            modifierDisplayTransform.localScale = new Vector3(0.1f, 0.1f, 0.09f);
 
             WindfallHelper.ResetShader(modifierDisplayTransform);
 
-            bumboModifier.modifierDisplayCollectibleTransform = modifierDisplayTransform.Find("ModifierDisplayCollectible");
-            bumboModifier.modifierDisplayBackTransform = modifierDisplayTransform.Find("ModifierDisplayBack");
-            bumboModifier.modifierDisplayIconTransform = modifierDisplayTransform.Find("ModifierDisplayIcon");
+            bumboModifier.modifierDisplayCollectibleTransform = modifierDisplayTransform.Find("Collectible");
+            bumboModifier.modifierDisplayBackTransform = modifierDisplayTransform.Find("Back");
+            bumboModifier.modifierDisplayIconTransform = modifierDisplayTransform.Find("Icon");
             bumboModifier.modifierDisplayValueTransform = modifierDisplayTransform.Find("Value");
-            bumboModifier.effectValueTransform = modifierDisplayTransform.Find("EffectValue");
-            bumboModifier.timerTransform = modifierDisplayTransform.Find("Temporary");
+            bumboModifier.effectValueTransform = modifierDisplayTransform.Find("ValueText");
 
+            bumboModifier.stackingTransform = modifierDisplayTransform.Find("Stacking");
+            bumboModifier.stackingTransform.gameObject.AddComponent<BumboModifierStacking>().bumboModifier = bumboModifier;
+            bumboModifier.stackingTransform.gameObject.AddComponent<WindfallTooltip>();
+
+            bumboModifier.timerTransform = modifierDisplayTransform.Find("Temporary");
             bumboModifier.timerTransform.gameObject.AddComponent<BumboModifierTemporary>().bumboModifier = bumboModifier;
             bumboModifier.timerTransform.gameObject.AddComponent<WindfallTooltip>();
 
@@ -391,13 +396,24 @@ namespace The_Legend_of_Bum_bo_Windfall
             MeshRenderer valueMeshRenderer = bumboModifier.modifierDisplayValueTransform.GetComponent<MeshRenderer>();
             if (valueMeshRenderer != null)
             {
-                float offsetY = bumboModifier.valueDisplayType == BumboModifier.ValueDisplayType.Hurt ? 0.145f : 0f;
+                float offsetY = bumboModifier.valueDisplayType == BumboModifier.ValueDisplayType.Hurt ? 0.426f : 0f;
                 valueMeshRenderer.material.mainTextureOffset = new Vector2(0f, offsetY);
             }
 
             bumboModifier.effectValueTransform.gameObject.SetActive(bumboModifier.valueDisplayType != BumboModifier.ValueDisplayType.None);
 
             bumboModifier.timerTransform.gameObject.SetActive(bumboModifier.modifierType == CharacterSheet.BumboModifierObject.ModifierType.Round);
+
+            bool stackingActive = false;
+            if (bumboModifier.canStack)
+            {
+                stackingActive = true;
+                if (int.TryParse(bumboModifier.value, out int result) && bumboModifier.StackingCap() > 0)
+                {
+                    stackingActive = (result < bumboModifier.StackingCap());
+                }
+            }
+            bumboModifier.stackingTransform.gameObject.SetActive(stackingActive);
 
             bool overrideIconChange = false;
             if (bumboModifier.spellSource == SpellName.TrashLid && bumboModifier.value == "1")
@@ -411,6 +427,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 ChangeModifierDisplayIcon(bumboModifier, null);
             }
         }
+
+        static readonly Dictionary<SpellName, string> textureAssignment = new Dictionary<SpellName, string>
+        {
+            {SpellName.TheVirus, "ThornsPoison" }
+        };
 
         static void ChangeModifierDisplayIcon(BumboModifier bumboModifier, string iconObjectName)
         {
@@ -448,6 +469,15 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     bumboModifier.modifierDisplayIconObjectTransform = UnityEngine.Object.Instantiate(iconObject, bumboModifier.modifierDisplayIconTransform).transform;
 
+                    //Assign alternate textures
+                    if (textureAssignment.TryGetValue(bumboModifier.spellSource, out string textureName))
+                    {
+                        if (Windfall.assetBundle.Contains(textureName))
+                        {
+                            bumboModifier.modifierDisplayIconObjectTransform.GetComponent<MeshRenderer>().material = Windfall.assetBundle.LoadAsset<Material>(textureName);
+                        }
+                    }
+
                     WindfallHelper.ResetShader(bumboModifier.modifierDisplayIconObjectTransform);
 
                     bumboModifier.modifierDisplayIconObjectTransform.localEulerAngles = Vector3.zero;
@@ -465,14 +495,23 @@ namespace The_Legend_of_Bum_bo_Windfall
         private Sequence displaySequence;
         private readonly float tweenDuration = 0.3f;
 
-        public readonly Vector3 showingRotation = new Vector3(0f, 180f, 90f);
-        public readonly Vector3 hidingRotation = new Vector3(0f, 180f, 270f);
+        public readonly Vector3 showingRotation = new Vector3(0f, 0f, 180f);
+        public readonly Vector3 hidingRotation = new Vector3(0f, 0f, 0f);
 
-        public readonly Vector3 showingPosition = new Vector3(-0.73f, 0.42f, 1.15f);
+        public readonly Vector3 showingPosition = new Vector3(-0.73f, 0.41f, 1.15f);
 
         ExpansionToggle()
         {
             transform.localEulerAngles = TargetRotation();
+        }
+
+        //Gamepad controls
+        void Update()
+        {
+            //if (InputManager.Instance.IsUsingGamepadInput() && InputManager.Instance.GetButtonDown(eInput.))
+            //{
+
+            //}
         }
 
         void OnMouseDown()
@@ -557,7 +596,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static readonly float punchScale = 0.012f;
         static readonly float tweenDuration = 0.3f;
 
-        public static readonly Vector3 baseDisplayPosition = new Vector3(-0.64f, 0.3f, 1.15f);
+        public static readonly Vector3 baseDisplayPosition = new Vector3(-0.54f, 0.26f, 1.17f);
         static readonly float displayIndexOffset = 0.2f;
 
         public enum ModifierCategory
@@ -585,6 +624,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         public string value;
         public ValueDisplayType valueDisplayType;
 
+        public bool canStack;
+
         public string iconObjectName;
 
         public int index;
@@ -599,6 +640,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         public Transform modifierDisplayValueTransform;
         public Transform effectValueTransform;
         public Transform timerTransform;
+        public Transform stackingTransform;
 
         public Transform modifierDisplayIconObjectTransform;
 
@@ -628,7 +670,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public Vector3 TooltipPosition()
         {
-            return transform.parent.TransformPoint(TargetPosition() + new Vector3(0.12f, -0.02f, 0f));
+            return transform.parent.TransformPoint(TargetPosition() + new Vector3(0.04f, -0.01f, 0f));
         }
 
         public void UpdateTint()
@@ -764,6 +806,43 @@ namespace The_Legend_of_Bum_bo_Windfall
             return description;
         }
 
+        public int StackingCap()
+        {
+            if (!CollectibleChanges.SpellEffectStackingCap.ContainsKey(spellSource))
+            {
+                return 0;
+            }
+
+            float cap = CollectibleChanges.SpellEffectStackingCap[spellSource];
+            return Mathf.RoundToInt(cap > 0 && cap < 1 ? cap * 100 : cap);
+        }
+
+        public string StackingDescription()
+        {
+            if (value == null)
+            {
+                return "";
+            }
+
+            string stacking = "Effect can be stacked further";
+
+            switch (spellSource)
+            {
+                case SpellName.BarbedWire:
+                    stacking += ", up to " + StackingCap().ToString() + " damage";
+                    break;
+                case SpellName.OrangeBelt:
+                    stacking += ", up to " + StackingCap().ToString() + " damage";
+                    break;
+                case SpellName.YellowBelt:
+                    stacking += ", up to " + StackingCap().ToString() + "% dodge";
+                    break;
+            }
+
+            return stacking;
+
+        }
+
         public void Init(string _source, SpellName _spellSource, TrinketName _trinketSource, string _value, int _index)
         {
             if (_source != null && _source != string.Empty)
@@ -778,84 +857,98 @@ namespace The_Legend_of_Bum_bo_Windfall
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.Retaliate;
                         valueDisplayType = ValueDisplayType.Hurt;
-                        iconObjectName = "Retaliate";
+                        canStack = true;
+                        iconObjectName = "Thorns";
                         break;
                     case SpellName.BlindRage:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.Standard;
+                        canStack = true;
                         iconObjectName = "Vulnerable";
                         break;
                     case SpellName.BrownBelt:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.Block;
                         valueDisplayType = ValueDisplayType.Hurt;
-                        iconObjectName = "ShieldSword";
+                        canStack = false;
+                        iconObjectName = "ShieldThorns";
                         break;
                     case SpellName.Euthanasia:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.Retaliate;
                         valueDisplayType = ValueDisplayType.Hurt;
-                        iconObjectName = "Retaliate";
+                        canStack = false;
+                        iconObjectName = "Thorns";
                         break;
                     case SpellName.OldPillow:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.Block;
                         valueDisplayType = ValueDisplayType.None;
+                        canStack = false;
                         iconObjectName = "Shield";
                         break;
                     case SpellName.OrangeBelt:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
                         modifierCategory = ModifierCategory.Retaliate;
                         valueDisplayType = ValueDisplayType.Hurt;
-                        iconObjectName = "HurtRetaliate";
+                        canStack = true;
+                        iconObjectName = "Thorns";
                         break;
                     case SpellName.Pause:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
                         modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.None;
+                        canStack = false;
                         iconObjectName = "Slow";
                         break;
                     case SpellName.RoidRage:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.Standard;
+                        canStack = false;
                         iconObjectName = "Critical";
                         break;
                     case SpellName.SmokeMachine:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
                         modifierCategory = ModifierCategory.Dodge;
                         valueDisplayType = ValueDisplayType.Standard;
+                        canStack = false;
                         iconObjectName = "Dodge";
                         break;
                     case SpellName.StopWatch:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
                         modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.None;
+                        canStack = false;
                         iconObjectName = "Slow";
                         break;
                     case SpellName.TheVirus:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
                         modifierCategory = ModifierCategory.Retaliate;
                         valueDisplayType = ValueDisplayType.None;
-                        iconObjectName = "HurtRetaliatePoison";
+                        canStack = false;
+                        iconObjectName = "Thorns";
                         break;
                     case SpellName.TrashLid:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.Block;
                         valueDisplayType = ValueDisplayType.None;
+                        canStack = false;
                         iconObjectName = "DoubleShield";
                         break;
                     case SpellName.TwentyTwenty:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
                         modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.None;
+                        canStack = false;
                         iconObjectName = "ComboMultiplier";
                         break;
                     case SpellName.YellowBelt:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
                         modifierCategory = ModifierCategory.Dodge;
                         valueDisplayType = ValueDisplayType.Standard;
+                        canStack = true;
                         iconObjectName = "Dodge";
                         break;
                 }
@@ -875,6 +968,16 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         public BumboModifier bumboModifier;
         public readonly string description = "Effect wears off next turn";
+
+        public Vector3 TooltipPosition()
+        {
+            return bumboModifier.TooltipPosition();
+        }
+    }
+
+    class BumboModifierStacking : MonoBehaviour
+    {
+        public BumboModifier bumboModifier;
 
         public Vector3 TooltipPosition()
         {
