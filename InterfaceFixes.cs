@@ -11,6 +11,7 @@ using UnityEngine.UI;
 using System.Collections;
 using I2.Loc;
 using System.Linq;
+using System.Web;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -779,9 +780,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "ShowEndTurnSign")]
         static bool BumboController_ShowEndTurnSign(BumboController __instance)
         {
-            if (__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent")
+            string currentEvent = __instance.app.model.bumboEvent.GetType().ToString();
+            if (currentEvent == "BossDyingEvent" || currentEvent == "TrinketReplaceEvent" || currentEvent == "TrinketReplaceCancelledEvent")
             {
-                //Abort ShowEndTurnSign; current event is BossDyingEvent
+                //Abort ShowEndTurnSign
                 return false;
             }
             return true;
