@@ -639,7 +639,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return false;
             }
             //Only perform this trinket replace cancel in boss rooms or at the skull game
-            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && (__instance.app.model.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Boss || (__instance.app.view.gamblingView != null && __instance.app.model.gamblingModel?.cameraAt == 0)))
+            if (_event_path == "cancel.spell" && __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceEvent" && ((__instance.app.view.gamblingView == null && __instance.app.model.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Boss) || (__instance.app.view.gamblingView != null && __instance.app.model.gamblingModel?.cameraAt == 0)))
             {
                 TrinketReplaceEvent trinketReplaceEvent = __instance.app.model.bumboEvent as TrinketReplaceEvent;
                 __instance.app.controller.HideNotifications(false);
