@@ -34,14 +34,32 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly string collectible_page_normal_path = "Collectible_page_normal";
         private static readonly string spell_use_metallic_path = "Spell_use_metallic_V3";
         private static readonly string trinket_page_metallic_path = "Trinket_Page_metallic";
-        //Patch: Fixes collectible texture maps
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        private static readonly string spell_defense_active_basecolor_path = "Spell_Defense_1_active_basecolor";
+        private static readonly string spell_defense_inactive_basecolor_path = "Spell_Defense_1_inactive_basecolor";
+
+        //Patch: Fix spell texture maps
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "Init")]
         static void BumboController_Init_Collectible_Textures(BumboController __instance)
         {
             ReplaceSpellIconMaterials(__instance.app);
-            ReplaceTrinketIconMaterials(__instance.app);
         }
-        private static void ReplaceTrinketIconMaterials(BumboApplication app)
+
+        //Patch: Fix trinket texture maps
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketModel), nameof(TrinketModel.FillDictionary))]
+        static void TrinketModel_FillDictionary_Prefix(TrinketModel __instance, out bool __state)
+        {
+            __state = __instance.populatedMaterial;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), nameof(TrinketModel.FillDictionary))]
+        static void TrinketModel_FillDictionary(TrinketModel __instance, bool __state)
+        {
+            if (!__state)
+            {
+                ReplaceTrinketIconMaterials(__instance);
+            }
+        }
+
+        private static void ReplaceTrinketIconMaterials(TrinketModel trinketModel)
         {
             AssetBundle assets = Windfall.assetBundle;
             if (assets == null)
@@ -73,14 +91,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                     default:
                         break;
                 }
-
                 //Find list for current trinket category
-                if (app.model.trinketModel.trinketMaterial.ContainsKey(trinketCategory) && app.model.trinketModel.trinketMaterial[trinketCategory] != null)
+                if (trinketModel.trinketMaterial.ContainsKey(trinketCategory) && trinketModel.trinketMaterial[trinketCategory] != null)
                 {
                     //Access materials for each page of current trinket category
-                    for (int materialCounter = 0; materialCounter < app.model.trinketModel.trinketMaterial[trinketCategory].Count; materialCounter++)
+                    for (int materialCounter = 0; materialCounter < trinketModel.trinketMaterial[trinketCategory].Count; materialCounter++)
                     {
-                        Material material = app.model.trinketModel.trinketMaterial[trinketCategory][materialCounter];
+                        Material material = trinketModel.trinketMaterial[trinketCategory][materialCounter];
                         if (material != null)
                         {
                             //Replace each material
@@ -115,7 +132,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                                 if (texture != null)
                                 {
-                                    material.SetTexture("_BumpMap", texture);
+                                    Texture oldBumpMap = material.GetTexture("_BumpMap");
+                                    if (oldBumpMap != null && oldBumpMap is Texture2D)
+                                    {
+                                        material.SetTexture("_BumpMap", texture);
+                                    }
                                 }
                             }
 
@@ -130,12 +151,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 }
                             }
 
-                            app.model.trinketModel.trinketMaterial[trinketCategory][materialCounter] = material;
+                            trinketModel.trinketMaterial[trinketCategory][materialCounter] = material;
                         }
                     }
                 }
             }
         }
+
         private static void ReplaceSpellIconMaterials(BumboApplication app)
         {
             AssetBundle assets = Windfall.assetBundle;
@@ -148,6 +170,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             SpellElement.SpellCategory[] spellCategories = new SpellElement.SpellCategory[]
             {
                 SpellElement.SpellCategory.Attack,
+                SpellElement.SpellCategory.Defense,
                 SpellElement.SpellCategory.Puzzle,
                 SpellElement.SpellCategory.Use,
             };
@@ -158,11 +181,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                 bool replaceHeight = false;
                 bool replaceNormal = false;
                 string metallicPath = null;
+                string activeBasecolorPath = null;
+                string inactiveBasecolorPath = null;
 
                 switch (spellCategory)
                 {
                     case SpellElement.SpellCategory.Attack:
                         replaceNormal = true;
+                        break;
+                    case SpellElement.SpellCategory.Defense:
+                        activeBasecolorPath = spell_defense_active_basecolor_path;
+                        inactiveBasecolorPath = spell_defense_inactive_basecolor_path;
                         break;
                     case SpellElement.SpellCategory.Puzzle:
                         replaceAmbientOcclusion = true;
@@ -185,6 +214,32 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Find array for current spell category
                     if (app.model.spellModel.spellMaterial[spellMaterialCounter] != null && app.model.spellModel.spellMaterial[spellMaterialCounter].category == spellCategory)
                     {
+                        //Access active materials for each page of current spell category
+                        for (int materialCounter = 0; materialCounter < app.model.spellModel.spellMaterial[spellMaterialCounter].active.Count; materialCounter++)
+                        {
+                            Material material = app.model.spellModel.spellMaterial[spellMaterialCounter].active[materialCounter];
+                            if (material != null)
+                            {
+                                //Replace each material
+                                string[] texturePropertyNames = material.GetTexturePropertyNames();
+
+                                //Main Texture
+                                if (activeBasecolorPath != null && texturePropertyNames.Contains("_MainTex") && assets.Contains(activeBasecolorPath))
+                                {
+                                    Texture texture = assets.LoadAsset<Texture>(activeBasecolorPath);
+
+                                    if (texture != null)
+                                    {
+                                        Console.WriteLine("***************!*!**************");
+
+                                        material.SetTexture("_MainTex", texture);
+                                    }
+                                }
+
+                                app.model.spellModel.spellMaterial[spellMaterialCounter].active[materialCounter] = material;
+                            }
+                        }
+
                         //Access inactive materials for each page of current spell category
                         for (int materialCounter = 0; materialCounter < app.model.spellModel.spellMaterial[spellMaterialCounter].inactive.Count; materialCounter++)
                         {
@@ -193,6 +248,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                             {
                                 //Replace each material
                                 string[] texturePropertyNames = material.GetTexturePropertyNames();
+
+                                //Main Texture
+                                if (inactiveBasecolorPath != null && texturePropertyNames.Contains("_MainTex") && assets.Contains(inactiveBasecolorPath))
+                                {
+                                    Texture texture = assets.LoadAsset<Texture>(inactiveBasecolorPath);
+
+                                    if (texture != null)
+                                    {
+                                        material.SetTexture("_MainTex", texture);
+                                    }
+                                }
 
                                 //Ambient Occlusion
                                 if (replaceAmbientOcclusion && texturePropertyNames.Contains("_OcclusionMap") && assets.Contains(collectible_page_ambient_occlusion_path))
