@@ -1867,6 +1867,26 @@ namespace The_Legend_of_Bum_bo_Windfall
         //    }
         //    return true;
         //}
+
+        //Patch: Makes sure GamepadSpellSelector is closed when the player clicks a spell that is viable for the current action
+        [HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
+        static void SpellView_OnMouseDown_Gamepad_Fix(SpellView __instance)
+        {
+            if (!__instance.app.model.paused && (SpellElement)AccessTools.Field(typeof(SpellView), "spell").GetValue(__instance) != null && __instance.gamepadActiveObject != null && __instance.gamepadActiveObject.activeSelf)
+            {
+                __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
+            }
+        }
+
+        //Patch: Makes sure GamepadSpellSelector is closed when the player clicks a trinket that is viable for the current action
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketView), "OnMouseDown")]
+        static void TrinketView_OnMouseDown_Gamepad_Fix(TrinketView __instance)
+        {
+            if (!__instance.app.model.paused && __instance.app.controller.GetTrinket(__instance.trinketIndex) != null && __instance.gamepadActiveObject != null && __instance.gamepadActiveObject.activeSelf)
+            {
+                __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
+            }
+        }
     }
 
     static class SoundsModification
