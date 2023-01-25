@@ -1460,8 +1460,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix]
         static void GamepadSpellSelector_Selectable_Constructor(ref SpellView Spell)
         {
-            //GamepadSpellSelector reads spell.IsActive property when determining whether the spell is selectable; the property isn't properly updated when the spell is removed, so this patch syncs the isActive property with the spell's status (whether it's null or not)
-            AccessTools.Property(typeof(SpellView), "isActive").SetValue(Spell, Spell.SpellObject != null);
+            //GamepadSpellSelector reads spell.IsActive property when determining whether the spell is selectable; the property isn't properly updated when the spell is removed, so this patch makes the spell unselectable if it's null
+            if (Spell.SpellObject == null)
+            {
+                AccessTools.Property(typeof(SpellView), "isActive").SetValue(Spell, false);
+            }
         }
     }
 }
