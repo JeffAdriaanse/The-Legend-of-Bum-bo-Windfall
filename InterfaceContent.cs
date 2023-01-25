@@ -10,6 +10,7 @@ using TMPro;
 using UnityEngine.EventSystems;
 using System.Collections;
 using PathologicalGames;
+using System.Reflection;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -1453,6 +1454,25 @@ namespace The_Legend_of_Bum_bo_Windfall
                 WinStreakCounter.ResetStreak(true);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    class GamepadSpellSelector_Selectable_Constructor_Patch
+    {
+        //Patch must be in its own class for HarmonyTargetMethod to work
+        [HarmonyTargetMethod]
+        static MethodBase SelectableConstrutor()
+        {
+            //To access stuff from a private class, HarmonyTargetMethod must be used to get the class type and method/constructor
+            return AccessTools.Constructor(AccessTools.Inner(typeof(GamepadSpellSelector), "Selectable"), new Type[] { typeof(SpellView), typeof(int), typeof(GamepadSpellSelector) });
+        }
+        //Patch: Fixes empty spell slots being selectable using gamepad/keyboard controls after using Price Tag to remove a spell
+        [HarmonyPrefix]
+        static void GamepadSpellSelector_Selectable_Constructor(ref SpellView Spell)
+        {
+            //GamepadSpellSelector reads spell.IsActive property when determining whether the spell is selectable; the property isn't properly updated when the spell is removed, so this patch syncs the isActive property with the spell's status (whether it's null or not)
+            AccessTools.Property(typeof(SpellView), "isActive").SetValue(Spell, Spell.SpellObject != null);
         }
     }
 }
