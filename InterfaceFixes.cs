@@ -22,6 +22,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(InterfaceFixes));
         }
 
+        //Patch: Fixes Bag-O-Trash and Bum-bo the Dead's passive ability sometimes causing spell icon visuals to not update correctly
+        //SetSpell now updates the target spell's icon active status
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]
+        static void BumboController_SetSpell(BumboController __instance, int _spell_index, SpellElement _spell)
+        {
+            __instance.app.view.spells[_spell_index].SetActive(_spell.IsReady());
+        }
+
         //Patch: Fixes map base being visible when transitioning between rooms
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
         static void BumboController_Init_MapView(BumboController __instance)
@@ -230,8 +238,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                                     if (texture != null)
                                     {
-                                        Console.WriteLine("***************!*!**************");
-
                                         material.SetTexture("_MainTex", texture);
                                     }
                                 }
