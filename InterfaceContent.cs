@@ -891,17 +891,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Fixes triggering actions that modify your spells using mouse controls causing both the puzzle board and the spell menu to be selectable at the same time using gamepad/keyboard controls
-        [HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
-        static void SpellView_OnMouseDown_Prefix(SpellView __instance)
-        {
-            object spell = AccessTools.Field(typeof(SpellView), "spell").GetValue(__instance);
-            if (!__instance.app.model.paused && spell is SpellElement && (SpellElement)spell != null && !__instance.disableObject.activeSelf && __instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
-            {
-                __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
-            }
-        }
-
         //Patch: Allows cancel button to be pressed while in a treasure room after canceling taking a trinket
         [HarmonyPrefix, HarmonyPatch(typeof(CancelView), "OnMouseDown")]
         static bool CancelView_OnMouseDown(CancelView __instance)
