@@ -827,7 +827,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(EndTurnView), "Start")]
         static void EndTurnView_Start(EndTurnView __instance)
         {
-            __instance.GetComponent<BoxCollider>().enabled = false;
+            __instance.MakeClickable(false);
+        }
+
+        //Patch: Disables the end turn sign collider when it is hidden; hiding the sign immediately after showing it would not update the collider correctly
+        [HarmonyPostfix, HarmonyPatch(typeof(EndTurnView), nameof(EndTurnView.HideSign))]
+        static void EndTurnView_HideSign(EndTurnView __instance)
+        {
+            __instance.MakeClickable(false);
         }
 
         //Patch: Prevents end turn sign from being clicked while the game is paused
