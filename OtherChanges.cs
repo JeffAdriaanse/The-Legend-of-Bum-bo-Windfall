@@ -287,10 +287,26 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                     }
 
+                    //Add entrance door
+                    if (roomCounter > 0 && roomDirections.Count > 0)
+                    {
+                        MapRoom.Direction previousRoomDirection = roomDirections[roomCounter - 1];
+                        if (previousRoomDirection == MapRoom.Direction.E)
+                        {
+                            currentRoom.AddDoor(MapRoom.Direction.W);
+                        }
+                        else if (previousRoomDirection == MapRoom.Direction.W)
+                        {
+                            currentRoom.AddDoor(MapRoom.Direction.E);
+                        }
+                    }
+
                     if (currentRoom.roomType != MapRoom.RoomType.Boss)
                     {
-                        //Add room direction
+                        //Add exit door
                         currentRoom.AddDoor(roomDirections[roomCounter]);
+
+                        //Add room direction
                         currentRoom.exitDirection = roomDirections[roomCounter];
 
                         //Update current position
