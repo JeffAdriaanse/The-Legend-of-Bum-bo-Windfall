@@ -85,6 +85,12 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
         }
+        //Patch: Display bumbo modifiers on Enemy Act
+        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.Act))]
+        static void Enemy_Act_ModifierDisplay(Enemy __instance)
+        {
+            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
+        }
 
         //Patch: Add trinket glitches on GUISide Awake
         [HarmonyPostfix, HarmonyPatch(typeof(GUISide), "Awake")]

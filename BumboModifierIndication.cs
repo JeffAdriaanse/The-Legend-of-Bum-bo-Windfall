@@ -140,12 +140,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                 SpellName.WhiteBelt, //Modifier object
             };
 
+            //Update spell modifiers
             for (int spellCounter = 0; spellCounter < trackedSpells.Count; spellCounter++)
             {
                 if (ConvertModifier(null, trackedSpells[spellCounter], TrinketName.None, SpellConversionValue(trackedSpells[spellCounter], app), modifierDispayCounter))
                 {
                     modifierDispayCounter++;
                 }
+            }
+
+            //Update actionPointModifier
+            short actionPointModifier = app.model.actionPointModifier;
+            if (ConvertModifier("actionPointModifier", SpellName.None, TrinketName.None, actionPointModifier != 0 ? actionPointModifier.ToString() : null, modifierDispayCounter))
+            {
+                modifierDispayCounter++;
             }
 
             UpdateExpansionToggle();
@@ -375,6 +383,15 @@ namespace The_Legend_of_Bum_bo_Windfall
                     bumboModifier.modifierDisplayCollectibleTransform.GetComponent<MeshRenderer>().materials = newMaterials.ToArray();
                 }
                 Debug.Log("Materials Set: " + newMaterials.Count);
+            }
+            else
+            {
+                //Disable if there is no spell
+                bumboModifier.modifierDisplayCollectibleTransform.gameObject.SetActive(false);
+
+                //Center effect icon
+                Vector3 localPosition = bumboModifier.modifierDisplayIconTransform.localPosition;
+                bumboModifier.modifierDisplayIconTransform.localPosition = new Vector3(1.07f, localPosition.y, localPosition.z);
             }
         }
 
@@ -775,6 +792,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
             }
 
+            switch (source)
+            {
+                case "actionPointModifier":
+                    description = "Lose " + value.Remove(0, 1) + " moves next turn, but not below 1 move";
+                    break;
+            }
+
             switch (spellSource)
             {
                 case SpellName.BrownBelt:
@@ -847,6 +871,17 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (_source != null && _source != string.Empty)
             {
+                switch (_source)
+                {
+                    case "actionPointModifier":
+                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
+                        modifierCategory = ModifierCategory.None;
+                        valueDisplayType = ValueDisplayType.Standard;
+                        canStack = true;
+                        iconObjectName = "MoveLoss";
+                        break;
+                }
+
                 source = _source;
             }
             else if (_spellSource != SpellName.None)
