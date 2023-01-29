@@ -106,7 +106,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             Override,
         }
 
-        private static BumboApplication app;
         private static GameObject tooltip;
 
         private static Transform anchor;
@@ -117,33 +116,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static GameObject defaultTooltipObject;
         private static DefaultTooltipMode defaultTooltip = DefaultTooltipMode.Disabled;
 
-        public static BumboApplication GetApp(BumboApplication _app)
-        {
-            if (app != null)
-            {
-                return app;
-            }
-
-            if (_app != null)
-            {
-                app = _app;
-            }
-            else
-            {
-                app = GameObject.FindObjectOfType<BumboApplication>();
-            }
-
-            return app;
-        }
-
         public static void UpdateTooltips()
         {
-            if (app?.view?.GUICamera?.cam == null)
+            if (WindfallHelper.app?.view?.GUICamera?.cam == null)
             {
                 return;
             }
 
-            Ray ray = app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = WindfallHelper.app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
             RaycastHit[] hits = Physics.RaycastAll(ray);
 
             WindfallTooltip closestTooltip = null;
@@ -195,7 +175,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void DisplayTooltip(WindfallTooltip windfallTooltip)
         {
-            if (app == null)
+            if (WindfallHelper.app == null)
             {
                 return;
             }
@@ -226,7 +206,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             ResizeTooltip(windfallTooltip);
 
-            Camera hudCamera = app.view.GUICamera.cam;
+            Camera hudCamera = WindfallHelper.app.view.GUICamera.cam;
             Vector3 hudCameraForward = hudCamera.transform.forward;
             Vector3 cameraPosition = hudCamera.transform.position;
 
@@ -363,7 +343,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly string tooltipPath = "Tooltip Base";
         private static GameObject CreateTooltip()
         {
-            if (app == null)
+            if (WindfallHelper.app == null)
             {
                 return null;
             }
@@ -373,7 +353,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return null;
             }
 
-            Transform tooltipTransform = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>(tooltipPath), app.view.GUICamera.transform.Find("HUD")).transform);
+            Transform tooltipTransform = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>(tooltipPath), WindfallHelper.app.view.GUICamera.transform.Find("HUD")).transform);
 
             tooltipTransform.localScale = new Vector3(1f, 1f, 1f);
 

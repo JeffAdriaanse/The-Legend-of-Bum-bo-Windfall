@@ -26,8 +26,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void BumboController_Init_GetApp(BumboController __instance)
         {
             WindfallHelper.GetApp(__instance.app);
-            BumboModifierIndication.GetApp(__instance.app);
-            WindfallTooltipController.GetApp(__instance.app);
         }
 
         //Patch: Update Windfall Tooltip

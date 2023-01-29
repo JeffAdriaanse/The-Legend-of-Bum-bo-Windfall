@@ -8,21 +8,28 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class WindfallHelper
     {
-        public static BumboApplication app;
+        private static BumboApplication bumboApplication;
+        public static BumboApplication app
+        {
+            get
+            {
+                if (bumboApplication == null)
+                {
+                    bumboApplication = GameObject.FindObjectOfType<BumboApplication>();
+                }
+
+                return bumboApplication;
+            }
+            set
+            {
+                bumboApplication = value;
+            }
+        }
         public static void GetApp(BumboApplication _app)
         {
-            if (app != null)
-            {
-                return;
-            }
-
             if (_app != null)
             {
                 app = _app;
-            }
-            else
-            {
-                app = GameObject.FindObjectOfType<BumboApplication>();
             }
         }
 

@@ -16,26 +16,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     static class BumboModifierIndication
     {
-        public static BumboApplication app;
-
         static List<BumboModifier> bumboModifiers;
-
-        public static void GetApp(BumboApplication _app)
-        {
-            if (app != null)
-            {
-                return;
-            }
-
-            if (_app != null)
-            {
-                app = _app;
-            }
-            else
-            {
-                app = GameObject.FindObjectOfType<BumboApplication>();
-            }
-        }
 
         static GameObject expansionToggle;
 
@@ -63,7 +44,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             string expansionTogglePath = "Toggle";
             if (Windfall.assetBundle.Contains(expansionTogglePath))
             {
-                expansionToggle = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset<GameObject>(expansionTogglePath), app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
+                expansionToggle = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset<GameObject>(expansionTogglePath), WindfallHelper.app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
                 expansionToggle.layer = 5;
                 expansionToggle.SetActive(false);
                 expansionToggle.AddComponent<ExpansionToggle>();
@@ -99,7 +80,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void UpdateModifiers()
         {
-            if (app?.model?.characterSheet == null)
+            if (WindfallHelper.app?.model?.characterSheet == null)
             {
                 return;
             }
@@ -143,14 +124,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Update spell modifiers
             for (int spellCounter = 0; spellCounter < trackedSpells.Count; spellCounter++)
             {
-                if (ConvertModifier(null, trackedSpells[spellCounter], TrinketName.None, SpellConversionValue(trackedSpells[spellCounter], app), modifierDispayCounter))
+                if (ConvertModifier(null, trackedSpells[spellCounter], TrinketName.None, SpellConversionValue(trackedSpells[spellCounter]), modifierDispayCounter))
                 {
                     modifierDispayCounter++;
                 }
             }
 
             //Update actionPointModifier
-            short actionPointModifier = app.model.actionPointModifier;
+            short actionPointModifier = WindfallHelper.app.model.actionPointModifier;
             if (ConvertModifier("actionPointModifier", SpellName.None, TrinketName.None, actionPointModifier != 0 ? actionPointModifier.ToString() : null, modifierDispayCounter))
             {
                 modifierDispayCounter++;
@@ -159,11 +140,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             UpdateExpansionToggle();
         }
 
-        static string SpellConversionValue(SpellName _spellSource, BumboApplication app)
+        static string SpellConversionValue(SpellName _spellSource)
         {
-            CharacterSheet.BumboRoundModifiers bumboRoundModifiers = app.model.characterSheet.bumboRoundModifiers;
-            CharacterSheet.BumboRoomModifiers bumboRoomModifiers = app.model.characterSheet.bumboRoomModifiers;
-            List<CharacterSheet.BumboModifierObject> bumboModifierObjects = app.model.characterSheet.bumboModifierObjects;
+            CharacterSheet characterSheet = WindfallHelper.app.model.characterSheet;
+
+            CharacterSheet.BumboRoundModifiers bumboRoundModifiers = characterSheet.bumboRoundModifiers;
+            CharacterSheet.BumboRoomModifiers bumboRoomModifiers = characterSheet.bumboRoomModifiers;
+            List<CharacterSheet.BumboModifierObject> bumboModifierObjects = characterSheet.bumboModifierObjects;
 
             switch (_spellSource)
             {
@@ -189,7 +172,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     return (barbedWireModifierObject != null && barbedWireModifierObject.damageOnHit > 0) ? barbedWireModifierObject.damageOnHit.ToString() : null;
                 case SpellName.BrownBelt:
                     CharacterSheet.BumboModifierObject brownBeltModifierObject = bumboModifierObjects.Find(modifierObject => modifierObject.spellName == _spellSource);
-                    return (brownBeltModifierObject != null) ? app.model.characterSheet.getItemDamage().ToString() : null;
+                    return (brownBeltModifierObject != null) ? WindfallHelper.app.model.characterSheet.getItemDamage().ToString() : null;
                 case SpellName.Euthanasia:
                     CharacterSheet.BumboModifierObject euthanasiaModifierObject = bumboModifierObjects.Find(modifierObject => modifierObject.spellName == _spellSource);
                     return (euthanasiaModifierObject != null && euthanasiaModifierObject.damageOnHit > 0) ? euthanasiaModifierObject.damageOnHit.ToString() : null;
@@ -276,7 +259,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return null;
             }
 
-            BumboModifier bumboModifier = UnityEngine.Object.Instantiate(Windfall.assetBundle?.LoadAsset<GameObject>("Modifier Display V2"), app.view.GUICamera.transform.Find("HUD")).AddComponent<BumboModifier>();
+            BumboModifier bumboModifier = UnityEngine.Object.Instantiate(Windfall.assetBundle?.LoadAsset<GameObject>("Modifier Display V2"), WindfallHelper.app.view.GUICamera.transform.Find("HUD")).AddComponent<BumboModifier>();
             bumboModifier.Init(_source, _spellSource, _trinketSource, _value, _index);
 
             bumboModifiers.Add(bumboModifier);
@@ -286,7 +269,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         static void DisplayModifier(BumboModifier bumboModifier)
         {
-            if (app == null)
+            if (WindfallHelper.app == null)
             {
                 return;
             }
@@ -361,11 +344,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Set spell texture
             if (bumboModifier.spellSource != SpellName.None)
             {
-                SpellElement spellElement = app.model.spellModel.spells[bumboModifier.spellSource];
+                SpellElement spellElement = WindfallHelper.app.model.spellModel.spells[bumboModifier.spellSource];
 
                 List<Material> newMaterials = new List<Material>();
 
-                Material iconMaterial = new Material(app.model.spellModel.Icon(spellElement.Category, true, spellElement.texturePage));
+                Material iconMaterial = new Material(WindfallHelper.app.model.spellModel.Icon(spellElement.Category, true, spellElement.texturePage));
                 if (iconMaterial != null)
                 {
                     iconMaterial.SetTextureOffset("_MainTex", spellElement.IconPosition);
@@ -522,17 +505,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             transform.localEulerAngles = TargetRotation();
         }
 
-        //Gamepad controls
+        //Keyboard/gamepad controls: Tab key triggers the toggle
         void Update()
         {
-            //if (InputManager.Instance.IsUsingGamepadInput() && InputManager.Instance.GetButtonDown(eInput.))
-            //{
-
-            //}
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                OnMouseDown();
+            }
         }
 
         void OnMouseDown()
         {
+            if (WindfallHelper.app.model.paused)
+            {
+                return;
+            }
+
             if (toggleSequence != null && toggleSequence.IsPlaying())
             {
                 return;
