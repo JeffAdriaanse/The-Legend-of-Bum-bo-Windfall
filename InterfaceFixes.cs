@@ -1937,7 +1937,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketView), "OnMouseDown")]
         static void TrinketView_OnMouseDown_Gamepad_Fix(TrinketView __instance)
         {
-            if (!__instance.app.model.paused && __instance.app.controller.GetTrinket(__instance.trinketIndex) != null && __instance.gamepadActiveObject != null && __instance.gamepadActiveObject.activeSelf)
+            if (!__instance.app.model.paused && __instance.app.model.characterSheet.trinkets.Count > __instance.trinketIndex && __instance.app.controller.GetTrinket(__instance.trinketIndex) != null && __instance.gamepadActiveObject != null && __instance.gamepadActiveObject.activeSelf)
             {
                 __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
             }
