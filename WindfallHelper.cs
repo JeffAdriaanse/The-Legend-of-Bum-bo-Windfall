@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UIElements;
+using System.Linq;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -148,6 +150,53 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             return float.NaN;
+        }
+    }
+
+    //Disables unwanted notifiactions immediately after they are created
+    public static class NotificationRemoval
+    {
+        public enum NotificationType
+        {
+            MANA_DRAIN,
+            MANA_GAIN,
+            DAMAGE_UP,
+            LOSE_MOVE,
+            DOOMED,
+        }
+
+        static Dictionary<NotificationType, string> NotificationNames = new Dictionary<NotificationType, string>()
+        {
+            { NotificationType.MANA_DRAIN, "mana drain" },
+            { NotificationType.MANA_GAIN, "mana gain" },
+            { NotificationType.DAMAGE_UP, "damage up" },
+            { NotificationType.LOSE_MOVE, "lose move" },
+            { NotificationType.DOOMED, "doomed" },
+        };
+        public static void RemoveNewestNotification(GUISide guiSide, NotificationType notificationType)
+        {
+            GameObject notificationToDisable = null;
+            int largestNotificationIndex = -1;
+            for (int childCounter = 0; childCounter < guiSide.transform.childCount; childCounter++)
+            {
+                //Loop through all children of GUISide object
+                Transform child = guiSide.transform.GetChild(childCounter);
+
+                if (child.gameObject.activeSelf && childCounter > largestNotificationIndex && NotificationNames.TryGetValue(notificationType, out string name))
+                {
+                    if (child.name.Contains(name))
+                    {
+                        //Locate the lowest active notification of the given type
+                        notificationToDisable = child.gameObject;
+                        largestNotificationIndex = childCounter;
+                    }
+                }
+            }
+            //Disable notification
+            if (notificationToDisable != null)
+            {
+                notificationToDisable.SetActive(false);
+            }
         }
     }
 }

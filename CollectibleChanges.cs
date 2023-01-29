@@ -4,6 +4,8 @@ using HarmonyLib;
 using UnityEngine;
 using System.Runtime.CompilerServices;
 using TMPro;
+using DG.Tweening;
+using UnityEngine.Playables;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -2176,8 +2178,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 				__instance.app.model.characterSheet.bumboRoomModifiers.damage--;
 				//Add spell damage increase instead
 				__instance.app.model.characterSheet.bumboRoomModifiers.itemDamage++; //Item damage room modifier is not implemented in the base game and must be added in
-                __instance.app.controller.UpdateStats();
-			}
+				__instance.app.controller.UpdateStats();
+
+				//Remove damage up notification
+				GUISide guiSide = __instance.app.view.GUICamera.GetComponent<GUISide>();
+                if (guiSide != null)
+				{
+					NotificationRemoval.RemoveNewestNotification(guiSide, NotificationRemoval.NotificationType.DAMAGE_UP);
+                }
+            }
 		}
 
 		//Patch: Implements room spell damage
