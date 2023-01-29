@@ -167,11 +167,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         static Dictionary<NotificationType, string> NotificationNames = new Dictionary<NotificationType, string>()
         {
-            { NotificationType.MANA_DRAIN, "mana drain" },
-            { NotificationType.MANA_GAIN, "mana gain" },
+            { NotificationType.MANA_DRAIN, "Mana_Drain" },
+            { NotificationType.MANA_GAIN, "Mana Gain" },
             { NotificationType.DAMAGE_UP, "damage up" },
-            { NotificationType.LOSE_MOVE, "lose move" },
-            { NotificationType.DOOMED, "doomed" },
+            { NotificationType.LOSE_MOVE, "Lose_Move" },
+            { NotificationType.DOOMED, "Doomed" },
         };
         public static void RemoveNewestNotification(GUISide guiSide, NotificationType notificationType)
         {
