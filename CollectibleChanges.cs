@@ -2169,7 +2169,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
 		//Patch: Pentagram no longer provides puzzle damage
-		[HarmonyPostfix, HarmonyPatch(typeof(PentagramSpell), "CastSpell")]
+		//Also removes damage up notification
+		[HarmonyPostfix, HarmonyPatch(typeof(PentagramSpell), nameof(PentagramSpell.CastSpell))]
 		static void PentagramSpell_CastSpell(PentagramSpell __instance, bool __result)
 		{
 			if (__result)
@@ -2189,8 +2190,26 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 		}
 
-		//Patch: Implements room spell damage
-		[HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "getItemDamage")]
+        //Patch: Pentagram no longer provides puzzle damage
+        [HarmonyPostfix, HarmonyPatch(typeof(MissingPieceSpell), nameof(MissingPieceSpell.CastSpell))]
+        static void MissingPieceSpell_CastSpell(MissingPieceSpell __instance, bool __result)
+        {
+            if (__result)
+            {
+                //Add new damage up notification
+                __instance.app.controller.GUINotification("HIT_HARDER_ROOM", GUINotificationView.NotifyType.General, __instance, true);
+
+                //Remove old damage up notification
+                GUISide guiSide = __instance.app.view.GUICamera.GetComponent<GUISide>();
+                if (guiSide != null)
+                {
+                    NotificationRemoval.RemoveNewestNotification(guiSide, NotificationRemoval.NotificationType.DAMAGE_UP);
+                }
+            }
+        }
+
+        //Patch: Implements room spell damage
+        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "getItemDamage")]
 		static void CharacterSheet_getItemDamage(CharacterSheet __instance, ref int __result)
 		{
 			int damage = Mathf.RoundToInt((float)Mathf.Clamp(__result + __instance.app.model.characterSheet.bumboRoomModifiers.itemDamage, 1, 5));
