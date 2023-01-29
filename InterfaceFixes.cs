@@ -22,6 +22,61 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(InterfaceFixes));
         }
 
+        //Patch: Fixes 'damage up' notification appearing incorrectly
+        //GUISide manaDrainView incorrectly contained the ManaDrainView of the child of the intended GameObject
+        [HarmonyPostfix, HarmonyPatch(typeof(GUISide), "Awake")]
+        static void GUISide_Awake(GUISide __instance)
+        {
+            ManaDrainView manaDrainView = __instance.damageUpView.transform.parent.GetComponent<ManaDrainView>();
+            if (manaDrainView != null)
+            {
+                __instance.damageUpView = manaDrainView;
+            }
+        }
+
+        //Patch: Fixes 'damage up' notification sometimes not appearing when Bum-bo the Brave's passive ability is triggered
+        //This patch replaces the 'HealthChange' method of BraveHiddenTriket
+        [HarmonyPostfix, HarmonyPatch(typeof(HealthController), nameof(HealthController.UpdateHearts))]
+        static void HealthController_UpdateHearts(HealthController __instance)
+        {
+            CharacterSheet characterSheet = __instance.app.model.characterSheet;
+
+            //Only applies to The Brave
+            if (characterSheet.bumboType == CharacterSheet.BumboType.TheBrave)
+            {
+                //Retrieve previous hit points value
+                float previousHitPoints = ObjectDataStorage.GetData(__instance.gameObject, "HitPoints");
+                if (previousHitPoints != float.NaN)
+                {
+                    bool hitPointsReducedBelowThreshold = false;
+
+                    //Check whether damage up occurred from either threshold
+                    if (previousHitPoints > 1f && characterSheet.hitPoints <= 1f)
+                    {
+                        hitPointsReducedBelowThreshold = true;
+                    }
+                    if (previousHitPoints > 2f && characterSheet.hitPoints <= 2f)
+                    {
+                        hitPointsReducedBelowThreshold = true;
+                    }
+
+                    //Display notification
+                    if (hitPointsReducedBelowThreshold)
+                    {
+                        __instance.app.controller.ShowDamageUp();
+                    }
+                }
+            }
+            //Store hit points value for the next health update
+            ObjectDataStorage.StoreData(__instance.gameObject, "HitPoints", characterSheet.hitPoints);
+        }
+        //Disable original method
+        [HarmonyPrefix, HarmonyPatch(typeof(BraveHiddenTrinket), nameof(BraveHiddenTrinket.HealthChange))]
+        static bool BraveHiddenTrinket_HealthChange()
+        {
+            return false;
+        }
+
         //Patch: Fixes Bag-O-Trash and Bum-bo the Dead's passive ability sometimes causing spell icon visuals to not update correctly
         //SetSpell now updates the target spell's icon active status
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]

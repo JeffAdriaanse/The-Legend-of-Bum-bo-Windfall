@@ -107,4 +107,47 @@ namespace The_Legend_of_Bum_bo_Windfall
             return transform;
         }
     }
+
+    //Stores floats as components on GameObjects; if the GameObject is destroyed, the data will be lost
+    public class ObjectDataStorage : MonoBehaviour
+    {
+        public Dictionary<string, float> data = new Dictionary<string, float>();
+
+        public static void StoreData(GameObject targetObject, string key, float value)
+        {
+            if (targetObject == null)
+            {
+                return;
+            }
+
+            ObjectDataStorage objectDataStorage = targetObject.GetComponent<ObjectDataStorage>();
+
+            if (objectDataStorage == null)
+            {
+                objectDataStorage = targetObject.AddComponent<ObjectDataStorage>();
+            }
+
+            objectDataStorage.data[key] = value;
+        }
+
+        public static float GetData(GameObject targetObject, string key)
+        {
+            if (targetObject == null)
+            {
+                return float.NaN;
+            }
+
+            ObjectDataStorage objectDataStorage = targetObject.GetComponent<ObjectDataStorage>();
+
+            if (objectDataStorage != null && objectDataStorage.data != null)
+            {
+                if (objectDataStorage.data.TryGetValue(key, out float value))
+                {
+                    return value;
+                }
+            }
+
+            return float.NaN;
+        }
+    }
 }
