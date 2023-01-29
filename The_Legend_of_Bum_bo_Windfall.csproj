@@ -39,4 +39,8 @@
       <HintPath>Libs\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(ProjectDir)$(OutDir)$(TargetFileName)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\The Legend of Bum-Bo\BepInEx\plugins\The Legend of Bum-bo_Windfall&quot; /Y" />
+  </Target>
 </Project>
