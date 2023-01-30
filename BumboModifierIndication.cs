@@ -788,7 +788,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             switch (source)
             {
                 case "actionPointModifier":
-                    description = "Lose " + value.Remove(0, 1) + " moves next turn, but not below 1 move";
+                    string displayValue = value;
+                    int minusIndex = displayValue.IndexOf("-");
+                    if (minusIndex >= 0)
+                    {
+                        displayValue = displayValue.Remove(minusIndex, 1);
+                    }
+
+                    description = "Lose " + displayValue + (displayValue == "1" ? " move" : " moves") + " next turn, but not below 1 move";
                     break;
             }
 
@@ -820,6 +827,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
                 case SpellName.TwentyTwenty:
                     description = "Duplicates the next tile combo effect";
+                    break;
+                case SpellName.WhiteBelt:
+                    description = "Stops enemy curse / mana drain, limits their damage to 1 heart";
                     break;
             }
 
@@ -981,6 +991,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                         valueDisplayType = ValueDisplayType.None;
                         canStack = false;
                         iconObjectName = "ComboMultiplier";
+                        break;
+                    case SpellName.WhiteBelt:
+                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
+                        modifierCategory = ModifierCategory.None;
+                        valueDisplayType = ValueDisplayType.None;
+                        canStack = false;
+                        iconObjectName = "StatusProtection";
                         break;
                     case SpellName.YellowBelt:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
