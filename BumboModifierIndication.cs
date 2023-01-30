@@ -702,7 +702,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (movementSequence != null && movementSequence.IsPlaying())
             {
-                movementSequence.Kill(true);
+                movementSequence.Kill(false);
             }
 
             transform.localPosition = RemovalPosition();
@@ -717,7 +717,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (movementSequence != null && movementSequence.IsPlaying())
             {
-                movementSequence.Kill(true);
+                movementSequence.Kill(false);
             }
 
             movementSequence.Append(transform.DOLocalMove(RemovalPosition(), tweenDuration).SetEase(Ease.InOutQuad));
@@ -737,7 +737,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (movementSequence != null && movementSequence.IsPlaying())
             {
-                movementSequence.Kill(true);
+                movementSequence.Kill(false);
             }
             movementSequence = DOTween.Sequence();
 
