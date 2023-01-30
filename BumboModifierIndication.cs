@@ -106,6 +106,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 SpellName.TheVirus, //Room modifier
 
+                SpellName.LooseChange, //Round modifier
+
                 SpellName.BlindRage, //Room modifier
 
                 SpellName.SmokeMachine, //Modifier object
@@ -151,6 +153,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             switch (_spellSource)
             {
                 //Round modifiers
+                case SpellName.LooseChange:
+                    string coins = WindfallPersistentDataController.LoadData().implementBalanceChanges ? OtherChanges.looseChangeCoinGain.ToString() : "1";
+                    return bumboRoundModifiers.coinForHurt ? coins : null;
                 case SpellName.Pause:
                     return bumboRoundModifiers.skipEnemyTurns > 0 ? bumboRoundModifiers.skipEnemyTurns.ToString() : null;
                 case SpellName.RoidRage:
@@ -798,6 +803,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                 case SpellName.Euthanasia:
                     description = "Inflicts " + value + " damage to the next attacking enemy";
                     break;
+                case SpellName.LooseChange:
+                    description = "Grants " + value + " coins when hurt";
+                    break;
                 case SpellName.Pause:
                     description = "Skips the next enemy phase";
                     break;
@@ -903,6 +911,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                         valueDisplayType = ValueDisplayType.Hurt;
                         canStack = false;
                         iconObjectName = "Thorns";
+                        break;
+                    case SpellName.LooseChange:
+                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Round;
+                        modifierCategory = ModifierCategory.None;
+                        valueDisplayType = ValueDisplayType.Standard;
+                        canStack = false;
+                        iconObjectName = "HurtCoin";
                         break;
                     case SpellName.OldPillow:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;

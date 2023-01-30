@@ -17,6 +17,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes exiting to menu incorrectly deleting certain gameObjects
+        //Also rebalances Loose Change coin gain
+        public static readonly int looseChangeCoinGain = 4;
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "OnNotification")]
         static bool BumboController_OnNotification(BumboController __instance, string _event_path)
         {
@@ -45,6 +47,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 return false;
             }
+
+            //Modify amount of coins granted by Loose Change
+            if (_event_path == "bumbo.hurt" && __instance.app.model.characterSheet.bumboRoundModifiers.coinForHurt)
+            {
+                int coins = WindfallPersistentDataController.LoadData().implementBalanceChanges ? looseChangeCoinGain : 1;
+                __instance.ModifyCoins(coins);
+                return false;
+            }
+
             return true;
         }
 

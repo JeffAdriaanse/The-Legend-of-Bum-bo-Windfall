@@ -2404,8 +2404,23 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = __instance.baseDamage + __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier();
 		}
 
-		//Patch: Changes Yellow Belt modifier to last for the room instead of only the current round
-		[HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), "CastSpell")]
+		//Patch: Increases Loose Change charge cost
+        [HarmonyPostfix, HarmonyPatch(typeof(LooseChangeSpell), MethodType.Constructor)]
+        static void LooseChangeSpell_Constructor(LooseChangeSpell __instance)
+        {
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+            {
+                return;
+            }
+			int chargeCost = 1;
+
+			__instance.chargeEveryRound = false;
+			__instance.charge = chargeCost;
+			__instance.requiredCharge = chargeCost;
+        }
+
+        //Patch: Changes Yellow Belt modifier to last for the room instead of only the current round
+        [HarmonyPostfix, HarmonyPatch(typeof(YellowBeltSpell), "CastSpell")]
 		static void YellowBeltSpell_CastSpell(YellowBeltSpell __instance, bool __result)
 		{
             if (__result)
