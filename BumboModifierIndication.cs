@@ -104,7 +104,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 SpellName.Euthanasia, //Modifier object
                 SpellName.OrangeBelt, //Modifier object
 
-                SpellName.TheVirus, //Room modifier
+                SpellName.TheVirus, //Round modifier
 
                 SpellName.LooseChange, //Round modifier
 
@@ -121,6 +121,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 SpellName.TwentyTwenty, //Round modifier
 
                 SpellName.WhiteBelt, //Modifier object
+
+                SpellName.WoodenSpoon, //Room modifier
             };
 
             //Update spell modifiers
@@ -162,14 +164,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                     return bumboRoundModifiers.crit ? "100%" : null;
                 case SpellName.StopWatch:
                     return bumboRoundModifiers.slow ? "1" : null;
+                case SpellName.TheVirus:
+                    return bumboRoundModifiers.poisonRounds > 0 ? "1" : null;
                 case SpellName.TwentyTwenty:
                     return bumboRoundModifiers.repeatComboCount > 0 ? bumboRoundModifiers.repeatComboCount.ToString() : null;
 
                 //Room modifiers
                 case SpellName.BlindRage:
                     return bumboRoomModifiers.damageMultiplier > 1 ? "x" + bumboRoomModifiers.damageMultiplier.ToString() : null;
-                case SpellName.TheVirus:
-                    return bumboRoundModifiers.poisonRounds > 0 ? "1" : null;
+                case SpellName.WoodenSpoon:
+                    return bumboRoomModifiers.actionPoints > 0 ? bumboRoomModifiers.actionPoints.ToString() : null;
 
                 //Modifier objects
                 case SpellName.BarbedWire:
@@ -836,6 +840,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                 case SpellName.WhiteBelt:
                     description = "Stops enemy curse / mana drain, limits their damage to 1 heart";
                     break;
+                case SpellName.WoodenSpoon:
+                    description = "Grants " + value + " movement each turn";
+                    break;
             }
 
             return description;
@@ -1003,6 +1010,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                         valueDisplayType = ValueDisplayType.None;
                         canStack = false;
                         iconObjectName = "StatusProtection";
+                        break;
+                    case SpellName.WoodenSpoon:
+                        modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
+                        modifierCategory = ModifierCategory.None;
+                        valueDisplayType = ValueDisplayType.Standard;
+                        canStack = true;
+                        iconObjectName = "MoveGain";
                         break;
                     case SpellName.YellowBelt:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
