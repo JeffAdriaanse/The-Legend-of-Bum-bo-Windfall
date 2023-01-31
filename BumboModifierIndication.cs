@@ -838,7 +838,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     description = "Duplicates the next tile combo effect";
                     break;
                 case SpellName.WhiteBelt:
-                    description = "Stops enemy curse / mana drain, limits their damage to 1 heart";
+                    description = "Prevents enemies from cursing and draining mana, and limits their damage to one heart per attack";
                     break;
                 case SpellName.WoodenSpoon:
                     description = "Grants " + value + " movement each turn";
