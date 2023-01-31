@@ -1949,6 +1949,28 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
             }
         }
+
+        //Patch: Adjusts rotation of the boss stats indicator
+        [HarmonyPostfix, HarmonyPatch(typeof(BossHeartView), "Awake")]
+        static void BossHeartView_Awake(BossHeartView __instance)
+        {
+            __instance.speed = UnityEngine.Random.Range(0.006f, 0.012f);
+            AccessTools.Field(typeof(BossHeartView), "swingAmount").SetValue(__instance, UnityEngine.Random.Range(2f, 15f));
+        }
+        //Patch: Adjusts rotation of player hearts
+        [HarmonyPostfix, HarmonyPatch(typeof(HeartController), "Awake")]
+        static void HeartController_Awake(HeartController __instance)
+        {
+            __instance.speed = UnityEngine.Random.Range(0.006f, 0.012f);
+            AccessTools.Field(typeof(HeartController), "swingAmount").SetValue(__instance, UnityEngine.Random.Range(2f, 15f));
+        }
+        //Patch: Adjusts rotation of holy mantle shields
+        [HarmonyPostfix, HarmonyPatch(typeof(HolyMantleShieldController), "Awake")]
+        static void HolyMantleShieldController_Awake(HolyMantleShieldController __instance)
+        {
+            AccessTools.Field(typeof(HolyMantleShieldController), "speed").SetValue(__instance, UnityEngine.Random.Range(0.006f, 0.012f));
+            AccessTools.Field(typeof(HolyMantleShieldController), "swingAmount").SetValue(__instance, UnityEngine.Random.Range(2f, 15f));
+        }
     }
 
     static class SoundsModification
