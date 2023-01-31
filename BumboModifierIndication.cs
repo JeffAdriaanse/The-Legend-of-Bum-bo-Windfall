@@ -526,6 +526,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
+            if (!gameObject.activeSelf)
+            {
+                return;
+            }
+
             if (toggleSequence != null && toggleSequence.IsPlaying())
             {
                 return;
@@ -570,7 +575,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (displaySequence != null && displaySequence.IsPlaying())
             {
-                displaySequence.Kill(true);
+                displaySequence.Kill(false);
             }
             displaySequence = DOTween.Sequence();
 
