@@ -259,7 +259,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 GameObject tooltipBack = labels[labelCounter].transform.parent.gameObject;
 
                 bool active = false;
-                if (linecount >= 0 && tooltipBack.name.Contains(linecount.ToString()))
+                if (linecount >= 0 && (tooltipBack.name.Contains(linecount.ToString()) || linecount >= 5 && tooltipBack.name.Contains("5")))
                 {
                     active = true;
                 }
