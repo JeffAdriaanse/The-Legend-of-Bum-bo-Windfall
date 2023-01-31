@@ -1951,25 +1951,51 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Adjusts rotation of the boss stats indicator
+        //Moves thread and changes its layer
         [HarmonyPostfix, HarmonyPatch(typeof(BossHeartView), "Awake")]
         static void BossHeartView_Awake(BossHeartView __instance)
         {
             __instance.speed = UnityEngine.Random.Range(0.006f, 0.012f);
             AccessTools.Field(typeof(BossHeartView), "swingAmount").SetValue(__instance, UnityEngine.Random.Range(2f, 15f));
+
+            //Moves thread and changes layer
+            Transform threadTransform = __instance.transform.Find("Thread");
+            if (threadTransform != null)
+            {
+                threadTransform.gameObject.layer = 5;
+                threadTransform.localPosition += new Vector3(0f, 0f, -0.03f);
+            }
         }
         //Patch: Adjusts rotation of player hearts
+        //Moves fishing line
         [HarmonyPostfix, HarmonyPatch(typeof(HeartController), "Awake")]
         static void HeartController_Awake(HeartController __instance)
         {
             __instance.speed = UnityEngine.Random.Range(0.006f, 0.012f);
             AccessTools.Field(typeof(HeartController), "swingAmount").SetValue(__instance, UnityEngine.Random.Range(2f, 15f));
+
+            //Move fishing line
+            Transform fishingLineTransform = __instance.transform.Find("Fishing Line");
+            if (fishingLineTransform != null)
+            {
+                fishingLineTransform.localPosition += new Vector3(0f, 0f, -0.01f);
+            }
         }
         //Patch: Adjusts rotation of holy mantle shields
+        //Moves fishing line
         [HarmonyPostfix, HarmonyPatch(typeof(HolyMantleShieldController), "Awake")]
         static void HolyMantleShieldController_Awake(HolyMantleShieldController __instance)
         {
             AccessTools.Field(typeof(HolyMantleShieldController), "speed").SetValue(__instance, UnityEngine.Random.Range(0.006f, 0.012f));
             AccessTools.Field(typeof(HolyMantleShieldController), "swingAmount").SetValue(__instance, UnityEngine.Random.Range(2f, 15f));
+
+            //Move fishing line
+            Transform fishingLineTransform = __instance.transform.Find("Transform")?.Find("Fishing Line");
+            if (fishingLineTransform != null)
+            {
+                fishingLineTransform.localPosition += new Vector3(0f, 0f, -0.01f);
+                MeshRenderer fishingLineMeshRenderer = fishingLineTransform.GetComponent<MeshRenderer>();
+            }
         }
     }
 
