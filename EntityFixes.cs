@@ -197,8 +197,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 if (enemy != null && !enemy.boss)
                 {
-
-                    enemy.championType = Enemy.ChampionType.NotAChampion;
+                    enemy.SetChampion(Enemy.ChampionType.NotAChampion);
 
                     if (EnemyBaseHealth.TryGetValue(enemy.enemyName, out int baseHealth))
                     {
@@ -233,6 +232,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Prevent effect from considering the hit enemy itself
             __instance.app.controller.ClearOwner(enemy);
+            return true;
+        }
+        //Patch: Fixes Mirror enemies not dying (bug caused by above patch)
+        [HarmonyPrefix, HarmonyPatch(typeof(MirrorHauntEnemy), nameof(MirrorHauntEnemy.Respawn))]
+        static bool MirrorHauntEnemy_Respawn(MirrorHauntEnemy __instance)
+        {
+            //Abort if the enemy is dead
+            if (!__instance.app.model.enemies.Contains(__instance) || !__instance.alive || __instance.health <= 0f)
+            {
+                return false;
+            }
+
             return true;
         }
 
