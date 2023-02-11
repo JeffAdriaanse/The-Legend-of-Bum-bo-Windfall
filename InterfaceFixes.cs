@@ -690,7 +690,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Block), "Start")]
         static bool Block_Start(Block __instance)
         {
-            float blockSize = 0.92f;
+            float blockSize = 1f;
             __instance.transform.localScale = new Vector3(blockSize, blockSize, blockSize);
             return true;
         }
