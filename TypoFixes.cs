@@ -159,6 +159,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Spell descriptions
                     { "Spells/BARBED_WIRE_DESCRIPTION", "Damage Attackers In Room"},
                     { "Spells/DOG_TOOTH_DESCRIPTION", "Attack that Heals You"},
+                    { "Spells/EUTHANASIA_DESCRIPTION", "Hurts an Attacking Enemy"},
                     { "Spells/ROCK_DESCRIPTION", "Hits the Furthest Enemy"},
                     { "Spells/ROCK_FRIENDS_DESCRIPTION", "Hits Enemies = to Spell Damage"},
                     { "Spells/STICK_DESCRIPTION", "Whack Away!"},
