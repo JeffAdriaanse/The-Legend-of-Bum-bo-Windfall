@@ -246,7 +246,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return true;
         }
-
         //Patch: Fixes Quake attacking dead enemies (bug caused by above patch)
         [HarmonyPrefix, HarmonyPatch(typeof(QuakeSpell), "DropRock")]
         static void QuakeSpell_DropRock(QuakeSpell __instance)
@@ -266,6 +265,15 @@ namespace The_Legend_of_Bum_bo_Windfall
                         AccessTools.Field(typeof(QuakeSpell), "enemies_to_hit").SetValue(__instance, enemiesToHitReplacement);
                     }
                 }
+            }
+        }
+        //Patch: Fixes enemies not getting knocked back
+        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.Knockback))]
+        static void Enemy_Knockback(Enemy __instance)
+        {
+            if (__instance is not CaddyBoss)
+            {
+                AccessTools.Field(typeof(Enemy), "knockbackHappened").SetValue(__instance, false);
             }
         }
 
