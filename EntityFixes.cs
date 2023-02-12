@@ -285,6 +285,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Only spawn dust on Init if the room is starting
             if (__instance.app.model.bumboEvent.ToString() == "RoomStartEvent")
             {
+                //Set flag to enable spawning dust
+                ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 1f);
+
                 __instance.SpawnDust();
             }
             //Set flag to disable spawning dust
