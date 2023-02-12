@@ -39,10 +39,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fixes champion enemies creating dust twice when spawning
+        //Also manages Mirror spawn dust
         [HarmonyPrefix, HarmonyPatch(typeof(Enemy), "SpawnDust")]
         static bool Enemy_SpawnDust(Enemy __instance)
         {
-            if (__instance.championType == Enemy.ChampionType.NotAChampion)
+            if (__instance.championType == Enemy.ChampionType.NotAChampion && ObjectDataStorage.GetData(__instance.gameObject, "spawnDust") != 0)
             {
                 return true;
             }
@@ -275,6 +276,30 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 AccessTools.Field(typeof(Enemy), "knockbackHappened").SetValue(__instance, false);
             }
+        }
+
+        //Patch: Fixes Mirror dust
+        [HarmonyPrefix, HarmonyPatch(typeof(MirrorHauntEnemy), nameof(MirrorHauntEnemy.Init))]
+        static void MirrorHauntEnemy_Init(MirrorHauntEnemy __instance)
+        {
+            //Only spawn dust on Init if the room is starting
+            if (__instance.app.model.bumboEvent.ToString() == "RoomStartEvent")
+            {
+                __instance.SpawnDust();
+            }
+            //Set flag to disable spawning dust
+            ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 0f);
+        }
+        //Changes MirrorHauntEnemy_Relocate to spawn dust after the Mirror has moved instead of beforehand, which would spawn the dust at the wrong location
+        [HarmonyPostfix, HarmonyPatch(typeof(MirrorHauntEnemy), nameof(MirrorHauntEnemy.Relocate))]
+        static void MirrorHauntEnemy_Relocate(MirrorHauntEnemy __instance)
+        {
+            //Set flag to enable spawning dust
+            ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 1f);
+            //Spawn dust
+            __instance.SpawnDust();
+            //Set flag to disable spawning dust
+            ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 0f);
         }
 
         public static Dictionary<EnemyName, int> EnemyBaseHealth
