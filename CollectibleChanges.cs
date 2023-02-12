@@ -2453,6 +2453,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Reduces White Belt enemy damage threshold from 1 heart to 1/2 heart
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), nameof(BumboController.TakeDamage))]
+        static void BumboController_TakeDamage(BumboController __instance, ref float _damage)
+        {
+			//Damage must be multiplied to account for Blind Rage effect, which is calculated at the start of TakeDamage
+			float multipliedDamage = _damage * __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier;
+            if (__instance.app.controller.ModifierObjectExists(SpellName.WhiteBelt) && multipliedDamage < -0.5f)
+			{
+				_damage = -0.5f / __instance.app.model.characterSheet.bumboRoomModifiers.damageMultiplier;
+            }
+        }
+
         static int ModifyBumboModifierObjectType(SpellName spellName, ref CharacterSheet characterSheet, bool _round)
 		{
 			if (characterSheet != null)
