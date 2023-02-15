@@ -16,6 +16,62 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(CollectibleFixes));
         }
 
+        //Fixes Butter Bean trinket effect
+        //Replace method
+        [HarmonyPrefix, HarmonyPatch(typeof(PoopAtStartEvent), nameof(PoopAtStartEvent.Toot))]
+        static bool PoopAtStartEvent_Toot(PoopAtStartEvent __instance)
+        {
+            BumboView view = __instance.app.view;
+            AIModel aiModel = __instance.app.model.aiModel;
+
+            view.soundsView.PlaySound(SoundsView.eSound.Poop, SoundsView.eAudioSlot.Default, false);
+            view.fartParticles.Play();
+
+            //Repeat for both ground and air enemies; 0 for ground, 1 for air
+            for (int enemyTypeIterator = 0; enemyTypeIterator < 2; enemyTypeIterator++)
+            {
+                //Iterate through all battlefield positions
+                for (int laneIterator = 0; laneIterator < 3; laneIterator++)
+                {
+                    for (int rowIterator = 0; rowIterator < 3; rowIterator++)
+                    {
+                        //Get target enemy
+                        GameObject targetEnemy;
+                        if (enemyTypeIterator == 0)
+                        {
+                            targetEnemy = aiModel.battlefieldPositions[aiModel.battlefieldPositionIndex[laneIterator, rowIterator]].owner_ground;
+                        }
+                        else
+                        {
+                            targetEnemy = aiModel.battlefieldPositions[aiModel.battlefieldPositionIndex[laneIterator, rowIterator]].owner_air;
+                        }
+
+                        //Detect whether there is an enemy behind
+                        GameObject enemyBehind = null;
+                        if (rowIterator > 0)
+                        {
+                            if (enemyTypeIterator == 0)
+                            {
+                                enemyBehind = aiModel.battlefieldPositions[aiModel.battlefieldPositionIndex[laneIterator, rowIterator - 1]].owner_ground;
+                            }
+                            else
+                            {
+                                enemyBehind = aiModel.battlefieldPositions[aiModel.battlefieldPositionIndex[laneIterator, rowIterator - 1]].owner_air;
+                            }
+                        }
+
+                        //Only knockback if there is space behind
+                        if (rowIterator > 0 && targetEnemy != null && enemyBehind == null)
+                        {
+                            targetEnemy.GetComponent<Enemy>().Knockback();
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+
         //Patch: Removes ChargeSpell from BossDyingEvent (function is being moved to GrabBossRewardEvent)
         [HarmonyPrefix, HarmonyPatch(typeof(BossDyingEvent), nameof(BossDyingEvent.NextEvent))]
         static bool BossDyingEvent_NextEvent(BossDyingEvent __instance, ref BumboEvent __result)
