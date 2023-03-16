@@ -24,9 +24,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             winStreakCounter.transform.Find("Streak").GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 62);
 
             TextMeshProUGUI headerText = winStreakCounter.transform.Find("Header").GetComponent<TextMeshProUGUI>();
-            if (headerText != null && LocalizationModifier.edFont != null)
+            if (headerText != null && WindfallHelper.GetEdmundMcmillenFont() != null)
             {
-                headerText.font = LocalizationModifier.edFont;
+                headerText.font = WindfallHelper.GetEdmundMcmillenFont();
             }
 
             UpdateWinStreakCounter();

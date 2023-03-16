@@ -33,6 +33,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        private readonly static string edmundmcmillen_font_path = "Edmundmcmillen-regular SDF";
+        private static TMP_FontAsset edmundmcmillen_regular;
+        public static TMP_FontAsset GetEdmundMcmillenFont()
+        {
+            if (edmundmcmillen_regular == null && Windfall.assetBundle != null && Windfall.assetBundle.Contains(edmundmcmillen_font_path))
+            {
+                edmundmcmillen_regular = Windfall.assetBundle.LoadAsset<TMP_FontAsset>("Edmundmcmillen-regular SDF");
+            }
+
+            return edmundmcmillen_regular;
+        }
+
         public static int ChaptersUnlocked(Progression progression)
         {
             int numberOfChapters;

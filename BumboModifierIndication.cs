@@ -347,7 +347,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             TextMeshPro effectValueTextMeshPro = bumboModifier.effectValueTransform.GetComponent<TextMeshPro>();
             if (effectValueTextMeshPro != null)
             {
-                LocalizationModifier.ChangeFont(null, effectValueTextMeshPro, LocalizationModifier.edFont);
+                LocalizationModifier.ChangeFont(null, effectValueTextMeshPro, WindfallHelper.GetEdmundMcmillenFont());
             }
 
             //Set spell texture

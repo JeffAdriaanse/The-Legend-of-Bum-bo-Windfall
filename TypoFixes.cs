@@ -69,6 +69,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static TMP_FontAsset edFont;
         private static void AcquireFonts(LanguageSourceData languageSourceData)
         {
+            //Unused method
+            return;
+
             if (languageSourceData.Assets != null && languageSourceData.mAssetDictionary != null)
             {
                 if (languageSourceData.mAssetDictionary.TryGetValue("EdmundMcMillen SDF", out UnityEngine.Object edFontValue))
