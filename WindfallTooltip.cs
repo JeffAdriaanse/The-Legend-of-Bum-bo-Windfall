@@ -94,6 +94,35 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = bumboModifierStacking.bumboModifier.StackingDescription();
                 return;
             }
+
+            SpellView spellView = gameObject.GetComponent<SpellView>();
+            if (spellView != null)
+            {
+                SpellElement spellObject = spellView.SpellObject;
+                if (spellObject == null || spellObject.spellName == SpellName.None)
+                {
+                    active = false;
+                    return;
+                }
+
+                displayAtMouse = false;
+                displayPosition = spellView.transform.position + new Vector3(-0.42f, 0f, 0f);
+                displayAnchor = Anchor.Right;
+
+                displayDescription = string.Empty;
+                if (WindfallTooltipDescriptions.SpellDescriptions.TryGetValue(spellObject.spellName, out string value))
+                {
+                    string damageValueReplacement = "[damage]";
+                    if (value.Contains(damageValueReplacement))
+                    {
+                        value.Replace(damageValueReplacement, spellObject.Damage().ToString());
+                    }
+
+                    displayDescription = value;
+                }
+
+                return;
+            }
         }
     }
 
@@ -360,7 +389,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             anchor = tooltipTransform.Find("Anchor");
 
             hiddenLabel = anchor.Find("Hidden Label").GetComponent<TextMeshPro>();
-            LocalizationModifier.ChangeFont(null, hiddenLabel, LocalizationModifier.edFont);
+            LocalizationModifier.ChangeFont(null, hiddenLabel, WindfallHelper.GetEdmundMcmillenFont());
 
             labels = tooltipTransform.GetComponentsInChildren<TextMeshPro>(true).ToList();
             if (labels.Contains(hiddenLabel))
@@ -370,11 +399,154 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             foreach (TextMeshPro textMeshPro in labels)
             {
-                LocalizationModifier.ChangeFont(null, textMeshPro, LocalizationModifier.edFont);
+                LocalizationModifier.ChangeFont(null, textMeshPro, WindfallHelper.GetEdmundMcmillenFont());
             }
 
 
             return tooltipTransform.gameObject;
+        }
+    }
+
+    public static class WindfallTooltipDescriptions
+    {
+        public static Dictionary<SpellName, string> SpellDescriptions
+        {
+            get
+            {
+                return new Dictionary<SpellName, string>
+                {
+                    { SpellName.Addy, "Raises spell damage and puzzle damage by 1 for a turn" },
+                    { SpellName.AttackFly, "Attacks for [damage] damage, repeating in the same lane for 1 damage each turn" },
+                    { SpellName.Backstabber, "Attacks for [damage] damage to the furthest enemy. Always crits primed enemies" },
+                    { SpellName.BarbedWire, "Deals [damage] damage to attacking enemies, up to [stacking]" },
+                    { SpellName.BeckoningFinger, "Pulls a random enemy to the front row and poisons it" },
+                    { SpellName.BeeButt, "Attacks for [damage] damage, poisoning the enemy" },
+                    { SpellName.BigRock, "Attacks for [damage] damage to the furthest enemy, plus 1 splash damage to adjacent enemies" },
+                    { SpellName.BigSlurp, "Grants 2 movement" },
+                    { SpellName.BlackCandle, "Destroys all curse tiles" },
+                    { SpellName.BlackD12, "Rerolls a column of tiles" },
+                    { SpellName.BlenderBlade, "Destroys a tile and the 4 tiles next to it" },
+                    { SpellName.BlindRage, "Raises spell damage and puzzle damage by 1, but increases all damage recieved" },
+                    { SpellName.BloodRights, "Grants 1 mana of each color, but also places 1-2 curse tiles" },
+                    { SpellName.BorfBucket, "Attacks for [damage] damage, plus 1 splash damage to adjacent enemies" },
+                    { SpellName.Box, "Grants 1 mana of each color" },
+                    { SpellName.Brimstone, "Attacks for [damage] damage to all enemies in a lane" },
+                    { SpellName.BrownBelt, "Blocks the next hit and counters for [damage] damage" },
+                    { SpellName.BumboShake, "Shuffles the puzzle board" },
+                    { SpellName.BumboSmash, "Attacks for [damage] damage" },
+                    { SpellName.ButterBean, "Knocks back all enemies" },
+                    { SpellName.BuzzDown, "Moves a tile column downwards" },
+                    { SpellName.BuzzRight, "Moves a tile row to the right" },
+                    { SpellName.BuzzUp, "Moves a tile column upwards" },
+                    { SpellName.CatHeart, "Randomly places a heart tile" },
+                    { SpellName.CatPaw, "Deals 1 red heart damage and converts it into a soul heart" },
+                    { SpellName.Chaos, "Randomly places a wild and a curse" },
+                    { SpellName.CoinRoll, "Grants 1 coin" },
+                    { SpellName.ConverterBrown, "Grants 2 brown mana" },
+                    { SpellName.ConverterGreen, "Grants 2 green mana" },
+                    { SpellName.ConverterGrey, "Grants 2 grey mana" },
+                    { SpellName.ConverterWhite, "Grants 2 white mana" },
+                    { SpellName.ConverterYellow, "Grants 2 yellow mana" },
+                    { SpellName.CraftPaper, "Transforms into a copy of another spell" },
+                    { SpellName.CrazyStraw, "Destroys a tile and grants 3 mana of its color" },
+                    { SpellName.CursedRainbow, "Randomly places 3 curse tiles, and 4 wild tiles at the top of the puzzle board" },
+                    { SpellName.D20, "Rerolls mana and the puzzle board, grants a coin and a soul heart, and unprimes all enemies" },
+                    { SpellName.D4, "Shuffles the puzzle board" },
+                    { SpellName.D6, "Rerolls a spell" },
+                    { SpellName.D8, "Rerolls mana" },
+                    { SpellName.DarkLotus, "Grants 1 mana of 3 random colors" },
+                    { SpellName.DeadDove, "Destroys a tile and all tiles above it" },
+                    { SpellName.DogTooth, "Attacks for [damage] damage, healing 1/2 heart if it hits an enemy" },
+                    { SpellName.Ecoli, "Transforms an enemy into a Poop, Dip, or Squat" },
+                    { SpellName.Eraser, "Destroys all tiles of the same type" },
+                    { SpellName.Euthanasia, "Deals [damage] damage to the next attacking enemy" },
+                    { SpellName.ExorcismKit, "Attacks a random enemy for [damage] damage and heals all other enemies for 2 health" },
+                    { SpellName.FishHook, "Attacks for [damage], granting 1 random mana if it hits an enemy" },
+                    { SpellName.FlashBulb, "Flashes all enemies, granting a 50% chance of blinding them" },
+                    { SpellName.Flip, "Rerolls a tile" },
+                    { SpellName.Flush, "Attacks for [damage] damage to all enemies and removes all Poops" },
+                    { SpellName.GoldenTick, "Reduces mana costs by 40% and charges all other spells" },
+                    { SpellName.HairBall, "Attacks for [damage] damage, splashing enemies behind for 1 damage" },
+                    { SpellName.HatPin, "Attacks for [damage] damage to all enemies in the row" },
+                    { SpellName.Juiced, "Grants 1 movement" },
+                    { SpellName.KrampusCross, "Destroys a row and column of tiles" },
+                    { SpellName.Lard, "Heals 1 heart, but reduces movement at the start of the next turn by 1" },
+                    { SpellName.LeakyBattery, "Attacks for [damage] damage to all enemies" },
+                    { SpellName.Lemon, "Attacks for [damage] damage, blinding the enemy" },
+                    { SpellName.Libra, "Averages current mana between all 5 colors" },
+                    { SpellName.LilRock, "Attacks for [damage] damage to the furthest enemy" },
+                    { SpellName.LithiumBattery, "Grants 2 movement" },
+                    { SpellName.LooseChange, "Grants 4 coins when hit for a turn" },
+                    { SpellName.LuckyFoot, "Raises luck by 1 for the room" },
+                    { SpellName.MagicMarker, "Randomly places 2-3 copies of a tile" },
+                    { SpellName.Mallot, "Destroys a tile and places 2 copies beside it" },
+                    { SpellName.MamaFoot, "Attacks for [damage] damage to all enemies, but hurts for 1/2 heart" },
+                    { SpellName.MamaShoe, "Attacks for [damage] damage to all grounded enemies" },
+                    { SpellName.MeatHook, "Attacks for [damage] damage to to the furthest enemy, pulling it to the front row" },
+                    { SpellName.MegaBattery, "Grants 3 movement and 2-3 mana of random colors" },
+                    { SpellName.MegaBean, "Knocks back all enemies in the front row and poisons all flying enemies" },
+                    { SpellName.Melatonin, "Unprimes all enemies" },
+                    { SpellName.Metronome, "Grants the effect of a random spell" },
+                    { SpellName.MirrorMirror, "Horizontally inverts a row of tiles" },
+                    { SpellName.MissingPiece, "Raises puzzle damage by 1 for the room" },
+                    { SpellName.MomsLipstick, "Places a heart tile" },
+                    { SpellName.MomsPad, "Blinds an enemy" },
+                    { SpellName.MsBang, "Destroys a tile and all 8 surrounding tiles" },
+                    { SpellName.Mushroom, "Raises spell damage and puzzle damage by 1 for the room and heals 1/2 heart" },
+                    { SpellName.NailBoard, "Attacks for [damage] damage to all enemies in the front row" },
+                    { SpellName.NavyBean, "Destroys a column of tiles" },
+                    { SpellName.Needle, "Attacks for [damage] damage, increasing its damage by 1 for the room if it hits an enemy" },
+                    { SpellName.Number1, "Attacks for [damage] damage, granting 1 movement if it hits an enemy" },
+                    { SpellName.OldPillow, "Blocks the next attack" },
+                    { SpellName.OrangeBelt, "Deals [damage] damage to attacking enemies for a turn, up to [stacking]" },
+                    { SpellName.PaperStraw, "Grants mana for each copy of the most common tile" },
+                    { SpellName.Pause, "Skips the next enemy phase" },
+                    { SpellName.Peace, "Unprimes a random enemy" },
+                    { SpellName.Pentagram, "Raises spell damage by 1 for the room" },
+                    { SpellName.Pepper, "Boogers and knocks back an enemy" },
+                    { SpellName.PintoBean, "Knocks back all enemies in the front row" },
+                    { SpellName.Pliers, "Attacks for [damage] damage, granting 1 grey mana and randomly placing a tooth tile if it hits an enemy" },
+                    { SpellName.PotatoMasher, "Destroys a tile and randomly places a copy of it" },
+                    { SpellName.PrayerCard, "Grants 1/2 soul heart" },
+                    { SpellName.PriceTag, "Destroys a spell and grants 10-20 coins" },
+                    { SpellName.PuzzleFlick, "Destroys all tiles of the same type, then attacks for damage equal to half the tiles destroyed" },
+                    { SpellName.Quake, "Attacks all grounded enemies that are not below a flying enemy for 1 damage. Destroys all obstacles and damages the top enemy in each space by 1 for each obstacle destroyed" },
+                    { SpellName.RainbowFinger, "Places a wild tile" },
+                    { SpellName.RainbowFlag, "Randomly places 3 wild tiles" },
+                    { SpellName.RedD12, "Rerolls a row of tiles" },
+                    { SpellName.Refresh, "Randomly adds 1 charge to a spell" },
+                    { SpellName.Rock, "Attacks for [damage] damage to the furthest enemy" },
+                    { SpellName.RockFriends, "Attacks [count] random enemies for [damage] damage" },
+                    { SpellName.RoidRage, "Grants 100% crit chance for the next attack" },
+                    { SpellName.RottenMeat, "Heals 1/2 heart, but obscures 4 tiles" },
+                    { SpellName.RubberBat, "Attacks for [damage] damage to all enemies in the front row and knocks them back" },
+                    { SpellName.SilverChip, "Increases coins gained from the clearing the room by 1-3" },
+                    { SpellName.Skewer, "Destroys a row of tiles" },
+                    { SpellName.SleightOfHand, "Reduces the mana cost of all other spells by 25% for the room" },
+                    { SpellName.SmokeMachine, "Grants 50% dodge chance for a turn" },
+                    { SpellName.Snack, "Heals 1/2 heart" },
+                    { SpellName.SnotRocket, "Boogers all enemies in a lane" },
+                    { SpellName.Stick, "Attacks for [damage] damage, knocking the enemy back" },
+                    { SpellName.StopWatch, "Prevents enemies from taking more than 1 action for a turn" },
+                    { SpellName.Teleport, "Skips the current room" },
+                    { SpellName.TheNegative, "Attacks for [damage] damage to all enemies in a lane" },
+                    { SpellName.ThePoop, "Places a poop barrier" },
+                    { SpellName.TheRelic, "Grants 1 soul heart" },
+                    { SpellName.TheVirus, "Poisons all attacking enemies for a turn" },
+                    { SpellName.TimeWalker, "Grants 3 movement" },
+                    { SpellName.TinyDice, "Rerolls all tiles of the same type" },
+                    { SpellName.Toothpick, "Destroys a tile and grants 1 mana of its color" },
+                    { SpellName.TracePaper, "Randomly grants the effect of another owned spell" },
+                    { SpellName.TrapDoor, "Skips the current chapter and grants 10 coins" },
+                    { SpellName.TrashLid, "Blocks the next 2 attacks" },
+                    { SpellName.WatchBattery, "Grants 1 movement" },
+                    { SpellName.WhiteBelt, "For a turn, negates enemy curses and mana drain, and limits their damage to 1/2 heart" },
+                    { SpellName.WoodenNickel, "Grants 1-2 coins" },
+                    { SpellName.WoodenSpoon, "Grants 1 movement immediately and at the start of each turn" },
+                    { SpellName.YellowBelt, "Grants 5% dodge chance for the room" },
+                    { SpellName.YumHeart, "Heals 1 heart" },
+                };
+            }
         }
     }
 }

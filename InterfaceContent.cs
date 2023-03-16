@@ -90,6 +90,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
         }
 
+        //Patch: Adds tooltips to spells
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]
+        static void BumboController_SetSpell(BumboController __instance, int _spell_index)
+        {
+            SpellView spellView = __instance.app.view.spells[_spell_index];
+            WindfallTooltip windfallTooltip = spellView.GetComponent<WindfallTooltip>();
+
+            if (windfallTooltip == null)
+            {
+                spellView.gameObject.AddComponent<WindfallTooltip>();
+            }
+        }
+
         //Patch: Add trinket glitches on GUISide Awake
         [HarmonyPostfix, HarmonyPatch(typeof(GUISide), "Awake")]
         static void GUISide_Awake(GUISide __instance)
