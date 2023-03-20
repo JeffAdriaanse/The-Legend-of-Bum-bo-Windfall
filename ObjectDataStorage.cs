@@ -11,7 +11,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     /// </summary>
     public class ObjectDataStorage
     {
-        public static List<ObjectDataStorage> Containers;
+        public static List<ObjectDataStorage> Containers = new List<ObjectDataStorage>();
 
         public Dictionary<string, float> data = new Dictionary<string, float>();
 
@@ -24,7 +24,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             foreach (ObjectDataStorage container in Containers)
             {
-                if (container.storageObject == null)
+                if (container == null || container.storageObject == null)
                 {
                     Containers.Remove(container);
                 }

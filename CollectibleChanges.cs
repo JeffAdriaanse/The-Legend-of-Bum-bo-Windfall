@@ -1180,6 +1180,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             foreach (SpellView spellView in __instance.app.view.spells)
             {
+                if (spellView.SpellObject == null)
+                {
+                    continue;
+                }
+
                 if (spellView.SpellObject.spellName == SpellName.CraftPaper)
                 {
                     //Track which spells should be disabled
@@ -1246,7 +1251,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 			bool anyActiveSpells = false;
             foreach (SpellView spellView in WindfallHelper.app.view.spells)
 			{
-				bool enableSpell = false;
+                if (spellView.SpellObject == null)
+                {
+                    continue;
+                }
+
+                bool enableSpell = false;
+
 				//Mana cost reduction is calculated differently when balance changes are enabled
                 if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
 				{
@@ -1326,6 +1337,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 			foreach (SpellView spellView in WindfallHelper.app.view.spells)
 			{
+				if (spellView.SpellObject == null)
+				{
+					continue;
+				}
+
 				if (!spellView.SpellObject.IsChargeable || spellView.SpellObject.requiredCharge <= minimumCharge)
 				{
                     //Track which spells should be disabled
@@ -1382,6 +1398,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Prevent disabled spells from being selected during SpellModifySpellEvent
                 if (__instance.disableObject.activeSelf)
                 {
+                    __instance.app.view.soundsView.PlaySound(SoundsView.eSound.Button, SoundsView.eAudioSlot.Default, false);
                     return false;
                 }
 
@@ -1508,6 +1525,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     return false;
                 }
+                //Return spell enabled states to normal
+                EnabledSpellsManager.ResetState();
+
             }
             return true;
 		}
