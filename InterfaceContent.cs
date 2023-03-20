@@ -750,11 +750,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __instance.app.view.GUICamera.GetComponent<GamepadSpellSelector>().Close(true);
 
                     //Add cancel functionality for use trinkets
-                    if (CollectibleChanges.currentTrinket != null)
-                    {
-                        EnabledSpellsManager.ResetState();
-                        CollectibleChanges.currentTrinket = null;
-                    }
+                    CollectibleChanges.currentTrinket = null;
+
+                    //Reset spell enabled states
+                    EnabledSpellsManager.ResetState();
                 }
 
                 //Null check for spellViewUsed

@@ -313,21 +313,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		//Patch: Prevents Craft Paper from being used on Craft Paper
-		[HarmonyPrefix, HarmonyPatch(typeof(CraftPaperSpell), "AlterSpell")]
-		static bool CraftPaperSpell_AlterSpell(CraftPaperSpell __instance, int _spell_index)
-		{
-			if (__instance.app.model.characterSheet.spells[_spell_index].spellName == SpellName.CraftPaper)
-			{
-				return false;
-			}
-			return true;
-		}
-
-		//Patch: AAA Battery effect now stacks non-independently
-		//AAABattery effect now incorporates Luck stat and Curio effect multiplier
-		//AAABattery effect now grants movement independently of Hoof
-		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), "ResetActionPoints")]
+        //Patch: AAA Battery effect now stacks non-independently
+        //AAABattery effect now incorporates Luck stat and Curio effect multiplier
+        //AAABattery effect now grants movement independently of Hoof
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "ResetActionPoints")]
 		static bool BumboController_ResetActionPoints(BumboController __instance)
 		{
 			BumboModel model = __instance.app.model;
@@ -1176,17 +1165,79 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		public static UseTrinket currentTrinket;
+        /// <summary>
+        /// Apllies a harmony patch to <see cref="CraftPaperSpell.CastSpell"/> that updates spell enabled statuses.
+        /// </summary>
+        /// <remarks>
+        /// This allows spells to be properly selectable during <see cref="SpellModifySpellEvent.Execute"/>. See <see cref="CollectibleChanges.SpellView_OnMouseDown"/>.
+        /// <br/>The patch must be a prefix because the spell enabled states need to be correct before <see cref="GamepadSpellSelector.Initialize(GamepadSpellSelector.eMode, bool, GamepadSpellSelector.CloseEvent)"/> is initialized when <see cref="SpellModifySpellEvent.Execute"/> is executed.
+        /// </remarks>
+        /// <param name="__instance">The instance object that is executing the method.</param>
+        [HarmonyPrefix, HarmonyPatch(typeof(CraftPaperSpell), nameof(CraftPaperSpell.CastSpell))]
+        static void CraftPaperSpell_CastSpell(CraftPaperSpell __instance)
+        {
+            List<SpellElement> spellsToDisable = new List<SpellElement>();
+
+            foreach (SpellView spellView in __instance.app.view.spells)
+            {
+                if (spellView.SpellObject.spellName == SpellName.CraftPaper)
+                {
+                    //Track which spells should be disabled
+                    spellsToDisable.Add(spellView.SpellObject);
+                }
+            }
+
+            //Enable/disable spells for SpellModifySpellEvent
+            EnabledSpellsManager.ChangeTemporaryState(spellsToDisable);
+        }
+
+        /// <summary>
+        /// Apllies a harmony patch to <see cref="D6Spell.CastSpell"/> that updates spell enabled statuses.
+        /// </summary>
+        /// <remarks>
+        /// This allows spells to be properly selectable during <see cref="SpellModifySpellEvent.Execute"/>. See <see cref="CollectibleChanges.SpellView_OnMouseDown"/>.
+        /// <br/>The patch must be a prefix because the spell enabled states need to be correct before <see cref="GamepadSpellSelector.Initialize(GamepadSpellSelector.eMode, bool, GamepadSpellSelector.CloseEvent)"/> is initialized when <see cref="SpellModifySpellEvent.Execute"/> is executed.
+        /// </remarks>
+        [HarmonyPrefix, HarmonyPatch(typeof(D6Spell), nameof(D6Spell.CastSpell))]
+        static void D6Spell_CastSpell()
+        {
+			//All spells should be enabled
+            List<SpellElement> spellsToDisable = new List<SpellElement>();
+
+            //Enable/disable spells for SpellModifySpellEvent
+            EnabledSpellsManager.ChangeTemporaryState(spellsToDisable);
+        }
+
+        /// <summary>
+        /// Apllies a harmony patch to <see cref="PriceTagSpell.CastSpell"/> that updates spell enabled statuses.
+        /// </summary>
+        /// <remarks>
+        /// This allows spells to be properly selectable during <see cref="SpellModifySpellEvent.Execute"/>. See <see cref="CollectibleChanges.SpellView_OnMouseDown"/>.
+        /// <br/>The patch must be a prefix because the spell enabled states need to be correct before <see cref="GamepadSpellSelector.Initialize(GamepadSpellSelector.eMode, bool, GamepadSpellSelector.CloseEvent)"/> is initialized during <see cref="SpellModifySpellEvent.Execute"/>.
+        /// </remarks>
+        [HarmonyPrefix, HarmonyPatch(typeof(PriceTagSpell), nameof(PriceTagSpell.CastSpell))]
+        static void PriceTagSpell_CastSpell()
+        {
+            //All spells should be enabled
+            List<SpellElement> spellsToDisable = new List<SpellElement>();
+
+            //Enable/disable spells for SpellModifySpellEvent
+            EnabledSpellsManager.ChangeTemporaryState(spellsToDisable);
+        }
+
+        public static UseTrinket currentTrinket;
 		static int currentTrinketIndex;
         /// <summary>
-        /// Apllies a harmony patch that changes Rainbow Tick's effect such that the player can choose which spell to use it on.
-        /// <br/>Instead of immdiately triggering the trinket effect, a SpellModifySpellEvent is triggered.
-		/// <br/>Spells that aren't viable for Rainbow Tick's effect are temporarily disabled.
-        /// <br/>The original method is always skipped.
+        /// Apllies a harmony patch to <see cref="RainbowTickTrinket.Use(int)"/> that changes its effect such that the player can choose which spell to use it on.
         /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="_index"></param>
-        /// <returns></returns>
+		/// <remarks>
+        /// Instead of immdiately triggering the trinket effect, a <see cref="SpellModifySpellEvent"/> is triggered. See <see cref="CollectibleChanges.SpellView_OnMouseDown"/> for the acutal effect implementation.
+		/// <br/>Spells that aren't viable for <see cref="RainbowTickTrinket"/>'s effect are temporarily disabled.
+        /// <br/>The original method is always skipped.
+		/// </remarks>
+        /// <param name="__instance">The instance object that is executing the method.</param>
+        /// <param name="_index">The trinket index of the instance.</param>
+        /// <returns>bool - Whether the original method should execute. This is always false.</returns>
         [HarmonyPrefix, HarmonyPatch(typeof(RainbowTickTrinket), "Use")]
 		static bool RainbowTickTrinket_Use(RainbowTickTrinket __instance, int _index)
 		{
@@ -1253,14 +1304,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
         /// <summary>
-        /// Apllies a harmony patch that changes Brown Tick's effect such that the player can choose which spell to use it on.
-        /// <br/>Instead of immdiately triggering the trinket effect, a SpellModifySpellEvent is triggered.
-        /// <br/>Spells that aren't viable for Brown Tick's effect are temporarily disabled.
-        /// <br/>The original method is always skipped.
+        /// Apllies a harmony patch to <see cref="BrownTickTrinket.Use(int)"/> that changes its effect such that such that the player can choose which spell to use it on.
         /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="_index"></param>
-        /// <returns></returns>
+		/// <remarks>
+        /// Instead of immdiately triggering the trinket effect, a <see cref="SpellModifySpellEvent"/> is triggered. See <see cref="CollectibleChanges.SpellView_OnMouseDown"/> for the acutal effect implementation.
+		/// <br/>Spells that aren't viable for <see cref="BrownTickTrinket"/>'s effect are temporarily disabled.
+        /// <br/>The original method is always skipped.
+		/// </remarks>
+        /// <param name="__instance">The instance object that is executing the method.</param>
+        /// <param name="_index">The trinket index of the instance.</param>
+        /// <returns>bool - Whether the original method should execute. This is always false.</returns>
         [HarmonyPrefix, HarmonyPatch(typeof(BrownTickTrinket), "Use")]
 		static bool BrownTickTrinket_Use(BrownTickTrinket __instance, int _index)
 		{
@@ -1310,140 +1363,153 @@ namespace The_Legend_of_Bum_bo_Windfall
 		}
 
         /// <summary>
-        /// Apllies a harmony patch that allows SpellModifySpellEvent to be used for Rainbow Tick and Brown Tick trinket effects.
-        /// <br/>The original method is only skipped if Rainbow Tick or Brown Tick triggered a SpellModifySpellEvent.
+        /// Apllies a harmony patch to <see cref="SpellView.OnMouseDown"/> that allows <see cref="SpellModifySpellEvent"/> to be used for <see cref="RainbowTickTrinket"/> and <see cref="BrownTickTrinket"/> effects.
         /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="___exit"></param>
-        /// <param name="___spell"></param>
+		/// <remarks>
+        /// Also prevents disabled spells from being selected during <see cref="SpellModifySpellEvent"/>.
+        /// <br/>The original method is replaced if <see cref="RainbowTickTrinket"/> or <see cref="BrownTickTrinket"/> triggered a <see cref="SpellModifySpellEvent"/>, in which case their effects are invoked manually.
+		/// <br/> See <see cref="CollectibleChanges.RainbowTickTrinket_Use(RainbowTickTrinket, int)"/> and <see cref="CollectibleChanges.BrownTickTrinket_Use(BrownTickTrinket, int)"/>.
+		/// </remarks>
+        /// <param name="__instance">The instance object that is executing the method.</param>
+        /// <param name="___exit">Argument from the vanilla method. Represents whether the exit tutorial button was pressed.</param>
+        /// <param name="___spell">Argument from the vanilla method. A reference to the spell that is being triggered.</param>
         /// <returns></returns>
-        [HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
+        [HarmonyPrefix, HarmonyPatch(typeof(SpellView), nameof(SpellView.OnMouseDown))]
 		static bool SpellView_OnMouseDown(SpellView __instance, bool ___exit, SpellElement ___spell)
 		{
-			if (!__instance.app.model.paused && __instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent" && currentTrinket != null)
+			if (!__instance.app.model.paused && __instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
 			{
-				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.Button, SoundsView.eAudioSlot.Default, false);
+                //Prevent disabled spells from being selected during SpellModifySpellEvent
+                if (__instance.disableObject.activeSelf)
+                {
+                    return false;
+                }
 
-				if (___exit || ___spell == null || __instance.disableObject.activeSelf)
+                if (currentTrinket != null)
 				{
-					return false;
-				}
+                    __instance.app.view.soundsView.PlaySound(SoundsView.eSound.Button, SoundsView.eAudioSlot.Default, false);
 
-				CollectibleFixes.UseTrinket_Use_Prefix(currentTrinket, currentTrinketIndex);
-				CollectibleFixes.UseTrinket_Use_Base_Method(currentTrinket, currentTrinketIndex);
-				CollectibleFixes.UseTrinket_Use_Postfix(currentTrinket);
+                    if (___exit || ___spell == null || __instance.disableObject.activeSelf)
+                    {
+                        return false;
+                    }
 
-				switch (currentTrinket.trinketName)
-				{
-					case TrinketName.RainbowTick:
+                    CollectibleFixes.UseTrinket_Use_Prefix(currentTrinket, currentTrinketIndex);
+                    CollectibleFixes.UseTrinket_Use_Base_Method(currentTrinket, currentTrinketIndex);
+                    CollectibleFixes.UseTrinket_Use_Postfix(currentTrinket);
 
-						SpellElement spellElement = ___spell;
+                    switch (currentTrinket.trinketName)
+                    {
+                        case TrinketName.RainbowTick:
 
-                        if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                        {
-                            if (!spellElement.IsChargeable)
+                            SpellElement spellElement = ___spell;
+
+                            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
                             {
-								List<int> availableManaTypeIndices = new List<int>();
-
-                                for (int costCounter = 0; costCounter < 6; costCounter++)
+                                if (!spellElement.IsChargeable)
                                 {
-                                    if (spellElement.Cost[costCounter] > 2)
+                                    List<int> availableManaTypeIndices = new List<int>();
+
+                                    for (int costCounter = 0; costCounter < 6; costCounter++)
                                     {
-                                        availableManaTypeIndices.Add(costCounter);
+                                        if (spellElement.Cost[costCounter] > 2)
+                                        {
+                                            availableManaTypeIndices.Add(costCounter);
+                                        }
+                                    }
+
+                                    if (availableManaTypeIndices.Count > 0)
+                                    {
+                                        int index = UnityEngine.Random.Range(0, availableManaTypeIndices.Count);
+                                        spellElement.Cost[index] -= 1;
                                     }
                                 }
+                                break;
+                            }
 
-								if (availableManaTypeIndices.Count > 0)
-								{
-                                    int index = UnityEngine.Random.Range(0, availableManaTypeIndices.Count);
-									spellElement.Cost[index] -= 1;
+                            int costReduction = CalculateManaCostReduction(__instance.SpellObject, 0.15f, false);
+
+                            for (int j = costReduction; j > 0; j--)
+                            {
+                                //Find colors with cost above 0
+                                List<int> availableColors = new List<int>();
+                                for (int k = 0; k < 6; k++)
+                                {
+                                    if (spellElement.Cost[k] != 0)
+                                    {
+                                        availableColors.Add(k);
+                                    }
+                                }
+                                //Choose random color to reduce
+                                int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
+                                short[] cost = __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost;
+                                cost[randomColor] -= 1;
+
+                                int totalCombinedCost = 0;
+                                //Increase the reduced color's cost modifier if the spell's total cost (including modifier) would be reduced below minimum OR if the reduced color's cost (including modifier) would be reduced below zero
+                                for (int costCounter = 0; costCounter < 6; costCounter++)
+                                {
+                                    totalCombinedCost += (short)(__instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[costCounter] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[costCounter]);
+                                }
+                                if (totalCombinedCost < SpellManaCosts.MinimumManaCost(__instance.app.model.characterSheet.spells[__instance.spellIndex]) || __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[randomColor] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] < 0)
+                                {
+                                    __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] += 1;
                                 }
                             }
                             break;
-                        }
+                        case TrinketName.BrownTick:
 
-                        int costReduction = CalculateManaCostReduction(__instance.SpellObject, 0.15f, false);
+                            int minimumCharge;
+                            if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                            {
+                                minimumCharge = 0;
+                            }
+                            else
+                            {
+                                minimumCharge = 1;
+                            }
 
-						for (int j = costReduction; j > 0; j--)
-						{
-							//Find colors with cost above 0
-							List<int> availableColors = new List<int>();
-							for (int k = 0; k < 6; k++)
-							{
-								if (spellElement.Cost[k] != 0)
-								{
-									availableColors.Add(k);
-								}
-							}
-							//Choose random color to reduce
-							int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
-							short[] cost = __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost;
-							cost[randomColor] -= 1;
+                            //Reduce recharge time
+                            if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge > minimumCharge)
+                            {
+                                __instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge--;
+                            }
+                            if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge < __instance.app.model.characterSheet.spells[__instance.spellIndex].charge)
+                            {
+                                __instance.app.model.characterSheet.spells[__instance.spellIndex].charge = __instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge;
+                            }
+                            if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge == 0)
+                            {
+                                __instance.app.model.characterSheet.spells[__instance.spellIndex].chargeEveryRound = true;
+                                __instance.app.model.characterSheet.spells[__instance.spellIndex].usedInRound = false;
+                            }
+                            break;
+                    }
 
-							int totalCombinedCost = 0;
-							//Increase the reduced color's cost modifier if the spell's total cost (including modifier) would be reduced below minimum OR if the reduced color's cost (including modifier) would be reduced below zero
-							for (int costCounter = 0; costCounter < 6; costCounter++)
-							{
-								totalCombinedCost += (short)(__instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[costCounter] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[costCounter]);
-							}
-							if (totalCombinedCost < SpellManaCosts.MinimumManaCost(__instance.app.model.characterSheet.spells[__instance.spellIndex]) || __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[randomColor] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] < 0)
-							{
-								__instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] += 1;
-							}
-						}
-						break;
-					case TrinketName.BrownTick:
+                    //Return spell enabled states to normal
+                    EnabledSpellsManager.ResetState();
 
-                        int minimumCharge;
-                        if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                        {
-                            minimumCharge = 0;
-                        }
-                        else
-                        {
-                            minimumCharge = 1;
-                        }
+                    __instance.app.controller.SetActiveSpells(true, true);
+                    __instance.app.controller.UpdateSpellManaText();
+                    currentTrinket = null;
 
-                        //Reduce recharge time
-                        if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge > minimumCharge)
-						{
-							__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge--;
-						}
-						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge < __instance.app.model.characterSheet.spells[__instance.spellIndex].charge)
-						{
-							__instance.app.model.characterSheet.spells[__instance.spellIndex].charge = __instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge;
-						}
-						if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge == 0)
-						{
-							__instance.app.model.characterSheet.spells[__instance.spellIndex].chargeEveryRound = true;
-							__instance.app.model.characterSheet.spells[__instance.spellIndex].usedInRound = false;
-						}
-						break;
-				}
+                    __instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
+                    __instance.app.view.spells[__instance.spellIndex].spellParticles.Play();
+                    __instance.Shake(1f);
+                    __instance.app.controller.HideNotifications(false);
 
-				//Return spell enabled states to normal
-				EnabledSpellsManager.ResetState();
+                    __instance.app.model.spellModel.currentSpell = null;
+                    __instance.app.model.spellModel.spellQueued = false;
 
-				__instance.app.controller.SetActiveSpells(true, true);
-				__instance.app.controller.UpdateSpellManaText();
-				currentTrinket = null;
+                    if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
+                    {
+                        __instance.app.controller.eventsController.EndEvent();
+                    }
 
-				__instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
-				__instance.app.view.spells[__instance.spellIndex].spellParticles.Play();
-				__instance.Shake(1f);
-				__instance.app.controller.HideNotifications(false);
-
-				__instance.app.model.spellModel.currentSpell = null;
-				__instance.app.model.spellModel.spellQueued = false;
-
-				if (__instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent")
-				{
-					__instance.app.controller.eventsController.EndEvent();
-				}
-
-				return false;
-			}
-			return true;
+                    return false;
+                }
+            }
+            return true;
 		}
 
 		//Patch: Changes starting stats and collectibles of characters
