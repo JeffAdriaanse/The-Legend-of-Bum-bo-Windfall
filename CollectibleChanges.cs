@@ -1178,170 +1178,146 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		public static UseTrinket currentTrinket;
 		static int currentTrinketIndex;
-		public static bool[] enabledSpells = new bool[6];
-		//Patch: Allows the player to choose which spell to use Rainbow Tick on 
-		[HarmonyPrefix, HarmonyPatch(typeof(RainbowTickTrinket), "Use")]
+        /// <summary>
+        /// Apllies a harmony patch that changes Rainbow Tick's effect such that the player can choose which spell to use it on.
+        /// <br/>Instead of immdiately triggering the trinket effect, a SpellModifySpellEvent is triggered.
+		/// <br/>Spells that aren't viable for Rainbow Tick's effect are temporarily disabled.
+        /// <br/>The original method is always skipped.
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="_index"></param>
+        /// <returns></returns>
+        [HarmonyPrefix, HarmonyPatch(typeof(RainbowTickTrinket), "Use")]
 		static bool RainbowTickTrinket_Use(RainbowTickTrinket __instance, int _index)
 		{
-			//Loop through spells
+			//Spells are disabled if their mana cost shouldn't be reduced
+			List<SpellElement> spellsToDisable = new List<SpellElement>();
 			bool anyActiveSpells = false;
-			int spellCounter = 0;
-			while (spellCounter < __instance.app.model.characterSheet.spells.Count)
+            foreach (SpellView spellView in WindfallHelper.app.view.spells)
 			{
-				//Record which spells are disabled
-				if (!__instance.app.view.spells[spellCounter].disableObject.activeSelf)
+				bool enableSpell = false;
+				//Mana cost reduction is calculated differently when balance changes are enabled
+                if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
 				{
-					enabledSpells[spellCounter] = true;
+					enableSpell = CalculateManaCostReduction(spellView.SpellObject, 0.15f, false) > 0;
 				}
 				else
 				{
-					enabledSpells[spellCounter] = false;
-				}
-
-				//Enable/disable spells
-				bool enableSpell;
-				if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-				{
-                    enableSpell = false;
-                    SpellElement spellElement = __instance.app.model.characterSheet.spells[spellCounter];
-                    if (!spellElement.IsChargeable)
+                    if (!spellView.SpellObject.IsChargeable)
                     {
                         for (int costCounter = 0; costCounter < 6; costCounter++)
                         {
-                            if (spellElement.Cost[costCounter] > 2)
+                            if (spellView.SpellObject.Cost[costCounter] > 2)
                             {
-								enableSpell = true;
+                                enableSpell = true;
+								break;
                             }
                         }
                     }
                 }
-                else
-				{
-					enableSpell = CalculateCostReduction(spellCounter, 0.15f, __instance.app, false) > 0;
-                }
 
-				if (enableSpell)
-				{
-					__instance.app.view.spells[spellCounter].EnableSpell();
-					anyActiveSpells = true;
-				}
+				//Track which spells should be disabled
+                if (!enableSpell)
+                {
+					spellsToDisable.Add(spellView.SpellObject);
+                }
 				else
 				{
-					__instance.app.view.spells[spellCounter].DisableSpell();
-				}
-				spellCounter += 1;
-			}
+					anyActiveSpells = true;
+                }
+            }
 
-			//Abort if there are no viable spells
-			if (!anyActiveSpells)
-			{
-				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
-				{
-					if (enabledSpells[spellCounter2])
-					{
-						__instance.app.view.spells[spellCounter2].EnableSpell();
-					}
-					else
-					{
-						__instance.app.view.spells[spellCounter2].DisableSpell();
-					}
-				}
-				__instance.app.controller.GUINotification("NO_VIABLE_SPELLS", GUINotificationView.NotifyType.General, null, true);
-				return false;
-			}
+			//If there are no viable spells, the trinket can't be used
+            if (!anyActiveSpells)
+            {
+                __instance.app.controller.GUINotification("NO_VIABLE_SPELLS", GUINotificationView.NotifyType.General, null, true);
+                return false;
+            }
 
-			currentTrinket = __instance;
-			currentTrinketIndex = _index;
+            //Enable/disable spells for SpellModifySpellEvent
+            EnabledSpellsManager.ChangeTemporaryState(spellsToDisable);
 
-			__instance.app.model.spellModel.currentSpell = null;
-			__instance.app.model.spellModel.spellQueued = false;
+            //Trinket must be tracked so that SpellModifySpellEvent can invoke its effect
+            currentTrinket = __instance;
+            currentTrinketIndex = _index;
 
-			__instance.app.model.spellViewUsed = null;
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
 
-			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
-			__instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
+            __instance.app.model.spellViewUsed = null;
 
-			return false;
+            __instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
+            __instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
+
+            return false;
 		}
 
-		//Patch: Allows the player to choose which spell to use Brown Tick on 
-		[HarmonyPrefix, HarmonyPatch(typeof(BrownTickTrinket), "Use")]
+        /// <summary>
+        /// Apllies a harmony patch that changes Brown Tick's effect such that the player can choose which spell to use it on.
+        /// <br/>Instead of immdiately triggering the trinket effect, a SpellModifySpellEvent is triggered.
+        /// <br/>Spells that aren't viable for Brown Tick's effect are temporarily disabled.
+        /// <br/>The original method is always skipped.
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="_index"></param>
+        /// <returns></returns>
+        [HarmonyPrefix, HarmonyPatch(typeof(BrownTickTrinket), "Use")]
 		static bool BrownTickTrinket_Use(BrownTickTrinket __instance, int _index)
 		{
-			//Loop through spells
+			//Spells are disabled if their charge cost shouldn't be reduced
+			List<SpellElement> spellsToDisable = new List<SpellElement>();
 			bool anyActiveSpells = false;
-			int spellCounter = 0;
-			while (spellCounter < __instance.app.model.characterSheet.spells.Count)
+
+            //The minimum charge cost that Brown Tick can reduce a spell to is calculated differently when balance changes are enabled
+            int minimumCharge = WindfallPersistentDataController.LoadData().implementBalanceChanges ? 0 : 1;
+
+			foreach (SpellView spellView in WindfallHelper.app.view.spells)
 			{
-				//Record which spells are disabled
-				if (!__instance.app.view.spells[spellCounter].disableObject.activeSelf)
+				if (!spellView.SpellObject.IsChargeable || spellView.SpellObject.requiredCharge <= minimumCharge)
 				{
-					enabledSpells[spellCounter] = true;
-				}
+                    //Track which spells should be disabled
+                    spellsToDisable.Add(spellView.SpellObject);
+                }
 				else
 				{
-					enabledSpells[spellCounter] = false;
-				}
-
-                int minimumCharge;
-                if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                {
-                    minimumCharge = 0;
+                    anyActiveSpells = true;
                 }
-                else
-                {
-                    minimumCharge = 1;
-                }
+            }
 
-                //Enable/disable spells
-                if (__instance.app.model.characterSheet.spells[spellCounter].IsChargeable && __instance.app.model.characterSheet.spells[spellCounter].requiredCharge > minimumCharge)
-				{
-					__instance.app.view.spells[spellCounter].EnableSpell();
-					anyActiveSpells = true;
-				}
-				else
-				{
-					__instance.app.view.spells[spellCounter].DisableSpell();
-				}
-				spellCounter += 1;
-			}
+            //If there are no viable spells, the trinket can't be used
+            if (!anyActiveSpells)
+            {
+                __instance.app.controller.GUINotification("NO_VIABLE_SPELLS", GUINotificationView.NotifyType.General, null, true);
+                return false;
+            }
 
-			//Abort if there are no viable spells
-			if (!anyActiveSpells)
-			{
-				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
-				{
-					if (enabledSpells[spellCounter2])
-					{
-						__instance.app.view.spells[spellCounter2].EnableSpell();
-					}
-					else
-					{
-						__instance.app.view.spells[spellCounter2].DisableSpell();
-					}
-				}
-				__instance.app.controller.GUINotification("NO_VIABLE_SPELLS", GUINotificationView.NotifyType.General, null, true);
-				return false;
-			}
+            //Enable/disable spells for SpellModifySpellEvent
+            EnabledSpellsManager.ChangeTemporaryState(spellsToDisable);
 
-			currentTrinket = __instance;
-			currentTrinketIndex = _index;
+            //Trinket must be tracked so that SpellModifySpellEvent can invoke its effect
+            currentTrinket = __instance;
+            currentTrinketIndex = _index;
 
-			__instance.app.model.spellModel.currentSpell = null;
-			__instance.app.model.spellModel.spellQueued = false;
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
 
-			__instance.app.model.spellViewUsed = null;
+            __instance.app.model.spellViewUsed = null;
 
-			__instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
-			__instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
+            __instance.app.controller.eventsController.SetEvent(new SpellModifySpellEvent());
+            __instance.app.controller.GUINotification("MODIFY_SPELL", GUINotificationView.NotifyType.Spell, null, false);
 
-			return false;
+            return false;
 		}
 
-		//Patch: Implements trinket modify spell effects
-		//Rainbow Tick
-		//Brown Tick
-		[HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
+        /// <summary>
+        /// Apllies a harmony patch that allows SpellModifySpellEvent to be used for Rainbow Tick and Brown Tick trinket effects.
+        /// <br/>The original method is only skipped if Rainbow Tick or Brown Tick triggered a SpellModifySpellEvent.
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="___exit"></param>
+        /// <param name="___spell"></param>
+        /// <returns></returns>
+        [HarmonyPrefix, HarmonyPatch(typeof(SpellView), "OnMouseDown")]
 		static bool SpellView_OnMouseDown(SpellView __instance, bool ___exit, SpellElement ___spell)
 		{
 			if (!__instance.app.model.paused && __instance.app.model.bumboEvent.GetType().ToString() == "SpellModifySpellEvent" && currentTrinket != null)
@@ -1386,7 +1362,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             break;
                         }
 
-                        int costReduction = CalculateCostReduction(__instance.spellIndex, 0.15f, __instance.app, false);
+                        int costReduction = CalculateManaCostReduction(__instance.SpellObject, 0.15f, false);
 
 						for (int j = costReduction; j > 0; j--)
 						{
@@ -1445,17 +1421,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 						break;
 				}
 
-				for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
-				{
-					if (enabledSpells[spellCounter2])
-					{
-						__instance.app.view.spells[spellCounter2].EnableSpell();
-					}
-					else
-					{
-						__instance.app.view.spells[spellCounter2].DisableSpell();
-					}
-				}
+				//Return spell enabled states to normal
+				EnabledSpellsManager.ResetState();
 
 				__instance.app.controller.SetActiveSpells(true, true);
 				__instance.app.controller.UpdateSpellManaText();
@@ -1609,7 +1576,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				SpellElement spellElement = __instance.app.model.characterSheet.spells[i];
 				if (!spellElement.IsChargeable)
 				{
-					int costReduction = CalculateCostReduction(i, 0.4f, __instance.app, true);
+					int costReduction = CalculateManaCostReduction(spellElement, 0.4f, true);
 
 					for (int k = costReduction; k > 0; k--)
 					{
@@ -1670,7 +1637,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				SpellElement spellElement = __instance.app.model.characterSheet.spells[i];
 				if (!spellElement.IsChargeable && spellElement != __instance)
 				{
-					int costReduction = CalculateCostReduction(i, 0.25f, __instance.app, true);
+					int costReduction = CalculateManaCostReduction(spellElement, 0.25f, true);
 
 					for (int k = costReduction; k > 0; k--)
 					{
@@ -1737,16 +1704,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 		}
 
-		public static int CalculateCostReduction(int _spell_index, float reductionPercentage, BumboApplication bumboApplication, bool temporaryCost)
+		public static int CalculateManaCostReduction(SpellElement spell, float reductionPercentage, bool includeTemporaryCost)
 		{
 			//Calculate cost reduction
 			int totalManaCost = 0;
 			for (int i = 0; i < 6; i++)
 			{
-				totalManaCost += (int)bumboApplication.model.characterSheet.spells[_spell_index].Cost[i];
-				if (temporaryCost)
+				totalManaCost += (int)spell.Cost[i];
+				if (includeTemporaryCost)
 				{
-					totalManaCost += (int)bumboApplication.model.characterSheet.spells[_spell_index].CostModifier[i];
+					totalManaCost += (int)spell.CostModifier[i];
 				}
 			}
 
@@ -1763,7 +1730,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 
 			//Do not reduce total cost below minimum
-			while (totalManaCost - costReduction < SpellManaCosts.MinimumManaCost(bumboApplication.model.characterSheet.spells[_spell_index]))
+			while (totalManaCost - costReduction < SpellManaCosts.MinimumManaCost(spell))
 			{
 				costReduction--;
 				if (costReduction <= 0)
@@ -1783,7 +1750,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app, false);
+            int costReduction = CalculateManaCostReduction(__instance.app.model.characterSheet.spells[_spell_index], 0.25f, false);
 
 			//Enable spell if cost reduction is above zero
 			if (costReduction > 0)
@@ -1805,7 +1772,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
 
-			int costReduction = CalculateCostReduction(_spell_index, 0.25f, __instance.app, false);
+			int costReduction = CalculateManaCostReduction(spellElement, 0.25f, false);
 
 			for (int j = costReduction; j > 0; j--)
 			{
@@ -1840,7 +1807,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			short num = 0;
 			while ((int)num < __instance.app.model.characterSheet.spells.Count)
 			{
-				int costReduction = CalculateCostReduction(num, 0.25f, __instance.app, false);
+				int costReduction = CalculateManaCostReduction(__instance.app.model.characterSheet.spells[num], 0.25f, false);
 				if (costReduction > 0)
 				{
 					___needles.Add(TrinketName.ManaPrick);

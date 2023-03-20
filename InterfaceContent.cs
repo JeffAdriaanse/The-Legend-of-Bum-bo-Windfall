@@ -752,17 +752,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Add cancel functionality for use trinkets
                     if (CollectibleChanges.currentTrinket != null)
                     {
-                        for (int spellCounter2 = 0; spellCounter2 < __instance.app.model.characterSheet.spells.Count; spellCounter2++)
-                        {
-                            if (CollectibleChanges.enabledSpells[spellCounter2])
-                            {
-                                __instance.app.view.spells[spellCounter2].EnableSpell();
-                            }
-                            else
-                            {
-                                __instance.app.view.spells[spellCounter2].DisableSpell();
-                            }
-                        }
+                        EnabledSpellsManager.ResetState();
                         CollectibleChanges.currentTrinket = null;
                     }
                 }
