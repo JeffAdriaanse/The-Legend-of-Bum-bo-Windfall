@@ -1389,7 +1389,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="__instance">The instance object that is executing the method.</param>
         /// <param name="___exit">Argument from the vanilla method. Represents whether the exit tutorial button was pressed.</param>
         /// <param name="___spell">Argument from the vanilla method. A reference to the spell that is being triggered.</param>
-        /// <returns></returns>
+        /// <returns>bool - Whether the original method should execute.</returns>
         [HarmonyPrefix, HarmonyPatch(typeof(SpellView), nameof(SpellView.OnMouseDown))]
 		static bool SpellView_OnMouseDown(SpellView __instance, bool ___exit, SpellElement ___spell)
 		{
