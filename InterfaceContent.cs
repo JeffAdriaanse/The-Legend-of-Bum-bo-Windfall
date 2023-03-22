@@ -120,44 +120,15 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            var trinketGlitchMesh = assets.LoadAsset<Mesh>("Glitch_Visual_V3");
-            var trinketGlitchTexture = assets.LoadAsset<Texture2D>("Glitch Visuals Texture");
-
             for (int trinketCounter = 0; trinketCounter < trinketGlitches.Length; trinketCounter++)
             {
                 if (trinketCounter < trinkets.Length)
                 {
-                    trinketGlitches[trinketCounter] = GameObject.Instantiate(trinkets[trinketCounter], trinkets[trinketCounter].transform.position, trinkets[trinketCounter].transform.rotation, trinkets[trinketCounter].transform);
-
-                    BoxCollider boxCollider = trinketGlitches[trinketCounter].GetComponent<BoxCollider>();
-                    if (boxCollider)
-                    {
-                        GameObject.Destroy(boxCollider);
-                    }
-
-                    TrinketView trinketView = trinketGlitches[trinketCounter].GetComponent<TrinketView>();
-                    if (trinketView)
-                    {
-                        GameObject.Destroy(trinketView);
-                    }
-
-                    ButtonHoverAnimation buttonHoverAnimation = trinketGlitches[trinketCounter].GetComponent<ButtonHoverAnimation>();
-                    if (buttonHoverAnimation)
-                    {
-                        GameObject.Destroy(buttonHoverAnimation);
-                    }
-
-                    for (int childCounter = 0; childCounter < trinketGlitches[trinketCounter].transform.childCount; childCounter++)
-                    {
-                        GameObject.Destroy(trinketGlitches[trinketCounter].transform.GetChild(childCounter).gameObject);
-                    }
-
-                    MeshFilter meshFilter = trinketGlitches[trinketCounter].GetComponent<MeshFilter>();
-                    meshFilter.mesh = trinketGlitchMesh;
-
-                    MeshRenderer meshRenderer = trinketGlitches[trinketCounter].GetComponent<MeshRenderer>();
-                    meshRenderer.material.mainTexture = trinketGlitchTexture;
-
+                    trinketGlitches[trinketCounter] = GameObject.Instantiate(assets.LoadAsset<GameObject>("GlitchVisual"), trinkets[trinketCounter].transform.position, trinkets[trinketCounter].transform.rotation, trinkets[trinketCounter].transform);
+                    trinketGlitches[trinketCounter].layer = 5;
+                    trinketGlitches[trinketCounter].transform.localPosition = new Vector3(-0.035f, 0.01f, -0.025f);
+                    trinketGlitches[trinketCounter].transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
+                    trinketGlitches[trinketCounter].transform.localRotation = Quaternion.Euler(new Vector3(90f, 180f, 0f));
                     trinketGlitches[trinketCounter].SetActive(false);
                 }
             }
