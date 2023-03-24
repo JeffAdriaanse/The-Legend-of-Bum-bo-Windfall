@@ -1758,7 +1758,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		static void DamagePrickTrinket_QualifySpell(DamagePrickTrinket __instance, int _spell_index)
 		{
 			SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
-			if (spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean || spellElement.spellName == SpellName.PuzzleFlick)
+			if (spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean)
 			{
 				__instance.app.view.spells[_spell_index].DisableSpell();
 			}
@@ -1770,7 +1770,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			while ((int)num < __instance.app.model.characterSheet.spells.Count)
 			{
 				SpellElement spellElement = __instance.app.model.characterSheet.spells[(int)num];
-				if (spellElement.Category == SpellElement.SpellCategory.Attack && !(spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean || spellElement.spellName == SpellName.PuzzleFlick))
+				if (spellElement.Category == SpellElement.SpellCategory.Attack && !(spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean))
 				{
 					___needles.Add(TrinketName.DamagePrick);
 					return false;
