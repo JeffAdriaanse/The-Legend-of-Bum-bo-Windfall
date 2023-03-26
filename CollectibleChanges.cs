@@ -2243,7 +2243,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 		}
 
-        //Patch: Pentagram no longer provides puzzle damage
+        //Patch: Update Missing Piece notification
         [HarmonyPostfix, HarmonyPatch(typeof(MissingPieceSpell), nameof(MissingPieceSpell.CastSpell))]
         static void MissingPieceSpell_CastSpell(MissingPieceSpell __instance, bool __result)
         {
@@ -2268,30 +2268,37 @@ namespace The_Legend_of_Bum_bo_Windfall
 			int damage = Mathf.RoundToInt((float)Mathf.Clamp(__result + __instance.app.model.characterSheet.bumboRoomModifiers.itemDamage, 1, 5));
 			__result = damage;
 		}
-		//Patch: Implements room spell damage
-		[HarmonyPrefix, HarmonyPatch(typeof(CharacterSheet), "getTemporaryItemDamage")]
-		static bool CharacterSheet_getTemporaryItemDamage(CharacterSheet __instance, ref int __result)
-		{
-			int num = __instance.bumboBaseInfo.itemDamage + __instance.app.model.characterSheet.hiddenTrinket.AddToSpellDamage();
-			short num2 = 0;
-			while ((int)num2 < __instance.app.model.characterSheet.trinkets.Count)
-			{
-				num += __instance.app.controller.GetTrinket((int)num2).AddToSpellDamage();
-				num2 += 1;
-			}
-			int num3 = Mathf.Max(0, 5 - num);
-			int num4 = 0;
-			num4 += __instance.app.model.characterSheet.bumboRoundModifiers.itemDamage;
-			num4 += __instance.app.model.characterSheet.bumboRoundModifiers.damage;
-			//Adding room item damage
-			num4 += __instance.app.model.characterSheet.bumboRoomModifiers.itemDamage;
-			num4 += __instance.app.model.characterSheet.bumboRoomModifiers.damage;
-			__result = Mathf.Clamp(num4, 0, num3);
-			return false;
-		}
+        //Patch: Implements room spell damage
+        [HarmonyPrefix, HarmonyPatch(typeof(CharacterSheet), "getTemporaryItemDamage")]
+        static bool CharacterSheet_getTemporaryItemDamage(CharacterSheet __instance, ref int __result)
+        {
+            int num = __instance.bumboBaseInfo.itemDamage + __instance.app.model.characterSheet.hiddenTrinket.AddToSpellDamage();
+            short num2 = 0;
+            while ((int)num2 < __instance.app.model.characterSheet.trinkets.Count)
+            {
+                num += __instance.app.controller.GetTrinket((int)num2).AddToSpellDamage();
+                num2 += 1;
+            }
+            int num3 = Mathf.Max(0, 5 - num);
+            int num4 = 0;
+            num4 += __instance.app.model.characterSheet.bumboRoundModifiers.itemDamage;
+            num4 += __instance.app.model.characterSheet.bumboRoundModifiers.damage;
+            //Adding room item damage
+            num4 += __instance.app.model.characterSheet.bumboRoomModifiers.itemDamage;
+            num4 += __instance.app.model.characterSheet.bumboRoomModifiers.damage;
+            __result = Mathf.Clamp(num4, 0, num3);
+            return false;
+        }
+        //Patch: Implements room spell damage
+        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "getItemDamageDelta")]
+        static void CharacterSheet_getItemDamageDelta(CharacterSheet __instance, ref int __result)
+        {
+            int damage = __instance.getItemDamage() - __instance.app.model.characterSheet.bumboList[(int)__instance.app.model.characterSheet.bumboType].itemDamage;
+            __result = damage >= 0 ? damage : 0;
+        }
 
-		//Patch: Increases mana gain from Converter
-		[HarmonyPrefix, HarmonyPatch(typeof(ConverterSpell), "ConvertMana")]
+        //Patch: Increases mana gain from Converter
+        [HarmonyPrefix, HarmonyPatch(typeof(ConverterSpell), "ConvertMana")]
 		static bool ConverterSpell_ConvertMana(ConverterSpell __instance, Block.BlockType _type)
 		{
             if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
