@@ -106,21 +106,26 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 displayAtMouse = false;
-                displayPosition = spellView.transform.position + new Vector3(-0.42f, 0f, 0f);
+                displayPosition = spellView.transform.position + new Vector3(-0.45f, 0f, 0f);
                 displayAnchor = Anchor.Right;
+                displayDescription = WindfallTooltipDescriptions.SpellDescriptionWithValues(spellObject);
+                return;
+            }
 
-                displayDescription = string.Empty;
-                if (WindfallTooltipDescriptions.SpellDescriptions.TryGetValue(spellObject.spellName, out string value))
+            SpellPickup spellPickup = gameObject.GetComponent<SpellPickup>();
+            if (spellPickup != null)
+            {
+                SpellElement spell = spellPickup.spell;
+                if (spell == null || spell.spellName == SpellName.None)
                 {
-                    string damageValueReplacement = "[damage]";
-                    if (value.Contains(damageValueReplacement))
-                    {
-                        value.Replace(damageValueReplacement, spellObject.Damage().ToString());
-                    }
-
-                    displayDescription = value;
+                    active = false;
+                    return;
                 }
 
+                displayAtMouse = true;
+                displayPosition = Vector3.zero;
+                displayAnchor = Anchor.BottomLeft;
+                displayDescription = WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
                 return;
             }
         }
@@ -152,15 +157,32 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            Ray ray = WindfallHelper.app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
-            RaycastHit[] hits = Physics.RaycastAll(ray);
+            //GUICamera
+            Ray GUIray = WindfallHelper.app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
+            RaycastHit[] GUIhits = Physics.RaycastAll(GUIray);
+
+            //Main Camera
+            Ray MainRay = WindfallHelper.app.view.mainCamera.cam.ScreenPointToRay(Input.mousePosition);
+            RaycastHit[] MainHits = Physics.RaycastAll(MainRay);
+
+            RaycastHit[] AllHits = new RaycastHit[GUIhits.Length + MainHits.Length];
+            GUIhits.CopyTo(AllHits, 0);
+            MainHits.CopyTo(AllHits, GUIhits.Length);
 
             WindfallTooltip closestTooltip = null;
             float closestTooltipDistance = 0f;
 
-            for (int i = 0; i < hits.Length; i++)
+            for (int hitIterator = 0; hitIterator < AllHits.Length; hitIterator++)
             {
-                RaycastHit hit = hits[i];
+                RaycastHit hit = AllHits[hitIterator];
+
+                //Do not count hits that mix GUICamera with a non-GUI collider, or vice versa
+                bool GUIHit = hitIterator < GUIhits.Length;
+                bool GUILayer = hit.collider.gameObject.layer == 5;
+                if (GUIHit != GUILayer)
+                {
+                    continue;
+                }
 
                 WindfallTooltip windfallTooltip = hit.collider.GetComponent<WindfallTooltip>();
 
@@ -196,7 +218,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (tooltipToShow != null && tooltipToShow.displayAtMouse)
             {
-                tooltipToShow.displayPosition = ray.GetPoint(1f);
+                tooltipToShow.displayPosition = GUIray.GetPoint(1f);
             }
 
             DisplayTooltip(tooltipToShow);
@@ -212,6 +234,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (tooltip == null)
             {
                 tooltip = CreateTooltip();
+
+                ScaleTooltip(0.85f);
 
                 if (tooltip == null)
                 {
@@ -240,7 +264,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Vector3 cameraPosition = hudCamera.transform.position;
 
             //Place tooltip display pane at a set distance from the camera
-            Plane tooltipDisplayPlane = new Plane(hudCameraForward, cameraPosition + (hudCameraForward * 0.8f));
+            Plane tooltipDisplayPlane = new Plane(hudCameraForward, cameraPosition + (hudCameraForward * 0.6f));
 
             //Get target display position
             Vector3 targetdisplayPosition = windfallTooltip.displayPosition;
@@ -384,8 +408,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             Transform tooltipTransform = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>(tooltipPath), WindfallHelper.app.view.GUICamera.transform.Find("HUD")).transform);
 
-            tooltipTransform.localScale = new Vector3(1f, 1f, 1f);
-
             anchor = tooltipTransform.Find("Anchor");
 
             hiddenLabel = anchor.Find("Hidden Label").GetComponent<TextMeshPro>();
@@ -405,20 +427,52 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return tooltipTransform.gameObject;
         }
+
+        private static void ScaleTooltip(float scale)
+        {
+            if (tooltip != null)
+            {
+                tooltip.transform.localScale = new Vector3(scale, scale, scale);
+            }
+        }
     }
 
     public static class WindfallTooltipDescriptions
     {
+        public static string SpellDescriptionWithValues(SpellElement spell)
+        {
+            if (SpellDescriptions.TryGetValue(spell.spellName, out string value))
+            {
+                switch (spell.spellName)
+                {
+                    case SpellName.BrownBelt:
+                        value = value.Replace("[damage]", WindfallHelper.app.model.characterSheet.getItemDamage().ToString());
+                        break;
+                    case SpellName.Euthanasia:
+                        value = value.Replace("[damage]", "5");
+                        break;
+                    case SpellName.RockFriends:
+                        value = value.Replace("[count]", WindfallHelper.app.model.characterSheet.getItemDamage().ToString());
+                        break;
+                }
+
+                value = value.Replace("[damage]", spell.Damage().ToString());
+                value = value.Replace("[stacking]", CollectibleChanges.PercentSpellEffectStackingCap(spell.spellName).ToString());
+                return value;
+            }
+            return string.Empty;
+        }
+
         public static Dictionary<SpellName, string> SpellDescriptions
         {
             get
             {
                 return new Dictionary<SpellName, string>
                 {
-                    { SpellName.Addy, "Raises spell damage and puzzle damage by 1 for a turn" },
+                    { SpellName.Addy, "Raises spell damage and puzzle damage by 1 for one turn" },
                     { SpellName.AttackFly, "Attacks for [damage] damage, repeating in the same lane for 1 damage each turn" },
                     { SpellName.Backstabber, "Attacks for [damage] damage to the furthest enemy. Always crits primed enemies" },
-                    { SpellName.BarbedWire, "Deals [damage] damage to attacking enemies, up to [stacking]" },
+                    { SpellName.BarbedWire, "Raises damage dealt to attacking enemies by 1, up to [stacking]" },
                     { SpellName.BeckoningFinger, "Pulls a random enemy to the front row and poisons it" },
                     { SpellName.BeeButt, "Attacks for [damage] damage, poisoning the enemy" },
                     { SpellName.BigRock, "Attacks for [damage] damage to the furthest enemy, plus 1 splash damage to adjacent enemies" },
@@ -439,7 +493,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.BuzzRight, "Moves a tile row to the right" },
                     { SpellName.BuzzUp, "Moves a tile column upwards" },
                     { SpellName.CatHeart, "Randomly places a heart tile" },
-                    { SpellName.CatPaw, "Deals 1 red heart damage and converts it into a soul heart" },
+                    { SpellName.CatPaw, "Drains a red heart and converts it into a soul heart" },
                     { SpellName.Chaos, "Randomly places a wild and a curse" },
                     { SpellName.CoinRoll, "Grants 1 coin" },
                     { SpellName.ConverterBrown, "Grants 2 brown mana" },
@@ -460,7 +514,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.Ecoli, "Transforms an enemy into a Poop, Dip, or Squat" },
                     { SpellName.Eraser, "Destroys all tiles of the same type" },
                     { SpellName.Euthanasia, "Deals [damage] damage to the next attacking enemy" },
-                    { SpellName.ExorcismKit, "Attacks a random enemy for [damage] damage and heals all other enemies for 2 health" },
+                    { SpellName.ExorcismKit, "Attacks a random enemy for [damage] damage and heals all other enemies for 1 health" },
                     { SpellName.FishHook, "Attacks for [damage], granting 1 random mana if it hits an enemy" },
                     { SpellName.FlashBulb, "Flashes all enemies, granting a 50% chance of blinding them" },
                     { SpellName.Flip, "Rerolls a tile" },
@@ -470,13 +524,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.HatPin, "Attacks for [damage] damage to all enemies in the row" },
                     { SpellName.Juiced, "Grants 1 movement" },
                     { SpellName.KrampusCross, "Destroys a row and column of tiles" },
-                    { SpellName.Lard, "Heals 1 heart, but reduces movement at the start of the next turn by 1" },
+                    { SpellName.Lard, "Heals 1 red heart, but reduces movement at the start of the next turn by 1" },
                     { SpellName.LeakyBattery, "Attacks for [damage] damage to all enemies" },
                     { SpellName.Lemon, "Attacks for [damage] damage, blinding the enemy" },
                     { SpellName.Libra, "Averages current mana between all 5 colors" },
                     { SpellName.LilRock, "Attacks for [damage] damage to the furthest enemy" },
                     { SpellName.LithiumBattery, "Grants 2 movement" },
-                    { SpellName.LooseChange, "Grants 4 coins when hit for a turn" },
+                    { SpellName.LooseChange, "Grants 4 coins when hit for one turn" },
                     { SpellName.LuckyFoot, "Raises luck by 1 for the room" },
                     { SpellName.MagicMarker, "Randomly places 2-3 copies of a tile" },
                     { SpellName.Mallot, "Destroys a tile and places 2 copies beside it" },
@@ -498,7 +552,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.Needle, "Attacks for [damage] damage, increasing its damage by 1 for the room if it hits an enemy" },
                     { SpellName.Number1, "Attacks for [damage] damage, granting 1 movement if it hits an enemy" },
                     { SpellName.OldPillow, "Blocks the next attack" },
-                    { SpellName.OrangeBelt, "Deals [damage] damage to attacking enemies for a turn, up to [stacking]" },
+                    { SpellName.OrangeBelt, "Raises damage dealt to attacking enemies by 1 for one turn, up to [stacking]" },
                     { SpellName.PaperStraw, "Grants mana for each copy of the most common tile" },
                     { SpellName.Pause, "Skips the next enemy phase" },
                     { SpellName.Peace, "Unprimes a random enemy" },
@@ -523,16 +577,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.SilverChip, "Increases coins gained from the clearing the room by 1-3" },
                     { SpellName.Skewer, "Destroys a row of tiles" },
                     { SpellName.SleightOfHand, "Reduces the mana cost of all other spells by 25% for the room" },
-                    { SpellName.SmokeMachine, "Grants 50% dodge chance for a turn" },
+                    { SpellName.SmokeMachine, "Grants 50% dodge chance for one turn" },
                     { SpellName.Snack, "Heals 1/2 heart" },
                     { SpellName.SnotRocket, "Boogers all enemies in a lane" },
                     { SpellName.Stick, "Attacks for [damage] damage, knocking the enemy back" },
-                    { SpellName.StopWatch, "Prevents enemies from taking more than 1 action for a turn" },
+                    { SpellName.StopWatch, "Prevents enemies from taking more than 1 action for one turn" },
                     { SpellName.Teleport, "Skips the current room" },
                     { SpellName.TheNegative, "Attacks for [damage] damage to all enemies in a lane" },
                     { SpellName.ThePoop, "Places a poop barrier" },
                     { SpellName.TheRelic, "Grants 1 soul heart" },
-                    { SpellName.TheVirus, "Poisons all attacking enemies for a turn" },
+                    { SpellName.TheVirus, "Poisons all attacking enemies for one turn" },
                     { SpellName.TimeWalker, "Grants 3 movement" },
                     { SpellName.TinyDice, "Rerolls all tiles of the same type" },
                     { SpellName.Toothpick, "Destroys a tile and grants 1 mana of its color" },
@@ -540,10 +594,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.TrapDoor, "Skips the current chapter and grants 10 coins" },
                     { SpellName.TrashLid, "Blocks the next 2 attacks" },
                     { SpellName.WatchBattery, "Grants 1 movement" },
-                    { SpellName.WhiteBelt, "For a turn, negates enemy curses and mana drain, and limits their damage to 1/2 heart" },
+                    { SpellName.WhiteBelt, "For one turn, negates enemy curses and mana drain, and limits their damage to 1/2 heart" },
                     { SpellName.WoodenNickel, "Grants 1-2 coins" },
                     { SpellName.WoodenSpoon, "Grants 1 movement immediately and at the start of each turn" },
-                    { SpellName.YellowBelt, "Grants 5% dodge chance for the room" },
+                    { SpellName.YellowBelt, "Raises dodge chance by 5% for the room, up to [stacking]%" },
                     { SpellName.YumHeart, "Heals 1 heart" },
                 };
             }

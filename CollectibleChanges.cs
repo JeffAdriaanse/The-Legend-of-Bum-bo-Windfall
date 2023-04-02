@@ -38,7 +38,24 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return floor > 0 || UnityEngine.Random.Range(0f, 1f) < remainder ? 1 : 0;
         }
 
-		public static Dictionary<SpellName, float> SpellEffectStackingCap
+        /// <summary>
+        /// Converts decimal stacking cap values to percent. Otherwise, the value is unchanged.
+        /// </summary>
+        /// <param name="spell"></param>
+        /// <returns>int - The stacking cap of the spell, in either whole value or percent form.</returns>
+        public static int PercentSpellEffectStackingCap(SpellName spell)
+		{
+			if (SpellEffectStackingCap.TryGetValue(spell, out float cap))
+			{
+                return Mathf.RoundToInt(cap > 0 && cap < 1 ? cap * 100 : cap);
+            }
+			return 0;
+        }
+
+		/// <summary>
+		/// Contains spell stacking limits.
+		/// </summary>
+        public static Dictionary<SpellName, float> SpellEffectStackingCap
 		{
 			get
 			{

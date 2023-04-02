@@ -103,6 +103,26 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Adds tooltips to spell pickups
+        //Also adjusts spell pickup colliders
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellPickup), "Start")]
+        static void SpellPickup_Start(SpellPickup __instance)
+        {
+            WindfallTooltip windfallTooltip = __instance.GetComponent<WindfallTooltip>();
+
+            if (windfallTooltip == null)
+            {
+                __instance.gameObject.AddComponent<WindfallTooltip>();
+            }
+
+            //Adjust collider
+            BoxCollider boxCollider = __instance.GetComponent<BoxCollider>();
+            if (boxCollider != null)
+            {
+                boxCollider.size = new Vector3(boxCollider.size.x * 1.32f, boxCollider.size.y, boxCollider.size.z);
+            }
+        }
+
         //Patch: Add trinket glitches on GUISide Awake
         [HarmonyPostfix, HarmonyPatch(typeof(GUISide), "Awake")]
         static void GUISide_Awake(GUISide __instance)

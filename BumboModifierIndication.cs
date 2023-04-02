@@ -417,9 +417,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (bumboModifier.canStack)
             {
                 stackingActive = true;
-                if (int.TryParse(bumboModifier.value, out int result) && bumboModifier.StackingCap() > 0)
+                if (int.TryParse(bumboModifier.value, out int result) && CollectibleChanges.PercentSpellEffectStackingCap(bumboModifier.spellSource) > 0)
                 {
-                    stackingActive = (result < bumboModifier.StackingCap());
+                    stackingActive = (result < CollectibleChanges.PercentSpellEffectStackingCap(bumboModifier.spellSource));
                 }
             }
             bumboModifier.stackingTransform.gameObject.SetActive(stackingActive);
@@ -689,7 +689,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public Vector3 TooltipPosition()
         {
-            return transform.parent.TransformPoint(TargetPosition() + new Vector3(0.04f, -0.01f, 0f));
+            return transform.parent.TransformPoint(transform.localPosition + new Vector3(0.07f, -0.01f, 0f));
+            //return transform.parent.TransformPoint(TargetPosition() + new Vector3(0.04f, -0.01f, 0f));
         }
 
         public void UpdateTint()
@@ -848,17 +849,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return description;
         }
 
-        public int StackingCap()
-        {
-            if (!CollectibleChanges.SpellEffectStackingCap.ContainsKey(spellSource))
-            {
-                return 0;
-            }
-
-            float cap = CollectibleChanges.SpellEffectStackingCap[spellSource];
-            return Mathf.RoundToInt(cap > 0 && cap < 1 ? cap * 100 : cap);
-        }
-
         public string StackingDescription()
         {
             if (value == null)
@@ -867,17 +857,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             string stacking = "Effect can be stacked further";
+            string stackingCap = CollectibleChanges.PercentSpellEffectStackingCap(spellSource).ToString();
 
             switch (spellSource)
             {
                 case SpellName.BarbedWire:
-                    stacking += ", up to " + StackingCap().ToString() + " damage";
+                    stacking += ", up to " + stackingCap + " damage";
                     break;
                 case SpellName.OrangeBelt:
-                    stacking += ", up to " + StackingCap().ToString() + " damage";
+                    stacking += ", up to " + stackingCap + " damage";
                     break;
                 case SpellName.YellowBelt:
-                    stacking += ", up to " + StackingCap().ToString() + "% dodge";
+                    stacking += ", up to " + stackingCap + "% dodge";
                     break;
             }
 
