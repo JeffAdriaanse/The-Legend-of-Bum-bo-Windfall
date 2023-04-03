@@ -532,6 +532,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.LithiumBattery, "Grants 2 movement" },
                     { SpellName.LooseChange, "Grants 4 coins when hit for one turn" },
                     { SpellName.LuckyFoot, "Raises luck by 1 for the room" },
+                    { SpellName.Magic8Ball, "Randomly places a wild tile at the top of the puzzle board" },
                     { SpellName.MagicMarker, "Randomly places 2-3 copies of a tile" },
                     { SpellName.Mallot, "Destroys a tile and places 2 copies beside it" },
                     { SpellName.MamaFoot, "Attacks for [damage] damage to all enemies, but hurts for 1/2 heart" },
