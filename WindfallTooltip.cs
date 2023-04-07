@@ -161,6 +161,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             WindfallTooltip closestTooltip = null;
             float closestTooltipDistance = 0f;
+            bool closestTooltipGUI = false;
 
             for (int hitIterator = 0; hitIterator < AllHits.Length; hitIterator++)
             {
@@ -180,11 +181,27 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     windfallTooltip.UpdateDisplayData();
 
-                    if (windfallTooltip.active && (hit.distance < closestTooltipDistance || closestTooltipDistance == 0f))
+                    //Verify that the tooltip is active
+                    if (!windfallTooltip.active)
                     {
-                        closestTooltip = windfallTooltip;
-                        closestTooltipDistance = hit.distance;
+                        continue;
                     }
+
+                    //Verify that the tooltip is the closest tooltip
+                    if (hit.distance > closestTooltipDistance && closestTooltipDistance != 0f)
+                    {
+                        continue;
+                    }
+
+                    //Prioritize GUI tooltips
+                    if (!GUIHit && closestTooltipGUI)
+                    {
+                        continue;
+                    }
+
+                    closestTooltip = windfallTooltip;
+                    closestTooltipDistance = hit.distance;
+                    closestTooltipGUI = GUIHit;
                 }
             }
 
