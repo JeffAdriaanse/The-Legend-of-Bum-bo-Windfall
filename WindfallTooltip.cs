@@ -33,16 +33,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public bool active;
 
-        public WindfallTooltip()
-        {
-            UpdateDisplayData();
-        }
-
-        //void OnMouseEnter()
-        //{
-        //    //Play Sound
-        //}
-
         public void UpdateDisplayData()
         {
             active = true;

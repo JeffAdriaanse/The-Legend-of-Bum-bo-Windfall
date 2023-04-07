@@ -509,7 +509,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public readonly Vector3 showingPosition = new Vector3(-0.73f, 0.41f, 1.15f);
 
-        ExpansionToggle()
+        private void Start()
         {
             transform.localEulerAngles = TargetRotation();
         }
