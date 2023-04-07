@@ -450,16 +450,47 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (SpellDescriptions.TryGetValue(spell.spellName, out string value))
             {
+                CharacterSheet characterSheet = WindfallHelper.app?.model?.characterSheet;
                 switch (spell.spellName)
                 {
                     case SpellName.BrownBelt:
-                        value = value.Replace("[damage]", WindfallHelper.app.model.characterSheet.getItemDamage().ToString());
+                        if (characterSheet != null)
+                        {
+                            value = value.Replace("[damage]", characterSheet.getItemDamage().ToString());
+                        }
+                        break;
+                    case SpellName.D10:
+                        string grounded = String.Empty;
+                        string flying = String.Empty;
+                        if (characterSheet != null)
+                        {
+                            switch (characterSheet.currentFloor)
+                            {
+                                case 2:
+                                    grounded = "Masks";
+                                    flying = "Longits or Boom Flies";
+                                    break;
+                                case 3:
+                                    grounded = "Skully B.s or Cultists";
+                                    flying = "Whisps";
+                                    break;
+                                default:
+                                    grounded = "Dips or Tato Kids";
+                                    flying = "Flies";
+                                    break;
+                            }
+                        }
+                        value = value.Replace("[grounded]", grounded);
+                        value = value.Replace("[flying]", flying);
                         break;
                     case SpellName.Euthanasia:
                         value = value.Replace("[damage]", "5");
                         break;
                     case SpellName.RockFriends:
-                        value = value.Replace("[count]", WindfallHelper.app.model.characterSheet.getItemDamage().ToString());
+                        if (characterSheet != null)
+                        {
+                            value = value.Replace("[count]", characterSheet.getItemDamage().ToString());
+                        }
                         break;
                 }
 
@@ -511,6 +542,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.CraftPaper, "Transforms into a copy of another spell" },
                     { SpellName.CrazyStraw, "Destroys a tile and grants 3 mana of its color" },
                     { SpellName.CursedRainbow, "Randomly places 3 curse tiles, and 4 wild tiles at the top of the puzzle board" },
+                    { SpellName.D10, "Rerolls all grounded enemies into [grounded]. Rerolls all flying enemies into [flying]. Enemy types change each floor." },
                     { SpellName.D20, "Rerolls mana and the puzzle board, grants a coin and a soul heart, and unprimes all enemies" },
                     { SpellName.D4, "Shuffles the puzzle board" },
                     { SpellName.D6, "Rerolls a spell" },
