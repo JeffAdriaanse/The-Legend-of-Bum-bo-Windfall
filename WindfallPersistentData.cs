@@ -19,6 +19,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             antiAliasing = true;
             depthOfField = false;
             motionBlur = true;
+
+            tooltipSize = 2;
         }
 
         public int winCount;
@@ -30,6 +32,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         public bool antiAliasing;
         public bool depthOfField;
         public bool motionBlur;
+
+        public int tooltipSize;
     }
 
     public static class WindfallPersistentDataController

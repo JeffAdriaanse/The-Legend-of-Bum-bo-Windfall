@@ -140,6 +140,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static GameObject defaultTooltipObject;
         private static DefaultTooltipMode defaultTooltip = DefaultTooltipMode.Disabled;
 
+        private static readonly float SCALE_SMALL = 0.7f;
+        private static readonly float SCALE_MEDIUM = 0.85f;
+        private static readonly float SCALE_LARGE = 1.0f;
+
         public static void UpdateTooltips()
         {
             if (WindfallHelper.app?.view?.GUICamera?.cam == null)
@@ -242,15 +246,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 tooltip = CreateTooltip();
 
-                ScaleTooltip(0.85f);
-
                 if (tooltip == null)
                 {
                     return;
                 }
             }
 
-            if (windfallTooltip == null)
+            int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
+
+            if (windfallTooltip == null || tooltipSize == 0)
             {
                 if (tooltip.activeSelf)
                 {
@@ -265,6 +269,21 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             ResizeTooltip(windfallTooltip);
+
+            float tooltipScale = SCALE_SMALL;
+            switch (tooltipSize)
+            {
+                case 1:
+                    tooltipScale = SCALE_SMALL;
+                    break;
+                case 2:
+                    tooltipScale = SCALE_MEDIUM;
+                    break;
+                case 3:
+                    tooltipScale = SCALE_LARGE;
+                    break;
+            }
+            ScaleTooltip(tooltipScale);
 
             Camera hudCamera = WindfallHelper.app.view.GUICamera.cam;
             Vector3 hudCameraForward = hudCamera.transform.forward;

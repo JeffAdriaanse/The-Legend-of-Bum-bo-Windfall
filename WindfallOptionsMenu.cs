@@ -23,6 +23,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static bool antiAliasing;
         private static bool motionBlur;
 
+        private static int tooltipSize;
+
         private static Sprite toggleActive;
         private static Sprite toggleInactive;
 
@@ -194,6 +196,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 InitializeButton(windfallOptionsMenu.transform.Find("Balance Changes").gameObject, ToggleBalanceChanges, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
                 InitializeButton(windfallOptionsMenu.transform.Find("Antialiasing").gameObject, ToggleAntiAliasing, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
                 InitializeButton(windfallOptionsMenu.transform.Find("Motion Blur").gameObject, ToggleMotionBlur, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+                InitializeButton(windfallOptionsMenu.transform.Find("Tooltips").Find("Size").gameObject, CycleTooltipSize, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
                 InitializeButton(windfallOptionsMenu.transform.Find("Sync Achievements").gameObject, SyncAchievements, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
                 InitializeButton(windfallOptionsMenu.transform.Find("Save").gameObject, SaveWindfallOptions, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
                 InitializeButton(windfallOptionsMenu.transform.Find("Cancel").gameObject, CloseWindfallOptionsMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
@@ -229,23 +232,52 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void ToggleBalanceChanges()
         {
             balanceChanges = !balanceChanges;
-            UpdateToggles();
+            UpdateButtons();
         }
         private static void ToggleAntiAliasing()
         {
             antiAliasing = !antiAliasing;
-            UpdateToggles();
+            UpdateButtons();
         }
         private static void ToggleMotionBlur()
         {
             motionBlur = !motionBlur;
-            UpdateToggles();
+            UpdateButtons();
         }
-        private static void UpdateToggles()
+        private static void CycleTooltipSize()
+        {
+            tooltipSize++;
+            if (tooltipSize > 3)
+            {
+                tooltipSize = 0;
+            }
+            UpdateButtons();
+        }
+        private static void UpdateButtons()
         {
             UpdateToggle(windfallOptionsMenu?.transform.Find("Balance Changes")?.Find("Toggle")?.gameObject, balanceChanges);
             UpdateToggle(windfallOptionsMenu?.transform.Find("Antialiasing")?.Find("Toggle")?.gameObject, antiAliasing);
             UpdateToggle(windfallOptionsMenu?.transform.Find("Motion Blur")?.Find("Toggle")?.gameObject, motionBlur);
+
+            TextMeshProUGUI tooltipSizeText = windfallOptionsMenu?.transform.Find("Tooltips")?.Find("Size")?.GetComponent<TextMeshProUGUI>();
+            if (tooltipSizeText != null)
+            {
+                switch (tooltipSize)
+                {
+                    case 0:
+                        tooltipSizeText.text = "Disabled";
+                        break;
+                    case 1:
+                        tooltipSizeText.text = "Small";
+                        break;
+                    case 2:
+                        tooltipSizeText.text = "Medium";
+                        break;
+                    case 3:
+                        tooltipSizeText.text = "Large";
+                        break;
+                }
+            }
         }
         private static void UpdateToggle(GameObject toggleObject, bool active)
         {
@@ -298,6 +330,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             windfallPersistentData.implementBalanceChanges = balanceChanges;
             windfallPersistentData.antiAliasing = antiAliasing;
             windfallPersistentData.motionBlur = motionBlur;
+            windfallPersistentData.tooltipSize = tooltipSize;
             WindfallPersistentDataController.SaveData(windfallPersistentData);
 
             GraphicsModifier.UpdateCameras();
@@ -311,8 +344,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             balanceChanges = windfallPersistentData.implementBalanceChanges;
             antiAliasing = windfallPersistentData.antiAliasing;
             motionBlur = windfallPersistentData.motionBlur;
+            tooltipSize = windfallPersistentData.tooltipSize;
 
-            UpdateToggles();
+            UpdateButtons();
         }
     }
 }
