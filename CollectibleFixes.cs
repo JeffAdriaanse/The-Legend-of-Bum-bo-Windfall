@@ -660,7 +660,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
-        static int flyCounter = 0;
+        static readonly string flyLaneIteratorKey = "flyLaneIterator";
         //Patch: Reworks Attack Fly Spell sequence to account for changes to enemy states between fly attacks
         [HarmonyPrefix, HarmonyPatch(typeof(AttackFlySpell), "EndOfMonsterRound")]
         static bool AttackFlySpell_EndOfMonsterRound(AttackFlySpell __instance, bool[] ___enemies_to_bother)
@@ -669,9 +669,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             Sequence sequence = DOTween.Sequence();
             bool isFinalLane = false;
             int currentLane = -1;
+
+            if (float.IsNaN(ObjectDataStorage.GetData(__instance, flyLaneIteratorKey)))
+            {
+                ObjectDataStorage.StoreData(__instance, flyLaneIteratorKey, 0f);
+            }
+
             for (int laneCounter = 0; laneCounter < 3; laneCounter++)
             {
-                if (flyCounter == laneCounter)
+                if ((int)ObjectDataStorage.GetData(__instance, flyLaneIteratorKey) == laneCounter)
                 {
                     if (___enemies_to_bother[laneCounter])
                     {
@@ -680,11 +686,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
                 }
             }
+            
+            ObjectDataStorage.StoreData(__instance, flyLaneIteratorKey, ObjectDataStorage.GetData(__instance, flyLaneIteratorKey) + 1f);
 
-            flyCounter++;
-            if (flyCounter > 2)
+            Console.WriteLine(ObjectDataStorage.GetData(__instance, flyLaneIteratorKey));
+
+            if (ObjectDataStorage.GetData(__instance, flyLaneIteratorKey) > 2f)
             {
-                flyCounter = 0;
+                ObjectDataStorage.StoreData(__instance, flyLaneIteratorKey, 0f);
                 isFinalLane = true;
             }
 
