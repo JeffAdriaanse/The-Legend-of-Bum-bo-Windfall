@@ -16,6 +16,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(CollectibleFixes));
         }
 
+        //Patch: Fixes TrinketController.NewRound not triggering when starting a room
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.StartRoom))]
+        static void BumboController_StartRoom(BumboController __instance)
+        {
+            if ((__instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.EnemyEncounter || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Boss || __instance.app.model.mapModel.currentRoom.roomType == MapRoom.RoomType.Start) && !__instance.app.model.mapModel.currentRoom.cleared)
+            {
+                __instance.app.controller.trinketController.NewRound();
+            }
+        }
+
         //Fixes Butter Bean trinket effect
         //Replace method
         [HarmonyPrefix, HarmonyPatch(typeof(PoopAtStartEvent), nameof(PoopAtStartEvent.Toot))]
