@@ -1217,7 +1217,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketPickupView), "OnMouseDown")]
         static bool TrinketPickupView_OnMouseDown(TrinketPickupView __instance)
         {
-            if (!__instance.app.model.paused)
+            if (!__instance.app.model.paused && __instance.Clickable)
             {
                 if ((__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent") && __instance.app.model.characterSheet.trinkets.Count < 4)
                 {
@@ -1226,7 +1226,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     return false;
                 }
                 //Don't use boss room logic while clicking a trinket during TrinketReplaceCancelledEvent while in a treasure room
-                if ((__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent") && __instance.app.model?.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Boss && (bool)AccessTools.Field(typeof(TrinketPickupView), "clickable").GetValue(__instance) == true)
+                if ((__instance.app.model.bumboEvent.GetType().ToString() == "BossDyingEvent" || __instance.app.model.bumboEvent.GetType().ToString() == "TrinketReplaceCancelledEvent") && __instance.app.model?.mapModel?.currentRoom?.roomType == MapRoom.RoomType.Boss && __instance.Clickable)
                 {
                     //Disable boss room pickups
                     GameObject[] bossRewardParents = __instance.app.view.bossRewardParents;

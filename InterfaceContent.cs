@@ -123,6 +123,65 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Adds tooltips to trinkets
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.UpdateTrinkets))]
+        static void BumboController_UpdateTrinkets_Tooltips(BumboController __instance)
+        {
+            foreach (GameObject trinket in __instance.app.view.GUICamera.GetComponent<GUISide>().trinkets)
+            {
+                WindfallTooltip windfallTooltip = trinket.GetComponent<WindfallTooltip>();
+
+                if (windfallTooltip == null)
+                {
+                    trinket.gameObject.AddComponent<WindfallTooltip>();
+                }
+            }
+        }
+
+        //Patch: Adds tooltips to trinket pickups
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketPickupView), "Start")]
+        static void TrinketPickupView_Start(TrinketPickupView __instance)
+        {
+            WindfallTooltip windfallTooltip = __instance.GetComponent<WindfallTooltip>();
+
+            if (windfallTooltip == null)
+            {
+                __instance.gameObject.AddComponent<WindfallTooltip>();
+            }
+
+            //Adjust collider
+            BoxCollider boxCollider = __instance.GetComponent<BoxCollider>();
+            if (boxCollider != null)
+            {
+                boxCollider.size = new Vector3(boxCollider.size.x * 1.1f, boxCollider.size.y * 1.11f, boxCollider.size.z);
+                boxCollider.center = new Vector3(boxCollider.center.x, 0.235f, boxCollider.center.z);
+            }
+        }
+
+        //Patch: Adds tooltips to bum-bo faces
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboFacesController), "Start")]
+        static void BumboFacesController_Start(BumboFacesController __instance)
+        {
+            WindfallTooltip windfallTooltip = __instance.GetComponent<WindfallTooltip>();
+
+            if (windfallTooltip == null)
+            {
+                __instance.gameObject.AddComponent<WindfallTooltip>();
+            }
+        }
+
+        //Patch: Disables vanilla tooltips
+        [HarmonyPrefix, HarmonyPatch(typeof(ToolTip), nameof(ToolTip.Show))]
+        static bool ToolTip_Show()
+        {
+            if (WindfallPersistentDataController.LoadData().tooltipSize != 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         //Patch: Add trinket glitches on GUISide Awake
         [HarmonyPostfix, HarmonyPatch(typeof(GUISide), "Awake")]
         static void GUISide_Awake(GUISide __instance)
@@ -982,8 +1041,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             trinketRewardDisplay.transform.localRotation = Quaternion.Euler(0f, 135f, 0f);
             trinketRewardDisplay.transform.localScale = new Vector3(0.75f, 0.75f, 0.75f);
             trinketRewardDisplay.GetComponent<TrinketPickupView>().SetTrinket(app.model.gamblingModel.trinketReward, 0);
+            trinketRewardDisplay.GetComponent<TrinketPickupView>().SetClickable(false);
             trinketRewardDisplay.SetActive(true);
-            trinketRewardDisplay.GetComponent<BoxCollider>().enabled = false;
+            trinketRewardDisplay.GetComponent<BoxCollider>().enabled = true;
             GameObject trinketDisplayLight = new GameObject("Trinket Display Light");
             trinketDisplayLight.AddComponent<Light>().intensity = 0;
             trinketDisplayLight.transform.position = new Vector3(-1.1f, 1.1f, -6f);

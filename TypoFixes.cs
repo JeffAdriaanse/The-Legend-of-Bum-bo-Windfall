@@ -41,40 +41,47 @@ namespace The_Legend_of_Bum_bo_Windfall
     static class LocalizationModifier
     {
         static bool triggered = false;
-        static LanguageSourceData languageSourceData;
-        public static void ModifyLanguageSourceData()
+        public static LanguageSourceData LanguageSourceData
         {
-            if (!triggered)
+            get
             {
                 if (LocalizationManager.Sources.Count > 0)
                 {
-                    languageSourceData = LocalizationManager.Sources[0];
+                    return LocalizationManager.Sources[0];
                 }
-                if (languageSourceData == null)
-                {
-                    return;
-                }
-                triggered = true;
-
-                //Acquire fonts
-                AcquireFonts(languageSourceData);
-
-                //Modify language
-                ModifyEnglish();
-                //Add language
-                AddEnglish();
+                return null;
             }
         }
 
+        public static void ModifyLanguageSourceData()
+        {
+            if (triggered)
+            {
+                return;
+            }
+
+            triggered = true;
+
+            //Modify language
+            ModifyEnglish();
+            //Add language
+            AddEnglish();
+        }
+
         public static TMP_FontAsset edFont;
-        private static void AcquireFonts(LanguageSourceData languageSourceData)
+        private static void AcquireFonts()
         {
             //Unused method
             return;
 
-            if (languageSourceData.Assets != null && languageSourceData.mAssetDictionary != null)
+            if (LanguageSourceData == null)
             {
-                if (languageSourceData.mAssetDictionary.TryGetValue("EdmundMcMillen SDF", out UnityEngine.Object edFontValue))
+                return;
+            }
+
+            if (LanguageSourceData.Assets != null && LanguageSourceData.mAssetDictionary != null)
+            {
+                if (LanguageSourceData.mAssetDictionary.TryGetValue("EdmundMcMillen SDF", out UnityEngine.Object edFontValue))
                 {
                     if (edFontValue is TMP_FontAsset)
                     {
@@ -101,6 +108,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void ModifyEnglish()
         {
+            if (LanguageSourceData == null)
+            {
+                return;
+            }
+
             foreach (string term in EnglishTextModifications.Keys)
             {
                 if (term == "Spells/ROCK_FRIENDS_DESCRIPTION" && !WindfallPersistentDataController.LoadData().implementBalanceChanges)
@@ -108,7 +120,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     continue;
                 }
 
-                TermData termData = languageSourceData.GetTermData(term);
+                TermData termData = LanguageSourceData.GetTermData(term);
                 if (termData == null)
                 {
                     Debug.LogWarning("[The Legend of Bum-bo: Windfall] Term " + term + " is null");
@@ -136,15 +148,47 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void AddEnglish()
         {
+            if (LanguageSourceData == null)
+            {
+                return;
+            }
+
             foreach (string term in EnglishTextAdditions.Keys)
             {
-                TermData termData = languageSourceData.AddTerm(term);
+                TermData termData = LanguageSourceData.AddTerm(term);
 
                 if (EnglishTextAdditions.TryGetValue(term, out string value))
                 {
                     termData.SetTranslation(0, value);
                 }
             }
+        }
+
+        public static string GetEnglishText(string term, string category)
+        {
+            TermData termData = null;
+
+            if (term == null)
+            {
+                return string.Empty;
+            }
+
+            if (category != null)
+            {
+                termData = LanguageSourceData.GetTermData(category + "/" + term, false);
+            }
+
+            if (termData == null)
+            {
+                termData = LanguageSourceData.GetTermData(term, true);
+            }
+
+            if (termData == null)
+            {
+                return string.Empty;
+            }
+
+            return termData.GetTranslation(0);
         }
 
         public static Dictionary<string, string> EnglishTextModifications

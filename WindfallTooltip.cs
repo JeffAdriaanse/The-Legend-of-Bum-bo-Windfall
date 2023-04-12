@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Drawing;
@@ -48,7 +49,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 displayAtMouse = false;
                 displayPosition = bumboModifier.TooltipPosition();
-                displayAnchor = Anchor.Left;
+                displayAnchor = Anchor.Right;
                 displayDescription = bumboModifier.Description();
                 return;
             }
@@ -64,7 +65,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 displayAtMouse = false;
                 displayPosition = bumboModifierTemporary.TooltipPosition();
-                displayAnchor = Anchor.Left;
+                displayAnchor = Anchor.Right;
                 displayDescription = bumboModifierTemporary.description;
                 return;
             }
@@ -80,7 +81,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 displayAtMouse = false;
                 displayPosition = bumboModifierStacking.TooltipPosition();
-                displayAnchor = Anchor.Left;
+                displayAnchor = Anchor.Right;
                 displayDescription = bumboModifierStacking.bumboModifier.StackingDescription();
                 return;
             }
@@ -88,17 +89,21 @@ namespace The_Legend_of_Bum_bo_Windfall
             SpellView spellView = gameObject.GetComponent<SpellView>();
             if (spellView != null)
             {
-                SpellElement spellObject = spellView.SpellObject;
-                if (spellObject == null || spellObject.spellName == SpellName.None)
+                SpellElement spell = spellView.SpellObject;
+                if (spell == null || spell.spellName == SpellName.None)
                 {
                     active = false;
                     return;
                 }
 
                 displayAtMouse = false;
-                displayPosition = spellView.transform.position + new Vector3(-0.45f, 0f, 0f);
-                displayAnchor = Anchor.Right;
-                displayDescription = WindfallTooltipDescriptions.SpellDescriptionWithValues(spellObject);
+                displayPosition = spellView.transform.position + new Vector3(-0.43f, 0f, 0f);
+                displayAnchor = Anchor.Left;
+                displayDescription = string.Empty;
+                if (WindfallHelper.app.model.spellModel.spellKA.TryGetValue(spell.spellName, out string spellKA))
+                {
+                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(spellKA, "Spells") + "</u>\n" + WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
+                }
                 return;
             }
 
@@ -114,10 +119,115 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 displayAtMouse = true;
                 displayPosition = Vector3.zero;
-                displayAnchor = Anchor.BottomLeft;
-                displayDescription = WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
+                displayAnchor = Anchor.TopRight;
+                displayDescription = string.Empty;
+                if (WindfallHelper.app.model.spellModel.spellKA.TryGetValue(spell.spellName, out string spellKA))
+                {
+                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(spellKA, "Spells") + "</u>\n" + WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
+                }
                 return;
             }
+
+            TrinketView trinketView = gameObject.GetComponent<TrinketView>();
+            if (trinketView != null && trinketView.trinketIndex < WindfallHelper.app.model.characterSheet.trinkets.Count)
+            {
+                TrinketElement trinket = WindfallHelper.app.controller.GetTrinket(trinketView.trinketIndex);
+                if (trinket == null || trinket.trinketName == TrinketName.None)
+                {
+                    active = false;
+                    return;
+                }
+
+                displayAtMouse = false;
+                displayPosition = trinketView.transform.position + new Vector3(-0.074f, 0.14f, 0f);
+                displayAnchor = Anchor.Top;
+                displayDescription = string.Empty;
+                if (WindfallHelper.app.model.trinketModel.trinketKA.TryGetValue(trinket.trinketName, out string trinketKA))
+                {
+                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
+                }
+                return;
+            }
+
+            TrinketPickupView trinketPickupView = gameObject.GetComponent<TrinketPickupView>();
+            if (trinketPickupView != null)
+            {
+                TrinketElement trinket = trinketPickupView.trinket;
+                if (trinket == null || trinket.trinketName == TrinketName.None)
+                {
+                    active = false;
+                    return;
+                }
+
+                displayAtMouse = true;
+                displayPosition = Vector3.zero;
+                displayAnchor = Anchor.TopRight;
+                displayDescription = string.Empty;
+                if (WindfallHelper.app.model.trinketModel.trinketKA.TryGetValue(trinket.trinketName, out string trinketKA))
+                {
+                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
+                }
+                return;
+            }
+
+            BumboFacesController bumboFacesController = gameObject.GetComponent<BumboFacesController>();
+            if (bumboFacesController != null)
+            {
+                displayAtMouse = false;
+                displayPosition = bumboFacesController.transform.position + new Vector3(0.08f, 0f, 0f);
+                displayAnchor = Anchor.Right;
+                displayDescription = string.Empty;
+
+                string bumboName;
+                string bumboDescription;
+                CharacterSheet.BumboType bumboType = WindfallHelper.app.model.characterSheet.bumboType;
+                switch (bumboType)
+                {
+                    case CharacterSheet.BumboType.TheBrave:
+                        bumboName = "Bum-bo the Brave";
+                        bumboDescription = "Gains 1 spell damage and 1 puzzle damage while at or below 2 red health. Increases to 2 spell damage and 2 puzzle damage while at or below 1 red health";
+                        break;
+                    case CharacterSheet.BumboType.TheNimble:
+                        bumboName = "Bum-bo the Nimble";
+                        bumboDescription = "Gains 1 mana of each color upon hitting an enemy with a puzzle attack";
+                        break;
+                    case CharacterSheet.BumboType.TheStout:
+                        bumboName = "Bum-bo the Stout";
+                        bumboDescription = "Gains extra mana from tile combos: 7 mana from 4-tile combos and 9 mana from bigger combos. Loses all mana at the start of each turn";
+                        break;
+                    case CharacterSheet.BumboType.TheWeird:
+                        bumboName = "Bum-bo the Weird";
+                        bumboDescription = "Gains 1 movement upon killing an enemy";
+                        break;
+                    case CharacterSheet.BumboType.TheDead:
+                        bumboName = "Bum-bo the Dead";
+                        bumboDescription = "Gains 2 mana of each color at the start of each room. Rerolls spell mana costs upon activation";
+                        break;
+                    case CharacterSheet.BumboType.TheLost:
+                        bumboName = "Bum-bo the Lost";
+                        bumboDescription = "Cannot gain health past 1/2 heart. Ghost tiles appear on the puzzle board";
+                        break;
+                    case CharacterSheet.BumboType.Eden:
+                        bumboName = "Bum-bo the Empty";
+                        bumboDescription = "Starts with random stats. Rerolls each spell into another spell of the same type at the start of each room";
+                        break;
+                    default:
+                        bumboName = string.Empty;
+                        bumboDescription = string.Empty;
+                        break;
+                }
+
+                displayDescription = "<u>" + bumboName + "</u>\n" + bumboDescription;
+
+                //string[] toolTips = (string[])AccessTools.Field(typeof(BumboFacesController), "toolTips").GetValue(bumboFacesController);
+                //if (toolTips != null && toolTips.Length > 0)
+                //{
+                //    displayDescription = "<u>" + bumboName + "</u>\n" + LocalizationModifier.GetEnglishText(toolTips[(int)bumboType], null);
+                //}
+
+                return;
+            }
+
         }
     }
 
@@ -140,9 +250,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static GameObject defaultTooltipObject;
         private static DefaultTooltipMode defaultTooltip = DefaultTooltipMode.Disabled;
 
-        private static readonly float SCALE_SMALL = 0.7f;
-        private static readonly float SCALE_MEDIUM = 0.85f;
-        private static readonly float SCALE_LARGE = 1.0f;
+        private static readonly float SCALE_SMALL = 0.85f;
+        private static readonly float SCALE_MEDIUM = 1.0f;
+        private static readonly float SCALE_LARGE = 1.15f;
 
         public static void UpdateTooltips()
         {
@@ -155,8 +265,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             Ray GUIray = WindfallHelper.app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
             RaycastHit[] GUIhits = Physics.RaycastAll(GUIray);
 
-            //Main Camera
-            Ray MainRay = WindfallHelper.app.view.mainCamera.cam.ScreenPointToRay(Input.mousePosition);
+            Ray MainRay;
+            if (WindfallHelper.app.view.gamblingView == null)
+            {
+                //Main Camera
+                MainRay = WindfallHelper.app.view.mainCamera.cam.ScreenPointToRay(Input.mousePosition);
+            }
+            else
+            {
+                //Gambling Camera
+                MainRay = WindfallHelper.app.view.gamblingView.gamblingCameraView.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+            }
             RaycastHit[] MainHits = Physics.RaycastAll(MainRay);
 
             RaycastHit[] AllHits = new RaycastHit[GUIhits.Length + MainHits.Length];
@@ -376,8 +495,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             float height;
             if (meshRenderer != null)
             {
-                width = meshRenderer.bounds.size.x * 0.48f;
-                height = meshRenderer.bounds.size.y * 0.6f;
+                width = meshRenderer.bounds.size.x * 0.46f;
+                height = meshRenderer.bounds.size.y * 0.54f;
             }
             else
             {
@@ -388,28 +507,28 @@ namespace The_Legend_of_Bum_bo_Windfall
             switch (windfallTooltip.displayAnchor)
             {
                 case WindfallTooltip.Anchor.Top:
-                    offset = new Vector3(0f, -height, 0f);
-                    break;
-                case WindfallTooltip.Anchor.TopRight:
-                    offset = new Vector3(-width, -height, 0f);
-                    break;
-                case WindfallTooltip.Anchor.Right:
-                    offset = new Vector3(-width, 0f, 0f);
-                    break;
-                case WindfallTooltip.Anchor.BottomRight:
-                    offset = new Vector3(-width, height, 0f);
-                    break;
-                case WindfallTooltip.Anchor.Bottom:
                     offset = new Vector3(0f, height, 0f);
                     break;
-                case WindfallTooltip.Anchor.BottomLeft:
+                case WindfallTooltip.Anchor.TopRight:
                     offset = new Vector3(width, height, 0f);
                     break;
-                case WindfallTooltip.Anchor.Left:
+                case WindfallTooltip.Anchor.Right:
                     offset = new Vector3(width, 0f, 0f);
                     break;
-                case WindfallTooltip.Anchor.TopLeft:
+                case WindfallTooltip.Anchor.BottomRight:
                     offset = new Vector3(width, -height, 0f);
+                    break;
+                case WindfallTooltip.Anchor.Bottom:
+                    offset = new Vector3(0f, -height, 0f);
+                    break;
+                case WindfallTooltip.Anchor.BottomLeft:
+                    offset = new Vector3(-width, -height, 0f);
+                    break;
+                case WindfallTooltip.Anchor.Left:
+                    offset = new Vector3(-width, 0f, 0f);
+                    break;
+                case WindfallTooltip.Anchor.TopLeft:
+                    offset = new Vector3(-width, height, 0f);
                     break;
                 default:
                     offset = Vector3.zero;
@@ -450,7 +569,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 LocalizationModifier.ChangeFont(null, textMeshPro, WindfallHelper.GetEdmundMcmillenFont());
             }
 
-
             return tooltipTransform.gameObject;
         }
 
@@ -458,7 +576,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (tooltip != null)
             {
-                tooltip.transform.localScale = new Vector3(scale, scale, scale);
+                tooltip.transform.Find("Anchor").localScale = new Vector3(scale, scale, scale * 0.5f);
             }
         }
     }
@@ -508,7 +626,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                     case SpellName.RockFriends:
                         if (characterSheet != null)
                         {
-                            value = value.Replace("[count]", characterSheet.getItemDamage().ToString());
+                            int itemDamage = characterSheet.getItemDamage();
+                            value = value.Replace("[count]", itemDamage.ToString());
+                            value = value.Replace("[target]", itemDamage == 1 ? "enemy" : "enemies");
                         }
                         break;
                 }
@@ -629,7 +749,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.RedD12, "Rerolls a row of tiles" },
                     { SpellName.Refresh, "Randomly adds 1 charge to a spell" },
                     { SpellName.Rock, "Attacks for [damage] spell damage to the furthest enemy" },
-                    { SpellName.RockFriends, "Randomly attacks [count] enemies for [damage] spell damage" },
+                    { SpellName.RockFriends, "Randomly attacks [count] [target] for [damage] spell damage" },
                     { SpellName.RoidRage, "Grants 100% crit chance for the next attack" },
                     { SpellName.RottenMeat, "Heals 1/2 heart, but randomly obscures 4 tiles" },
                     { SpellName.RubberBat, "Attacks for [damage] spell damage to all enemies in the front row and knocks them back" },
@@ -661,18 +781,34 @@ namespace The_Legend_of_Bum_bo_Windfall
                 };
             }
         }
+
+        public static string TrinketDescriptionWithValues(TrinketElement trinket)
+        {
+            if (TrinketDescriptions.TryGetValue(trinket.trinketName, out string value))
+            {
+                return value;
+            }
+            return string.Empty;
+        }
+
         public static Dictionary<TrinketName, string> TrinketDescriptions
         {
             get
             {
                 return new Dictionary<TrinketName, string>
                 {
+                    //1Up
+                    { TrinketName.ChargePrick, "Reduces an item's recharge time by 1" },
+                    { TrinketName.DamagePrick, "Raises a spell's damage by 1" },
+                    { TrinketName.ManaPrick, "Reduces a spell's mana cost by 25%" },
+                    { TrinketName.RandomPrick, "Rerolls a spell" },
+                    { TrinketName.ShufflePrick, "Rerolls a spell's mana cost" },
                     { TrinketName.AAABattery, "Grants a 10% chance to gain 1 movement at the start of each turn" },
                     { TrinketName.AABattery, "Grants a 25% chance to gain 1 movement upon killing an enemy" },
                     { TrinketName.Artery, "Grants a 10% chance to heal 1/2 heart upon killing an enemy" },
                     { TrinketName.BagOJuice, "Grants 1 mana of each color upon taking damage during the enemy phase" },
                     { TrinketName.BagOSucking, "Grants a 50% chance to gain 3 random mana upon dealing spell damage" },
-                    { TrinketName.BagOTrash, "Rerolls spell mana costs when they are activated" },
+                    { TrinketName.BagOTrash, "Rerolls spell mana costs upon activation" },
                     { TrinketName.BlackCandle, "Negates all damage recieved from curse tiles" },
                     { TrinketName.BlackMagic, "Deals 3 puzzle damage to all enemies upon making a curse tile combo" },
                     { TrinketName.BloodBag, "Raises spell damage and puzzle damage by 1 for the current room upon taking damage during the enemy phase" },
