@@ -188,7 +188,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = "<u>" + bumboName + "</u>\n" + bumboDescription;
                 return;
             }
-
         }
     }
 
@@ -793,7 +792,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new Dictionary<TrinketName, string>
                 {
-                    //1Up
                     { TrinketName.ChargePrick, "Reduces an item's recharge time by 1" },
                     { TrinketName.DamagePrick, "Raises a spell's damage by 1" },
                     { TrinketName.ManaPrick, "Reduces a spell's mana cost by 25%" },
@@ -845,6 +843,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.Norovirus, "Causes poop barriers to retaliate for 1 damage when attacked" },
                     { TrinketName.NoseGoblin, "Randomly places 2-4 booger tiles at the start of each room" },
                     { TrinketName.OldTooth, "Randomly places 2-4 tooth tiles at the start of each room" },
+                    { TrinketName.OneUp, "Grants an extra life upon taking fatal damage, restoring all starting health" },
                     { TrinketName.PinkBow, "Grants a soul heart upon entering the Wooden Nickel" },
                     { TrinketName.PinkEye, "Grants a 25% chance to apply poison upon hitting an enemy" },
                     { TrinketName.Pinky, "Grants a 33% chance to randomly place a wild tile upon killing an enemy" },
