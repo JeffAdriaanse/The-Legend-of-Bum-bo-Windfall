@@ -178,53 +178,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayAnchor = Anchor.Right;
                 displayDescription = string.Empty;
 
-                string bumboName;
-                string bumboDescription;
+                string bumboName = string.Empty;
+                string bumboDescription = string.Empty;
+
                 CharacterSheet.BumboType bumboType = WindfallHelper.app.model.characterSheet.bumboType;
-                switch (bumboType)
-                {
-                    case CharacterSheet.BumboType.TheBrave:
-                        bumboName = "Bum-bo the Brave";
-                        bumboDescription = "Gains 1 spell damage and 1 puzzle damage while at or below 2 red health. Increases to 2 spell damage and 2 puzzle damage while at or below 1 red health";
-                        break;
-                    case CharacterSheet.BumboType.TheNimble:
-                        bumboName = "Bum-bo the Nimble";
-                        bumboDescription = "Gains 1 mana of each color upon hitting an enemy with a puzzle attack";
-                        break;
-                    case CharacterSheet.BumboType.TheStout:
-                        bumboName = "Bum-bo the Stout";
-                        bumboDescription = "Gains extra mana from tile combos: 7 mana from 4-tile combos and 9 mana from bigger combos. Loses all mana at the start of each turn";
-                        break;
-                    case CharacterSheet.BumboType.TheWeird:
-                        bumboName = "Bum-bo the Weird";
-                        bumboDescription = "Gains 1 movement upon killing an enemy";
-                        break;
-                    case CharacterSheet.BumboType.TheDead:
-                        bumboName = "Bum-bo the Dead";
-                        bumboDescription = "Gains 2 mana of each color at the start of each room. Rerolls spell mana costs upon activation";
-                        break;
-                    case CharacterSheet.BumboType.TheLost:
-                        bumboName = "Bum-bo the Lost";
-                        bumboDescription = "Cannot gain health past 1/2 heart. Ghost tiles appear on the puzzle board";
-                        break;
-                    case CharacterSheet.BumboType.Eden:
-                        bumboName = "Bum-bo the Empty";
-                        bumboDescription = "Starts with random stats. Rerolls each spell into another spell of the same type at the start of each room";
-                        break;
-                    default:
-                        bumboName = string.Empty;
-                        bumboDescription = string.Empty;
-                        break;
-                }
+                if (WindfallTooltipDescriptions.BumboNames.TryGetValue(bumboType, out string name)) bumboName = name;
+                if (WindfallTooltipDescriptions.BumboDescriptions.TryGetValue(bumboType, out string description)) bumboDescription = description;
 
                 displayDescription = "<u>" + bumboName + "</u>\n" + bumboDescription;
-
-                //string[] toolTips = (string[])AccessTools.Field(typeof(BumboFacesController), "toolTips").GetValue(bumboFacesController);
-                //if (toolTips != null && toolTips.Length > 0)
-                //{
-                //    displayDescription = "<u>" + bumboName + "</u>\n" + LocalizationModifier.GetEnglishText(toolTips[(int)bumboType], null);
-                //}
-
                 return;
             }
 
@@ -583,6 +544,41 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     public static class WindfallTooltipDescriptions
     {
+
+        public static Dictionary<CharacterSheet.BumboType, string> BumboNames
+        {
+            get
+            {
+                return new Dictionary<CharacterSheet.BumboType, string>
+                {
+                    { CharacterSheet.BumboType.TheBrave, "Bum-bo the Brave" },
+                    { CharacterSheet.BumboType.TheNimble, "Bum-bo the Nimble" },
+                    { CharacterSheet.BumboType.TheStout, "Bum-bo the Stout" },
+                    { CharacterSheet.BumboType.TheWeird, "Bum-bo the Weird" },
+                    { CharacterSheet.BumboType.TheDead, "Bum-bo the Dead" },
+                    { CharacterSheet.BumboType.TheLost, "Bum-bo the Lost" },
+                    { CharacterSheet.BumboType.Eden, "Bum-bo the Empty" },
+                };
+            }
+        }
+
+        public static Dictionary<CharacterSheet.BumboType, string> BumboDescriptions
+        {
+            get
+            {
+                return new Dictionary<CharacterSheet.BumboType, string>
+                {
+                    { CharacterSheet.BumboType.TheBrave, "Gains 1 spell damage and 1 puzzle damage while at or below 2 red health. Increases to 2 spell damage and 2 puzzle damage while at or below 1 red health" },
+                    { CharacterSheet.BumboType.TheNimble, "Gains 1 mana of each color upon hitting an enemy with a puzzle attack" },
+                    { CharacterSheet.BumboType.TheStout, "Gains extra mana from tile combos: 7 mana from 4-tile combos and 9 mana from bigger combos. Loses all mana at the start of each turn" },
+                    { CharacterSheet.BumboType.TheWeird, "Gains 1 movement upon killing an enemy" },
+                    { CharacterSheet.BumboType.TheDead, "Gains 2 mana of each color at the start of each room. Rerolls spell mana costs upon activation" },
+                    { CharacterSheet.BumboType.TheLost, "Cannot gain health past 1/2 heart. Ghost tiles appear on the puzzle board" },
+                    { CharacterSheet.BumboType.Eden, "Starts with random stats. Rerolls each spell into another spell of the same type at the start of each room" },
+                };
+            }
+        }
+
         public static string SpellDescriptionWithValues(SpellElement spell)
         {
             if (SpellDescriptions.TryGetValue(spell.spellName, out string value))
