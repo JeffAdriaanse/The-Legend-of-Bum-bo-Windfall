@@ -149,6 +149,27 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
+            TrinketView trinketViewParent = gameObject.transform.parent.GetComponent<TrinketView>();
+            if (gameObject.name == "GlitchVisualObject" && trinketViewParent != null && trinketViewParent.trinketIndex < WindfallHelper.app.model.characterSheet.trinkets.Count)
+            {
+                TrinketElement trinket = WindfallHelper.app.model.characterSheet.trinkets[trinketViewParent.trinketIndex];
+                if (trinket == null || trinket.trinketName != TrinketName.Glitch)
+                {
+                    active = false;
+                    return;
+                }
+
+                displayAtMouse = false;
+                displayPosition = trinketViewParent.transform.position + new Vector3(-0.074f, 0.14f, 0f);
+                displayAnchor = Anchor.Top;
+                displayDescription = string.Empty;
+                if (WindfallHelper.app.model.trinketModel.trinketKA.TryGetValue(trinket.trinketName, out string trinketKA))
+                {
+                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
+                }
+                return;
+            }
+
             TrinketPickupView trinketPickupView = gameObject.GetComponent<TrinketPickupView>();
             if (trinketPickupView != null)
             {

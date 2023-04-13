@@ -203,11 +203,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (trinketCounter < trinkets.Length)
                 {
-                    trinketGlitches[trinketCounter] = GameObject.Instantiate(assets.LoadAsset<GameObject>("GlitchVisual"), trinkets[trinketCounter].transform.position, trinkets[trinketCounter].transform.rotation, trinkets[trinketCounter].transform);
+                    trinketGlitches[trinketCounter] = GameObject.Instantiate(assets.LoadAsset<GameObject>("GlitchVisualObject"), trinkets[trinketCounter].transform.position, trinkets[trinketCounter].transform.rotation, trinkets[trinketCounter].transform);
                     trinketGlitches[trinketCounter].layer = 5;
                     trinketGlitches[trinketCounter].transform.localPosition = new Vector3(-0.035f, 0.01f, -0.025f);
                     trinketGlitches[trinketCounter].transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
                     trinketGlitches[trinketCounter].transform.localRotation = Quaternion.Euler(new Vector3(90f, 180f, 0f));
+                    trinketGlitches[trinketCounter].name = "GlitchVisualObject";
+                    trinketGlitches[trinketCounter].AddComponent<WindfallTooltip>();
                     trinketGlitches[trinketCounter].SetActive(false);
                 }
             }
