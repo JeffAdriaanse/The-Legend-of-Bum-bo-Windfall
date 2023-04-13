@@ -1,9 +1,12 @@
 ﻿using HarmonyLib;
+using PathologicalGames;
 using System;
 using System.CodeDom;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
@@ -228,9 +231,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static TextMeshPro hiddenLabel;
         private static List<TextMeshPro> labels;
 
-        private static GameObject defaultTooltipObject;
-        private static DefaultTooltipMode defaultTooltip = DefaultTooltipMode.Disabled;
-
         private static readonly float SCALE_SMALL = 0.85f;
         private static readonly float SCALE_MEDIUM = 1.0f;
         private static readonly float SCALE_LARGE = 1.15f;
@@ -244,7 +244,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //GUICamera
             Ray GUIray = WindfallHelper.app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
-            RaycastHit[] GUIhits = Physics.RaycastAll(GUIray);
 
             Ray MainRay;
             if (WindfallHelper.app.view.gamblingView == null)
@@ -257,6 +256,27 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Gambling Camera
                 MainRay = WindfallHelper.app.view.gamblingView.gamblingCameraView.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
             }
+
+            //Get closest tooltip object under mouse position
+            WindfallTooltip tooltipToShow = GetMouseTooltip(GUIray, MainRay);
+
+            //If there is no mouse tooltip, attempt to get a gamepad tooltip
+            if (tooltipToShow == null)
+            {
+                tooltipToShow = GetGamepadTooltip();
+            }
+
+            if (tooltipToShow != null && tooltipToShow.displayAtMouse)
+            {
+                tooltipToShow.displayPosition = GUIray.GetPoint(1f);
+            }
+
+            DisplayTooltip(tooltipToShow);
+        }
+
+        private static WindfallTooltip GetMouseTooltip(Ray GUIray, Ray MainRay)
+        {
+            RaycastHit[] GUIhits = Physics.RaycastAll(GUIray);
             RaycastHit[] MainHits = Physics.RaycastAll(MainRay);
 
             RaycastHit[] AllHits = new RaycastHit[GUIhits.Length + MainHits.Length];
@@ -308,31 +328,71 @@ namespace The_Legend_of_Bum_bo_Windfall
                     closestTooltipGUI = GUIHit;
                 }
             }
+            return closestTooltip;
+        }
 
-            WindfallTooltip tooltipToShow = closestTooltip;
+        private static WindfallTooltip GetGamepadTooltip()
+        {
+            List<GameObject> gamepadSelectables = new List<GameObject>();
 
-            if (defaultTooltip == DefaultTooltipMode.Override || (tooltipToShow == null && defaultTooltip == DefaultTooltipMode.Enabled))
+            //Access selectables and add them to the list
+            if (WindfallHelper.GamepadSpellSelector != null)
             {
-                if (defaultTooltipObject == null)
+                object m_Selectables = typeof(GamepadSpellSelector).GetField("m_Selectables", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(WindfallHelper.GamepadSpellSelector);
+                if (m_Selectables != null)
                 {
-                    defaultTooltipObject = new GameObject();
-                    tooltipToShow = defaultTooltipObject.AddComponent<WindfallTooltip>();
-                }
-                else
-                {
-                    tooltipToShow = defaultTooltipObject.GetComponent<WindfallTooltip>();
-                }
+                    foreach (object selectable in (m_Selectables as IEnumerable))
+                    {
+                        Type selectableType = selectable.GetType();
+                        SpellView m_Spell = (SpellView)selectableType.GetField("m_Spell", BindingFlags.Public | BindingFlags.Instance).GetValue(selectable);
+                        TrinketView m_Trinket = (TrinketView)selectableType.GetField("m_Trinket", BindingFlags.Public | BindingFlags.Instance).GetValue(selectable);
 
-                tooltipToShow.displayAtMouse = true;
-                tooltipToShow.displayAnchor = WindfallTooltip.Anchor.BottomLeft;
+                        if (m_Spell != null)
+                        {
+                            gamepadSelectables.Add(m_Spell.gameObject);
+                            continue;
+                        }
+
+                        if (m_Trinket != null)
+                        {
+                            gamepadSelectables.Add(m_Trinket.gameObject);
+                        }
+                    }
+                }
             }
 
-            if (tooltipToShow != null && tooltipToShow.displayAtMouse)
+            foreach (GameObject selectable in gamepadSelectables)
             {
-                tooltipToShow.displayPosition = GUIray.GetPoint(1f);
-            }
+                WindfallTooltip windfallTooltip = selectable.GetComponent<WindfallTooltip>();
 
-            DisplayTooltip(tooltipToShow);
+                bool selected = false;
+
+                SpellView spellView = selectable.GetComponent<SpellView>();
+                if (spellView != null && spellView.gamepadSelectionObject.activeSelf)
+                {
+                    selected = true;
+                }
+
+                TrinketView trinketView = selectable.GetComponent<TrinketView>();
+                if (trinketView != null && trinketView.gamepadSelectionObject.activeSelf)
+                {
+                    selected = true;
+                }
+
+                if (spellView != null && windfallTooltip != null && selected)
+                {
+                    windfallTooltip.UpdateDisplayData();
+
+                    //Verify that the tooltip is active
+                    if (!windfallTooltip.active)
+                    {
+                        continue;
+                    }
+
+                    return windfallTooltip;
+                }
+            }
+            return null;
         }
 
         private static void DisplayTooltip(WindfallTooltip windfallTooltip)

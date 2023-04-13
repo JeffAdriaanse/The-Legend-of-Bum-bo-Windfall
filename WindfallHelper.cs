@@ -3,6 +3,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UIElements;
 using System.Linq;
+using PathologicalGames;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -30,6 +31,77 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (_app != null)
             {
                 app = _app;
+            }
+        }
+
+        private static GamepadSpellSelector gamepadSpellSelector;
+        public static GamepadSpellSelector GamepadSpellSelector
+        {
+            get
+            {
+                if (gamepadSpellSelector == null)
+                {
+                    gamepadSpellSelector = WindfallHelper.app?.view?.GUICamera?.GetComponent<GamepadSpellSelector>();
+                }
+
+                if (gamepadSpellSelector == null)
+                {
+                    gamepadSpellSelector = GameObject.FindObjectOfType<GamepadSpellSelector>();
+                }
+
+                return gamepadSpellSelector;
+            }
+        }
+
+        private static GamepadTreasureRoomController gamepadTreasureRoomController;
+        public static GamepadTreasureRoomController GamepadTreasureRoomController
+        {
+            get
+            {
+                if (gamepadTreasureRoomController == null)
+                {
+                    gamepadTreasureRoomController = PoolManager.Pools["Spells"].GetComponent<GamepadTreasureRoomController>();
+                }
+
+                if (gamepadTreasureRoomController == null)
+                {
+                    gamepadTreasureRoomController = GameObject.FindObjectOfType<GamepadTreasureRoomController>();
+                }
+
+                return gamepadTreasureRoomController;
+            }
+        }
+
+        private static GamepadTreasureRoomController gamepadBossRoomController;
+        public static GamepadTreasureRoomController GamepadBossRoomController
+        {
+            get
+            {
+                if (gamepadBossRoomController == null)
+                {
+                    gamepadBossRoomController = WindfallHelper.app.view.bossRewardParents[0].transform.parent.GetComponent<GamepadTreasureRoomController>();
+                }
+
+                if (gamepadBossRoomController == null)
+                {
+                    gamepadBossRoomController = GameObject.FindObjectOfType<GamepadTreasureRoomController>();
+                }
+
+                return gamepadBossRoomController;
+            }
+        }
+
+        private static GamepadGamblingController gamepadGamblingController;
+        public static GamepadGamblingController GamepadGamblingController
+        {
+            get
+            {
+                if (gamepadGamblingController == null)
+                {
+                    gamepadGamblingController = GameObject.FindObjectOfType<GamepadGamblingController>();
+                }
+
+                return gamepadGamblingController;
             }
         }
 
