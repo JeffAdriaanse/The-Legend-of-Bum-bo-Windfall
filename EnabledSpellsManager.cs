@@ -11,6 +11,8 @@ namespace The_Legend_of_Bum_bo_Windfall
     /// </summary>
     public static class EnabledSpellsManager
     {
+        private static readonly string spellViewEnabledKey = "spellViewEnabledKey";
+
         /// <summary>
         /// Changes the enabled state of Bum-bo's spells while keeping track of their exising enabled state.
         /// </summary>
@@ -19,8 +21,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             foreach (SpellView spellView in WindfallHelper.app.view.spells)
             {
-                float enabled = spellView.disableObject.activeSelf ? 0f : 1f;
-                ObjectDataStorage.StoreData(spellView, "enabled", enabled);
+                ObjectDataStorage.StoreData<bool>(spellView, spellViewEnabledKey, spellView.disableObject.activeSelf);
 
                 if (spellView.SpellObject != null && spellsToDisable != null && spellsToDisable.Contains(spellView.SpellObject))
                 {
@@ -40,13 +41,17 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             foreach (SpellView spellView in WindfallHelper.app.view.spells)
             {
-                float enabled = ObjectDataStorage.GetData(spellView, "enabled");
+                bool enabled = true;
+                if (ObjectDataStorage.HasData<bool>(spellView, spellViewEnabledKey))
+                {
+                    enabled = ObjectDataStorage.GetData<bool>(spellView, spellViewEnabledKey);
+                }
 
-                if (enabled == 1f)
+                if (enabled)
                 {
                     spellView.EnableSpell();
                 }
-                else if (enabled == 0f)
+                else
                 {
                     spellView.DisableSpell();
                 }

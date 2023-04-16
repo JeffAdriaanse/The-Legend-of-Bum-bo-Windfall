@@ -43,7 +43,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Enemy), "SpawnDust")]
         static bool Enemy_SpawnDust(Enemy __instance)
         {
-            if (__instance.championType == Enemy.ChampionType.NotAChampion && ObjectDataStorage.GetData(__instance.gameObject, "spawnDust") != 0)
+            bool spawnDust = true;
+            if (ObjectDataStorage.HasData<bool>(__instance.gameObject, spawnDustKey))
+            {
+                spawnDust = ObjectDataStorage.GetData<bool>(__instance.gameObject, spawnDustKey);
+            }
+
+            if (__instance.championType == Enemy.ChampionType.NotAChampion && spawnDust)
             {
                 return true;
             }
@@ -278,6 +284,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        private static readonly string spawnDustKey = "spawnDustKey";
+
         //Patch: Fixes Mirror dust
         [HarmonyPrefix, HarmonyPatch(typeof(MirrorHauntEnemy), nameof(MirrorHauntEnemy.Init))]
         static void MirrorHauntEnemy_Init(MirrorHauntEnemy __instance)
@@ -286,23 +294,23 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.app.model.bumboEvent.ToString() == "RoomStartEvent")
             {
                 //Set flag to enable spawning dust
-                ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 1f);
+                ObjectDataStorage.StoreData<bool>(__instance.gameObject, spawnDustKey, true);
 
                 __instance.SpawnDust();
             }
             //Set flag to disable spawning dust
-            ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 0f);
+            ObjectDataStorage.StoreData<bool>(__instance.gameObject, spawnDustKey, false);
         }
         //Changes MirrorHauntEnemy_Relocate to spawn dust after the Mirror has moved instead of beforehand, which would spawn the dust at the wrong location
         [HarmonyPostfix, HarmonyPatch(typeof(MirrorHauntEnemy), nameof(MirrorHauntEnemy.Relocate))]
         static void MirrorHauntEnemy_Relocate(MirrorHauntEnemy __instance)
         {
             //Set flag to enable spawning dust
-            ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 1f);
+            ObjectDataStorage.StoreData<bool>(__instance.gameObject, spawnDustKey, true);
             //Spawn dust
             __instance.SpawnDust();
             //Set flag to disable spawning dust
-            ObjectDataStorage.StoreData(__instance.gameObject, "spawnDust", 0f);
+            ObjectDataStorage.StoreData<bool>(__instance.gameObject, spawnDustKey, false);
         }
 
         public static Dictionary<EnemyName, int> EnemyBaseHealth

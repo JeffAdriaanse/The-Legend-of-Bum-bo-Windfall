@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 namespace The_Legend_of_Bum_bo_Windfall
 {
     /// <summary>
-    /// Stores floats on objects. Useful for keeping track of custom data specific to an object and that should be lost when the object no longer exists.
+    /// Stores data on objects. Useful for keeping track of custom data specific to an object and that should be lost when the object no longer exists.
     /// </summary>
     public class ObjectDataStorage
     {
         public static List<ObjectDataStorage> Containers = new List<ObjectDataStorage>();
 
-        public Dictionary<string, float> data = new Dictionary<string, float>();
+        public Dictionary<string, object> data = new Dictionary<string, object>();
 
         public object storageObject;
 
@@ -22,13 +22,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         private static void ClearUnusedContainers()
         {
-            foreach (ObjectDataStorage container in Containers)
-            {
-                if (container == null || container.storageObject == null)
-                {
-                    Containers.Remove(container);
-                }
-            }
+            Containers.RemoveAll(container => container == null || container.storageObject == null);
         }
 
         /// <summary>
@@ -45,24 +39,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return null;
             }
 
-            foreach (ObjectDataStorage container in Containers)
-            {
-                if (container.storageObject == targetObject)
-                {
-                    return container;
-                }
-            }
-
-            return null;
+            return Containers.FirstOrDefault(container => container.storageObject == targetObject);
         }
 
         /// <summary>
-        /// Stores a float value on the given object, associated with the provided key.
+        /// Stores data on the given object, associated with the provided key.
         /// </summary>
         /// <param name="targetObject">The target object.</param>
-        /// <param name="key">The key associated with the stored value.</param>
-        /// <param name="value">The value to store.</param>
-        public static void StoreData(object targetObject, string key, float value)
+        /// <param name="key">The key associated with the stored data.</param>
+        /// <param name="value">The data to store.</param>
+        public static void StoreData<T>(object targetObject, string key, T value)
         {
             ObjectDataStorage container = FindContainer(targetObject);
 
@@ -79,24 +65,51 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Retrieves a float value stored on the given object, associated with the provided key.
+        /// Retrieves data stored on the given object, associated with the provided key.
         /// </summary>
         /// <param name="targetObject">The target object.</param>
-        /// <param name="key">The key associated with the stored value.</param>
-        /// <returns>The stored value, or NaN if no value is found.</returns>
-        public static float GetData(object targetObject, string key)
+        /// <param name="key">The key associated with the stored data.</param>
+        /// <returns>The stored data, or default value if no value is found.</returns>
+        public static T GetData<T>(object targetObject, string key)
         {
             ObjectDataStorage container = FindContainer(targetObject);
 
             if (container != null)
             {
-                if (container.data.TryGetValue(key, out float value))
+                if (container.data.TryGetValue(key, out object value))
                 {
-                    return value;
+                    if (value is T typedValue)
+                    {
+                        return typedValue;
+                    }
                 }
             }
 
-            return float.NaN;
+            return default(T);
+        }
+
+        /// <summary>
+        /// Whether the object has data of the given type associated with the provided key.
+        /// </summary>
+        /// <param name="targetObject">The target object.</param>
+        /// <param name="key">The key associated with the stored data.</param>
+        /// <returns>True if data is found. False if no data is found.</returns>
+        public static bool HasData<T>(object targetObject, string key)
+        {
+            ObjectDataStorage container = FindContainer(targetObject);
+
+            if (container != null)
+            {
+                if (container.data.TryGetValue(key, out object value))
+                {
+                    if (value is T)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

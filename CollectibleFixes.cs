@@ -660,7 +660,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         //***************************************************
         //***************************************************
 
-        static readonly string flyLaneIteratorKey = "flyLaneIterator";
+        private static readonly string flyLaneIteratorKey = "flyLaneIterator";
         //Patch: Reworks Attack Fly Spell sequence to account for changes to enemy states between fly attacks
         [HarmonyPrefix, HarmonyPatch(typeof(AttackFlySpell), "EndOfMonsterRound")]
         static bool AttackFlySpell_EndOfMonsterRound(AttackFlySpell __instance, bool[] ___enemies_to_bother)
@@ -670,14 +670,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             bool isFinalLane = false;
             int currentLane = -1;
 
-            if (float.IsNaN(ObjectDataStorage.GetData(__instance, flyLaneIteratorKey)))
+            if (!ObjectDataStorage.HasData<int>(__instance, flyLaneIteratorKey))
             {
-                ObjectDataStorage.StoreData(__instance, flyLaneIteratorKey, 0f);
+                ObjectDataStorage.StoreData<int>(__instance, flyLaneIteratorKey, 0);
             }
 
             for (int laneCounter = 0; laneCounter < 3; laneCounter++)
             {
-                if ((int)ObjectDataStorage.GetData(__instance, flyLaneIteratorKey) == laneCounter)
+                if (ObjectDataStorage.GetData<int>(__instance, flyLaneIteratorKey) == laneCounter)
                 {
                     if (___enemies_to_bother[laneCounter])
                     {
@@ -687,13 +687,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
             
-            ObjectDataStorage.StoreData(__instance, flyLaneIteratorKey, ObjectDataStorage.GetData(__instance, flyLaneIteratorKey) + 1f);
+            ObjectDataStorage.StoreData<int>(__instance, flyLaneIteratorKey, ObjectDataStorage.GetData<int>(__instance, flyLaneIteratorKey) + 1);
 
-            Console.WriteLine(ObjectDataStorage.GetData(__instance, flyLaneIteratorKey));
-
-            if (ObjectDataStorage.GetData(__instance, flyLaneIteratorKey) > 2f)
+            if (ObjectDataStorage.GetData<int>(__instance, flyLaneIteratorKey) > 2)
             {
-                ObjectDataStorage.StoreData(__instance, flyLaneIteratorKey, 0f);
+                ObjectDataStorage.StoreData<int>(__instance, flyLaneIteratorKey, 0);
                 isFinalLane = true;
             }
 

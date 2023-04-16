@@ -34,6 +34,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        private static readonly string hitPointsKey = "hitPointsKey";
+
         //Patch: Fixes 'damage up' notification sometimes not appearing when Bum-bo the Brave's passive ability is triggered
         //This patch replaces the 'HealthChange' method of BraveHiddenTriket
         [HarmonyPostfix, HarmonyPatch(typeof(HealthController), nameof(HealthController.UpdateHearts))]
@@ -45,7 +47,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (characterSheet.bumboType == CharacterSheet.BumboType.TheBrave)
             {
                 //Retrieve previous hit points value
-                float previousHitPoints = ObjectDataStorage.GetData(__instance.gameObject, "HitPoints");
+                float previousHitPoints = float.NaN;
+                if (ObjectDataStorage.HasData<float>(__instance.gameObject, hitPointsKey))
+                {
+                    previousHitPoints = ObjectDataStorage.GetData<float>(__instance.gameObject, hitPointsKey);
+                }
                 if (previousHitPoints != float.NaN)
                 {
                     bool hitPointsReducedBelowThreshold = false;
@@ -68,7 +74,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
             //Store hit points value for the next health update
-            ObjectDataStorage.StoreData(__instance.gameObject, "HitPoints", characterSheet.hitPoints);
+            ObjectDataStorage.StoreData<float>(__instance.gameObject, hitPointsKey, characterSheet.hitPoints);
         }
         //Disable original method
         [HarmonyPrefix, HarmonyPatch(typeof(BraveHiddenTrinket), nameof(BraveHiddenTrinket.HealthChange))]
