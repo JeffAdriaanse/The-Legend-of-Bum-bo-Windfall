@@ -1068,6 +1068,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.TracePaper, "Randomly grants the effect of another owned spell" },
                     { SpellName.TrapDoor, "Skips the current chapter and grants 10 coins" },
                     { SpellName.TrashLid, "Blocks the next 2 attacks" },
+                    { SpellName.TwentyLbsWeight, "Destroys all tiles in the top 3 rows" },
+                    { SpellName.TwentyTwenty, "Duplicates the next tile combo effect" },
                     { SpellName.WatchBattery, "Grants 1 movement" },
                     { SpellName.WhiteBelt, "For the current turn, negates enemy curses and mana drain, and limits their damage to 1/2 heart" },
                     { SpellName.WoodenNickel, "Grants 1-2 coins" },
