@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.UIElements;
 using System.Linq;
 using PathologicalGames;
+using System;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -60,7 +61,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (gamepadTreasureRoomController == null)
                 {
-                    gamepadTreasureRoomController = PoolManager.Pools["Spells"].GetComponent<GamepadTreasureRoomController>();
+                    gamepadTreasureRoomController = PoolManager.Pools["Spells"]?.GetComponent<GamepadTreasureRoomController>();
                 }
 
                 if (gamepadTreasureRoomController == null)
@@ -79,7 +80,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (gamepadBossRoomController == null)
                 {
-                    gamepadBossRoomController = WindfallHelper.app.view.bossRewardParents[0].transform.parent.GetComponent<GamepadTreasureRoomController>();
+                    GameObject[] bossRewardParents = WindfallHelper.app?.view?.bossRewardParents;
+                    if (bossRewardParents != null && bossRewardParents[0] != null)
+                    {
+                        gamepadBossRoomController = bossRewardParents[0]?.transform.parent?.GetComponent<GamepadTreasureRoomController>();
+                    }
                 }
 
                 if (gamepadBossRoomController == null)

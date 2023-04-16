@@ -1537,6 +1537,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
+        //Patch: Fixes GamepadSpellSelector automatically selecting a collectible on initialization when using mouse controls
+        [HarmonyPostfix, HarmonyPatch(typeof(GamepadSpellSelector), nameof(GamepadSpellSelector.Initialize))]
+        static void GamepadSpellSelector_Initialize(GamepadSpellSelector __instance)
+        {
+            if (InputManager.Instance.IsUsingTouchInput())
+            {
+                AccessTools.Method(typeof(GamepadSpellSelector), "apply_selection").Invoke(__instance, new object[] { -1 });
+            }
+        }
+
         //Patch: Prevents interacting with the spell menu using gamepad controls while the spell menu is moving
         [HarmonyPrefix, HarmonyPatch(typeof(GamepadSpellSelector), "Update")]
         static bool GamepadSpellSelector_Update(GamepadSpellSelector __instance)
