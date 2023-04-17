@@ -806,6 +806,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.trinket.Category == TrinketElement.TrinketCategory.Use)
             {
                 __instance.trinketUses.text = __instance.trinket.uses.ToString();
+
+                __instance.trinketUses.gameObject.SetActive(true);
+                __instance.trinketUsesObject.SetActive(true);
             }
         }
 
@@ -816,6 +819,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance.trinket.Category == TrinketElement.TrinketCategory.Use)
             {
                 __instance.trinketUses.text = __instance.trinket.uses.ToString();
+
+                __instance.trinketUses.gameObject.SetActive(true);
+                __instance.trinketUsesObject.SetActive(true);
             }
         }
         //***************************************************
