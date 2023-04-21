@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -22,7 +20,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         private static void ClearUnusedContainers()
         {
-            Containers.RemoveAll(container => container == null || container.storageObject == null);
+            //Note: Storage objects must be cast to UnityEngine.Object and checked against null a second time. This is because Unity uses wrapper objects that sometimes persist after the object has been destroyed.
+            //When the object is cast to UnityEngine.Object before the null check, the comparison operator properly check against null.
+            //See https://blog.unity.com/technology/custom-operator-should-we-keep-it
+            Containers.RemoveAll(container => (container == null || container.storageObject == null || (container.storageObject is UnityEngine.Object && (container.storageObject as UnityEngine.Object) == null)));
         }
 
         /// <summary>
