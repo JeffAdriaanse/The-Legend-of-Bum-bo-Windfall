@@ -852,18 +852,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Constrains tooltip position to Camera view
         private static void ConstrainTooltipToCamera(Camera camera, MeshRenderer meshRenderer, Plane tooltipDisplayPlane)
         {
-            Bounds bounds = meshRenderer.bounds;
-
             Vector3 screenCenterPoint = new Vector3(camera.pixelWidth/2, camera.pixelHeight/2, 1f);
 
-            float boundsScale = 1f;
+            Bounds meshBounds = meshRenderer.GetComponent<MeshFilter>().mesh.bounds;
 
             Vector3[] boundsSides = new Vector3[]
-{
-                bounds.center + (meshRenderer.transform.right * bounds.extents.x * boundsScale),
-                bounds.center + (-meshRenderer.transform.right * bounds.extents.x * boundsScale),
-                bounds.center + (meshRenderer.transform.up * bounds.extents.y * boundsScale),
-                bounds.center + (-meshRenderer.transform.up * bounds.extents.y * boundsScale),
+            {
+                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(meshBounds.extents.x, 0f, 0f)),
+                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(-meshBounds.extents.x, 0f, 0f)),
+                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, 0f, meshBounds.extents.z)),
+                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, 0f, -meshBounds.extents.z)),
             };
 
             float pixelOffsetX = 0f;
@@ -929,169 +927,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 tooltip.transform.position = ray.GetPoint(enter);
             }
-        }
-
-        //Returns the closest lateral potential position of a rendered object such that the object would be entirely visible within the camera frustum
-        //Only works laterally; does not move the object forwards or backwards in relation to the camera
-        private static void MoveTooltipToClosestVisiblePositionWithinCameraFrustum(Camera camera, Vector3 cameraOffset, MeshRenderer meshRenderer, Plane tooltipDisplayPlane)
-        {
-            Plane[] cameraPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
-
-            for (int planeIterator = 0; planeIterator < cameraPlanes.Length; planeIterator++)
-            {
-                Plane plane = cameraPlanes[planeIterator];
-
-                Vector3 offsetX = camera.transform.right * cameraOffset.x;
-                Vector3 offsetY = camera.transform.up * cameraOffset.y;
-                Vector3 offsetZ = camera.transform.forward * cameraOffset.z;
-
-                plane.Translate(-offsetX);
-                plane.Translate(-offsetY);
-                plane.Translate(-offsetZ);
-            }
-
-            Bounds bounds = meshRenderer.bounds;
-
-            Vector3[] boundsSize = new Vector3[]
-            {
-                new Vector3(-bounds.extents.x, 0f, 0f),
-                new Vector3(bounds.extents.x, 0f, 0f),
-                new Vector3(0f, -bounds.extents.y, 0f),
-                new Vector3(0f, bounds.extents.y, 0f),
-            };
-
-            Vector3[] boundsSides = new Vector3[]
-            {
-                bounds.center + (meshRenderer.transform.right * bounds.size.x),
-                bounds.center + (-meshRenderer.transform.right * bounds.size.x),
-                bounds.center + (meshRenderer.transform.up * bounds.size.y),
-                bounds.center + (-meshRenderer.transform.up * bounds.size.y),
-                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[0]),
-                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[1]),
-                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[2]),
-                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[3]),
-            };
-
-            //Vector3 boundsExtentsLeft = new Vector3(-bounds.extents.x, 0f, 0f);
-            //Vector3 boundsExtentsRight = new Vector3(bounds.extents.x, 0f, 0f);
-            //Vector3 boundsExtentsDown = new Vector3(0f, -bounds.extents.y, 0f);
-            //Vector3 boundsExtentsUp = new Vector3(0f, bounds.extents.y, 0f);
-
-            //Vector3 boundsLeft = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsLeft);
-            //Vector3 boundsRight = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsRight);
-            //Vector3 boundsDown = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsDown);
-            //Vector3 boundsUp = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsUp);
-
-
-            for (int planeIterator = 0; planeIterator < 4; planeIterator++)
-            {
-                int furthestSideIndex = -1;
-                float furthestSideDistance = 0f;
-
-                for (int sideIterator = 0; sideIterator < boundsSides.Length; sideIterator++)
-                {
-                    if (!cameraPlanes[planeIterator].GetSide(boundsSides[sideIterator]))
-                    {
-                        float distanceFromPlane = Math.Abs(cameraPlanes[planeIterator].GetDistanceToPoint(boundsSides[sideIterator]));
-
-                        if (distanceFromPlane > furthestSideDistance)
-                        {
-                            furthestSideIndex = sideIterator;
-                            furthestSideDistance = distanceFromPlane;
-                        }
-                    }
-                }
-
-                if (furthestSideIndex >= 0)
-                {
-                    //Move tooltip by the vector from the plane to the edge of the existing tooltip position
-                    Vector3 closestPointOnPlane = cameraPlanes[planeIterator].ClosestPointOnPlane(boundsSides[furthestSideIndex]);
-                    Vector3 movementVector = closestPointOnPlane - boundsSides[furthestSideIndex];
-                    Vector3 newPosition = tooltip.transform.position + movementVector;
-
-                    //Constrain new position to tooltipDisplayPlane
-                    tooltip.transform.position = tooltipDisplayPlane.ClosestPointOnPlane(newPosition);
-                }
-            }
-
-
-
-
-
-            //Vector3 targetPositionOffsetX = Vector3.zero;
-            //Vector3 targetPositionOffsetY = Vector3.zero;
-
-            ////Check if the mesh is beyond the left side of the camera view
-            //if (!cameraPlanes[0].GetSide(boundsCenter + boundsLeft))
-            //{
-            //    boundsCenter = cameraPlanes[0].ClosestPointOnPlane(bounds.center);
-            //    targetPositionOffsetX = boundsLeft;
-            //}
-            ////Check if the mesh is beyond the right side of the camera view
-            //else if (!cameraPlanes[1].GetSide(boundsCenter + boundsRight))
-            //{
-            //    boundsCenter = cameraPlanes[1].ClosestPointOnPlane(bounds.center);
-            //    targetPositionOffsetX = boundsRight;
-            //}
-
-            ////Check if the mesh is beyond the left side of the camera view
-            //if (!cameraPlanes[2].GetSide(boundsCenter + boundsDown))
-            //{
-            //    boundsCenter = cameraPlanes[2].ClosestPointOnPlane(bounds.center);
-            //    targetPositionOffsetY = boundsDown;
-            //}
-            ////Check if the mesh is beyond the right side of the camera view
-            //else if (!cameraPlanes[3].GetSide(boundsCenter + boundsUp))
-            //{
-            //    boundsCenter = cameraPlanes[3].ClosestPointOnPlane(bounds.center);
-            //    targetPositionOffsetY = boundsUp;
-            //}
-
-
-
-
-
-
-
-
-
-            ////Left
-            //Vector3 screenPoint = camera.WorldToScreenPoint(bounds.center);
-            //if (screenPoint.x < 0)
-            //{
-            //    Ray ray = new Ray(camera.transform.position, camera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, 1f)) - camera.transform.position);
-            //}
-
-
-            ////Left
-            //Vector3 cameraLeft = cameraPlanes[0].ClosestPointOnPlane(boundsCenter);
-            //if (boundsCenter.x < cameraLeft.x)
-            //{
-            //    boundsCenter = cameraLeft;
-            //}
-
-            ////Right
-            //Vector3 cameraRight = cameraPlanes[1].ClosestPointOnPlane(boundsCenter);
-            //if (boundsCenter.x > cameraRight.x)
-            //{
-            //    boundsCenter = cameraRight;
-            //}
-
-            ////Bottom
-            //Vector3 cameraBottom = cameraPlanes[2].ClosestPointOnPlane(boundsCenter);
-            //if (boundsCenter.y < cameraBottom.y)
-            //{
-            //    boundsCenter = cameraBottom;
-            //}
-
-            ////Top
-            //Vector3 cameraTop = cameraPlanes[3].ClosestPointOnPlane(boundsCenter);
-            //if (boundsCenter.y > cameraTop.y)
-            //{
-            //    boundsCenter = cameraTop;
-            //}
-
-            //return boundsCenter + targetPositionOffsetX + targetPositionOffsetY;
         }
 
         private static void ResizeTooltip(WindfallTooltip windfallTooltip)
