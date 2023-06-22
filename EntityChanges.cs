@@ -15,9 +15,92 @@ namespace The_Legend_of_Bum_bo_Windfall
 			Harmony.CreateAndPatchAll(typeof(EntityChanges));
 		}
 
-		//Changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
-		//Champions are now more common once the player has unlocked 'Everything Is Terrible!'
-		[HarmonyPrefix, HarmonyPatch(typeof(BumboController), nameof(BumboController.MakeAChampion))]
+		public static readonly string colliderEnemyKey = "colliderEnemyKey";
+        static readonly string updatedCollidersKey = "updatedCollidersKey";
+        static readonly string[] baseSpriteNames = new string[]
+		{
+            "Attack",
+            "Cringe",
+            "Dead",
+            "Hurt",
+            "Idle",
+            "Prime",
+        };
+        //Adds colliders to enemy meshes
+        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.BaseInit))]
+        static void Enemy_BaseInit(Enemy __instance)
+        {
+			//Don't update colliders if they have already been updated 
+			if (ObjectDataStorage.GetData<bool>(__instance, updatedCollidersKey))
+			{
+				return;
+			};
+
+            Collider[] colliders = __instance.transform.GetComponentsInChildren<Collider>(true);
+			//Destroy old colliders
+            foreach (Collider collider in colliders)
+            {
+				UnityEngine.Object.Destroy(collider);
+            }
+
+            List<MeshRenderer> sprites = new List<MeshRenderer>();
+            MeshRenderer[] spriteMeshes = __instance.transform.GetComponentsInChildren<MeshRenderer>(true);
+			//Add all enemy sprites to sprites list
+			foreach (MeshRenderer spriteMesh in spriteMeshes)
+			{
+				List<string> spriteNames = new List<string>();
+
+				spriteNames.AddRange(baseSpriteNames);
+
+				if (EnemySpriteNames.TryGetValue(__instance.GetType(), out string[] enemySpriteNames))
+				{
+                    spriteNames.AddRange(enemySpriteNames);
+                }
+
+                //Only add enemy sprites
+                foreach (string spriteName in spriteNames)
+				{
+                    if (spriteMesh.gameObject.name.Contains(spriteName))
+					{
+						sprites.Add(spriteMesh);
+                        break;
+                    }
+                }
+            }
+
+			//Add colliders
+			foreach (MeshRenderer sprite in sprites)
+			{
+                sprite.gameObject.AddComponent<MeshCollider>();
+                sprite.gameObject.AddComponent<WindfallTooltip>();
+                ObjectDataStorage.StoreData<Enemy>(sprite.gameObject, colliderEnemyKey, __instance);
+            }
+
+            ObjectDataStorage.StoreData<bool>(__instance, updatedCollidersKey, true);
+        }
+        private static Dictionary<Type, string[]> EnemySpriteNames
+        {
+            get
+            {
+                return new Dictionary<Type, string[]>
+                {
+                    //Enemies
+                    { typeof(DigDigEnemy), new string[] { "Hiding" } },
+                    { typeof(MeatGolemEnemy), new string[] { "Body", "Arm", "Leg" } },
+                    { typeof(ShitEnemy), new string[] { "Shit" } },
+                    { typeof(StoneEnemy), new string[] { "Stone" } },
+                    { typeof(WilloWispEnemy), new string[] { "Flame" } },
+
+					//Bosses
+                    { typeof(BygoneBoss), new string[] { "blue_baby" } },
+                    { typeof(BygoneGhostBoss), new string[] { "blue_baby" } },
+                };
+            }
+        }
+
+        //Changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
+        //Champions are now more common once the player has unlocked 'Everything Is Terrible!'
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), nameof(BumboController.MakeAChampion))]
 		static bool BumboController_MakeAChampion(BumboController __instance)
 		{
 			if (WindfallSavedState.IsLoading())

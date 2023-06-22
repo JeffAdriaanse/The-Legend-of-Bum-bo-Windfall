@@ -39,6 +39,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public bool displayGamepad;
 
+        public static UnityEngine.Color enemyHoverTintColor = new UnityEngine.Color(0.6f, 0.6f, 0.6f);
+
         public void UpdateDisplayType(bool gamepad)
         {
             displayGamepad = gamepad;
@@ -290,7 +292,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             BumboFacesController bumboFacesController = gameObject.GetComponent<BumboFacesController>();
             if (bumboFacesController != null)
             {
-
                 displayAtMouse = false;
 
                 if (displayAtMouse)
@@ -316,7 +317,127 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = "<u>" + bumboName + "</u>\n" + bumboDescription;
                 return;
             }
-            
+
+            //Try to find enemy component
+            Enemy enemy = gameObject.GetComponent<Enemy>();
+            if (enemy == null)
+            {
+                enemy = ObjectDataStorage.GetData<Enemy>(gameObject, EntityChanges.colliderEnemyKey);
+            }
+            if (enemy != null)
+            {
+                if (enemy is BygoneBoss && !enemy.alive)
+                {
+                    active = false;
+                    return;
+                }
+
+                displayAtMouse = !displayGamepad;
+                
+                if (displayAtMouse)
+                {
+                    displayPosition = Vector3.zero;
+                    displayAnchor = Anchor.TopRight;
+                }
+                else
+                {
+                    displayPosition = enemy.transform.position - enemy.transform.right * 0.3f;
+                    displayAnchor = Anchor.Right;
+                }
+
+                Boss boss = enemy.GetComponent<Boss>();
+
+                string movesText = "\nMovement: " + enemy.turns.ToString();
+
+                string damageText = "\nDamage: ";
+                int damage = 1;
+                if (enemy.berserk || enemy.brieflyBerserk == 1)
+                {
+                    damage++;
+                }
+                if (enemy.championType == Enemy.ChampionType.FullHeart)
+                {
+                    damage++;
+                }
+                switch (damage)
+                {
+                    default:
+                        damageText += "1/2 heart";
+                        break;
+                    case 2:
+                        damageText += "1 heart";
+                        break;
+                    case 3:
+                        damageText += "1 + 1/2 heart";
+                        break;
+                }
+
+                string enemyNameText = string.Empty;
+                //Enemy and Boss names from type
+                if (WindfallTooltipDescriptions.EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType))
+                {
+                    enemyNameText = enemyNameFromType;
+                }
+                if (enemyNameText == string.Empty)
+                {
+                    //Enemy names from name
+                    if (WindfallTooltipDescriptions.EnemyDisplayNamesByEnemyName.TryGetValue(enemy.enemyName, out string enemyNameFromName))
+                    {
+                        enemyNameText = enemyNameFromName;
+                    }
+                }
+                if (enemyNameText == string.Empty)
+                {
+                    //Boss names from name
+                    if (boss != null && WindfallTooltipDescriptions.BossDisplayNamesByBossName.TryGetValue(boss.bossName, out string bossNameFromName))
+                    {
+                        enemyNameText = bossNameFromName;
+                    }
+                }
+
+                string resitanceText = string.Empty;
+                //Resistance descriptors
+                switch (enemy.attackImmunity)
+                {
+                    case Enemy.AttackImmunity.ReducePuzzleDamage:
+                        resitanceText = "\nResists puzzle damage";
+                        break;
+                    case Enemy.AttackImmunity.ReduceSpellDamage:
+                        resitanceText = "\nResists spell damage";
+                        break;
+                    case Enemy.AttackImmunity.SuperAttack:
+                        resitanceText = "\nCannot be damaged";
+                        break;
+                }
+
+                string damageReductionText = string.Empty;
+                //Damage reduction descriptors
+                if (WindfallTooltipDescriptions.EnemyDamageReductionByType.TryGetValue(enemy.GetType(), out string value))
+                {
+                    damageReductionText = value;
+                }
+
+                if (!enemy.alive)
+                {
+                    movesText = string.Empty;
+                    if (enemy is not StonyEnemy)
+                    {
+                        damageText = string.Empty;
+                    }
+                }
+
+                ObjectTinter objectTinter = enemy.objectTinter;
+                if (objectTinter != null)
+                {
+                    if (!(bool)AccessTools.Field(typeof(ObjectTinter), "tinted").GetValue(objectTinter))
+                    {
+                        objectTinter.Tint(enemyHoverTintColor);
+                    }
+                }
+
+                displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + resitanceText + damageReductionText;
+                return;
+            }
         }
     }
 
@@ -385,6 +506,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             DisplayTooltip(tooltipToShow);
+
+            ClearEnemyTints(tooltipToShow);
         }
 
         private static WindfallTooltip GetMouseTooltip(Ray GUIray, Ray MainRay)
@@ -486,15 +609,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 //Access m_Selections
                 object m_Selections_object = AccessTools.Field(typeof(GamepadTreasureRoomController), "m_Selections").GetValue(WindfallHelper.GamepadTreasureRoomController);
+                
                 List<MonoBehaviour> m_Selections = new List<MonoBehaviour>();
                 if (m_Selections_object != null && m_Selections_object is List<MonoBehaviour>)
                 {
                     m_Selections = m_Selections_object as List<MonoBehaviour>;
                 }
-
+                
                 foreach (MonoBehaviour monoBehaviour in m_Selections)
                 {
-                    gamepadObjects.Add(monoBehaviour.gameObject);
+                    if (monoBehaviour != null)
+                    {
+                        gamepadObjects.Add(monoBehaviour.gameObject);
+                    }
                 }
             }
             
@@ -531,13 +658,21 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 foreach (MonoBehaviour monoBehaviour in m_ShopItems)
                 {
-                    gamepadObjects.Add(monoBehaviour.gameObject);
+                    if (monoBehaviour != null)
+                    {
+                        gamepadObjects.Add(monoBehaviour.gameObject);
+                    }
                 }
             }
             
             //Find the first selected gamepad object and display the return the associated tooltip
             foreach (GameObject gamepadObject in gamepadObjects)
             {
+                if (gamepadObject == null)
+                {
+                    continue;
+                }
+
                 WindfallTooltip windfallTooltip = gamepadObject.GetComponent<WindfallTooltip>();
                 if (windfallTooltip == null)
                 {
@@ -686,11 +821,277 @@ namespace The_Legend_of_Bum_bo_Windfall
                 tooltip.transform.position = targetDisplayRay.GetPoint(enter) + cameraOffset;
                 //Apply anchor offset
                 anchor.localPosition = AnchorOffset(windfallTooltip);
+
+                MeshRenderer toolipBack = ActiveToolipBack();
+                if (toolipBack != null)
+                {
+                    ConstrainTooltipToCamera(hudCamera, toolipBack, tooltipDisplayPlane);
+                    //MoveTooltipToClosestVisiblePositionWithinCameraFrustum(hudCamera, cameraOffset, toolipBack, tooltipDisplayPlane);
+                    //tooltip.transform.position = tooltipDisplayPlane.ClosestPointOnPlane(ClosestVisiblePositionWithinCameraFrustum(hudCamera, toolipBack));
+                }
             }
             else
             {
                 tooltip.SetActive(false);
             }
+        }
+
+        private static MeshRenderer ActiveToolipBack()
+        {
+            foreach (MeshRenderer meshRenderer in tooltip.GetComponentsInChildren<MeshRenderer>(false))
+            {
+                if (meshRenderer.gameObject.name.Contains("Tooltip"))
+                {
+                    return meshRenderer;
+                }
+            }
+
+            return null;
+        }
+
+        //Constrains tooltip position to Camera view
+        private static void ConstrainTooltipToCamera(Camera camera, MeshRenderer meshRenderer, Plane tooltipDisplayPlane)
+        {
+            Bounds bounds = meshRenderer.bounds;
+
+            Vector3 screenCenterPoint = new Vector3(camera.pixelWidth/2, camera.pixelHeight/2, 1f);
+
+            float boundsScale = 1f;
+
+            Vector3[] boundsSides = new Vector3[]
+{
+                bounds.center + (meshRenderer.transform.right * bounds.extents.x * boundsScale),
+                bounds.center + (-meshRenderer.transform.right * bounds.extents.x * boundsScale),
+                bounds.center + (meshRenderer.transform.up * bounds.extents.y * boundsScale),
+                bounds.center + (-meshRenderer.transform.up * bounds.extents.y * boundsScale),
+            };
+
+            float pixelOffsetX = 0f;
+            float pixelOffsetY = 0f;
+
+            for (int axisIterator = 0; axisIterator < 2; axisIterator++)
+            {
+                float furthestSideDistance = 0f;
+
+                for (int sideIterator = 0; sideIterator < boundsSides.Length; sideIterator++)
+                {
+                    Vector3 sideScreenPoint = camera.WorldToScreenPoint(boundsSides[sideIterator]);
+                    sideScreenPoint.z = 1f;
+
+                    float distanceFromCenter;
+                    if (axisIterator == 0)
+                    {
+                        distanceFromCenter = sideScreenPoint.x - screenCenterPoint.x;
+                    }
+                    else
+                    {
+                        distanceFromCenter = sideScreenPoint.y - screenCenterPoint.y;
+                    }
+
+                    distanceFromCenter = Math.Abs(distanceFromCenter);
+
+                    if (distanceFromCenter > furthestSideDistance)
+                    {
+                        furthestSideDistance = distanceFromCenter;
+
+                        if (axisIterator == 0)
+                        {
+                            if (sideScreenPoint.x < 0)
+                            {
+                                pixelOffsetX = -sideScreenPoint.x;
+                            }
+                            else if (sideScreenPoint.x > camera.pixelWidth)
+                            {
+                                pixelOffsetX = -(sideScreenPoint.x - camera.pixelWidth);
+                            }
+                        }
+                        else
+                        {
+                            if (sideScreenPoint.y < 0)
+                            {
+                                pixelOffsetY = -sideScreenPoint.y;
+                            }
+                            else if (sideScreenPoint.y > camera.pixelHeight)
+                            {
+                                pixelOffsetY = -(sideScreenPoint.y - camera.pixelHeight);
+                            }
+                        }
+                    }
+                }
+            }
+
+            Vector3 tooltipScreenPoint = camera.WorldToScreenPoint(tooltip.transform.position);
+            tooltipScreenPoint.x += pixelOffsetX;
+            tooltipScreenPoint.y += pixelOffsetY;
+
+            Ray ray = camera.ScreenPointToRay(new Vector2(tooltipScreenPoint.x, tooltipScreenPoint.y));
+            if (tooltipDisplayPlane.Raycast(ray, out float enter))
+            {
+                tooltip.transform.position = ray.GetPoint(enter);
+            }
+        }
+
+        //Returns the closest lateral potential position of a rendered object such that the object would be entirely visible within the camera frustum
+        //Only works laterally; does not move the object forwards or backwards in relation to the camera
+        private static void MoveTooltipToClosestVisiblePositionWithinCameraFrustum(Camera camera, Vector3 cameraOffset, MeshRenderer meshRenderer, Plane tooltipDisplayPlane)
+        {
+            Plane[] cameraPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
+
+            for (int planeIterator = 0; planeIterator < cameraPlanes.Length; planeIterator++)
+            {
+                Plane plane = cameraPlanes[planeIterator];
+
+                Vector3 offsetX = camera.transform.right * cameraOffset.x;
+                Vector3 offsetY = camera.transform.up * cameraOffset.y;
+                Vector3 offsetZ = camera.transform.forward * cameraOffset.z;
+
+                plane.Translate(-offsetX);
+                plane.Translate(-offsetY);
+                plane.Translate(-offsetZ);
+            }
+
+            Bounds bounds = meshRenderer.bounds;
+
+            Vector3[] boundsSize = new Vector3[]
+            {
+                new Vector3(-bounds.extents.x, 0f, 0f),
+                new Vector3(bounds.extents.x, 0f, 0f),
+                new Vector3(0f, -bounds.extents.y, 0f),
+                new Vector3(0f, bounds.extents.y, 0f),
+            };
+
+            Vector3[] boundsSides = new Vector3[]
+            {
+                bounds.center + (meshRenderer.transform.right * bounds.size.x),
+                bounds.center + (-meshRenderer.transform.right * bounds.size.x),
+                bounds.center + (meshRenderer.transform.up * bounds.size.y),
+                bounds.center + (-meshRenderer.transform.up * bounds.size.y),
+                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[0]),
+                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[1]),
+                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[2]),
+                //meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsSize[3]),
+            };
+
+            //Vector3 boundsExtentsLeft = new Vector3(-bounds.extents.x, 0f, 0f);
+            //Vector3 boundsExtentsRight = new Vector3(bounds.extents.x, 0f, 0f);
+            //Vector3 boundsExtentsDown = new Vector3(0f, -bounds.extents.y, 0f);
+            //Vector3 boundsExtentsUp = new Vector3(0f, bounds.extents.y, 0f);
+
+            //Vector3 boundsLeft = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsLeft);
+            //Vector3 boundsRight = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsRight);
+            //Vector3 boundsDown = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsDown);
+            //Vector3 boundsUp = meshRenderer.transform.TransformPoint(meshRenderer.transform.InverseTransformPoint(bounds.center) + boundsExtentsUp);
+
+
+            for (int planeIterator = 0; planeIterator < 4; planeIterator++)
+            {
+                int furthestSideIndex = -1;
+                float furthestSideDistance = 0f;
+
+                for (int sideIterator = 0; sideIterator < boundsSides.Length; sideIterator++)
+                {
+                    if (!cameraPlanes[planeIterator].GetSide(boundsSides[sideIterator]))
+                    {
+                        float distanceFromPlane = Math.Abs(cameraPlanes[planeIterator].GetDistanceToPoint(boundsSides[sideIterator]));
+
+                        if (distanceFromPlane > furthestSideDistance)
+                        {
+                            furthestSideIndex = sideIterator;
+                            furthestSideDistance = distanceFromPlane;
+                        }
+                    }
+                }
+
+                if (furthestSideIndex >= 0)
+                {
+                    //Move tooltip by the vector from the plane to the edge of the existing tooltip position
+                    Vector3 closestPointOnPlane = cameraPlanes[planeIterator].ClosestPointOnPlane(boundsSides[furthestSideIndex]);
+                    Vector3 movementVector = closestPointOnPlane - boundsSides[furthestSideIndex];
+                    Vector3 newPosition = tooltip.transform.position + movementVector;
+
+                    //Constrain new position to tooltipDisplayPlane
+                    tooltip.transform.position = tooltipDisplayPlane.ClosestPointOnPlane(newPosition);
+                }
+            }
+
+
+
+
+
+            //Vector3 targetPositionOffsetX = Vector3.zero;
+            //Vector3 targetPositionOffsetY = Vector3.zero;
+
+            ////Check if the mesh is beyond the left side of the camera view
+            //if (!cameraPlanes[0].GetSide(boundsCenter + boundsLeft))
+            //{
+            //    boundsCenter = cameraPlanes[0].ClosestPointOnPlane(bounds.center);
+            //    targetPositionOffsetX = boundsLeft;
+            //}
+            ////Check if the mesh is beyond the right side of the camera view
+            //else if (!cameraPlanes[1].GetSide(boundsCenter + boundsRight))
+            //{
+            //    boundsCenter = cameraPlanes[1].ClosestPointOnPlane(bounds.center);
+            //    targetPositionOffsetX = boundsRight;
+            //}
+
+            ////Check if the mesh is beyond the left side of the camera view
+            //if (!cameraPlanes[2].GetSide(boundsCenter + boundsDown))
+            //{
+            //    boundsCenter = cameraPlanes[2].ClosestPointOnPlane(bounds.center);
+            //    targetPositionOffsetY = boundsDown;
+            //}
+            ////Check if the mesh is beyond the right side of the camera view
+            //else if (!cameraPlanes[3].GetSide(boundsCenter + boundsUp))
+            //{
+            //    boundsCenter = cameraPlanes[3].ClosestPointOnPlane(bounds.center);
+            //    targetPositionOffsetY = boundsUp;
+            //}
+
+
+
+
+
+
+
+
+
+            ////Left
+            //Vector3 screenPoint = camera.WorldToScreenPoint(bounds.center);
+            //if (screenPoint.x < 0)
+            //{
+            //    Ray ray = new Ray(camera.transform.position, camera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, 1f)) - camera.transform.position);
+            //}
+
+
+            ////Left
+            //Vector3 cameraLeft = cameraPlanes[0].ClosestPointOnPlane(boundsCenter);
+            //if (boundsCenter.x < cameraLeft.x)
+            //{
+            //    boundsCenter = cameraLeft;
+            //}
+
+            ////Right
+            //Vector3 cameraRight = cameraPlanes[1].ClosestPointOnPlane(boundsCenter);
+            //if (boundsCenter.x > cameraRight.x)
+            //{
+            //    boundsCenter = cameraRight;
+            //}
+
+            ////Bottom
+            //Vector3 cameraBottom = cameraPlanes[2].ClosestPointOnPlane(boundsCenter);
+            //if (boundsCenter.y < cameraBottom.y)
+            //{
+            //    boundsCenter = cameraBottom;
+            //}
+
+            ////Top
+            //Vector3 cameraTop = cameraPlanes[3].ClosestPointOnPlane(boundsCenter);
+            //if (boundsCenter.y > cameraTop.y)
+            //{
+            //    boundsCenter = cameraTop;
+            //}
+
+            //return boundsCenter + targetPositionOffsetX + targetPositionOffsetY;
         }
 
         private static void ResizeTooltip(WindfallTooltip windfallTooltip)
@@ -840,6 +1241,48 @@ namespace The_Legend_of_Bum_bo_Windfall
                 tooltip.transform.Find("Anchor").localScale = new Vector3(scale, scale, scale * 0.5f);
             }
         }
+
+        private static void ClearEnemyTints(WindfallTooltip tooltipToShow)
+        {
+            if (WindfallHelper.app?.model?.enemies == null)
+            {
+                return;
+            }
+
+            foreach (Enemy enemy in WindfallHelper.app.model.enemies)
+            {
+                if (enemy == null)
+                {
+                    continue;
+                }
+
+                ObjectTinter objectTinter = enemy.objectTinter;
+                if (objectTinter == null)
+                {
+                    continue;
+                }
+                if (objectTinter.tintColor != WindfallTooltip.enemyHoverTintColor)
+                {
+                    continue;
+                }
+
+                if (tooltipToShow != null)
+                {
+                    Enemy tooltipEnemy = tooltipToShow.gameObject.GetComponent<Enemy>();
+                    if (tooltipEnemy == null)
+                    {
+                        tooltipEnemy = ObjectDataStorage.GetData<Enemy>(tooltipToShow.gameObject, EntityChanges.colliderEnemyKey);
+                    }
+
+                    if (tooltipEnemy != null && enemy == tooltipEnemy)
+                    {
+                        continue;
+                    }
+                }
+
+                objectTinter.NoTint();
+            }
+        }
     }
 
     public static class WindfallTooltipDescriptions
@@ -954,7 +1397,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.BlackD12, "Rerolls a column of tiles" },
                     { SpellName.BlenderBlade, "Destroys a tile and the 4 tiles next to it" },
                     { SpellName.BlindRage, "For the current room, raises spell damage and puzzle damage by 1, but multiplies all damage recieved" },
-                    { SpellName.BloodRights, "Grants 1 mana of each color, but also randomly places 1-2 curse tiles" },
+                    { SpellName.BloodRights, "Grants 1 mana of each color, but also randomly places <nobr>1-2</nobr> curse tiles" },
                     { SpellName.BorfBucket, "Attacks for [damage] spell damage, plus 1 splash damage to adjacent spaces" },
                     { SpellName.Box, "Grants 1 mana of each color" },
                     { SpellName.Brimstone, "Attacks for [damage] spell damage to all enemies in a lane" },
@@ -962,9 +1405,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.BumboShake, "Shuffles the puzzle board" },
                     { SpellName.BumboSmash, "Attacks for [damage] spell damage" },
                     { SpellName.ButterBean, "Knocks back all enemies" },
-                    { SpellName.BuzzDown, "Moves a tile column downwards" },
-                    { SpellName.BuzzRight, "Moves a tile row to the right" },
-                    { SpellName.BuzzUp, "Moves a tile column upwards" },
+                    { SpellName.BuzzDown, "Moves a tile column downwards by one" },
+                    { SpellName.BuzzRight, "Moves a tile row to the right by one" },
+                    { SpellName.BuzzUp, "Moves a tile column upwards by one" },
                     { SpellName.CatHeart, "Randomly places a heart tile" },
                     { SpellName.CatPaw, "Drains a red heart and converts it into a soul heart" },
                     { SpellName.Chaos, "Randomly places a wild and a curse" },
@@ -1007,12 +1450,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.LooseChange, "Grants 4 coins when hit for one turn" },
                     { SpellName.LuckyFoot, "Raises luck by 1 for the room" },
                     { SpellName.Magic8Ball, "Randomly places a wild tile in the 'next' row" },
-                    { SpellName.MagicMarker, "Randomly places 2-3 copies of a tile" },
+                    { SpellName.MagicMarker, "Randomly places <nobr>2-3</nobr> copies of a tile" },
                     { SpellName.Mallot, "Destroys a tile and places 2 copies beside it" },
                     { SpellName.MamaFoot, "Attacks for [damage] spell damage to all enemies, but hurts for 1/2 heart" },
                     { SpellName.MamaShoe, "Attacks for [damage] spell damage to all grounded enemies" },
                     { SpellName.MeatHook, "Attacks for [damage] spell damage to to the furthest enemy, pulling it to the front row" },
-                    { SpellName.MegaBattery, "Grants 3 movement and 2-3 random mana" },
+                    { SpellName.MegaBattery, "Grants 3 movement and <nobr>2-3</nobr> random mana" },
                     { SpellName.MegaBean, "Knocks back all enemies in the front row and poisons all flying enemies" },
                     { SpellName.Melatonin, "Unprimes all enemies" },
                     { SpellName.Metronome, "Grants the effect of a random spell" },
@@ -1037,7 +1480,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.Pliers, "Attacks for [damage] spell damage, granting 1 grey mana and randomly placing a tooth tile if it hits an enemy" },
                     { SpellName.PotatoMasher, "Destroys a tile and randomly places a copy of it" },
                     { SpellName.PrayerCard, "Grants 1/2 soul heart" },
-                    { SpellName.PriceTag, "Destroys a spell and grants 10-20 coins" },
+                    { SpellName.PriceTag, "Destroys a spell and grants <nobr>10-20</nobr> coins" },
                     { SpellName.PuzzleFlick, "Destroys all tiles of the same type, then attacks for spell damage equal to half the tiles destroyed" },
                     { SpellName.Quake, "Attacks all grounded enemies that are not below a flying enemy for 1 spell damage. Destroys all obstacles and attacks all spaces for 1 damage per obstacle destroyed" },
                     { SpellName.RainbowFinger, "Places a wild tile" },
@@ -1049,7 +1492,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.RoidRage, "Grants 100% crit chance for the next attack" },
                     { SpellName.RottenMeat, "Heals 1/2 heart, but randomly obscures 4 tiles" },
                     { SpellName.RubberBat, "Attacks for [damage] spell damage to all enemies in the front row and knocks them back" },
-                    { SpellName.SilverChip, "Increases coins gained from the clearing the current room by 1-3" },
+                    { SpellName.SilverChip, "Increases coins gained from the clearing the current room by <nobr>1-3</nobr>" },
                     { SpellName.Skewer, "Destroys a row of tiles" },
                     { SpellName.SleightOfHand, "Reduces the mana cost of all other spells by 25% for the current room" },
                     { SpellName.SmokeMachine, "Grants 50% dodge chance for the current turn" },
@@ -1072,7 +1515,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.TwentyTwenty, "Duplicates the next tile combo effect" },
                     { SpellName.WatchBattery, "Grants 1 movement" },
                     { SpellName.WhiteBelt, "For the current turn, negates enemy curses and mana drain, and limits their damage to 1/2 heart" },
-                    { SpellName.WoodenNickel, "Grants 1-2 coins" },
+                    { SpellName.WoodenNickel, "Grants <nobr>1-2</nobr> coins" },
                     { SpellName.WoodenSpoon, "Grants 1 movement immediately and at the start of each turn" },
                     { SpellName.YellowBelt, "Raises dodge chance by 5% for the current room, up to [stacking]%" },
                     { SpellName.YumHeart, "Heals 1 heart" },
@@ -1122,17 +1565,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.ColostomyBag, "Randomly places a poop pile at the start of each room" },
                     { TrinketName.Curio, "Multiplies the effects of some trinkets" },
                     { TrinketName.CurvedHorn, "At the start of each turn, grants a 33% chance to raise spell damage by 1 for the current turn" },
-                    { TrinketName.Death, "Hurts all non-boss enemies for damage equal to their current health. Deals 3 damage to bosses" },
+                    { TrinketName.Death, "Hurts all <nobr>non-boss</nobr> enemies for damage equal to their current health. Deals 3 damage to bosses" },
                     { TrinketName.Dinner, "Heals all hearts" },
                     { TrinketName.DrakulaTeeth, "Grants a 10% chance to heal 1/2 heart upon damaging an enemy" },
                     { TrinketName.EggBeater, "Rerolls mana upon killing an enemy" },
                     { TrinketName.Experimental, "Randomly raises a stat by 1 and places a curse tile on the puzzle board" },
                     { TrinketName.FalseTeeth, "Grants 1 grey mana at the start of each turn" },
-                    { TrinketName.Feather, "At the start of each turn or when taking damage from a non-enemy source, if only 1/2 red health remains, randomly chooses an unavailable spell and allows it to be used once for free" },
+                    { TrinketName.Feather, "At the start of each turn or when taking damage from a <nobr>non-enemy</nobr> source, if only 1/2 red health remains, randomly chooses an unavailable spell and allows it to be used once for free" },
                     { TrinketName.Fracture, "Randomly throws a bone at the start of each room" },
                     { TrinketName.Glitch, "Transforms into a random trinket at the start of each room" },
                     { TrinketName.Goober, "Randomly throws a booger at the start of each room" },
-                    { TrinketName.HeartLocket, "Randomly places 2-4 heart tiles at the start of each room" },
+                    { TrinketName.HeartLocket, "Randomly places <nobr>2-4 heart</nobr> tiles at the start of each room" },
                     { TrinketName.HolyMantle, "Grants a shield that negates one hit of damage in each room" },
                     { TrinketName.Hoof, "Grants 1 movement at the start of each room" },
                     { TrinketName.IBS, "Increases the size of placed poop piles by 1, but not above 3" },
@@ -1144,20 +1587,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.MysticMarble, "Raises the damage of tooth attacks by 1" },
                     { TrinketName.NineVolt, "Grants a 25% chance to randomly charge a spell by 1 upon using a spell" },
                     { TrinketName.Norovirus, "Causes poop barriers to retaliate for 1 damage when attacked" },
-                    { TrinketName.NoseGoblin, "Randomly places 2-4 booger tiles at the start of each room" },
-                    { TrinketName.OldTooth, "Randomly places 2-4 tooth tiles at the start of each room" },
+                    { TrinketName.NoseGoblin, "Randomly places <nobr>2-4</nobr> booger tiles at the start of each room" },
+                    { TrinketName.OldTooth, "Randomly places <nobr>2-4</nobr> tooth tiles at the start of each room" },
                     { TrinketName.OneUp, "Grants an extra life upon taking fatal damage, restoring all starting health" },
                     { TrinketName.PinkBow, "Grants a soul heart upon entering the Wooden Nickel" },
                     { TrinketName.PinkEye, "Grants a 25% chance to apply poison upon hitting an enemy" },
                     { TrinketName.Pinky, "Grants a 33% chance to randomly place a wild tile upon killing an enemy" },
-                    { TrinketName.Plunger, "Randomly places 2-4 poop tiles at the start of each room" },
+                    { TrinketName.Plunger, "Randomly places <nobr>2-4</nobr> poop tiles at the start of each room" },
                     { TrinketName.PuzzlePiece, "Upon making a tile combo, grants 1 mana of each color for each wild tile used" },
                     { TrinketName.RainbowBag, "Rerolls each spell into another spell of the same type at the start of each room" },
                     { TrinketName.RainbowTick, "Reduces a spell's mana cost by 25%" },
                     { TrinketName.RatHeart, "Grants a 25% chance to gain 1/2 soul heart at the start of each room" },
                     { TrinketName.RatTail, "Raises dodge chance by 10%" },
-                    { TrinketName.Rib, "Randomly places 2-4 bone tiles at the start of each room" },
-                    { TrinketName.Sample, "Randomly places 2-4 pee tiles at the start of each room" },
+                    { TrinketName.Rib, "Randomly places <nobr>2-4</nobr> bone tiles at the start of each room" },
+                    { TrinketName.Sample, "Randomly places <nobr>2-4</nobr> pee tiles at the start of each room" },
                     { TrinketName.SantaSangre, "Grants a 10% chance to gain 1/2 soul heart upon damaging an enemy" },
                     { TrinketName.SharpNail, "Grants a 10% chance to deal 1 spell damage to enemies when they move" },
                     { TrinketName.SilverSkull, "Grants 1 random mana upon killing an enemy" },
@@ -1182,6 +1625,208 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.UsedTissue, "Grants 1 green mana at the start of each turn" },
                     { TrinketName.WetDiaper, "Grants a 25% chance to gain 1 movement upon receiving movement from any other source" },
                     { TrinketName.WhiteCandle, "Randomly destroys a curse tile at the start of each turn" },
+                };
+            }
+        }
+
+        public static Dictionary<EnemyName, string> EnemyDisplayNamesByEnemyName
+        {
+            get
+            {
+                return new Dictionary<EnemyName, string>
+                {
+                    { EnemyName.Arsemouth, "Tall Boy" },
+                    { EnemyName.BlackBlobby, "Black Blobby" },
+                    { EnemyName.Blib, "Blib" },
+                    { EnemyName.BlueBoney, "Skully B." },
+                    { EnemyName.BoomFly, "Boom Fly" },
+                    { EnemyName.Burfer, "Burfer" },
+                    { EnemyName.Butthead, "Squat" },
+                    { EnemyName.CornyDip, "Corn Dip" },
+                    { EnemyName.Curser, "Curser" },
+                    { EnemyName.DigDig, "Dig Dig" },
+                    { EnemyName.Dip, "Dip" },
+                    { EnemyName.Flipper, "Flipper" },
+                    { EnemyName.FloatingCultist, "Floater" },
+                    { EnemyName.Fly, "Fly" },
+                    { EnemyName.Greedling, "Greedling" },
+                    { EnemyName.GreenBlib, "Green Blib" },
+                    { EnemyName.GreenBlobby, "Green Blobby" },
+                    { EnemyName.Hanger, "Keeper" },
+                    { EnemyName.Hopper, "Leaper" },
+                    { EnemyName.Host, "Host" },
+                    { EnemyName.Imposter, "Imposter" },
+                    { EnemyName.Isaacs, "Isaac" },
+                    { EnemyName.Larry, "Larry" },
+                    { EnemyName.Leechling, "Suck" },
+                    { EnemyName.Longit, "Longits" },
+                    { EnemyName.ManaWisp, "Mana Wisp" },
+                    { EnemyName.MaskedImposter, "Mask" },
+                    { EnemyName.MeatGolem, "Meat Golum" },
+                    { EnemyName.MegaPoofer, "Mega Poofer" },
+                    { EnemyName.MirrorHauntLeft, "Mirror" },
+                    { EnemyName.MirrorHauntRight, "Mirror" },
+                    { EnemyName.PeepEye, "Peeper Eye" },
+                    { EnemyName.Poofer, "Poofer" },
+                    { EnemyName.Pooter, "Pooter" },
+                    { EnemyName.PurpleBoney, "Skully P." },
+                    { EnemyName.RedBlobby, "Red Blobby" },
+                    { EnemyName.RedCultist, "Red Floater" },
+                    { EnemyName.Screecher, "Screecher" },
+                    { EnemyName.Shit, "Poop" },
+                    { EnemyName.Spookie, "Spookie" },
+                    { EnemyName.Stone, "Rock" },
+                    { EnemyName.Stony, "Stony" },
+                    { EnemyName.Sucker, "Sucker" },
+                    { EnemyName.Tader, "Daddy Tato" },
+                    { EnemyName.Tado, "Tato Kid" },
+                    { EnemyName.TaintedPeepEye, "Tainted Peeper Eye" },
+                    { EnemyName.Tutorial, "Keeper" },
+                    { EnemyName.WalkingCultist, "Cultist" },
+                    { EnemyName.WillOWisp, "Whisp" },
+                };
+            }
+        }
+
+        public static Dictionary<BossName, string> BossDisplayNamesByBossName
+        {
+            get
+            {
+                return new Dictionary<BossName, string>
+                {
+                    { BossName.Bygone, "Bygone" },
+                    { BossName.Duke, "The Duke" },
+                    { BossName.Dusk, "Dusk" },
+                    { BossName.Gibs, "Gibs" },
+                    { BossName.Gizzarda, "Gizzarda" },
+                    { BossName.Loaf, "Loaf" },
+                    { BossName.Peeper, "Peeper" },
+                    { BossName.Pyre, "Pyre" },
+                    { BossName.Sangre, "Sangre" },
+                    { BossName.ShyGal, "Shy Gal" },
+                    { BossName.TaintedDusk, "Tainted Dusk" },
+                    { BossName.TaintedPeeper, "Tainted Peeper" },
+                    { BossName.TaintedShyGal, "Tainted Shy Gal" },
+                };
+            }
+        }
+
+        public static Dictionary<Type, string> EnemyDisplayNamesByType
+        {
+            get
+            {
+                return new Dictionary<Type, string>
+                {
+                    //Enemies
+                    { typeof(ArsemouthEnemy), "Tall Boy" },
+                    { typeof(BlackBlobbyEnemy), "Black Blobby" },
+                    { typeof(BlibEnemy), "Blib" },
+                    { typeof(BlueBoneyEnemy), "Skully B." },
+                    { typeof(BoomFlyEnemy), "BoomFly" },
+                    { typeof(BurferEnemy), "Burfer" },
+                    { typeof(ButtheadEnemy), "Squat" },
+                    //CornyDip
+                    { typeof(CurserEnemy), "Curser" },
+                    { typeof(DigDigEnemy), "Dig Dig" },
+                    { typeof(DipEnemy), "Dip" },
+                    { typeof(FlipperEnemy), "Flipper" },
+                    { typeof(FloatingCultistEnemy), "Floater" },
+                    { typeof(FlyEnemy), "Fly" },
+                    { typeof(GreedlingEnemy), "Greedling" },
+                    //GreenBlib
+                    { typeof(GreenBlobbyEnemy), "Green Blobby" },
+                    { typeof(HangerEnemy), "Keeper" },
+                    { typeof(HopperEnemy), "Leaper" },
+                    { typeof(HostEnemy), "Host" },
+                    { typeof(ImposterEnemy), "Imposter" },
+                    { typeof(IsaacsEnemy), "Isaac" },
+                    { typeof(LarryEnemy), "Larry" },
+                    { typeof(LeecherEnemy), "Suck" },
+                    { typeof(LongitEnemy), "Longits" },
+                    { typeof(ManaWispEnemy), "Mana Wisp" },
+                    { typeof(MaskedImposterEnemy), "Mask" },
+                    { typeof(MeatGolemEnemy), "Meat Golum" },
+                    { typeof(MegaPooferEnemy), "Mega Poofer" },
+                    { typeof(MirrorHauntEnemy), "Mirror" },
+                    { typeof(PeepEyeEnemy), "Peeper Eye" },
+                    { typeof(PooferEnemy), "Poofer" },
+                    { typeof(PooterEnemy), "Pooter" },
+                    { typeof(PurpleBoneyEnemy), "Skully P." },
+                    { typeof(RedBlobbyEnemy), "Red Blobby" },
+                    { typeof(RedCultistEnemy), "Red Floater" },
+                    { typeof(ScreecherEnemy), "Screecher" },
+                    { typeof(ShitEnemy), "Poop" },
+                    { typeof(SpookieEnemy), "Spookie" },
+                    { typeof(StoneEnemy), "Rock" },
+                    { typeof(StonyEnemy), "Stony" },
+                    { typeof(SuckerEnemy), "Sucker" },
+                    { typeof(TaderEnemy), "Daddy Tato" },
+                    { typeof(TadoEnemy), "Tato Kid" },
+                    //TaintedPeepEye
+                    { typeof(TutorialEnemy), "Keeper" },
+                    { typeof(WalkingCultistEnemy), "Cultist" },
+                    { typeof(WilloWispEnemy), "Whisp" },
+
+                    //Bosses
+                    { typeof(BygoneBoss), "Bygone" },
+                    { typeof(BygoneGhostBoss), "Bygone" },
+                    { typeof(DukeBoss), "The Duke" },
+                    { typeof(DuskBoss), "Dusk" },
+                    { typeof(GibsBoss), "Gibs" },
+                    { typeof(GizzardaBoss), "Gizzarda" },
+                    { typeof(LoafBoss), "Loaf" },
+                    { typeof(PeepsBoss), "Peeper" },
+                    { typeof(PyreBoss), "Pyre" },
+                    { typeof(CaddyBoss), "Sangre" },
+                    { typeof(ShyGalBoss), "Shy Gal" },
+                    { typeof(TaintedDuskBoss), "Tainted Dusk" },
+                    //TaintedPeeper
+                    //TaintedShyGal
+                };
+            }
+        }
+
+        public static string EnemyDamageReductionWithValues(Enemy enemy)
+        {
+            if (EnemyDamageReductionByType.TryGetValue(enemy.GetType(), out string value))
+            {
+                if (enemy is DukeBoss)
+                {
+                    DukeBoss dukeBoss = enemy as DukeBoss;
+                    DukeBoss.DukeSize dukeSize = (DukeBoss.DukeSize)AccessTools.Field(typeof(DukeBoss), "dukeSize").GetValue(dukeBoss);
+
+                    int damageReduction;
+                    if (dukeSize == DukeBoss.DukeSize.Large)
+                    {
+                        damageReduction = 1;
+                    }
+                    else if (dukeSize == DukeBoss.DukeSize.Medium)
+                    {
+                        damageReduction = 2;
+                    }
+                    else
+                    {
+                        return string.Empty;
+                    }
+
+                    value = value.Replace("[damage]", damageReduction.ToString());
+                }
+                return value;
+            }
+            return string.Empty;
+        }
+        public static Dictionary<Type, string> EnemyDamageReductionByType
+        {
+            get
+            {
+                return new Dictionary<Type, string>
+                {
+                    //Enemies
+                    { typeof(SpookieEnemy), "\nLimits incoming damage to 1" },
+
+                    //Bosses
+                    { typeof(BygoneGhostBoss), "\nLimits incoming damage to 1" },
+                    { typeof(DukeBoss), "\nLimits incoming damage to [damage]" },
                 };
             }
         }
