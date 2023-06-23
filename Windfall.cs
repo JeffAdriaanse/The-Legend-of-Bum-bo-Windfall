@@ -30,6 +30,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             EntityChanges.Awake();
             CollectibleFixes.Awake();
             CollectibleChanges.Awake();
+            CollectibleImport.Awake();
             InterfaceFixes.Awake();
             SoundsModification.Awake();
             InterfaceContent.Awake();
