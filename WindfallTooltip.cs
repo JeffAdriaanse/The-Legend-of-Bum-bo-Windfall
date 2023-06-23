@@ -818,16 +818,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             Ray targetDisplayRay = new Ray(hudCameraPosition, tagetDisplayDirection);
             if (tooltipDisplayPlane.Raycast(targetDisplayRay, out float enter))
             {
+                //Move tooltip
                 tooltip.transform.position = targetDisplayRay.GetPoint(enter) + cameraOffset;
+
                 //Apply anchor offset
                 anchor.localPosition = AnchorOffset(windfallTooltip);
 
+                //Constrain tooltip to camera view
                 MeshRenderer toolipBack = ActiveToolipBack();
                 if (toolipBack != null)
                 {
                     ConstrainTooltipToCamera(hudCamera, toolipBack, tooltipDisplayPlane);
-                    //MoveTooltipToClosestVisiblePositionWithinCameraFrustum(hudCamera, cameraOffset, toolipBack, tooltipDisplayPlane);
-                    //tooltip.transform.position = tooltipDisplayPlane.ClosestPointOnPlane(ClosestVisiblePositionWithinCameraFrustum(hudCamera, toolipBack));
                 }
             }
             else
@@ -849,84 +850,107 @@ namespace The_Legend_of_Bum_bo_Windfall
             return null;
         }
 
-        //Constrains tooltip position to Camera view
+        //Constrains tooltip position to camera view
         private static void ConstrainTooltipToCamera(Camera camera, MeshRenderer meshRenderer, Plane tooltipDisplayPlane)
         {
-            Vector3 screenCenterPoint = new Vector3(camera.pixelWidth/2, camera.pixelHeight/2, 1f);
+            //Calculate the global positions of the sides of the tooltip back
+            List<Vector3> boundsSides = RenderedMeshSidePositionsGlobal(meshRenderer, true, false, true);
 
-            Bounds meshBounds = meshRenderer.GetComponent<MeshFilter>().mesh.bounds;
+            Vector2 pixelOffset = new Vector2();
 
-            Vector3[] boundsSides = new Vector3[]
+            //Find the tooltip sides that are furthest from the center of the screen
+            for (int sideIterator = 0; sideIterator < boundsSides.Count; sideIterator++)
             {
-                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(meshBounds.extents.x, 0f, 0f)),
-                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(-meshBounds.extents.x, 0f, 0f)),
-                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, 0f, meshBounds.extents.z)),
-                meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, 0f, -meshBounds.extents.z)),
-            };
+                Vector3 sideScreenPoint3D = camera.WorldToScreenPoint(boundsSides[sideIterator]);
+                Vector2 sideScreenPoint = new Vector2(sideScreenPoint3D.x, sideScreenPoint3D.y);
 
-            float pixelOffsetX = 0f;
-            float pixelOffsetY = 0f;
+                Vector2 sidePixelOffset = PixelOffsetIntoCameraView(camera, sideScreenPoint);
 
-            for (int axisIterator = 0; axisIterator < 2; axisIterator++)
-            {
-                float furthestSideDistance = 0f;
-
-                for (int sideIterator = 0; sideIterator < boundsSides.Length; sideIterator++)
+                //Track the horizontal offset needed to move the furthest horizontal edge into the camera view
+                if (Math.Abs(sidePixelOffset.x) > Math.Abs(pixelOffset.x))
                 {
-                    Vector3 sideScreenPoint = camera.WorldToScreenPoint(boundsSides[sideIterator]);
-                    sideScreenPoint.z = 1f;
+                    pixelOffset.x = sidePixelOffset.x;
+                }
 
-                    float distanceFromCenter;
-                    if (axisIterator == 0)
-                    {
-                        distanceFromCenter = sideScreenPoint.x - screenCenterPoint.x;
-                    }
-                    else
-                    {
-                        distanceFromCenter = sideScreenPoint.y - screenCenterPoint.y;
-                    }
-
-                    distanceFromCenter = Math.Abs(distanceFromCenter);
-
-                    if (distanceFromCenter > furthestSideDistance)
-                    {
-                        furthestSideDistance = distanceFromCenter;
-
-                        if (axisIterator == 0)
-                        {
-                            if (sideScreenPoint.x < 0)
-                            {
-                                pixelOffsetX = -sideScreenPoint.x;
-                            }
-                            else if (sideScreenPoint.x > camera.pixelWidth)
-                            {
-                                pixelOffsetX = -(sideScreenPoint.x - camera.pixelWidth);
-                            }
-                        }
-                        else
-                        {
-                            if (sideScreenPoint.y < 0)
-                            {
-                                pixelOffsetY = -sideScreenPoint.y;
-                            }
-                            else if (sideScreenPoint.y > camera.pixelHeight)
-                            {
-                                pixelOffsetY = -(sideScreenPoint.y - camera.pixelHeight);
-                            }
-                        }
-                    }
+                //Track the vetical offset needed to move the furthest vetical edge into the camera view
+                if (Math.Abs(sidePixelOffset.y) > Math.Abs(pixelOffset.y))
+                {
+                    pixelOffset.y = sidePixelOffset.y;
                 }
             }
 
+            //Abort if the tooltip is within the camera view already and does not need to be moved
+            if (pixelOffset.x == 0 && pixelOffset.y == 0)
+            {
+                return;
+            }
+
             Vector3 tooltipScreenPoint = camera.WorldToScreenPoint(tooltip.transform.position);
-            tooltipScreenPoint.x += pixelOffsetX;
-            tooltipScreenPoint.y += pixelOffsetY;
+            tooltipScreenPoint.x += pixelOffset.x;
+            tooltipScreenPoint.y += pixelOffset.y;
 
             Ray ray = camera.ScreenPointToRay(new Vector2(tooltipScreenPoint.x, tooltipScreenPoint.y));
             if (tooltipDisplayPlane.Raycast(ray, out float enter))
             {
                 tooltip.transform.position = ray.GetPoint(enter);
             }
+        }
+
+        //Returns an array containing the global positions of the center of all six faces of the object's local rendered mesh bounds
+        private static List<Vector3> RenderedMeshSidePositionsGlobal(MeshRenderer meshRenderer, bool includeX = true, bool includeY = true, bool includeZ = true)
+        {
+            MeshFilter meshFilter = meshRenderer.GetComponent<MeshFilter>();
+            if (meshFilter == null) return null;
+
+            Mesh mesh = meshFilter.mesh;
+            if (mesh == null) return null;
+
+            Bounds meshBounds = mesh.bounds;
+
+            List<Vector3> boundsSides = new List<Vector3>();
+            if (includeX)
+            {
+                boundsSides.Add(meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(meshBounds.extents.x, 0f, 0f)));
+                boundsSides.Add(meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(-meshBounds.extents.x, 0f, 0f)));
+            }
+            if (includeY)
+            {
+                boundsSides.Add(meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, meshBounds.extents.y, 0f)));
+                boundsSides.Add(meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, -meshBounds.extents.y, 0f)));
+            }
+            if (includeZ)
+            {
+                boundsSides.Add(meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, 0f, meshBounds.extents.z)));
+                boundsSides.Add(meshRenderer.transform.TransformPoint(meshBounds.center + new Vector3(0f, 0f, -meshBounds.extents.z)));
+            }
+
+            return boundsSides;
+        }
+
+        //Returns pixel offset needed to move a screen point into the camera view
+        private static Vector2 PixelOffsetIntoCameraView(Camera camera, Vector2 screenPoint)
+        {
+            Vector2 pixelOffset = new Vector2();
+
+            if (screenPoint.x < 0)
+            {
+                pixelOffset.x = -screenPoint.x;
+            }
+            else if (screenPoint.x > camera.pixelWidth)
+            {
+                pixelOffset.x = -(screenPoint.x - camera.pixelWidth);
+            }
+
+            if (screenPoint.y < 0)
+            {
+                pixelOffset.y = -screenPoint.y;
+            }
+            else if (screenPoint.y > camera.pixelHeight)
+            {
+                pixelOffset.y = -(screenPoint.y - camera.pixelHeight);
+            }
+
+            return pixelOffset;
         }
 
         private static void ResizeTooltip(WindfallTooltip windfallTooltip)
