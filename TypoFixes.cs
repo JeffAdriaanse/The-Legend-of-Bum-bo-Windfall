@@ -261,6 +261,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 Dictionary<string, string> additions = new Dictionary<string, string>
                 {
+                    //Spells
+                    { "Spells/PLASMA_BALL_NAME", "Plasma Ball"},
+                    { "Spells/PLASMA_BALL_DESCRIPTION", "Chain Attack"},
+
                     //GUI Notifications
                     { "GUI Notifications/NO_VIABLE_SPELLS", "No Viable Spells"},
 

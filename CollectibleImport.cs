@@ -51,7 +51,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 Dictionary<SpellName, string> spellKA = new Dictionary<SpellName, string>()
                 {
-
+                    {
+                        (SpellName)1000,
+                        "PLASMA_BALL_NAME"
+                    },
                 };
                 return spellKA;
             }
@@ -62,7 +65,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 Dictionary<string, SpellName> spellNames = new Dictionary<string, SpellName>()
                 {
-
+                    {
+                        "PlasmaBall",
+                        (SpellName)1000
+                    },
                 };
                 return spellNames;
             }
@@ -73,7 +79,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 Dictionary<SpellName, SpellElement> spells = new Dictionary<SpellName, SpellElement>()
                 {
-
+                    {
+                        (SpellName)1000,
+                        new SpellElement()
+                    },
                 };
                 return spells;
             }
@@ -84,7 +93,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 List<SpellName> validSpells = new List<SpellName>()
                 {
-                    
+                    (SpellName)1000,
                 };
                 return validSpells;
             }
