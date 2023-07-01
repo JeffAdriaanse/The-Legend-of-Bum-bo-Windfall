@@ -204,6 +204,110 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return transform;
         }
+
+        //Finds all valid enemy positions on the battlefield adjacent to the provided enemy position
+        public static List<BattlefieldPosition> AdjacentBattlefieldPositions(AIModel aiModel, BattlefieldPosition battlefieldPosition, bool includeDiagonal, bool includeHorizontal = true, bool includeVertical = true)
+        {
+            List<BattlefieldPosition> battlefieldPositions = new List<BattlefieldPosition>();
+
+            if (aiModel == null || battlefieldPosition == null)
+            {
+                return battlefieldPositions;
+            }
+
+            //Search all potential positions around the battlefield position
+            for (int xIterator = battlefieldPosition.x - 1; xIterator < battlefieldPosition.x + 2; xIterator++)
+            {
+                for (int yIterator = battlefieldPosition.y - 1; yIterator < battlefieldPosition.y + 2; yIterator++)
+                {
+                    //Exclude the provided position
+                    if (xIterator == battlefieldPosition.x && yIterator == battlefieldPosition.y)
+                    {
+                        continue;
+                    }
+
+                    //Exclude positions horizontally outside of battlefield 
+                    if (xIterator < 0 || xIterator > 2)
+                    {
+                        continue;
+                    }
+
+                    //Exclude positions vertically outside of battlefield 
+                    if (yIterator < 0 || yIterator > 2)
+                    {
+                        continue;
+                    }
+
+                    //When diagonals are not included, exclude poisitions that are not in the same row or lane
+                    if (!includeDiagonal)
+                    {
+                        if (xIterator != battlefieldPosition.x && yIterator != battlefieldPosition.y)
+                        {
+                            continue;
+                        }
+                    }
+
+                    //When horizontals are not included, exclude poisitions that are in the same row
+                    if (!includeHorizontal)
+                    {
+                        if (xIterator == battlefieldPosition.x)
+                        {
+                            continue;
+                        }
+                    }
+
+                    //When verticals are not included, exclude poisitions that are in the same row
+                    if (!includeVertical)
+                    {
+                        if (yIterator == battlefieldPosition.y)
+                        {
+                            continue;
+                        }
+                    }
+
+                    //Add battlefield positions
+                    battlefieldPositions.Add(aiModel.battlefieldPositions[aiModel.battlefieldPositionIndex[xIterator, yIterator]]);
+                }
+            }
+
+            return battlefieldPositions;
+        }
+
+        //Returns a valid enemy in the given battlefield position. Returns null if no enemy is found or if the enemy is not alive.
+        public static Enemy GetEnemyByBattlefieldPosition(BattlefieldPosition battlefieldPosition, bool ground, bool living)
+        {
+            GameObject adjacentEnemyObject;
+
+            if (ground)
+            {
+                adjacentEnemyObject = battlefieldPosition.owner_ground;
+            }
+            else
+            {
+                adjacentEnemyObject = battlefieldPosition.owner_air;
+            }
+
+            if (adjacentEnemyObject == null)
+            {
+                return null;
+            }
+
+            Enemy localAdjacentEnemy = adjacentEnemyObject.GetComponent<Enemy>();
+            if (localAdjacentEnemy == null)
+            {
+                return null;
+            }
+
+            if (living)
+            {
+                if (!localAdjacentEnemy.alive && localAdjacentEnemy.enemyName != EnemyName.Shit)
+                {
+                    return null;
+                }
+            }
+
+            return localAdjacentEnemy;
+        }
     }
 
     //Disables unwanted notifiactions immediately after they are created
