@@ -942,32 +942,35 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SpellsFromCategory")]
         static bool BumboController_SpellsFromCategory(BumboController __instance, SpellElement.SpellCategory _category, ref List<SpellName> __result)
         {
-            List<SpellName> list = new List<SpellName>();
+            //Add all valid spells
+            List<SpellName> returnSpellsFromCategory = new List<SpellName>();
+            returnSpellsFromCategory.AddRange(__instance.app.model.spellModel.validSpells);
 
             //Replace validSpells spell categorization with FastSpellRetrieval spell categorization
+            List<SpellName> retrievedSpellsFromCategory = new List<SpellName>();
             switch (_category)
             {
                 case SpellElement.SpellCategory.Attack:
-                    list = new List<SpellName>(FastSpellRetrieval.AttackSpells);
+                    retrievedSpellsFromCategory = new List<SpellName>(FastSpellRetrieval.AttackSpells);
                     break;
                 case SpellElement.SpellCategory.Defense:
-                    list = new List<SpellName>(FastSpellRetrieval.DefenseSpells);
+                    retrievedSpellsFromCategory = new List<SpellName>(FastSpellRetrieval.DefenseSpells);
                     break;
                 case SpellElement.SpellCategory.Puzzle:
-                    list = new List<SpellName>(FastSpellRetrieval.PuzzleSpells);
+                    retrievedSpellsFromCategory = new List<SpellName>(FastSpellRetrieval.PuzzleSpells);
                     break;
                 case SpellElement.SpellCategory.Use:
-                    list = new List<SpellName>(FastSpellRetrieval.UseSpells);
+                    retrievedSpellsFromCategory = new List<SpellName>(FastSpellRetrieval.UseSpells);
                     break;
                 case SpellElement.SpellCategory.Other:
-                    list = new List<SpellName>(FastSpellRetrieval.OtherSpells);
+                    retrievedSpellsFromCategory = new List<SpellName>(FastSpellRetrieval.OtherSpells);
                     break;
             }
 
-            //Remove non valid spells
-            list.RemoveAll((SpellName x) => !__instance.app.model.spellModel.validSpells.Contains(x));
+            //Remove spells from the wrong categories
+            returnSpellsFromCategory.RemoveAll((SpellName x) => !retrievedSpellsFromCategory.Contains(x));
 
-            __result = list;
+            __result = returnSpellsFromCategory;
             return false;
         }
         //***************************************************
@@ -984,6 +987,9 @@ static class FastSpellRetrieval
         SpellElement.SpellCategory category = SpellElement.SpellCategory.None;
         switch (spell)
         {
+            case (SpellName)1000:
+                category = SpellElement.SpellCategory.Attack;
+                break;
             case SpellName.Addy:
                 category = SpellElement.SpellCategory.Other;
                 break;
@@ -1396,6 +1402,7 @@ static class FastSpellRetrieval
         {
             List<SpellName> list = new List<SpellName>
             {
+                (SpellName)1000,
                 SpellName.AttackFly,
                 SpellName.Backstabber,
                 SpellName.BeeButt,
