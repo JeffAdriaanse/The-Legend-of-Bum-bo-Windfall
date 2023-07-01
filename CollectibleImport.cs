@@ -1,10 +1,13 @@
 ﻿using HarmonyLib;
+using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using static SpellElement;
+using static TrinketElement;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -15,16 +18,83 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(CollectibleImport));
         }
 
-        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), nameof(BumboController.Init))]
-        static void BumboController_Init(BumboController __instance)
+        //[HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.Init))]
+        //static void BumboController_Init(BumboController __instance)
+        //{
+        //    //Add spell materials
+        //    //AddSpellMaterial()
+
+        //    ImportCollectibleData(__instance.app.model.spellModel);
+        //}
+
+        //Test
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spellKA", MethodType.Getter)]
+        static void SpellModel_spellKA(SpellModel __instance, ref Dictionary<SpellName, string> __result)
         {
-            //Add spell materials
-            //AddSpellMaterial()
+            Dictionary<SpellName, string> returnedDict = new Dictionary<SpellName, string>(__result);
+
+            returnedDict.AddRange(CollectibleImportData.spellKA);
+
+            __result = returnedDict;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spellNames", MethodType.Getter)]
+        static void SpellModel_spellNames(SpellModel __instance, ref Dictionary<string, SpellName> __result)
+        {
+            Dictionary<string, SpellName> returnedDict = new Dictionary<string, SpellName>(__result);
+
+            returnedDict.AddRange(CollectibleImportData.spellNames);
+
+            __result = returnedDict;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spells", MethodType.Getter)]
+        static void SpellModel_spells(SpellModel __instance, ref Dictionary<SpellName, SpellElement> __result)
+        {
+            Dictionary<SpellName, SpellElement> returnedDict = new Dictionary<SpellName, SpellElement>(__result);
+
+            returnedDict.AddRange(CollectibleImportData.spells);
+
+            __result = returnedDict;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "validSpells", MethodType.Getter)]
+        static void SpellModel_validSpells(SpellModel __instance, ref List<SpellName> __result)
+        {
+            List<SpellName> returnedList = new List<SpellName>(__result);
+
+            for (int multiplier = 0; multiplier < 200; multiplier++)
+            {
+                returnedList.AddRange(CollectibleImportData.validSpells);
+            }
+
+            __result = returnedList;
+        }
+
+        //Imports collectible data to SpellModel
+        static void ImportCollectibleData(SpellModel spellModel)
+        {
+            if (spellModel == null)
+            {
+                return;
+            }
+
+            spellModel.spellKA.AddRange(CollectibleImportData.spellKA);
+            spellModel.spellNames.AddRange(CollectibleImportData.spellNames);
+            spellModel.spells.AddRange(CollectibleImportData.spells);
+            spellModel.validSpells.AddRange(CollectibleImportData.validSpells);
         }
 
         //Adds spell icon materials
         static void AddSpellMaterial(Material material, SpellModel spellModel, SpellElement.SpellCategory spellCategory, bool active)
         {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (spellModel == null)
+            {
+                return;
+            }
+
             foreach (SpellMaterial spellMaterial in spellModel.spellMaterial)
             {
                 if (spellMaterial.category == spellCategory)
@@ -36,6 +106,247 @@ namespace The_Legend_of_Bum_bo_Windfall
                     else
                     {
                         spellMaterial.inactive.Add(material);
+                    }
+                }
+            }
+        }
+
+        private static readonly string collectible_page_ambient_occlusion_path = "Collectible_page_ambient_occlusion";
+        private static readonly string collectible_page_height_path = "Collectible_page_height";
+        private static readonly string collectible_page_normal_path = "Collectible_page_normal";
+        private static readonly string spell_use_metallic_path = "Spell_use_metallic_V3";
+        private static readonly string trinket_page_metallic_path = "Trinket_Page_metallic";
+        private static readonly string spell_defense_active_basecolor_path = "Spell_Defense_1_active_basecolor";
+        private static readonly string spell_defense_inactive_basecolor_path = "Spell_Defense_1_inactive_basecolor";
+
+        private static readonly string[] defaultMaterialTextureMapIDs = new string[]
+        {
+            "_MainTex",
+            "_OcclusionMap",
+            "_ParallaxMap",
+            "_BumpMap",
+            "_MetallicGlossMap",
+        };
+
+        //Returns a copy of the given material with textures replaced according to the provided texture replacements 
+        private static Material ReplaceMaterialTextures(Material material, Dictionary<string, Texture> textureReplacements)
+        {
+            if (material == null) { return material; }
+
+            if (textureReplacements == null || textureReplacements.Count == 0) { return material; }
+
+            string[] texturePropertyNames = material.GetTexturePropertyNames();
+            if (texturePropertyNames == null || texturePropertyNames.Length == 0) { return material; }
+
+            //Replace each texture
+            foreach (KeyValuePair<string, Texture> textureReplacement in textureReplacements)
+            {
+                string textureID = textureReplacement.Key;
+                if (textureID == null || !texturePropertyNames.Contains(textureID)) { continue; }
+
+                Texture texture = textureReplacement.Value;
+                if (texture == null) { continue; }
+
+                material.SetTexture(textureID, texture);
+            }
+
+            return material;
+        }
+
+        //Patch: Fix spell texture maps
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init_Collectible_Textures(BumboController __instance)
+        {
+            ReplaceSpellIconMaterials(__instance.app);
+        }
+
+        //Patch: Fix trinket texture maps
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketModel), nameof(TrinketModel.FillDictionary))]
+        static void TrinketModel_FillDictionary_Prefix(TrinketModel __instance, out bool __state)
+        {
+            __state = __instance.populatedMaterial;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), nameof(TrinketModel.FillDictionary))]
+        static void TrinketModel_FillDictionary(TrinketModel __instance, bool __state)
+        {
+            if (!__state)
+            {
+                ReplaceTrinketIconMaterials(__instance);
+            }
+        }
+
+        private static void ReplaceSpellIconMaterials(BumboApplication app)
+        {
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+
+            SpellCategory[] spellCategories = new SpellCategory[]
+            {
+                SpellCategory.Attack,
+                SpellCategory.Defense,
+                SpellCategory.Puzzle,
+                SpellCategory.Use,
+            };
+
+            foreach (SpellCategory spellCategory in spellCategories)
+            {
+                string[] activeTexturePaths = new string[5];
+                string[] inactiveTexturePaths = new string[5];
+
+                //Assign hardcoded texture asset paths to each texture of both active and inactive spell materials
+                switch (spellCategory)
+                {
+                    case SpellCategory.Attack:
+                        activeTexturePaths[3] = collectible_page_normal_path;
+                        inactiveTexturePaths[3] = collectible_page_normal_path;
+                        break;
+                    case SpellCategory.Defense:
+                        activeTexturePaths[0] = spell_defense_active_basecolor_path;
+                        inactiveTexturePaths[0] = spell_defense_inactive_basecolor_path;
+                        break;
+                    case SpellCategory.Puzzle:
+                        inactiveTexturePaths[1] = collectible_page_ambient_occlusion_path;
+                        inactiveTexturePaths[2] = collectible_page_height_path;
+                        inactiveTexturePaths[3] = collectible_page_normal_path;
+                        break;
+                    case SpellCategory.Use:
+                        inactiveTexturePaths[1] = collectible_page_ambient_occlusion_path;
+                        inactiveTexturePaths[2] = collectible_page_height_path;
+                        inactiveTexturePaths[3] = collectible_page_normal_path;
+                        inactiveTexturePaths[4] = spell_use_metallic_path;
+                        break;
+                    default:
+                        break;
+                }
+
+                Dictionary<string, Texture> activeTextureReplacements = new Dictionary<string, Texture>();
+                Dictionary<string, Texture> inactiveTextureReplacements = new Dictionary<string, Texture>();
+
+                //Load replacement texture assets
+                for (int activeIterator = 0; activeIterator < 2; activeIterator++)
+                {
+                    bool active = activeIterator == 0;
+
+                    for (int textureMapIterator = 0; textureMapIterator < defaultMaterialTextureMapIDs.Length; textureMapIterator++)
+                    {
+                        string defaultMaterialTextureMapID = defaultMaterialTextureMapIDs[textureMapIterator];
+                        if (defaultMaterialTextureMapID == null || defaultMaterialTextureMapID == string.Empty) { continue; }
+
+                        //Use different texture paths for active vs inactive materials
+                        string texturePath;
+                        if (active) { texturePath = activeTexturePaths[textureMapIterator]; }
+                        else { texturePath = inactiveTexturePaths[textureMapIterator]; }
+
+                        if (texturePath == null || texturePath == string.Empty || !assets.Contains(texturePath)) { continue; }
+
+                        Texture texture = assets.LoadAsset<Texture>(texturePath);
+                        if (texture == null) { continue; }
+
+                        //Store texture replacements separately for active vs inactive materials
+                        if (active) { activeTextureReplacements.Add(defaultMaterialTextureMapID, texture); }
+                        else { inactiveTextureReplacements.Add(defaultMaterialTextureMapID, texture); }
+                    }
+                }
+
+                //Loop through spell model material arrays
+                for (int spellMaterialCounter = 0; spellMaterialCounter < app.model.spellModel.spellMaterial.Length; spellMaterialCounter++)
+                {
+                    //Find array for current spell category
+                    if (app.model.spellModel.spellMaterial[spellMaterialCounter] != null && app.model.spellModel.spellMaterial[spellMaterialCounter].category == spellCategory)
+                    {
+                        //Access active materials for each page of current spell category
+                        for (int materialCounter = 0; materialCounter < app.model.spellModel.spellMaterial[spellMaterialCounter].active.Count; materialCounter++)
+                        {
+                            Material unmodifiedMaterial = app.model.spellModel.spellMaterial[spellMaterialCounter].active[materialCounter];
+                            if (unmodifiedMaterial == null) { continue; }
+
+                            //Replace material textures
+                            Material modifiedMaterial = ReplaceMaterialTextures(unmodifiedMaterial, activeTextureReplacements);
+                            app.model.spellModel.spellMaterial[spellMaterialCounter].active[materialCounter] = modifiedMaterial;
+                        }
+
+                        //Access inactive materials for each page of current spell category
+                        for (int materialCounter = 0; materialCounter < app.model.spellModel.spellMaterial[spellMaterialCounter].inactive.Count; materialCounter++)
+                        {
+                            Material unmodifiedMaterial = app.model.spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter];
+                            if (unmodifiedMaterial == null) { continue; }
+
+                            //Replace material textures
+                            Material modifiedMaterial = ReplaceMaterialTextures(unmodifiedMaterial, inactiveTextureReplacements);
+                            app.model.spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter] = modifiedMaterial;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void ReplaceTrinketIconMaterials(TrinketModel trinketModel)
+        {
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return;
+            }
+
+            TrinketCategory[] trinketCategories = new TrinketCategory[]
+            {
+                TrinketCategory.Special,
+            };
+
+            foreach (TrinketCategory trinketCategory in trinketCategories)
+            {
+                string[] texturePaths = new string[5];
+
+                //Assign hardcoded texture asset paths to each texture of the trinket materials
+                switch (trinketCategory)
+                {
+                    case TrinketCategory.Special:
+                        texturePaths[1] = collectible_page_ambient_occlusion_path;
+                        texturePaths[2] = collectible_page_height_path;
+                        texturePaths[3] = collectible_page_normal_path;
+                        texturePaths[4] = trinket_page_metallic_path;
+                        break;
+                    default:
+                        break;
+                }
+
+                Dictionary<string, Texture> textureReplacements = new Dictionary<string, Texture>();
+
+                for (int textureMapIterator = 0; textureMapIterator < defaultMaterialTextureMapIDs.Length; textureMapIterator++)
+                {
+                    //Assign texture IDs
+                    string defaultMaterialTextureMapID = defaultMaterialTextureMapIDs[textureMapIterator];
+                    if (defaultMaterialTextureMapID == null || defaultMaterialTextureMapID == string.Empty) { continue; }
+
+                    //Assign texture paths
+                    string texturePath = texturePaths[textureMapIterator];
+                    if (texturePath == null || texturePath == string.Empty || !assets.Contains(texturePath)) { continue; }
+
+                    //Load textures
+                    Texture texture = assets.LoadAsset<Texture>(texturePath);
+                    if (texture == null) { continue; }
+
+                    //Store texture replacements
+                    textureReplacements.Add(defaultMaterialTextureMapID, texture);
+                }
+
+                //Find list for current trinket category
+                if (trinketModel.trinketMaterial.ContainsKey(trinketCategory) && trinketModel.trinketMaterial[trinketCategory] != null)
+                {
+                    //Access materials for each page of current trinket category
+                    for (int materialCounter = 0; materialCounter < trinketModel.trinketMaterial[trinketCategory].Count; materialCounter++)
+                    {
+                        Material unmodifiedMaterial = trinketModel.trinketMaterial[trinketCategory][materialCounter];
+                        if (unmodifiedMaterial == null) { continue; }
+
+                        //Replace material textures
+                        Material modifiedMaterial = ReplaceMaterialTextures(unmodifiedMaterial, textureReplacements);
+                        trinketModel.trinketMaterial[trinketCategory][materialCounter] = modifiedMaterial;
                     }
                 }
             }
@@ -66,7 +377,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Dictionary<string, SpellName> spellNames = new Dictionary<string, SpellName>()
                 {
                     {
-                        "PlasmaBall",
+                        "1000",
                         (SpellName)1000
                     },
                 };
@@ -81,7 +392,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     {
                         (SpellName)1000,
-                        new SpellElement()
+                        new PlasmaBallSpell()
                     },
                 };
                 return spells;
