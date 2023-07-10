@@ -35,10 +35,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Electricity iteration count scales with spell damage
         private static int ChainDistance()
         {
-            return WindfallHelper.app.model.characterSheet.getItemDamage();
+            return WindfallHelper.app.model.characterSheet.getItemDamage() + 1;
         }
 
-        private readonly float chainAnimationDelay = 0.6f;
+        private readonly float chainAnimationDelay = 0.4f;
         public override Sequence AttackAnimation()
         {
             //Spell ends attack manually
@@ -56,7 +56,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Abort attack and end event
                 Sequence missSequence = DOTween.Sequence();
-                missSequence.AppendInterval(0.5f).AppendCallback(delegate
+                missSequence.AppendInterval(0.6f).AppendCallback(delegate
                 {
                     app.controller.eventsController.EndEvent();
                 });
@@ -149,31 +149,46 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     //Vertically adjacent enemies (same battlefield position, different enemy type)
                     Enemy localAdjacentEnemy = WindfallHelper.GetEnemyByBattlefieldPosition(battlefieldPosition, !ground, true);
-                    if (localAdjacentEnemy != null)
+                    //Ignore already chained enemies
+                    if (localAdjacentEnemy != null && !overallChainedEnemies.Contains(localAdjacentEnemy))
                     {
                         adjacentUnchainedEnemies.Add(localAdjacentEnemy);
+                        //Prioritize chaining to vertically adjacent enemies
+                        break;
                     }
 
-                    //Horizontally adjacent enemies
-                    foreach (BattlefieldPosition adjacentBattlefieldPosition in WindfallHelper.AdjacentBattlefieldPositions(aiModel, battlefieldPosition, false))
-                    {
-                        //Do not include the current enemy positions
-                        if (currentChainedEnemyPositions.Contains(adjacentBattlefieldPosition))
-                        {
-                            continue;
-                        }
 
-                        //Add adjacent enemies if they are of the same ground/flying type
-                        Enemy adjacentEnemy = WindfallHelper.GetEnemyByBattlefieldPosition(adjacentBattlefieldPosition, ground, true);
-                        if (adjacentEnemy != null)
+                    //Add all ground and flying enemies that are nearby
+                    for (int groundIterator = 0; groundIterator < 2; groundIterator++)
+                    {
+                        bool groundIteration = groundIterator == 0;
+                        //Horizontally adjacent enemies, including diagonals
+                        foreach (BattlefieldPosition adjacentBattlefieldPosition in WindfallHelper.AdjacentBattlefieldPositions(aiModel, battlefieldPosition, true))
                         {
-                            adjacentUnchainedEnemies.Add(adjacentEnemy);
+                            //Do not include the current enemy positions
+                            if (currentChainedEnemyPositions.Contains(adjacentBattlefieldPosition))
+                            {
+                                continue;
+                            }
+
+                            //Add adjacent enemies
+                            Enemy adjacentEnemy = WindfallHelper.GetEnemyByBattlefieldPosition(adjacentBattlefieldPosition, groundIteration, true);
+                            //Ignore already chained enemies
+                            if (adjacentEnemy != null && !overallChainedEnemies.Contains(adjacentEnemy))
+                            {
+                                adjacentUnchainedEnemies.Add(adjacentEnemy);
+                            }
                         }
                     }
                 }
 
-                //Ignore already chained enemies
-                adjacentUnchainedEnemies.RemoveAll((Enemy enemy) => overallChainedEnemies.Contains(enemy));
+                //Choose a random chain target
+                if (adjacentUnchainedEnemies.Count > 0)
+                {
+                    int randomEnemyIndex = UnityEngine.Random.Range(0, adjacentUnchainedEnemies.Count);
+                    Enemy randomEnemy = adjacentUnchainedEnemies[randomEnemyIndex];
+                    adjacentUnchainedEnemies.RemoveAll((Enemy enemy) => enemy != randomEnemy);
+                }
 
                 //Track enemies in current chain iteration
                 nextChainedEnemies.AddRange(adjacentUnchainedEnemies);
