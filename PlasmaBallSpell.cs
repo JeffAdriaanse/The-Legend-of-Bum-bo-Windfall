@@ -16,6 +16,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Name = "PLASMA_BALL_DESCRIPTION";
             Category = SpellCategory.Attack;
             Target = TargetType.FirstInSelectedColumn;
+            texturePage = 1;
             IconPosition = new Vector2(0f, 0f);
             spellName = (SpellName)1000;
             manaSize = ManaSize.L;
