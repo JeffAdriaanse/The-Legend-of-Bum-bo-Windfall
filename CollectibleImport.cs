@@ -107,7 +107,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 switch (spellCategory)
                 {
                     case SpellCategory.Attack:
-                        activeMaterial = WindfallHelper.app.model.spellModel.Icon(spellCategory, true, 0);
+                        activeMaterial = new Material(WindfallHelper.app.model.spellModel.Icon(spellCategory, true, 0));
                         if (activeMaterial != null)
                         {
                             if (assets.Contains("Attack Spells Active Basecolor"))
@@ -120,7 +120,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             }
                         }
 
-                        inactiveMaterial = WindfallHelper.app.model.spellModel.Icon(spellCategory, false, 0);
+                        inactiveMaterial = new Material(WindfallHelper.app.model.spellModel.Icon(spellCategory, false, 0));
                         if (inactiveMaterial != null)
                         {
                             if (assets.Contains("Attack Spells Inactive Basecolor"))
