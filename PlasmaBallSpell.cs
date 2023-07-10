@@ -53,7 +53,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (transform == null)
             {
                 app.Notify("miss.attack", app.controller.eventsController, Array.Empty<object>());
-                return base.AttackAnimation();
+
+                //Abort attack and end event
+                Sequence missSequence = DOTween.Sequence();
+                missSequence.AppendInterval(0.5f).AppendCallback(delegate
+                {
+                    app.controller.eventsController.EndEvent();
+                });
+
+                return missSequence;
             }
 
             //Grab enemy component
