@@ -38,7 +38,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return WindfallHelper.app.model.characterSheet.getItemDamage() + 1;
         }
 
-        private readonly float chainAnimationDelay = 0.4f;
+        private readonly float chainAnimationDelay = 0.6f;
         public override Sequence AttackAnimation()
         {
             //Spell ends attack manually
@@ -68,7 +68,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Enemy enemy = transform.GetComponent<Enemy>();
 
             //Attack sequence
-            enemy.Hurt((float)Damage(), Enemy.AttackImmunity.ReduceSpellDamage, statusEffects, enemy.position.x);
+            ShockEnemy(enemy);
 
             List<Enemy> overallChainedEnemies = new List<Enemy> { enemy };
             List<Enemy> currentChainedEnemies = new List<Enemy> { enemy };
@@ -201,13 +201,35 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 foreach (Enemy enemy in nextChainedEnemies)
                 {
-                    enemy.Hurt((float)Damage(), Enemy.AttackImmunity.ReduceSpellDamage, statusEffects, enemy.position.x);
+                    ShockEnemy(enemy);
                 }
             }).AppendInterval(chainAnimationDelay).AppendCallback(delegate
             {
                 //Recursive method
                 ChainElectricity(overallChainedEnemies, nextChainedEnemies, chainIterator + 1);
             });
+        }
+
+        private void ShockEnemy(Enemy enemy)
+        {
+            if (enemy == null) { return; }
+
+            AssetBundle assets = Windfall.assetBundle;
+            if (assets != null && assets.Contains("Plasma_Trail_Particles"))
+            {
+                GameObject plasmaTrail = GameObject.Instantiate(assets.LoadAsset<GameObject>("Plasma_Trail_Particles"));
+
+                //Spawn Plasma at enemy attack target position
+                Vector3 plasmaPosition = enemy.transform.position + new Vector3(0f, 0.5f, -0.15f);
+                if (enemy.transform.Find("Attack Target") != null)
+                {
+                    plasmaPosition = enemy.transform.Find("Attack Target").transform.position + new Vector3(0f, 0.25f, -0.15f);
+                }
+
+                plasmaTrail.transform.position = plasmaPosition;
+            }
+
+            enemy.Hurt((float)Damage(), Enemy.AttackImmunity.ReduceSpellDamage, statusEffects, enemy.position.x);
         }
     }
 }
