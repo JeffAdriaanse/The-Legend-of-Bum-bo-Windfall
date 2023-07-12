@@ -250,16 +250,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //When horizontals are not included, exclude poisitions that are in the same row
                     if (!includeHorizontal)
                     {
-                        if (xIterator == battlefieldPosition.x)
+                        if (yIterator == battlefieldPosition.y)
                         {
                             continue;
                         }
                     }
 
-                    //When verticals are not included, exclude poisitions that are in the same row
+                    //When verticals are not included, exclude poisitions that are in the same lane
                     if (!includeVertical)
                     {
-                        if (yIterator == battlefieldPosition.y)
+                        if (xIterator == battlefieldPosition.x)
                         {
                             continue;
                         }
