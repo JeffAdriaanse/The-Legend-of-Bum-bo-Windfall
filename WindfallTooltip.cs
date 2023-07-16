@@ -1476,7 +1476,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.Hoof, "Grants 1 movement at the start of each room" },
                     { TrinketName.IBS, "Increases the size of placed poop piles by 1, but not above 3" },
                     { TrinketName.LotusPetal, "Grants 3 mana of each color" },
-                    { TrinketName.Magnet, "Grants a 33% chance to increase coins gained from clearing each room by 2" },
+                    { TrinketName.Magnet, "Grants a 33% chance to gain 2 extra coins upon clearing a room" },
                     { TrinketName.ModelingClay, "Randomly chooses another owned trinket and becomes a copy of it" },
                     { TrinketName.MomsPhoto, "Grants a 25% chance to apply blindness upon hitting an enemy" },
                     { TrinketName.MysteriousBag, "Grants a 25% chance to splash 1 spell damage to all adjacent spaces upon damaging an enemy" },
