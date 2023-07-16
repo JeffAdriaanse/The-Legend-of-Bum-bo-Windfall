@@ -308,6 +308,20 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return localAdjacentEnemy;
         }
+
+        /// <summary>
+        /// Returns the world space transform equivalent of an internal battlefield position. Operates using a simplified version of the positioning logic in <see cref="Enemy.setPosition(int, int, float)"/>.
+        /// </summary>
+        /// <param name="battlefieldPosition">The internal battlefield coordinates.</param>
+        /// <returns>The world space transform position of the given battlefield position.</returns>
+        /// <remarks>The y position of the returned world space battlefield position will always be 0, corresponding to the floor of the battlefield.
+        /// <br/>The y axis of the internal battlefield position corresponds to the z axis of the global transform position due to axis discrepancy between the two systems.</remarks>
+        public static Vector3 WorldSpaceBattlefieldPosition(Vector2 battlefieldPosition)
+        {
+            float transformPositionX = (battlefieldPosition.x - 1f) * 1.25f;
+            float transformPositionZ = -0.6f - (battlefieldPosition.y * 0.975f);
+            return new Vector3(transformPositionX, 0f, transformPositionZ);
+        }
     }
 
     //Disables unwanted notifiactions immediately after they are created

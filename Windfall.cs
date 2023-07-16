@@ -39,7 +39,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             OtherChanges.Awake();
         }
 
-        static void LoadAssets()
+        public static void LoadAssets()
         {
             foreach (string path in AssetBundlePaths)
             {
@@ -54,7 +54,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        static List<string> AssetBundlePaths
+        private static List<string> AssetBundlePaths
         {
             get
             {

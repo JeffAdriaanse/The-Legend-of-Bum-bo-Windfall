@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityStandardAssets.ImageEffects;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -435,6 +436,21 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
 
+                //Show battlefield grid
+                List<BattlefieldPosition> enemyBattlefieldPositions = new List<BattlefieldPosition>();
+                BattlefieldPosition enemyBattlefieldPosition = WindfallHelper.app.model.aiModel.battlefieldPositions[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[enemy.position.x, enemy.position.y]];
+                enemyBattlefieldPositions.Add(enemyBattlefieldPosition);
+                if (enemy.enemyWidth == 3)
+                {
+                    enemyBattlefieldPositions.AddRange(WindfallHelper.AdjacentBattlefieldPositions(WindfallHelper.app.model.aiModel, enemyBattlefieldPosition, false, true, false));
+                }
+                List<Vector2Int> enemyBattlefieldPositionsVector = new List<Vector2Int>();
+                foreach (BattlefieldPosition battlefieldPosition in enemyBattlefieldPositions)
+                {
+                    enemyBattlefieldPositionsVector.Add(new Vector2Int(battlefieldPosition.x, battlefieldPosition.y));
+                }
+                BattlefieldGridView.ShowGrid(enemyBattlefieldPositionsVector);
+
                 displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + resitanceText + damageReductionText;
                 return;
             }
@@ -508,6 +524,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             DisplayTooltip(tooltipToShow);
 
             ClearEnemyTints(tooltipToShow);
+            HideGridView(tooltipToShow);
         }
 
         private static WindfallTooltip GetMouseTooltip(Ray GUIray, Ray MainRay)
@@ -1141,6 +1158,25 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 objectTinter.NoTint();
             }
+        }
+
+        private static void HideGridView(WindfallTooltip tooltipToShow)
+        {
+            if (tooltipToShow != null)
+            {
+                Enemy tooltipEnemy = tooltipToShow.gameObject.GetComponent<Enemy>();
+                if (tooltipEnemy == null)
+                {
+                    tooltipEnemy = ObjectDataStorage.GetData<Enemy>(tooltipToShow.gameObject, EntityChanges.colliderEnemyKey);
+                }
+
+                if (tooltipEnemy != null)
+                {
+                    return;
+                }
+            }
+
+            BattlefieldGridView.HideGrid();
         }
     }
 

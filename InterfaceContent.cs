@@ -28,6 +28,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.GetApp(__instance.app);
         }
 
+        //Patch: Initialize battlefield grid
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
+        static void BumboController_Init_InitializeGrid(BumboController __instance)
+        {
+            BattlefieldGridView.InitializeGrid();
+        }
+
         //Patch: Update Windfall Tooltip
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Update")]
         static void BumboController_Update(BumboController __instance)
