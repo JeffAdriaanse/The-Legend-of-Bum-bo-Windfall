@@ -2331,33 +2331,53 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		static int rockCounter = 0;
-        [HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "AttackAnimation")]
+		private static readonly string rockFriendsCounterKey = "rockFriendsCounterKey";
+		//Reset rock counter
+        [HarmonyPostfix, HarmonyPatch(typeof(RockFriendsSpell), "AttackAnimation")]
         static void RockFriendsSpell_AttackAnimation(RockFriendsSpell __instance)
         {
-			rockCounter = 0;
+			ObjectDataStorage.StoreData<int>(__instance, rockFriendsCounterKey, 0);
         }
         //Patch: Rock Friends now drops a number of rocks equal to the player's spell damage stat
         [HarmonyPrefix, HarmonyPatch(typeof(RockFriendsSpell), "DropRock")]
-		static bool RockFriendsSpell_DropRock(RockFriendsSpell __instance, ref int _rock_number)
+		static void RockFriendsSpell_DropRock(RockFriendsSpell __instance, ref int _rock_number)
 		{
             if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
             {
-                return true;
+				return;
             }
 
-            rockCounter++;
+            ObjectDataStorage.StoreData<int>(__instance, rockFriendsCounterKey, ObjectDataStorage.GetData<int>(__instance, rockFriendsCounterKey) + 1);
 			_rock_number = 1;
-			if (rockCounter > __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier())
+			if (ObjectDataStorage.GetData<int>(__instance, rockFriendsCounterKey) > __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier())
 			{
 				_rock_number = 4;
-				rockCounter = 0;
-			}
-			return true;
+                ObjectDataStorage.StoreData<int>(__instance, rockFriendsCounterKey, 0);
+            }
 		}
 
-		//Patch: Changes Attack Fly spell damage to incorporate the player's spell damage stat
-		[HarmonyPostfix, HarmonyPatch(typeof(AttackFlySpell), "Damage")]
+        //Patch: Fixes Rock Friends leaving a rock sprite at the room origin if the attack ends prematurely by clearing a room
+        [HarmonyPostfix, HarmonyPatch(typeof(RockFriendsSpell), "DropRock")]
+        static void RockFriendsSpell_DropRock_Postfix(RockFriendsSpell __instance)
+        {
+			if (__instance.app.model.bumboEvent is not AttackSpellEvent)
+
+            {
+				GameObject rockFriend = GameObject.Find("RockFriend");
+                if (rockFriend == null)
+                {
+                    rockFriend = GameObject.Find("RockFriend(Clone)");
+                }
+
+                if (rockFriend != null)
+				{
+					GameObject.Destroy(rockFriend);
+                }
+			}
+        }
+
+        //Patch: Changes Attack Fly spell damage to incorporate the player's spell damage stat
+        [HarmonyPostfix, HarmonyPatch(typeof(AttackFlySpell), "Damage")]
 		static void AttackFlySpell_Damage(AttackFlySpell __instance, ref int __result)
 		{
             if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
