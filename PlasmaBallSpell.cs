@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityStandardAssets.ImageEffects;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -25,6 +26,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             baseDamage = 0;
             hasAnimation = true;
         }
+
+        private static readonly GameObject PLASMA_PARTICLES = Windfall.assetBundle.LoadAsset<GameObject>("Plasma_Trail_Particles");
 
         //Deals 1 damage. Damage can be buffed by Damage Needles
         public override int Damage()
@@ -236,21 +239,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets != null && assets.Contains("Plasma_Trail_Particles"))
+            //Spawn plasma particles
+            if (PLASMA_PARTICLES != null)
             {
-                GameObject plasmaTrail = GameObject.Instantiate(assets.LoadAsset<GameObject>("Plasma_Trail_Particles"));
+                GameObject plasmaTrail = GameObject.Instantiate(PLASMA_PARTICLES);
 
-                //Spawn Plasma at enemy attack target position
-                Vector3 plasmaPosition = enemy.transform.position + new Vector3(0f, 0.5f, -0.15f);
-                if (enemy.transform.Find("Attack Target") != null)
-                {
-                    plasmaPosition = enemy.transform.Find("Attack Target").transform.position + new Vector3(0f, 0.25f, -0.15f);
-                }
+                //Estimate enemy position
+                float enemyTypeHeightModifier = enemy.enemyType == Enemy.EnemyType.Flying ? 1f : 0f;
+                Vector3 plasmaPosition = enemy.transform.position + new Vector3(0f, 0.33f + enemyTypeHeightModifier, 0f);
 
+                //Move particle to enemy position
                 plasmaTrail.transform.position = plasmaPosition;
             }
 
+            //Hurt enemy
             enemy.Hurt((float)Damage(), Enemy.AttackImmunity.ReduceSpellDamage, statusEffects, enemy.position.x);
         }
     }
