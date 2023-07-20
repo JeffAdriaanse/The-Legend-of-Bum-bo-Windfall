@@ -239,18 +239,21 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
+            //Estimate enemy position
+            float enemyTypeHeightModifier = enemy.enemyType == Enemy.EnemyType.Flying ? 1f : 0f;
+            Vector3 plasmaPosition = enemy.transform.position + new Vector3(0f, 0.33f + enemyTypeHeightModifier, 0f);
+
             //Spawn plasma particles
             if (PLASMA_PARTICLES != null)
             {
                 GameObject plasmaTrail = GameObject.Instantiate(PLASMA_PARTICLES);
 
-                //Estimate enemy position
-                float enemyTypeHeightModifier = enemy.enemyType == Enemy.EnemyType.Flying ? 1f : 0f;
-                Vector3 plasmaPosition = enemy.transform.position + new Vector3(0f, 0.33f + enemyTypeHeightModifier, 0f);
-
                 //Move particle to enemy position
                 plasmaTrail.transform.position = plasmaPosition;
             }
+
+            //Play sound
+            SoundsView.Instance.PlaySound((SoundsView.eSound)1000, plasmaPosition);
 
             //Hurt enemy
             enemy.Hurt((float)Damage(), Enemy.AttackImmunity.ReduceSpellDamage, statusEffects, enemy.position.x);
