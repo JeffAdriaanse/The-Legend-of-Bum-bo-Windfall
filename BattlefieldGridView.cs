@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,8 +37,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         break;
                     }
+                    gridCells[cellIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridCellView")).AddComponent<BattlefieldGridCellView>();
+                    gridCells[cellIndex].Init(new Vector2Int(gridCellIteratorX, gridCellIteratorY));
 
-                    gridCells[cellIndex] = new BattlefieldGridCellView(new Vector2Int(gridCellIteratorX, gridCellIteratorY));
                     cellIndex++;
                 }
             }
@@ -53,59 +55,62 @@ namespace The_Legend_of_Bum_bo_Windfall
                         break;
                     }
 
-                    gridLines[lineIndex] = new BattlefieldGridLineView(vertical, lineIterator);
+                    gridLines[lineIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridLineView")).AddComponent<BattlefieldGridLineView>();
+                    gridLines[lineIndex].Init(vertical, lineIterator);
+
                     lineIndex++;
                 }
             }
 
-            HideGrid();
+            ShowGrid(null);
         }
 
         /// <summary>
-        /// Shows the given grid cells and their adjacent grid lines.
+        /// Shows the given grid cells and their adjacent grid lines. Hides all other grid cells and lines.
         /// </summary>
-        /// <param name="battlefieldPositions">The grid cells to show.</param>
+        /// <param name="battlefieldPositions">The list of enemy positions for which grid cells and lines will be shown. If the list is null, all cells and lines in the grid will be hidden.</param>
         public static void ShowGrid(List<Vector2Int> battlefieldPositions)
         {
-            HideGrid();
+            List<BattlefieldGridCellView> enemyGridCells = new List<BattlefieldGridCellView>();
+            List<BattlefieldGridLineView> enemyGridLines = new List<BattlefieldGridLineView>();
 
-            //Activate grid cells
-            List<BattlefieldGridCellView> enemyGridCells = GetGridCells(battlefieldPositions);
-            foreach (BattlefieldGridCellView enemyGridCellView in enemyGridCells)
+            //If battlefield positions are null, abort and hide all cells and lines
+            if (battlefieldPositions != null)
             {
-                enemyGridCellView.cell.SetActive(true);
-            }
+                //Find all grid cells occupied by the enemy
+                enemyGridCells = GetGridCells(battlefieldPositions);
 
-            //Grid lines
-            foreach (BattlefieldGridCellView gridCellView in enemyGridCells)
-            {
-                List<BattlefieldGridLineView> gridLines = AdjacentGridLines(gridCellView);
-                foreach (BattlefieldGridLineView gridLineView in gridLines)
+                //Find all grid lines around the enemy grid cells
+                foreach (BattlefieldGridCellView gridCellView in enemyGridCells)
                 {
-                    gridLineView.line.SetActive(true);
+                    if (gridCellView == null) { continue; }
+
+                    List<BattlefieldGridLineView> cellGridLines = AdjacentGridLines(gridCellView);
+
+                    foreach (BattlefieldGridLineView cellGridLine in cellGridLines)
+                    {
+                        if (cellGridLine == null) { continue; }
+
+                        if (!enemyGridLines.Contains(cellGridLine))
+                        {
+                            enemyGridLines.Add(cellGridLine);
+                        }
+                    }
                 }
             }
-        }
 
-        /// <summary>
-        /// Deactivates all grid cells and lines.
-        /// </summary>
-        public static void HideGrid()
-        {
+            //Toggle grid cells
             foreach (BattlefieldGridCellView gridCellView in gridCells)
             {
-                if (gridCellView != null && gridCellView.cell != null)
-                {
-                    gridCellView.cell.SetActive(false);
-                }
+                if (gridCellView == null) { continue; }
+                gridCellView.DisplayElement(enemyGridCells.Contains(gridCellView));
             }
 
+            //Toggle grid lines
             foreach (BattlefieldGridLineView gridLineView in gridLines)
             {
-                if (gridLineView != null && gridLineView.line != null)
-                {
-                    gridLineView.line.SetActive(false);
-                }
+                if (gridLineView == null) { continue; }
+                gridLineView.DisplayElement(enemyGridLines.Contains(gridLineView));
             }
         }
 
@@ -156,34 +161,94 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
     }
 
-    class BattlefieldGridCellView
+    abstract class BattlefieldGridElementView : MonoBehaviour
     {
-        public GameObject cell;
+        protected readonly float SHOWING_HEIGHT = 0f;
+        protected readonly float HIDING_HEIGHT = -0.05f;
 
-        public Vector2Int battlefieldPosition;
+        private Sequence displaySequence;
+        private readonly float tweenDuration = 0.2f;
 
-        /// <summary>
-        /// Creates a grid cell at the given position.
-        /// </summary>
-        /// <param name="battlefieldPosition">The cell battlefield position.</param>
-        public BattlefieldGridCellView(Vector2Int battlefieldPosition)
+        private bool showing = true;
+
+        public void DisplayElement(bool show)
         {
-            this.battlefieldPosition = battlefieldPosition;
-            cell = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridCellView"));
+            if (show == showing)
+            {
+                return;
+            }
+            showing = show;
 
-            //Position
-            cell.transform.position = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(battlefieldPosition.x, battlefieldPosition.y));
-            //Vertical offset
-            cell.transform.position += new Vector3(0f, BattlefieldGridView.GRID_VIEW_VERTICAL_OFFSET * 0.5f, 0f);
+            if (show)
+            {
+                ShowElement();
+            }
+            else
+            {
+                HideElement();
+            }
+        }
 
-            //Scale
-            cell.transform.localScale = new Vector3(1.85f, 1.85f, 1.85f);
+        protected void ShowElement()
+        {
+            gameObject.SetActive(true);
+            TriggerDisplaySequence(ShowingHeight());
+        }
+
+        protected void HideElement()
+        {
+            TriggerDisplaySequence(HidingHeight());
+            //displaySequence.PrependInterval(tweenDuration);
+            displaySequence.AppendCallback(delegate { gameObject.SetActive(false); });
+        }
+
+        protected void TriggerDisplaySequence(float targetHeight)
+        {
+            if (displaySequence != null && displaySequence.IsPlaying())
+            {
+                displaySequence.Kill(false);
+            }
+
+            displaySequence = DOTween.Sequence();
+            displaySequence.Append(transform.DOMove(new Vector3(transform.position.x, targetHeight, transform.position.z), tweenDuration).SetEase(Ease.InOutQuad));
+        }
+
+        protected float ShowingHeight()
+        {
+            return SHOWING_HEIGHT;
+        }
+        
+        protected float HidingHeight()
+        {
+            return HIDING_HEIGHT;
         }
     }
 
-    class BattlefieldGridLineView
+    class BattlefieldGridCellView : BattlefieldGridElementView
     {
-        public GameObject line;
+        public Vector2Int battlefieldPosition;
+
+        /// <summary>
+        /// Initializes a grid cell at the given position.
+        /// </summary>
+        /// <param name="battlefieldPosition">The cell battlefield position.</param>
+        public void Init(Vector2Int battlefieldPosition)
+        {
+            this.battlefieldPosition = battlefieldPosition;
+
+            //Position
+            gameObject.transform.position = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(battlefieldPosition.x, battlefieldPosition.y));
+            //Default to hiding position
+            gameObject.transform.position = new Vector3(gameObject.transform.position.x, HIDING_HEIGHT, gameObject.transform.position.z);
+
+            //Scale
+            gameObject.transform.localScale = new Vector3(1.85f, 3f, 1.85f);
+        }
+    }
+
+    class BattlefieldGridLineView : BattlefieldGridElementView
+    {
+        private float SHOWING_HEIGHT_MODIFIER = 0f;
 
         public bool vertical;
         public int index;
@@ -193,12 +258,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="vertical">The axis of the grid line.</param>
         /// <param name="index">The index of the grid line within the given axis.</param>
-        public BattlefieldGridLineView(bool vertical, int index)
+        public void Init(bool vertical, int index)
         {
             this.vertical = vertical;
             this.index = index;
-
-            line = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridLineView"));
 
             //Positions are based on the four grid cells adjacent to the center
             float lineBattlefieldPosition = (index == 0 || index == 1) ? 0f : 2f;
@@ -213,28 +276,37 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Get position of nearby grid cell
                 worldSpacePosition = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(1, lineBattlefieldPosition));
 
-                //Vertical offset
-                worldSpacePosition += new Vector3(0f, BattlefieldGridView.GRID_VIEW_VERTICAL_OFFSET * 0.75f, 0f);
+                SHOWING_HEIGHT_MODIFIER = 0f;
+
+                //Default to hiding position
+                worldSpacePosition = new Vector3(worldSpacePosition.x, HIDING_HEIGHT, worldSpacePosition.z);
 
                 //Rotate line
-                line.transform.eulerAngles = line.transform.eulerAngles + new Vector3(0f, 90f, 0f);
+                gameObject.transform.eulerAngles = gameObject.transform.eulerAngles + new Vector3(0f, 90f, 0f);
 
                 //Scale line
-                line.transform.localScale = new Vector3(line.transform.localScale.x, line.transform.localScale.y, 2.4f);
+                gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x, gameObject.transform.localScale.y, 2.4f);
             }
             else
             {
                 //Get position of nearby grid cell
                 worldSpacePosition = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(lineBattlefieldPosition, 1));
 
-                //Vertical offset
-                worldSpacePosition += new Vector3(0f, BattlefieldGridView.GRID_VIEW_VERTICAL_OFFSET * 1f, 0f);
+                SHOWING_HEIGHT_MODIFIER = 0.01f;
+
+                //Default to hiding position
+                worldSpacePosition = new Vector3(worldSpacePosition.x, HIDING_HEIGHT, worldSpacePosition.z);
 
                 //Scale line
-                line.transform.localScale = new Vector3(line.transform.localScale.x, line.transform.localScale.y, 1.8f);
+                gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x, gameObject.transform.localScale.y, 1.8f);
             }
 
-            line.transform.position = worldSpacePosition;
+            gameObject.transform.position = worldSpacePosition;
+        }
+
+        private float ShowingHeight()
+        {
+            return base.ShowingHeight() + SHOWING_HEIGHT_MODIFIER;
         }
     }
 }

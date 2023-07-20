@@ -1176,7 +1176,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
 
-            BattlefieldGridView.HideGrid();
+            BattlefieldGridView.ShowGrid(null);
         }
     }
 
