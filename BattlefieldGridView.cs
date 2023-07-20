@@ -39,6 +39,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                     gridCells[cellIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridCellView")).AddComponent<BattlefieldGridCellView>();
                     gridCells[cellIndex].Init(new Vector2Int(gridCellIteratorX, gridCellIteratorY));
+                    gridCells[cellIndex].gameObject.SetActive(false);
 
                     cellIndex++;
                 }
@@ -57,12 +58,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     gridLines[lineIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridLineView")).AddComponent<BattlefieldGridLineView>();
                     gridLines[lineIndex].Init(vertical, lineIterator);
+                    gridLines[lineIndex].gameObject.SetActive(false);
 
                     lineIndex++;
                 }
             }
-
-            ShowGrid(null);
         }
 
         /// <summary>
@@ -163,13 +163,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     abstract class BattlefieldGridElementView : MonoBehaviour
     {
-        protected readonly float SHOWING_HEIGHT = 0f;
-        protected readonly float HIDING_HEIGHT = -0.05f;
-
         private Sequence displaySequence;
         private readonly float TWEEN_DURATION = 0.2f;
+        protected readonly Vector3 HIDING_SCALE = Vector3.zero;
 
-        private bool showing = true;
+        private bool showing = false;
 
         public void DisplayElement(bool show)
         {
@@ -192,17 +190,17 @@ namespace The_Legend_of_Bum_bo_Windfall
         protected void ShowElement()
         {
             gameObject.SetActive(true);
-            TriggerDisplaySequence(ShowingHeight());
+            TriggerDisplaySequence(ShowingScale());
         }
 
         protected void HideElement()
         {
-            TriggerDisplaySequence(HidingHeight());
+            TriggerDisplaySequence(Vector3.zero);
             //displaySequence.PrependInterval(tweenDuration);
             displaySequence.AppendCallback(delegate { gameObject.SetActive(false); });
         }
 
-        protected void TriggerDisplaySequence(float targetHeight)
+        protected void TriggerDisplaySequence(Vector3 scale)
         {
             if (displaySequence != null && displaySequence.IsPlaying())
             {
@@ -210,23 +208,20 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             displaySequence = DOTween.Sequence();
-            displaySequence.Append(transform.DOMove(new Vector3(transform.position.x, targetHeight, transform.position.z), TWEEN_DURATION).SetEase(Ease.InOutQuad));
+            displaySequence.Append(transform.DOScale(scale, TWEEN_DURATION).SetEase(Ease.InOutQuad));
         }
 
-        protected virtual float ShowingHeight()
+        protected virtual Vector3 ShowingScale()
         {
-            return SHOWING_HEIGHT;
-        }
-        
-        protected virtual float HidingHeight()
-        {
-            return HIDING_HEIGHT;
+            return Vector3.one;
         }
     }
 
     class BattlefieldGridCellView : BattlefieldGridElementView
     {
         public Vector2Int battlefieldPosition;
+
+        private Vector3 SHOWING_SCALE = new Vector3(1.85f, 3f, 1.85f);
 
         /// <summary>
         /// Initializes a grid cell at the given position.
@@ -236,19 +231,23 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             this.battlefieldPosition = battlefieldPosition;
 
-            //Position
+            //Initial position
             gameObject.transform.position = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(battlefieldPosition.x, battlefieldPosition.y));
-            //Default to hiding position
-            gameObject.transform.position = new Vector3(gameObject.transform.position.x, HIDING_HEIGHT, gameObject.transform.position.z);
 
-            //Scale
-            gameObject.transform.localScale = new Vector3(1.85f, 3f, 1.85f);
+            //Initial scale
+            gameObject.transform.localScale = HIDING_SCALE;
+        }
+
+        protected override Vector3 ShowingScale()
+        {
+            return SHOWING_SCALE;
         }
     }
 
     class BattlefieldGridLineView : BattlefieldGridElementView
     {
-        private float SHOWING_HEIGHT_MODIFIER = 0f;
+        private readonly float Y_AXIS_OFFSET = 0.02f;
+        private Vector3 SHOWING_SCALE = Vector3.one;
 
         public bool vertical;
         public int index;
@@ -273,40 +272,37 @@ namespace The_Legend_of_Bum_bo_Windfall
             Vector3 worldSpacePosition;
             if (!vertical)
             {
-                //Get position of nearby grid cell
+                //Convert adjusted battlefield position to world space
                 worldSpacePosition = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(1, lineBattlefieldPosition));
 
-                SHOWING_HEIGHT_MODIFIER = 0f;
-
-                //Default to hiding position
-                worldSpacePosition = new Vector3(worldSpacePosition.x, HIDING_HEIGHT, worldSpacePosition.z);
-
-                //Rotate line
+                //Rotate horizontal lines
                 gameObject.transform.eulerAngles = gameObject.transform.eulerAngles + new Vector3(0f, 90f, 0f);
 
-                //Scale line
-                gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x, gameObject.transform.localScale.y, 2.4f);
+                //Set showing scale
+                SHOWING_SCALE = new Vector3(gameObject.transform.localScale.x, gameObject.transform.localScale.y, 2.4f);
             }
             else
             {
-                //Get position of nearby grid cell
+                //Convert adjusted battlefield position to world space
                 worldSpacePosition = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(lineBattlefieldPosition, 1));
 
-                SHOWING_HEIGHT_MODIFIER = 0.02f;
+                //Offset vertical lines on the y axis
+                worldSpacePosition = new Vector3(worldSpacePosition.x, Y_AXIS_OFFSET, worldSpacePosition.z);
 
-                //Default to hiding position
-                worldSpacePosition = new Vector3(worldSpacePosition.x, HIDING_HEIGHT, worldSpacePosition.z);
-
-                //Scale line
-                gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x, gameObject.transform.localScale.y, 1.8f);
+                //Set showing scale
+                SHOWING_SCALE = new Vector3(gameObject.transform.localScale.x, gameObject.transform.localScale.y, 1.8f);
             }
 
+            //Initial scale
+            gameObject.transform.localScale = HIDING_SCALE;
+
+            //Initial position
             gameObject.transform.position = worldSpacePosition;
         }
 
-        protected override float ShowingHeight()
+        protected override Vector3 ShowingScale()
         {
-            return base.ShowingHeight() + SHOWING_HEIGHT_MODIFIER;
+            return SHOWING_SCALE;
         }
     }
 }
