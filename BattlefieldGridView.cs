@@ -75,7 +75,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             List<BattlefieldGridLineView> enemyGridLines = new List<BattlefieldGridLineView>();
 
             //If battlefield positions are null, abort and hide all cells and lines
-            if (battlefieldPositions != null)
+            if (battlefieldPositions != null && battlefieldPositions.Count > 0)
             {
                 //Find all grid cells occupied by the enemy
                 enemyGridCells = GetGridCells(battlefieldPositions);
@@ -167,7 +167,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         protected readonly float HIDING_HEIGHT = -0.05f;
 
         private Sequence displaySequence;
-        private readonly float tweenDuration = 0.2f;
+        private readonly float TWEEN_DURATION = 0.2f;
 
         private bool showing = true;
 
@@ -210,15 +210,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             displaySequence = DOTween.Sequence();
-            displaySequence.Append(transform.DOMove(new Vector3(transform.position.x, targetHeight, transform.position.z), tweenDuration).SetEase(Ease.InOutQuad));
+            displaySequence.Append(transform.DOMove(new Vector3(transform.position.x, targetHeight, transform.position.z), TWEEN_DURATION).SetEase(Ease.InOutQuad));
         }
 
-        protected float ShowingHeight()
+        protected virtual float ShowingHeight()
         {
             return SHOWING_HEIGHT;
         }
         
-        protected float HidingHeight()
+        protected virtual float HidingHeight()
         {
             return HIDING_HEIGHT;
         }
@@ -292,7 +292,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Get position of nearby grid cell
                 worldSpacePosition = WindfallHelper.WorldSpaceBattlefieldPosition(new Vector2(lineBattlefieldPosition, 1));
 
-                SHOWING_HEIGHT_MODIFIER = 0.01f;
+                SHOWING_HEIGHT_MODIFIER = 0.02f;
 
                 //Default to hiding position
                 worldSpacePosition = new Vector3(worldSpacePosition.x, HIDING_HEIGHT, worldSpacePosition.z);
@@ -304,7 +304,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             gameObject.transform.position = worldSpacePosition;
         }
 
-        private float ShowingHeight()
+        protected override float ShowingHeight()
         {
             return base.ShowingHeight() + SHOWING_HEIGHT_MODIFIER;
         }

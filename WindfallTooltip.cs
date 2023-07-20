@@ -436,21 +436,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
 
-                //Show battlefield grid
-                List<BattlefieldPosition> enemyBattlefieldPositions = new List<BattlefieldPosition>();
-                BattlefieldPosition enemyBattlefieldPosition = WindfallHelper.app.model.aiModel.battlefieldPositions[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[enemy.position.x, enemy.position.y]];
-                enemyBattlefieldPositions.Add(enemyBattlefieldPosition);
-                if (enemy.enemyWidth == 3)
-                {
-                    enemyBattlefieldPositions.AddRange(WindfallHelper.AdjacentBattlefieldPositions(WindfallHelper.app.model.aiModel, enemyBattlefieldPosition, false, true, false));
-                }
-                List<Vector2Int> enemyBattlefieldPositionsVector = new List<Vector2Int>();
-                foreach (BattlefieldPosition battlefieldPosition in enemyBattlefieldPositions)
-                {
-                    enemyBattlefieldPositionsVector.Add(new Vector2Int(battlefieldPosition.x, battlefieldPosition.y));
-                }
-                BattlefieldGridView.ShowGrid(enemyBattlefieldPositionsVector);
-
                 displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + resitanceText + damageReductionText;
                 return;
             }
@@ -524,7 +509,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             DisplayTooltip(tooltipToShow);
 
             ClearEnemyTints(tooltipToShow);
-            HideGridView(tooltipToShow);
+
+            DisplayGridView(tooltipToShow);
         }
 
         private static WindfallTooltip GetMouseTooltip(Ray GUIray, Ray MainRay)
@@ -1160,8 +1146,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        private static void HideGridView(WindfallTooltip tooltipToShow)
+        private static void DisplayGridView(WindfallTooltip tooltipToShow)
         {
+            //Show battlefield grid
+            List<Vector2Int> enemyBattlefieldPositionsVector = new List<Vector2Int>();
+
             if (tooltipToShow != null)
             {
                 Enemy tooltipEnemy = tooltipToShow.gameObject.GetComponent<Enemy>();
@@ -1172,11 +1161,22 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 if (tooltipEnemy != null)
                 {
-                    return;
+                    List<BattlefieldPosition> enemyBattlefieldPositions = new List<BattlefieldPosition>();
+                    BattlefieldPosition enemyBattlefieldPosition = WindfallHelper.app.model.aiModel.battlefieldPositions[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[tooltipEnemy.position.x, tooltipEnemy.position.y]];
+                    enemyBattlefieldPositions.Add(enemyBattlefieldPosition);
+                    if (tooltipEnemy.enemyWidth == 3)
+                    {
+                        enemyBattlefieldPositions.AddRange(WindfallHelper.AdjacentBattlefieldPositions(WindfallHelper.app.model.aiModel, enemyBattlefieldPosition, false, true, false));
+                    }
+
+                    foreach (BattlefieldPosition battlefieldPosition in enemyBattlefieldPositions)
+                    {
+                        enemyBattlefieldPositionsVector.Add(new Vector2Int(battlefieldPosition.x, battlefieldPosition.y));
+                    }
                 }
             }
 
-            BattlefieldGridView.ShowGrid(null);
+            BattlefieldGridView.ShowGrid(enemyBattlefieldPositionsVector);
         }
     }
 
