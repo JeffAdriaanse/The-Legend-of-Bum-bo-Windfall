@@ -1224,6 +1224,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                 CharacterSheet characterSheet = WindfallHelper.app?.model?.characterSheet;
                 switch (spell.spellName)
                 {
+                    case (SpellName)1000:
+                        if (spell is PlasmaBallSpell plasmaBallSpell)
+                        {
+                            value = value.Replace("[spread]", plasmaBallSpell.ChainDistance().ToString());
+                        }
+                        break;
                     case SpellName.BrownBelt:
                         if (characterSheet != null)
                         {
@@ -1280,7 +1286,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new Dictionary<SpellName, string>
                 {
-                    { (SpellName)1000, "Attacks for [damage] spell damage, chaining to adjacent enemies up to [spread] times" },
+                    { (SpellName)1000, "Attacks an enemy for [damage] spell damage, chaining to nearby enemies up to [spread] additional times" },
                     { SpellName.Addy, "Raises spell damage and puzzle damage by 1 for the current turn" },
                     { SpellName.AttackFly, "Attacks for [damage] spell damage, repeating in the same lane for 1 damage each turn for the current room" },
                     { SpellName.Backstabber, "Attacks for [damage] spell damage to the furthest enemy. Always crits primed enemies" },

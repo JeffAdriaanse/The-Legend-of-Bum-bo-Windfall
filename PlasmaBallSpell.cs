@@ -36,7 +36,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Electricity iteration count scales with spell damage
-        private static int ChainDistance()
+        public int ChainDistance()
         {
             return WindfallHelper.app.model.characterSheet.getItemDamage() + 1;
         }
