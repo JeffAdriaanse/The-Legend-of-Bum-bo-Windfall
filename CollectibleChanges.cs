@@ -2349,7 +2349,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             ObjectDataStorage.StoreData<int>(__instance, rockFriendsCounterKey, ObjectDataStorage.GetData<int>(__instance, rockFriendsCounterKey) + 1);
 			_rock_number = 1;
-			if (ObjectDataStorage.GetData<int>(__instance, rockFriendsCounterKey) > __instance.app.model.characterSheet.getItemDamage() + __instance.SpellDamageModifier())
+			if (ObjectDataStorage.GetData<int>(__instance, rockFriendsCounterKey) > __instance.app.model.characterSheet.getItemDamage() + 1)
 			{
 				_rock_number = 4;
                 ObjectDataStorage.StoreData<int>(__instance, rockFriendsCounterKey, 0);

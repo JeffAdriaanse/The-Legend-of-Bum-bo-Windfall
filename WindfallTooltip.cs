@@ -1266,7 +1266,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     case SpellName.RockFriends:
                         if (characterSheet != null)
                         {
-                            int itemDamage = characterSheet.getItemDamage();
+                            int itemDamage = characterSheet.getItemDamage() + 1;
                             value = value.Replace("[count]", itemDamage.ToString());
                             value = value.Replace("[target]", itemDamage == 1 ? "rock on a random enemy," : "rocks on random enemies, each");
                         }
