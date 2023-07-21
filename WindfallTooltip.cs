@@ -1268,7 +1268,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         {
                             int itemDamage = characterSheet.getItemDamage();
                             value = value.Replace("[count]", itemDamage.ToString());
-                            value = value.Replace("[target]", itemDamage == 1 ? "enemy" : "enemies");
+                            value = value.Replace("[target]", itemDamage == 1 ? "rock on a random enemy," : "rocks on random enemies, each");
                         }
                         break;
                 }
@@ -1390,7 +1390,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.RedD12, "Rerolls a row of tiles" },
                     { SpellName.Refresh, "Randomly adds 1 charge to a spell" },
                     { SpellName.Rock, "Attacks for [damage] spell damage to the furthest enemy" },
-                    { SpellName.RockFriends, "Randomly attacks [count] [target] for [damage] spell damage" },
+                    { SpellName.RockFriends, "Drops [count] [target] dealing [damage] spell damage" },
                     { SpellName.RoidRage, "Grants 100% crit chance for the next attack" },
                     { SpellName.RottenMeat, "Heals 1/2 heart, but randomly obscures 4 tiles" },
                     { SpellName.RubberBat, "Attacks for [damage] spell damage to all enemies in the front row and knocks them back" },
