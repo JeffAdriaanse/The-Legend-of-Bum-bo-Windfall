@@ -414,6 +414,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Damage reduction descriptors
                 string damageReductionText = WindfallTooltipDescriptions.EnemyDamageReductionWithValues(enemy);
 
+                //Omit irrelevant tooltip information
                 if (!enemy.alive)
                 {
                     movesText = string.Empty;
@@ -421,6 +422,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         damageText = string.Empty;
                     }
+                }
+                if (WindfallTooltipDescriptions.NonAttackingEnemies.Contains(enemy.enemyName) || enemy.gameObject.name.Contains("Tainted Shy Gal Mimic 2"))
+                {
+                    damageText = string.Empty;
                 }
 
                 ObjectTinter objectTinter = enemy.objectTinter;
@@ -1736,6 +1741,22 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Bosses
                     { typeof(BygoneGhostBoss), "\nLimits incoming damage to 1" },
                     { typeof(DukeBoss), "\nLimits incoming damage to [damage]" },
+                };
+            }
+        }
+
+        public static List<EnemyName> NonAttackingEnemies
+        {
+            get
+            {
+                return new List<EnemyName>
+                {
+                    EnemyName.Arsemouth,
+                    EnemyName.Curser,
+                    EnemyName.FloatingCultist,
+                    EnemyName.TaintedPeepEye,
+                    EnemyName.Screecher,
+                    EnemyName.Sucker,
                 };
             }
         }
