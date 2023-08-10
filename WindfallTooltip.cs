@@ -411,12 +411,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                         break;
                 }
 
-                string damageReductionText = string.Empty;
                 //Damage reduction descriptors
-                if (WindfallTooltipDescriptions.EnemyDamageReductionByType.TryGetValue(enemy.GetType(), out string value))
-                {
-                    damageReductionText = value;
-                }
+                string damageReductionText = WindfallTooltipDescriptions.EnemyDamageReductionWithValues(enemy);
 
                 if (!enemy.alive)
                 {
