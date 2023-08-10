@@ -465,6 +465,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
+            //Abort if tooltips are disabled
+            int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
+            if (tooltipSize == 0)
+            {
+                if (tooltip != null && tooltip.activeSelf)
+                {
+                    tooltip.SetActive(false);
+                }
+                return;
+            }
+
             //GUICamera
             Ray GUIray = WindfallHelper.app.view.GUICamera.cam.ScreenPointToRay(Input.mousePosition);
 
@@ -738,9 +749,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
 
-            int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
-
-            if (windfallTooltip == null || tooltipSize == 0)
+            if (windfallTooltip == null)
             {
                 if (tooltip.activeSelf)
                 {
@@ -756,6 +765,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             ResizeTooltip(windfallTooltip);
 
+            //Scale tooltips according to user settings
+            int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
             float tooltipScale = SCALE_SMALL;
             switch (tooltipSize)
             {
