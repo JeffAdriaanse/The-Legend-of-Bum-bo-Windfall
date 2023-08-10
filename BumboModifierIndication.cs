@@ -856,19 +856,19 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return "";
             }
 
-            string stacking = "Effect can be stacked further";
+            string stacking = "Effect can be stacked";
             string stackingCap = CollectibleChanges.PercentSpellEffectStackingCap(spellSource).ToString();
 
             switch (spellSource)
             {
                 case SpellName.BarbedWire:
-                    stacking += ", up to " + stackingCap + " damage";
+                    stacking += " up to " + stackingCap + " damage";
                     break;
                 case SpellName.OrangeBelt:
-                    stacking += ", up to " + stackingCap + " damage";
+                    stacking += " up to " + stackingCap + " damage";
                     break;
                 case SpellName.YellowBelt:
-                    stacking += ", up to " + stackingCap + "% dodge";
+                    stacking += " up to " + stackingCap + "% dodge";
                     break;
             }
 
