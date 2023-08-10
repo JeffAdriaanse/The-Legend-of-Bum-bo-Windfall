@@ -374,11 +374,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 string enemyNameText = string.Empty;
-                //Enemy and Boss names from type
-                if (WindfallTooltipDescriptions.EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType))
-                {
-                    enemyNameText = enemyNameFromType;
-                }
                 if (enemyNameText == string.Empty)
                 {
                     //Enemy names from name
@@ -393,6 +388,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (boss != null && WindfallTooltipDescriptions.BossDisplayNamesByBossName.TryGetValue(boss.bossName, out string bossNameFromName))
                     {
                         enemyNameText = bossNameFromName;
+                    }
+                }
+                if (enemyNameText == string.Empty)
+                {
+                    //Enemy and Boss names from type
+                    if (WindfallTooltipDescriptions.EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType))
+                    {
+                        enemyNameText = enemyNameFromType;
                     }
                 }
 
@@ -1569,7 +1572,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { EnemyName.Hanger, "Keeper" },
                     { EnemyName.Hopper, "Leaper" },
                     { EnemyName.Host, "Host" },
-                    { EnemyName.Imposter, "Imposter" },
+                    //{ EnemyName.Imposter, "Imposter" },
                     { EnemyName.Isaacs, "Isaac" },
                     { EnemyName.Larry, "Larry" },
                     { EnemyName.Leechling, "Suck" },
