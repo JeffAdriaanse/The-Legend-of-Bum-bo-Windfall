@@ -26,6 +26,42 @@ namespace The_Legend_of_Bum_bo_Windfall
             "Idle",
             "Prime",
         };
+        private static Dictionary<Type, string[]> EnemySpriteNames
+        {
+            get
+            {
+                return new Dictionary<Type, string[]>
+                {
+                    //Enemies
+                    { typeof(BoomFlyEnemy), new string[] { "Wings" } },
+                    { typeof(DigDigEnemy), new string[] { "Hiding" } },
+                    { typeof(FlipperEnemy), new string[] { "Legs" } },
+                    { typeof(GreedlingEnemy), new string[] { "legs" } },
+                    { typeof(HangerEnemy), new string[] { "KeeperBody", "Rope" } },
+                    { typeof(IsaacsEnemy), new string[] { "Legs" } },
+                    { typeof(LeecherEnemy), new string[] { "legs" } },
+                    { typeof(ManaWispEnemy), new string[] { "manawisp" } },
+                    { typeof(MeatGolemEnemy), new string[] { "Body", "Arm", "Leg" } },
+                    { typeof(ShitEnemy), new string[] { "Shit" } },
+                    { typeof(StoneEnemy), new string[] { "Stone" } },
+                    { typeof(WilloWispEnemy), new string[] { "Flame" } },
+
+					//Bosses
+                    { typeof(BygoneBoss), new string[] { "blue_baby" } },
+                    { typeof(BygoneGhostBoss), new string[] { "blue_baby" } },
+                    { typeof(CaddyBoss), new string[] { "corpse", "Heart" } },
+                    { typeof(DukeBoss), new string[] { "Inhale", "Exhale" } },
+                    { typeof(DuskBoss), new string[] { "wraith" } },
+                    { typeof(GibsBoss), new string[] { "Gibs Cube" } },
+                    { typeof(GizzardaBoss), new string[] { "flipper" } },
+                    { typeof(LoafBoss), new string[] { "Arms", "Head", "Legs" } },
+                    { typeof(PeepsBoss), new string[] { "Body", "Arm", "Leg" } },
+                    { typeof(PyreBoss), new string[] { "jaw", "fire", "skull" } },
+                    { typeof(ShyGalBoss), new string[] { "tatertot" } },
+                    { typeof(TaintedDuskBoss), new string[] { "wraith" } },
+                };
+            }
+        }
         //Adds colliders to enemy meshes
         [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.BaseInit))]
         static void Enemy_BaseInit(Enemy __instance)
@@ -77,25 +113,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             ObjectDataStorage.StoreData<bool>(__instance, updatedCollidersKey, true);
-        }
-        private static Dictionary<Type, string[]> EnemySpriteNames
-        {
-            get
-            {
-                return new Dictionary<Type, string[]>
-                {
-                    //Enemies
-                    { typeof(DigDigEnemy), new string[] { "Hiding" } },
-                    { typeof(MeatGolemEnemy), new string[] { "Body", "Arm", "Leg" } },
-                    { typeof(ShitEnemy), new string[] { "Shit" } },
-                    { typeof(StoneEnemy), new string[] { "Stone" } },
-                    { typeof(WilloWispEnemy), new string[] { "Flame" } },
-
-					//Bosses
-                    { typeof(BygoneBoss), new string[] { "blue_baby" } },
-                    { typeof(BygoneGhostBoss), new string[] { "blue_baby" } },
-                };
-            }
         }
 
         //Changes champion generation such that each enemy has a chance to spawn as a champion instead of only one champion at most per room
