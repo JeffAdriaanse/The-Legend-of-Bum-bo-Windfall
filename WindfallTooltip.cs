@@ -1345,7 +1345,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     { (SpellName)1000, "Attacks an enemy for [damage] spell damage, chaining to nearby enemies up to [spread] additional times" },
                     { SpellName.Addy, "Raises spell damage and puzzle damage by 1 for the current turn" },
-                    { SpellName.AttackFly, "Attacks for [damage] spell damage, repeating in the same lane for 1 damage each turn for the current room" },
+                    { SpellName.AttackFly, "Attacks for [damage] spell damage, repeating in the same lane for 1 damage each turn" },
                     { SpellName.Backstabber, "Attacks for [damage] spell damage to the furthest enemy. Always crits primed enemies" },
                     { SpellName.BarbedWire, "Raises retaliatory damage dealt to attacking enemies by 1 for the current room, up to [stacking]" },
                     { SpellName.BeckoningFinger, "Pulls a random enemy to the front row and poisons it" },
