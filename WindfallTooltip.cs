@@ -348,8 +348,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 Boss boss = enemy.GetComponent<Boss>();
 
+                //Movement
                 string movesText = "\nMovement: " + enemy.turns.ToString();
 
+                //Damage
                 string damageText = "\nDamage: ";
                 int damage = 1;
                 if (enemy.berserk || enemy.brieflyBerserk == 1)
@@ -373,6 +375,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         break;
                 }
 
+                //Enemy names
                 string enemyNameText = string.Empty;
                 if (enemyNameText == string.Empty)
                 {
@@ -399,8 +402,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
 
+                //Resistances
                 string resitanceText = string.Empty;
-                //Resistance descriptors
                 switch (enemy.attackImmunity)
                 {
                     case Enemy.AttackImmunity.ReducePuzzleDamage:
@@ -410,12 +413,51 @@ namespace The_Legend_of_Bum_bo_Windfall
                         resitanceText = "\nResists spell damage";
                         break;
                     case Enemy.AttackImmunity.SuperAttack:
-                        resitanceText = "\nCannot be damaged";
+                        resitanceText = "\nInvulnerable";
                         break;
                 }
+                if (enemy is CaddyBoss)
+                {
+                    CaddyBoss caddyBoss = (CaddyBoss)enemy;
+                    if (!caddyBoss.IsChestOpen()) { resitanceText = "\nInvulnerable"; }
+                }
 
-                //Damage reduction descriptors
+                //Damage reduction
                 string damageReductionText = WindfallTooltipDescriptions.EnemyDamageReductionWithValues(enemy);
+
+                //Blocking
+                string blockText = string.Empty;
+                bool block = false;
+                if (enemy is BlackBlobbyEnemy)
+                {
+                    BlackBlobbyEnemy blackBlobbyEnemy = (BlackBlobbyEnemy)enemy;
+                    if (blackBlobbyEnemy.healthState == BlackBlobbyEnemy.HealthState.full) { block = true; }
+                }
+                if (enemy is GreenBlobbyEnemy)
+                {
+                    GreenBlobbyEnemy greenBlobbyEnemy = (GreenBlobbyEnemy)enemy;
+                    if (greenBlobbyEnemy.healthState == GreenBlobbyEnemy.HealthState.full) { block = true; }
+                }
+                if (enemy is RedBlobbyEnemy)
+                {
+                    RedBlobbyEnemy redBlobbyEnemy = (RedBlobbyEnemy)enemy;
+                    if (redBlobbyEnemy.healthState == RedBlobbyEnemy.HealthState.full) { block = true; }
+                }
+                if (WindfallHelper.app.model.aiModel.battlefieldEffects[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[enemy.position.x, enemy.position.y]].effect == BattlefieldEffect.Effect.Shield)
+                {
+                    block = true;
+                }
+                if (block)
+                {
+                    blockText = "\nBlocks the next hit";
+                }
+
+                //Enemy descriptions
+                string descriptionText = string.Empty;
+                if (WindfallTooltipDescriptions.EnemyDescriptions.TryGetValue(enemy.enemyName, out string value))
+                {
+                    descriptionText = "\n" + value;
+                }
 
                 //Omit irrelevant tooltip information
                 if (!enemy.alive)
@@ -440,7 +482,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
 
-                displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + resitanceText + damageReductionText;
+                displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + resitanceText + damageReductionText + blockText + descriptionText;
                 return;
             }
         }
@@ -1699,6 +1741,26 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { typeof(TaintedDuskBoss), "Tainted Dusk" },
                     //TaintedPeeper
                     //TaintedShyGal
+                };
+            }
+        }
+
+        public static Dictionary<EnemyName, string> EnemyDescriptions
+        {
+            get
+            {
+                return new Dictionary<EnemyName, string>
+                {
+                    { EnemyName.BlackBlobby, "Drains mana when hurt" },
+                    { EnemyName.BoomFly, "Explodes on death" },
+                    { EnemyName.Greedling, "Steals a coin on hit" },
+                    { EnemyName.Isaacs, "Saps movement on death" },
+                    { EnemyName.MeatGolem, "Saps movement on hit" },
+                    { EnemyName.MegaPoofer, "Explodes on death, healing nearby enemies by 2" },
+                    { EnemyName.Poofer, "Explodes on death, healing nearby enemies by 2" },
+                    { EnemyName.Sucker, "Reduces mana gain by 1" },
+                    { EnemyName.Tader, "Shuffles the puzzle board on hit" },
+                    { EnemyName.Tado, "Spawns a Leaper on death" },
                 };
             }
         }
