@@ -581,6 +581,24 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
+        //Patch: Prevents counter damage from affecting Cursers when they curse the player
+        [HarmonyPrefix, HarmonyPatch(typeof(EnemiesAttackEvent), "NextEvent")]
+        static bool EnemiesAttackEvent_NextEvent(EnemiesAttackEvent __instance, ref BumboEvent __result)
+        {
+            if (__instance.app.model.aiModel.attackingEnemies.Count > 0)
+            {
+                //Abort in case CurserEnemy
+                if (__instance.app.model.aiModel.attackingEnemies[0] != null && __instance.app.model.aiModel.attackingEnemies[0] is CurserEnemy)
+                {
+                    __instance.app.model.aiModel.attackingEnemies.RemoveAt(0);
+                    __result = new EnemiesAttackEvent();
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         //Patch: Fixes Mega Bean forcefully ending the player's turn
         [HarmonyPatch(typeof(MegaBeanSpell), "AttackAnimation")]
         class MegaBeanSpell_End_Event_Patch
