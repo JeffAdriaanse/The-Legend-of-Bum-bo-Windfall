@@ -572,12 +572,18 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(BumboCounterEvent), "Execute")]
         static bool BumboCounterEvent_Execute(BumboCounterEvent __instance)
         {
-            if (__instance.app.model.aiModel.attackingEnemies.Count > 0 && (__instance.app.model.aiModel.attackingEnemies[0] == null || __instance.app.model.aiModel.attackingEnemies[0].health <= 0f))
+            if (__instance.app.model.aiModel.attackingEnemies.Count > 0)
             {
-                //Null check has failed. End event
-                __instance.End();
-                return false;
+                Enemy enemy = __instance.app.model.aiModel.attackingEnemies[0];
+
+                //Abort in case of null or dead enemy
+                if (enemy == null || enemy.health <= 0f || !__instance.app.model.enemies.Contains(enemy))
+                {
+                    __instance.End();
+                    return false;
+                }
             }
+
             return true;
         }
 
