@@ -66,6 +66,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.BaseInit))]
         static void Enemy_BaseInit(Enemy __instance)
         {
+			//Do not apply to TutorialEnemy
+			if (__instance is TutorialEnemy) { return; }
+
 			//Don't update colliders if they have already been updated 
 			if (ObjectDataStorage.GetData<bool>(__instance, updatedCollidersKey))
 			{
