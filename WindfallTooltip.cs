@@ -376,31 +376,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Enemy names
-                string enemyNameText = string.Empty;
-                if (enemyNameText == string.Empty)
-                {
-                    //Enemy names from name
-                    if (WindfallTooltipDescriptions.EnemyDisplayNamesByEnemyName.TryGetValue(enemy.enemyName, out string enemyNameFromName))
-                    {
-                        enemyNameText = enemyNameFromName;
-                    }
-                }
-                if (enemyNameText == string.Empty)
-                {
-                    //Boss names from name
-                    if (boss != null && WindfallTooltipDescriptions.BossDisplayNamesByBossName.TryGetValue(boss.bossName, out string bossNameFromName))
-                    {
-                        enemyNameText = bossNameFromName;
-                    }
-                }
-                if (enemyNameText == string.Empty)
-                {
-                    //Enemy and Boss names from type
-                    if (WindfallTooltipDescriptions.EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType))
-                    {
-                        enemyNameText = enemyNameFromType;
-                    }
-                }
+                string enemyNameText = WindfallTooltipDescriptions.EnemyDisplayName(enemy);
 
                 //Resistances
                 string resitanceText = string.Empty;
@@ -1586,6 +1562,50 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.WhiteCandle, "Randomly destroys a curse tile at the start of each turn" },
                 };
             }
+        }
+
+        public static string EnemyDisplayName(Enemy enemy)
+        {
+            if (enemy == null) { return string.Empty; }
+
+            //Get boss
+            Boss boss = null;
+            if (enemy is Boss) { boss = enemy as Boss; }
+
+            //Enemy names
+            string enemyNameText = string.Empty;
+            if (enemyNameText == string.Empty)
+            {
+                //Enemy names from name
+                if (EnemyDisplayNamesByEnemyName.TryGetValue(enemy.enemyName, out string enemyNameFromName))
+                {
+                    enemyNameText = enemyNameFromName;
+                }
+            }
+            if (enemyNameText == string.Empty)
+            {
+                //Boss names from name
+                if (boss != null && BossDisplayNamesByBossName.TryGetValue((enemy as Boss).bossName, out string bossNameFromName))
+                {
+                    enemyNameText = bossNameFromName;
+                }
+            }
+            if (enemyNameText == string.Empty)
+            {
+                //Enemy and Boss names from type
+                if (EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType))
+                {
+                    enemyNameText = enemyNameFromType;
+                }
+            }
+
+            //Get Flipper
+            if (enemy is FlipperEnemy)
+            {
+                enemyNameText = enemy.attackImmunity == Enemy.AttackImmunity.ReducePuzzleDamage ? "Nib" : "Jib";
+            }
+
+            return enemyNameText;
         }
 
         public static Dictionary<EnemyName, string> EnemyDisplayNamesByEnemyName
