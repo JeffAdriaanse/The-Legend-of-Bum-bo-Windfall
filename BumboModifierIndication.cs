@@ -413,16 +413,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             bumboModifier.timerTransform.gameObject.SetActive(bumboModifier.modifierType == CharacterSheet.BumboModifierObject.ModifierType.Round);
 
-            bool stackingActive = false;
-            if (bumboModifier.canStack)
-            {
-                stackingActive = true;
-                if (int.TryParse(bumboModifier.value, out int result) && CollectibleChanges.PercentSpellEffectStackingCap(bumboModifier.spellSource) > 0)
-                {
-                    stackingActive = (result < CollectibleChanges.PercentSpellEffectStackingCap(bumboModifier.spellSource));
-                }
-            }
-            bumboModifier.stackingTransform.gameObject.SetActive(stackingActive);
+            bumboModifier.stackingTransform.gameObject.SetActive(bumboModifier.canStack);
 
             bool overrideIconChange = false;
             if (bumboModifier.spellSource == SpellName.TrashLid && bumboModifier.value == "1")
