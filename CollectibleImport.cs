@@ -87,11 +87,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void AddSpellMaterialPages(BumboApplication app)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             SpellCategory[] spellCategories = new SpellCategory[]
             {
@@ -190,11 +185,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void ReplaceSpellIconMaterials(BumboApplication app)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             SpellCategory[] spellCategories = new SpellCategory[]
             {
@@ -301,11 +291,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void ReplaceTrinketIconMaterials(TrinketModel trinketModel)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             TrinketCategory[] trinketCategories = new TrinketCategory[]
             {

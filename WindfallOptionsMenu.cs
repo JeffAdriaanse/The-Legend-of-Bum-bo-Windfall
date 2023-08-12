@@ -31,11 +31,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void SetUpWindfallOptionsMenu(GameObject menuView, bool pauseMenu)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
+
             //Add sprites
             toggleActive = assets.LoadAsset<Sprite>("UI Toggle Active Thick");
             toggleInactive = assets.LoadAsset<Sprite>("UI Toggle Inactive Thick");
@@ -168,11 +164,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void CreateWindfallOptionsMenu(GameObject menuView)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             //Get font asset
             TMP_FontAsset edmundmcmillen_regular = WindfallHelper.GetEdmundMcmillenFont();

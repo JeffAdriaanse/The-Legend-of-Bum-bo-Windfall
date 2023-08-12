@@ -9,14 +9,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static GameObject winStreakCounter;
         public static void CreateWinStreakCounter(TitleController titleController)
         {
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-
-            winStreakCounter = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Win Streak Counter"), titleController.mainMenu.transform);
+            winStreakCounter = UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Win Streak Counter"), titleController.mainMenu.transform);
             winStreakCounter.transform.SetSiblingIndex(1);
             RectTransform winStreakCounterRect = winStreakCounter.GetComponent<RectTransform>();
             winStreakCounterRect.anchoredPosition = new Vector2(260, -50);

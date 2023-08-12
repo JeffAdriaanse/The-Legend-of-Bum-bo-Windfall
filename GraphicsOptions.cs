@@ -30,11 +30,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void SetUpGraphicsOptions(GameObject menuView, bool pauseMenu)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
+
             //Add sprites
             toggleActive = assets.LoadAsset<Sprite>("UI Toggle Active Thick");
             toggleInactive = assets.LoadAsset<Sprite>("UI Toggle Inactive Thick");
@@ -63,15 +59,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void CreateGraphicsMenu(GameObject menuView)
         {
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-
             //Create graphics menu
-            graphicsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Graphics Menu"), menuView.transform.Find("Graphics Menu"));
+            graphicsMenu = UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Graphics Menu"), menuView.transform.Find("Graphics Menu"));
             graphicsMenu.transform.SetSiblingIndex(1);
             RectTransform graphicsMenuRect = graphicsMenu.GetComponent<RectTransform>();
             graphicsMenuRect.anchoredPosition = new Vector2(240, -30);
@@ -302,15 +291,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static void MoveMouseToNewCanvas(GameObject menuView)
         {
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-
             GameObject mouse = menuView.transform.Find("Mouse").gameObject;
-            GameObject canvasObject = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Mouse Canvas"), menuView.transform);
+            GameObject canvasObject = UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Mouse Canvas"), menuView.transform);
             canvasObject.GetComponent<RectTransform>().SetAsLastSibling();
 
             mouseCanvas = canvasObject.GetComponent<Canvas>();
@@ -363,11 +345,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
 
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             //Only apply depth of field if the camera is the main game camera
             bool mainGameCamera = camera.GetComponent<CameraView>() != null && camera.GetComponent<GUISide>() == null;

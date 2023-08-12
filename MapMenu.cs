@@ -64,11 +64,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void GrabAssets()
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             //Grab Bum-bo head sprite
             switch (app.model.characterSheet.bumboType)
@@ -117,14 +112,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             mapMenuButton.name = "Map Menu Button";
 
             //Change button texture
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
             Material mapButtonMaterial = mapMenuButton.GetComponent<MeshRenderer>().material;
-            mapButtonMaterial.mainTexture = assets.LoadAsset<Texture>("Map Button");
+            mapButtonMaterial.mainTexture = Windfall.assetBundle.LoadAsset<Texture>("Map Button");
             mapButtonMaterial.mainTextureOffset = new Vector2(0, -0.08f);
             mapButtonMaterial.mainTextureScale = new Vector2(1.10f, 1.10f);
         }
@@ -151,29 +140,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             gamblingMapMenuButton.name = "Gambling Map Menu Button";
 
             //Change button texture
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
             Material mapButtonMaterial = gamblingMapMenuButton.GetComponent<MeshRenderer>().material;
-            mapButtonMaterial.mainTexture = assets.LoadAsset<Texture>("Map Button");
+            mapButtonMaterial.mainTexture = Windfall.assetBundle.LoadAsset<Texture>("Map Button");
             mapButtonMaterial.mainTextureOffset = new Vector2(0, -0.08f);
             mapButtonMaterial.mainTextureScale = new Vector2(1.10f, 1.10f);
         }
 
         private static void CreateMapMenuCanvas()
         {
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-
             //Canvas
-            GameObject mapMenuCanvasPrefab = assets.LoadAsset<GameObject>("Map Menu Canvas");
+            GameObject mapMenuCanvasPrefab = Windfall.assetBundle.LoadAsset<GameObject>("Map Menu Canvas");
             mapMenuCanvas = UnityEngine.Object.Instantiate(mapMenuCanvasPrefab);
             mapMenuCanvas.transform.SetParent(app.view.transform);
             mapMenuCanvas.transform.SetAsFirstSibling();

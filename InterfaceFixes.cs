@@ -1495,13 +1495,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             GameObject cupGameSign = __instance.view.cupGameSignView.gameObject;
 
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-            var texture = assets.LoadAsset<Texture2D>("Cash Register");
+            var texture = Windfall.assetBundle.LoadAsset<Texture2D>("Cash Register");
 
             cupGameSign.GetComponent<MeshRenderer>().material.mainTexture = texture;
         }
@@ -1517,13 +1511,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             GameObject wheelSliceHeart = __instance.statSlices[5];
 
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-            var texture = assets.LoadAsset<Texture2D>("Wheel");
+            var texture = Windfall.assetBundle.LoadAsset<Texture2D>("Wheel");
 
             wheelSliceHeart.GetComponent<MeshRenderer>().material.mainTexture = texture;
         }
@@ -1534,13 +1522,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             GameObject wheelBack = __instance.transform.Find("Wheel_Back").gameObject;
 
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-            var mesh = assets.LoadAsset<Mesh>("Wheel_Back_Updated");
+            var mesh = Windfall.assetBundle.LoadAsset<Mesh>("Wheel_Back_Updated");
 
             wheelBack.GetComponent<MeshFilter>().mesh = mesh;
         }
@@ -1551,13 +1533,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             GameObject useIcon = __instance.spellTypeItem;
 
-            AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
-            var iconMesh = assets.LoadAsset<Mesh>("Use_Spell_Icon");
+            var iconMesh = Windfall.assetBundle.LoadAsset<Mesh>("Use_Spell_Icon");
 
             useIcon.GetComponent<MeshFilter>().mesh = iconMesh;
         }
@@ -1569,11 +1545,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void SelectCharacterView_Start(SelectCharacterView __instance)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             GameObject stoutStatsObject = __instance.stout.transform.Find("Bumbo The Stout").Find("stout_select").Find("bumbo_select_stats").gameObject;
             var textureStout = assets.LoadAsset<Texture2D>("Stout Stats");
@@ -1599,13 +1570,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Change hand color if character is Bum-bo the Empty
             if (_bumbo_type == CharacterSheet.BumboType.Eden)
             {
-                AssetBundle assets = Windfall.assetBundle;
-                if (assets == null)
-                {
-                    Debug.Log("Failed to load AssetBundle!");
-                    return;
-                }
-                var emptyHandTexture = assets.LoadAsset<Texture2D>("Empty Throw Hand");
+                var emptyHandTexture = Windfall.assetBundle.LoadAsset<Texture2D>("Empty Throw Hand");
 
                 foreach (GameObject gameObject in new GameObject[]
                 {

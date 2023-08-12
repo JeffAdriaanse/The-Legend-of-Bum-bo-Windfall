@@ -121,12 +121,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 TermData termData = LanguageSourceData.GetTermData(term);
-                if (termData == null)
-                {
-                    Debug.LogWarning("[The Legend of Bum-bo: Windfall] Term " + term + " is null");
-                    break;
-                }
-                else
+                if (termData != null)
                 {
                     string[] languages = termData.Languages;
                     int englishIndex = 0;

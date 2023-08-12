@@ -206,11 +206,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void CreateTrinketGlitches(GameObject[] trinkets)
         {
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             for (int trinketCounter = 0; trinketCounter < trinketGlitches.Length; trinketCounter++)
             {
@@ -1215,11 +1210,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Title box coins
             AssetBundle assets = Windfall.assetBundle;
-            if (assets == null)
-            {
-                Debug.Log("Failed to load AssetBundle!");
-                return;
-            }
 
             var CoinsMesh = assets.LoadAsset<Mesh>("Coins_Model_V3");
             var CoinsTexture = assets.LoadAsset<Texture2D>("Title_Coins_Texture_V2");

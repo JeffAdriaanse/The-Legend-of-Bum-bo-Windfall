@@ -81,7 +81,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			try
 			{
 				windfallDoc.LoadXml(ReadXml());
-				Console.WriteLine("[The Legend of Bum-bo: Windfall] Loading windfall saved state from " + FilePath);
+                Debug.Log("[The Legend of Bum-bo: Windfall] Loading windfall saved state from " + FilePath);
 			}
 			catch (Exception ex)
 			{
@@ -94,12 +94,12 @@ namespace The_Legend_of_Bum_bo_Windfall
 			{
 				if (windfallDoc.SelectSingleNode("/save/vanilla") == null || app.controller.savedStateController == null || !SavedStateController.HasSavedState())
 				{
-					Console.WriteLine("[The Legend of Bum-bo: Windfall] No vanilla saved state detected; aborting loading of Windfall saved state");
+                    Debug.Log("[The Legend of Bum-bo: Windfall] No vanilla saved state detected; aborting loading of Windfall saved state");
 					windfallDoc = null;
 				}
 				else if (windfallDoc.SelectSingleNode("/save/vanilla").Attributes["bytes"].Value != (string)AccessTools.Method(typeof(SavedStateController), "ReadXml").Invoke(app.controller.savedStateController, new object[] { }))
 				{
-					Console.WriteLine("[The Legend of Bum-bo: Windfall] Incompatible vanilla saved state detected; aborting loading of Windfall saved state");
+                    Debug.Log("[The Legend of Bum-bo: Windfall] Incompatible vanilla saved state detected; aborting loading of Windfall saved state");
 					windfallDoc = null;
 				}
 			}
@@ -1001,7 +1001,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			StringWriter stringWriter = new StringWriter();
 			xmlDocument.Save(stringWriter);
 			WriteXml(stringWriter.ToString());
-			Console.WriteLine("[The Legend of Bum-bo: Windfall] Saving coin count");
+            Debug.Log("[The Legend of Bum-bo: Windfall] Saving coin count");
 		}
 	}
 }
