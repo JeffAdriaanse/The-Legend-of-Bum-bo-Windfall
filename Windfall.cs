@@ -19,10 +19,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static AssetBundle assetBundle;
         private void Awake()
         {
-            Logger.LogInfo($"Loaded {modGUID}");
+            Logger.LogInfo($"Loading {modGUID}");
 
             //Load assets
-            LoadAssets();
+            if (!LoadAssets())
+            {
+                Logger.LogError("Could not find assets file for The Legend of Bum-bo: Windfall. Ensure 'windfall' file is placed in the mod folder.");
+                return;
+            }
 
             //Patching with harmony
             harmony.PatchAll();
@@ -37,9 +41,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             TypoFixes.Awake();
             SaveChanges.Awake();
             OtherChanges.Awake();
+
+            Logger.LogInfo($"Loaded {modGUID}");
         }
 
-        public static void LoadAssets()
+        public static bool LoadAssets()
         {
             foreach (string path in AssetBundlePaths)
             {
@@ -52,6 +58,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
                 }
             }
+
+            return assetBundle != null;
         }
 
         private static List<string> AssetBundlePaths
