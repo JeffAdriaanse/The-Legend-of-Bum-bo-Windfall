@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
@@ -429,11 +430,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Enemy descriptions
-                string descriptionText = string.Empty;
-                if (WindfallTooltipDescriptions.EnemyDescriptions.TryGetValue(enemy.enemyName, out string value))
-                {
-                    descriptionText = "\n" + value;
-                }
+                string descriptionText = WindfallTooltipDescriptions.EnemyDisplayDescription(enemy);
 
                 //Omit irrelevant tooltip information
                 if (!enemy.alive)
@@ -1765,22 +1762,28 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        public static Dictionary<EnemyName, string> EnemyDescriptions
+        public static string EnemyDisplayDescription(Enemy enemy)
+        {
+            if (EnemyDescriptions.TryGetValue(EnemyDisplayName(enemy), out string value)) { return "\n" + value; }
+            return string.Empty;
+        }
+
+        public static Dictionary<string, string> EnemyDescriptions
         {
             get
             {
-                return new Dictionary<EnemyName, string>
+                return new Dictionary<string, string>
                 {
-                    { EnemyName.BlackBlobby, "Drains mana when hurt" },
-                    { EnemyName.BoomFly, "Explodes on death" },
-                    { EnemyName.Greedling, "Steals a coin on hit" },
-                    { EnemyName.Isaacs, "Saps movement on death" },
-                    { EnemyName.MeatGolem, "Saps movement on hit" },
-                    { EnemyName.MegaPoofer, "Explodes on death, healing nearby enemies by 2" },
-                    { EnemyName.Poofer, "Explodes on death, healing nearby enemies by 2" },
-                    { EnemyName.Sucker, "Reduces mana gain by 1" },
-                    { EnemyName.Tader, "Shuffles the puzzle board on hit" },
-                    { EnemyName.Tado, "Spawns a Leaper on death" },
+                    { "Black Blobby", "Drains mana when hurt" },
+                    { "Boom Fly", "Explodes on death" },
+                    { "Greedling", "Steals a coin on hit" },
+                    { "Isaac", "Saps movement on de ath" },
+                    { "Meat Golum", "Saps movement on hit" },
+                    { "Mega Poofer", "Explodes on death, healing nearby enemies by 2" },
+                    { "Poofer", "Explodes on death, healing nearby enemies by 2" },
+                    { "Sucker", "Reduces mana gain by 1" },
+                    { "Daddy Tato", "Shuffles the puzzle board on hit" },
+                    { "Tato Kid", "Spawns a Leaper on death" },
                 };
             }
         }
