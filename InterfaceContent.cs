@@ -72,6 +72,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
             }
         }
+        //Patch: Display bumbo modifiers on UseTrinket Use
+        [HarmonyPostfix, HarmonyPatch(typeof(UseTrinket), "Use")]
+        static void UseTrinket_Use_ModifierDisplay(UseTrinket __instance)
+        {
+            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
+        }
         //Patch: Display bumbo modifiers on TakeDamage
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "TakeDamage")]
         static void BumboController_TakeDamage_ModifierDisplay(BumboController __instance)
