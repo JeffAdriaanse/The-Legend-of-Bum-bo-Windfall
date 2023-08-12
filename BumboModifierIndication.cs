@@ -374,7 +374,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     bumboModifier.modifierDisplayCollectibleTransform.GetComponent<MeshRenderer>().materials = newMaterials.ToArray();
                 }
-                Debug.Log("Materials Set: " + newMaterials.Count);
             }
             else
             {
