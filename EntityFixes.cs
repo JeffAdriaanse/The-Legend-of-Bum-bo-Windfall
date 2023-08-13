@@ -5,6 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using DG.Tweening;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -311,6 +312,34 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.SpawnDust();
             //Set flag to disable spawning dust
             ObjectDataStorage.StoreData<bool>(__instance.gameObject, spawnDustKey, false);
+        }
+
+        //Fixes Host erroneously ending events
+        [HarmonyPrefix, HarmonyPatch(typeof(HostEnemy), "Close")]
+        static bool HostEnemy_Close(HostEnemy __instance)
+        {
+            bool closed = (bool)AccessTools.Field(typeof(HostEnemy), "closed").GetValue(__instance);
+
+            //Modify fields
+            AccessTools.Field(typeof(HostEnemy), "closed").SetValue(__instance, true);
+            __instance.noFlyOver = false;
+            __instance.turnsMade++;
+
+            //Only animate if closing
+            if (!closed)
+            {
+                //Reset animation
+                DOTween.Kill(__instance.tweenID, false);
+                __instance.enemySprites.transform.localScale = Vector3.one;
+
+                //Animate
+                DOTween.Sequence().Append(ShortcutExtensions.DOScale(__instance.enemySprites.transform, new Vector3(0.5714f, 1.75f, 1f), __instance.AttackAnimTime(0.1f)).SetEase(Ease.OutQuad)).Append(ShortcutExtensions.DOScale(__instance.enemySprites.transform, new Vector3(1.75f, 0.5714f, 1f), __instance.AttackAnimTime(0.1f))).AppendCallback(delegate
+                {
+                    __instance.AnimateIdle();
+                }).SetId(__instance.tweenID);
+            }
+
+            return false;
         }
 
         public static Dictionary<EnemyName, int> EnemyBaseHealth
