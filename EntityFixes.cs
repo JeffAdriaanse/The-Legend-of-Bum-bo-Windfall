@@ -342,6 +342,23 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
+        //Prevents Host from attempting to open while beneath a flying enemy 
+        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.WillSkip))]
+        static void Enemy_WillSkip(Enemy __instance, ref bool __result)
+        {
+            if (__instance is HostEnemy)
+            {
+                HostEnemy hostEnemy = __instance as HostEnemy;
+
+                //Do not attempt to open if a flying enemy is above
+                if (hostEnemy.IsClosed() && hostEnemy.app.model.aiModel.battlefieldPositions[hostEnemy.app.model.aiModel.battlefieldPositionIndex[hostEnemy.battlefieldPosition.x, hostEnemy.battlefieldPosition.y]].owner_air != null)
+                {
+                    //Skip turn
+                    __result = true;
+                }
+            }
+        }
+
         public static Dictionary<EnemyName, int> EnemyBaseHealth
         {
             get
