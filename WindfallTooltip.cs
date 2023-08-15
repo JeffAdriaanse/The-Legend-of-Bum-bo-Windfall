@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityStandardAssets.ImageEffects;
+using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -347,10 +348,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     displayAnchor = Anchor.Right;
                 }
 
-                Boss boss = enemy.GetComponent<Boss>();
-
                 //Movement
-                string movesText = "\nMovement: " + enemy.turns.ToString();
+                string movesText = "\nActions: " + enemy.turns.ToString();
 
                 //Damage
                 string damageText = "\nDamage: ";
@@ -389,45 +388,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                     case Enemy.AttackImmunity.ReduceSpellDamage:
                         resitanceText = "\nResists spell damage";
                         break;
-                    case Enemy.AttackImmunity.SuperAttack:
-                        resitanceText = "\nInvulnerable";
-                        break;
                 }
-                if (enemy is CaddyBoss)
-                {
-                    CaddyBoss caddyBoss = (CaddyBoss)enemy;
-                    if (!caddyBoss.IsChestOpen()) { resitanceText = "\nInvulnerable"; }
-                }
+
+                //Invincibility
+                string invincibilityText = WindfallTooltipDescriptions.EnemyIsInvincible(enemy) ? "\nInvulnerable" : string.Empty;
 
                 //Damage reduction
                 string damageReductionText = WindfallTooltipDescriptions.EnemyDamageReductionWithValues(enemy);
 
                 //Blocking
-                string blockText = string.Empty;
-                bool block = false;
-                if (enemy is BlackBlobbyEnemy)
-                {
-                    BlackBlobbyEnemy blackBlobbyEnemy = (BlackBlobbyEnemy)enemy;
-                    if (blackBlobbyEnemy.healthState == BlackBlobbyEnemy.HealthState.full) { block = true; }
-                }
-                if (enemy is GreenBlobbyEnemy)
-                {
-                    GreenBlobbyEnemy greenBlobbyEnemy = (GreenBlobbyEnemy)enemy;
-                    if (greenBlobbyEnemy.healthState == GreenBlobbyEnemy.HealthState.full) { block = true; }
-                }
-                if (enemy is RedBlobbyEnemy)
-                {
-                    RedBlobbyEnemy redBlobbyEnemy = (RedBlobbyEnemy)enemy;
-                    if (redBlobbyEnemy.healthState == RedBlobbyEnemy.HealthState.full) { block = true; }
-                }
-                if (WindfallHelper.app.model.aiModel.battlefieldEffects[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[enemy.position.x, enemy.position.y]].effect == BattlefieldEffect.Effect.Shield)
-                {
-                    block = true;
-                }
-                if (block)
-                {
-                    blockText = "\nBlocks the next hit";
-                }
+                string blockText = WindfallTooltipDescriptions.EnemyIsBlocking(enemy) ? "\nBlocks the next hit" : string.Empty;
 
                 //Enemy descriptions
                 string descriptionText = WindfallTooltipDescriptions.EnemyDisplayDescription(enemy);
@@ -435,9 +405,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Omit irrelevant tooltip information
                 if (!enemy.alive)
                 {
-                    movesText = string.Empty;
                     if (enemy is not StonyEnemy)
                     {
+                        movesText = string.Empty;
                         damageText = string.Empty;
                     }
                 }
@@ -446,6 +416,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     damageText = string.Empty;
                 }
 
+                //Tint enemy
                 ObjectTinter objectTinter = enemy.objectTinter;
                 if (objectTinter != null)
                 {
@@ -455,7 +426,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
 
-                displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + resitanceText + damageReductionText + blockText + descriptionText;
+                //Output description
+                displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + invincibilityText + resitanceText + damageReductionText + blockText + descriptionText;
                 return;
             }
         }
@@ -1604,8 +1576,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return enemyNameText;
         }
-
-        public static Dictionary<EnemyName, string> EnemyDisplayNamesByEnemyName
+        private static Dictionary<EnemyName, string> EnemyDisplayNamesByEnemyName
         {
             get
             {
@@ -1663,8 +1634,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 };
             }
         }
-
-        public static Dictionary<BossName, string> BossDisplayNamesByBossName
+        private static Dictionary<BossName, string> BossDisplayNamesByBossName
         {
             get
             {
@@ -1686,8 +1656,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 };
             }
         }
-
-        public static Dictionary<Type, string> EnemyDisplayNamesByType
+        private static Dictionary<Type, string> EnemyDisplayNamesByType
         {
             get
             {
@@ -1767,8 +1736,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (EnemyDescriptions.TryGetValue(EnemyDisplayName(enemy), out string value)) { return "\n" + value; }
             return string.Empty;
         }
-
-        public static Dictionary<string, string> EnemyDescriptions
+        private static Dictionary<string, string> EnemyDescriptions
         {
             get
             {
@@ -1845,6 +1813,88 @@ namespace The_Legend_of_Bum_bo_Windfall
                     EnemyName.TaintedPeepEye,
                     EnemyName.Screecher,
                     EnemyName.Sucker,
+                };
+            }
+        }
+
+        public static bool EnemyIsBlocking(Enemy enemy)
+        {
+            bool block = false;
+
+            //Blobby passive ability
+            if (enemy is BlackBlobbyEnemy)
+            {
+                BlackBlobbyEnemy blackBlobbyEnemy = (BlackBlobbyEnemy)enemy;
+                if (blackBlobbyEnemy.healthState == BlackBlobbyEnemy.HealthState.full) { block = true; }
+            }
+            if (enemy is GreenBlobbyEnemy)
+            {
+                GreenBlobbyEnemy greenBlobbyEnemy = (GreenBlobbyEnemy)enemy;
+                if (greenBlobbyEnemy.healthState == GreenBlobbyEnemy.HealthState.full) { block = true; }
+            }
+            if (enemy is RedBlobbyEnemy)
+            {
+                RedBlobbyEnemy redBlobbyEnemy = (RedBlobbyEnemy)enemy;
+                if (redBlobbyEnemy.healthState == RedBlobbyEnemy.HealthState.full) { block = true; }
+            }
+
+            //Shy gal mask
+            if (enemy is ShyGalBoss)
+            {
+                ShyGalBoss shyGalBoss = (ShyGalBoss)enemy;
+                if (!(bool)AccessTools.Field(typeof(ShyGalBoss), "is_dumb").GetValue(shyGalBoss) && (shyGalBoss.isMasked || !shyGalBoss.boss)) { block = true; }
+            }
+
+            //Red bubble shield
+            if (WindfallHelper.app.model.aiModel.battlefieldEffects[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[enemy.position.x, enemy.position.y]].effect == BattlefieldEffect.Effect.Shield)
+            {
+                block = true;
+            }
+
+            return block;
+        }
+
+        public static bool EnemyIsInvincible(Enemy enemy)
+        {
+            if (enemy.attackImmunity == Enemy.AttackImmunity.SuperAttack)
+            {
+                return true;
+            }
+
+            bool invincible = false;
+            if (PotentiallyInvincibleEnemies.Contains(EnemyDisplayName(enemy)))
+            {
+                invincible = true;
+
+                //Host skull
+                if (enemy is HostEnemy)
+                {
+                    HostEnemy hostEnemy = (HostEnemy)enemy;
+                    if (!hostEnemy.IsClosed()) { invincible = false; }
+                }
+
+                //Sangre chest
+                if (enemy is CaddyBoss)
+                {
+                    CaddyBoss caddyBoss = (CaddyBoss)enemy;
+                    if (caddyBoss.IsChestOpen()) { invincible = false; }
+                }
+            }
+
+            return invincible;
+        }
+        private static List<string> PotentiallyInvincibleEnemies
+        {
+            get
+            {
+                return new List<string>
+                {
+                    "Mana Wisp",
+                    "Host",
+                    "Peeper Eye",
+                    "Sangre",
+                    "Stony",
+                    "Tainted Peeper Eye",
                 };
             }
         }
