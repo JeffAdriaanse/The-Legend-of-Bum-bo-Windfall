@@ -1283,6 +1283,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     case SpellName.Euthanasia:
                         value = value.Replace("[damage]", "5");
                         break;
+                    case SpellName.ExorcismKit:
+                        string healing = WindfallPersistentDataController.LoadData().implementBalanceChanges ? "1" : "2";
+                        value = value.Replace("[healing]", healing);
+                        break;
                     case SpellName.RockFriends:
                         if (characterSheet != null)
                         {
@@ -1353,7 +1357,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.Ecoli, "Transforms an enemy into a Poop, Dip, or Squat" },
                     { SpellName.Eraser, "Destroys all tiles of the same type" },
                     { SpellName.Euthanasia, "Retaliates for [damage] spell damage to the next attacking enemy" },
-                    { SpellName.ExorcismKit, "Attacks a random enemy for [damage] spell damage and heals all other enemies for 1 health" },
+                    { SpellName.ExorcismKit, "Attacks a random enemy for [damage] spell damage and heals all other enemies for [healing] health" },
                     { SpellName.FishHook, "Attacks for [damage] spell damage, granting 1 random mana if it hits an enemy" },
                     { SpellName.FlashBulb, "Flashes all enemies, granting a 50% chance of blinding them" },
                     { SpellName.Flip, "Rerolls a tile" },
