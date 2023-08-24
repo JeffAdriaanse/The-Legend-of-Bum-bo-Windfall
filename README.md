@@ -8,6 +8,7 @@ The Legend of Bum-bo does not have official modding support. This mod requires B
 ## Features
 * A new spell, Plasma Ball
 * An enhanced tooltip system that displays information of all enemies and collectibles
+* A status indicator system, which passively displays temporary effects that are currently influencing Bum-bo
 * A win streak counter
 * The ability to rewatch cutscenes from the main menu
 * Improvements to the save and continue system for in progress runs
