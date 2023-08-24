@@ -77,11 +77,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (soundAges.ContainsKey(Sound))
             {
-                Debug.Log("Cancelled " + Sound.ToString() + " sound. Age: " + soundAges[Sound].ToString());
+                //Debug.Log("Cancelled " + Sound.ToString() + " sound. Age: " + soundAges[Sound].ToString());
                 __state = false;
                 return false;
             }
-            Debug.Log("Didn't cancel " + Sound.ToString() + " sound");
+            //Debug.Log("Didn't cancel " + Sound.ToString() + " sound");
             __state = true;
             return true;
         }
@@ -93,11 +93,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (soundAges.ContainsKey(Sound))
             {
-                Debug.Log("Cancelled " + Sound.ToString() + " 3D sound. Age: " + soundAges[Sound].ToString());
+                //Debug.Log("Cancelled " + Sound.ToString() + " 3D sound. Age: " + soundAges[Sound].ToString());
                 __state = false;
                 return false;
             }
-            Debug.Log("Didn't cancel " + Sound.ToString() + " 3D sound");
+            //Debug.Log("Didn't cancel " + Sound.ToString() + " 3D sound");
             __state = true;
             return true;
         }

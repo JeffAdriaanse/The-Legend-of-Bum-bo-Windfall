@@ -52,10 +52,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             List<SpellName> returnedList = new List<SpellName>(__result);
 
-            for (int multiplier = 0; multiplier < 200; multiplier++)
-            {
-                returnedList.AddRange(CollectibleImportData.validSpells);
-            }
+            returnedList.AddRange(CollectibleImportData.validSpells);
 
             __result = returnedList;
         }
