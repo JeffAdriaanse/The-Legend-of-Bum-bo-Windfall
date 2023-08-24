@@ -21,7 +21,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             foreach (SpellView spellView in WindfallHelper.app.view.spells)
             {
-                ObjectDataStorage.StoreData<bool>(spellView, spellViewEnabledKey, spellView.disableObject.activeSelf);
+                ObjectDataStorage.StoreData<bool>(spellView, spellViewEnabledKey, !spellView.disableObject.activeSelf);
 
                 if (spellView.SpellObject != null && spellsToDisable != null && spellsToDisable.Contains(spellView.SpellObject))
                 {
