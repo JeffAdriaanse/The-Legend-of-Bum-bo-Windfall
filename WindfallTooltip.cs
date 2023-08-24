@@ -1287,6 +1287,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         string healing = WindfallPersistentDataController.LoadData().implementBalanceChanges ? "1" : "2";
                         value = value.Replace("[healing]", healing);
                         break;
+                    case SpellName.LooseChange:
+                        string coins = WindfallPersistentDataController.LoadData().implementBalanceChanges ? "4 coins" : "1 coin";
+                        value = value.Replace("[coins]", coins);
+                        break;
                     case SpellName.RockFriends:
                         if (characterSheet != null)
                         {
@@ -1373,7 +1377,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.Libra, "Averages current mana between all 5 colors" },
                     { SpellName.LilRock, "Attacks for [damage] spell damage to the furthest enemy" },
                     { SpellName.LithiumBattery, "Grants 2 movement" },
-                    { SpellName.LooseChange, "Grants 4 coins when hit for one turn" },
+                    { SpellName.LooseChange, "Grants [coins] upon taking damage during the next enemy phase" },
                     { SpellName.LuckyFoot, "Raises luck by 1 for the room" },
                     { SpellName.Magic8Ball, "Randomly places a wild tile in the 'next' row" },
                     { SpellName.MagicMarker, "Randomly places <nobr>2-3</nobr> copies of a tile" },
@@ -1516,7 +1520,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.NoseGoblin, "Randomly places <nobr>2-4</nobr> booger tiles at the start of each room" },
                     { TrinketName.OldTooth, "Randomly places <nobr>2-4</nobr> tooth tiles at the start of each room" },
                     { TrinketName.OneUp, "Grants an extra life upon taking fatal damage, restoring all starting health" },
-                    { TrinketName.PinkBow, "Grants a soul heart upon entering the Wooden Nickel" },
+                    { TrinketName.PinkBow, "Grants a soul heart at the end of each chapter" },
                     { TrinketName.PinkEye, "Grants a 25% chance to apply poison upon hitting an enemy" },
                     { TrinketName.Pinky, "Grants a 33% chance to randomly place a wild tile upon killing an enemy" },
                     { TrinketName.Plunger, "Randomly places <nobr>2-4</nobr> poop tiles at the start of each room" },
@@ -1531,7 +1535,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.SharpNail, "Grants a 10% chance to deal 1 spell damage to enemies when they move" },
                     { TrinketName.SilverSkull, "Grants 1 random mana upon killing an enemy" },
                     { TrinketName.SinusInfection, "Causes boogers to deal 1 puzzle damage upon hitting an enemy" },
-                    { TrinketName.SmallBox, "Grants 3 random mana" },
+                    { TrinketName.SmallBox, "Grants 3 random mana at the start of each room" },
                     { TrinketName.SoulBag, "Grants a 25% chance to gain 1 movement upon killing an enemy" },
                     { TrinketName.SteamSale, "Reduces the price of needles, hearts, and trinkets in the Wooden Nickel by 2" },
                     { TrinketName.StemCell, "Heals 1/2 heart upon clearing a room" },
