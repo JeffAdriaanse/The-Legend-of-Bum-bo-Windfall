@@ -2635,7 +2635,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 		public static Dictionary<SpellName, int> rebalancedManaCosts = new Dictionary<SpellName, int>()
 		{
 			{ SpellName.AttackFly, 6 },
-			{ SpellName.BigSlurp, 11 },
             { SpellName.BlenderBlade, 5 },
             { SpellName.DeadDove, 4 },
             { SpellName.HairBall, 5 },
