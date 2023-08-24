@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using DG.Tweening;
+using HarmonyLib;
 using PathologicalGames;
 using System;
 using System.CodeDom;
@@ -443,6 +444,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         private static GameObject tooltip;
+        private static bool tooltipShowing = true;
 
         private static Transform anchor;
 
@@ -464,9 +466,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
             if (tooltipSize == 0)
             {
-                if (tooltip != null && tooltip.activeSelf)
+                if (tooltip != null)
                 {
-                    tooltip.SetActive(false);
+                    ShowTooltip(false, false);
                 }
                 return;
             }
@@ -746,36 +748,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (windfallTooltip == null)
             {
-                if (tooltip.activeSelf)
-                {
-                    tooltip.SetActive(false);
-                }
+                ShowTooltip(false, true);
                 return;
             }
 
-            if (!tooltip.activeSelf)
-            {
-                tooltip.SetActive(true);
-            }
-
             ResizeTooltip(windfallTooltip);
-
-            //Scale tooltips according to user settings
-            int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
-            float tooltipScale = SCALE_SMALL;
-            switch (tooltipSize)
-            {
-                case 1:
-                    tooltipScale = SCALE_SMALL;
-                    break;
-                case 2:
-                    tooltipScale = SCALE_MEDIUM;
-                    break;
-                case 3:
-                    tooltipScale = SCALE_LARGE;
-                    break;
-            }
-            ScaleTooltip(tooltipScale);
 
             //Hud Camera
             Camera hudCamera = WindfallHelper.app.view.GUICamera.cam;
@@ -835,11 +812,37 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     ConstrainTooltipToCamera(hudCamera, toolipBack, tooltipDisplayPlane);
                 }
+
+                ShowTooltip(true, true);
             }
             else
             {
-                tooltip.SetActive(false);
+                ShowTooltip(false, false);
             }
+        }
+
+        private static Sequence showTooltipAnimation;
+        private static readonly float SHOW_TOOLTIP_TWEEN_DURATION = 0.12f;
+        private static void ShowTooltip(bool show, bool animate)
+        {
+            if (tooltip == null || tooltip.transform == null) return;
+
+            if (show == tooltipShowing) return;
+            tooltipShowing = show;
+
+            if (showTooltipAnimation != null && showTooltipAnimation.IsPlaying())
+            {
+                showTooltipAnimation.Kill(false);
+            }
+
+            if (show) tooltip.SetActive(true);
+
+            Vector3 scale = show ? TooltipScale() : new Vector3(0f, 0f, 0f);
+
+            showTooltipAnimation = DOTween.Sequence();
+            showTooltipAnimation.Append(tooltip.transform.DOScale(scale, SHOW_TOOLTIP_TWEEN_DURATION).SetEase(Ease.InOutQuad));
+
+            if (!show) showTooltipAnimation.AppendCallback(delegate { tooltip.SetActive(false); });
         }
 
         private static MeshRenderer ActiveToolipBack()
@@ -1095,15 +1098,30 @@ namespace The_Legend_of_Bum_bo_Windfall
                 LocalizationModifier.ChangeFont(null, textMeshPro, WindfallHelper.GetEdmundMcmillenFont());
             }
 
+            ShowTooltip(false, false);
+
             return tooltipTransform.gameObject;
         }
 
-        private static void ScaleTooltip(float scale)
+        private static Vector3 TooltipScale()
         {
-            if (tooltip != null)
+            //Scale tooltips according to user settings
+            int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
+            float tooltipScale = SCALE_SMALL;
+            switch (tooltipSize)
             {
-                tooltip.transform.Find("Anchor").localScale = new Vector3(scale, scale, scale * 0.5f);
+                case 1:
+                    tooltipScale = SCALE_SMALL;
+                    break;
+                case 2:
+                    tooltipScale = SCALE_MEDIUM;
+                    break;
+                case 3:
+                    tooltipScale = SCALE_LARGE;
+                    break;
             }
+
+            return new Vector3(tooltipScale, tooltipScale, tooltipScale * 0.5f);
         }
 
         private static void ClearEnemyTints(WindfallTooltip tooltipToShow)
