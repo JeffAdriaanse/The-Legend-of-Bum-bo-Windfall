@@ -1603,7 +1603,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Get Bygone Ghost
             if (enemy.gameObject.name.Contains("Bygone Ghost"))
             {
-                enemyNameText = "Bygone";
+                enemyNameText = "Bygone Ghost";
             }
 
             return enemyNameText;
@@ -1774,16 +1774,37 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new Dictionary<string, string>
                 {
+                    //Enemies
                     { "Black Blobby", "Drains mana when hurt" },
                     { "Boom Fly", "Explodes on death" },
+                    { "Cultist", "Places a curse tile on hit" },
+                    { "Daddy Tato", "Shuffles the puzzle board on hit" },
+                    { "Dig Dig", "Dies when all Dig Digs are hiding" },
                     { "Greedling", "Steals a coin on hit" },
-                    { "Isaac", "Saps movement on de ath" },
+                    { "Isaac", "Saps movement on death" },
+                    { "Jib", "Flips into a Nib when hurt" },
+                    { "Larry", "Creates a gas cloud when hurt" },
+                    { "Longits", "Curls when hit or boogered" },
+                    { "Mana Wisp", "Extinguishes when a tile combo of its color is matched" },
                     { "Meat Golum", "Saps movement on hit" },
                     { "Mega Poofer", "Explodes on death, healing nearby enemies by 2" },
+                    { "Nib", "Flips into a Jib when hurt" },
                     { "Poofer", "Explodes on death, healing nearby enemies by 2" },
+                    { "Red Floater", "Fires two projectiles when attacking" },
+                    { "Spookie", "Places a curse tile when hurt" },
                     { "Sucker", "Reduces mana gain by 1" },
-                    { "Daddy Tato", "Shuffles the puzzle board on hit" },
                     { "Tato Kid", "Spawns a Leaper on death" },
+
+                    //Bosses
+                    { "Bygone", "Spawns a Fly and obscures two tiles when hurt" },
+                    { "Bygone Ghost", "Places a curse tile when hurt" },
+                    { "Dusk", "Moves backwards and disables a spell after taking 4 damage in a single turn" },
+                    { "Gibs", "Spawns a Green Blib when hurt" },
+                    { "Gizzarda", "Flips when hurt" },
+                    { "Loaf", "Spawns Dips when hurt" },
+                    { "Pyre", "Extinguishes when a tile combo of its color is matched" },
+                    { "Tainted Peeper", "Fires two projectiles when attacking\nSpawns a Blib after taking 3 damage" },
+                    { "Tainted Dusk", "Moves backwards after taking 4 damage in a single turn" },
                 };
             }
         }
