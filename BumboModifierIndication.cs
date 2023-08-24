@@ -411,6 +411,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             bumboModifier.effectValueTransform.gameObject.SetActive(bumboModifier.valueDisplayType != BumboModifier.ValueDisplayType.None);
 
             bumboModifier.timerTransform.gameObject.SetActive(bumboModifier.modifierType == CharacterSheet.BumboModifierObject.ModifierType.Round);
+            if (bumboModifier.spellSource != SpellName.None)
+            {
+                bumboModifier.timerTransform.gameObject.SetActive(BumboModifierTemporary.TemporarySpellsources.Contains(bumboModifier.spellSource));
+            }
 
             bumboModifier.stackingTransform.gameObject.SetActive(bumboModifier.canStack);
 
@@ -782,6 +786,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
                 case ModifierCategory.Retaliate:
                     description = "Inflicts " + value + " damage to attacking enemies";
+                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges && spellSource == SpellName.BarbedWire) { description = "Inflicts " + value + " damage to enemies that hit you"; }
                     break;
             }
 
@@ -814,22 +819,24 @@ namespace The_Legend_of_Bum_bo_Windfall
                     description = "Grants " + value + " coins when hurt";
                     break;
                 case SpellName.Pause:
-                    description = "Skips the next enemy phase";
+                    description = "Skips the enemy phase";
                     break;
                 case SpellName.RoidRage:
                     description = "Next attack will crit";
                     break;
                 case SpellName.StopWatch:
-                    description = "Each enemy can only act once during the next enemy phase";
+                    description = "Each enemy can only act once during the enemy phase";
                     break;
                 case SpellName.TheVirus:
-                    description = "Poisons attacking enemies during the next enemy phase";
+                    description = "Poisons attacking enemies";
+                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) { description = "Poisons enemies that hit you"; }
                     break;
                 case SpellName.TwentyTwenty:
                     description = "Duplicates the next tile combo effect";
                     break;
                 case SpellName.WhiteBelt:
                     description = "Negates enemy curses and mana drain, and limits their damage to 1/2 heart";
+                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) { description = "Negates enemy curses and mana drain, and limits their damage to 1 heart"; }
                     break;
                 case SpellName.WoodenSpoon:
                     description = "Grants " + value + " movement each turn";
@@ -843,7 +850,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (value == null)
             {
-                return "";
+                return string.Empty;
             }
 
             string stacking = "Effect can be stacked";
@@ -1027,6 +1034,33 @@ namespace The_Legend_of_Bum_bo_Windfall
         public Vector3 TooltipPosition()
         {
             return bumboModifier.TooltipPosition();
+        }
+
+        public static List<SpellName> TemporarySpellsources
+        {
+            get
+            {
+                List<SpellName> effects = new List<SpellName>
+                {
+                    SpellName.LooseChange,
+                    SpellName.OrangeBelt,
+                    SpellName.Pause,
+                    SpellName.SmokeMachine,
+                    SpellName.StopWatch,
+                    SpellName.TheVirus,
+                    SpellName.TwentyTwenty,
+                    SpellName.WhiteBelt,
+                };
+
+                if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                {
+                    effects.Add(SpellName.BarbedWire);
+                    effects.Add(SpellName.RoidRage);
+                    effects.Remove(SpellName.TheVirus);
+                }
+
+                return effects;
+            }
         }
     }
 
