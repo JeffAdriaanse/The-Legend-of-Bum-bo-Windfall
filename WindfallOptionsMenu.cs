@@ -23,7 +23,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static bool antiAliasing;
         private static bool motionBlur;
 
-        private static int tooltipSize;
+        private static int tooltipSize = 1;
 
         private static Sprite toggleActive;
         private static Sprite toggleInactive;
@@ -238,9 +238,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void CycleTooltipSize()
         {
             tooltipSize++;
-            if (tooltipSize > 3)
+            if (tooltipSize > 1)
             {
-                tooltipSize = 0;
+                tooltipSize = -2;
             }
             UpdateButtons();
         }
@@ -255,16 +255,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 switch (tooltipSize)
                 {
-                    case 0:
+                    case -2:
                         tooltipSizeText.text = "Disabled";
                         break;
-                    case 1:
+                    case -1:
                         tooltipSizeText.text = "Small";
                         break;
-                    case 2:
+                    case 0:
                         tooltipSizeText.text = "Medium";
                         break;
-                    case 3:
+                    case 1:
                         tooltipSizeText.text = "Large";
                         break;
                 }

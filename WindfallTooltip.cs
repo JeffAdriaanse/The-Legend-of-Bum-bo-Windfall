@@ -464,7 +464,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Abort if tooltips are disabled
             int tooltipSize = WindfallPersistentDataController.LoadData().tooltipSize;
-            if (tooltipSize == 0)
+            if (tooltipSize == -2)
             {
                 if (tooltip != null)
                 {
@@ -1110,13 +1110,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             float tooltipScale = SCALE_SMALL;
             switch (tooltipSize)
             {
-                case 1:
+                case -1:
                     tooltipScale = SCALE_SMALL;
                     break;
-                case 2:
+                case 0:
                     tooltipScale = SCALE_MEDIUM;
                     break;
-                case 3:
+                case 1:
                     tooltipScale = SCALE_LARGE;
                     break;
             }

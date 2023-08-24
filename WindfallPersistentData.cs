@@ -20,7 +20,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             depthOfField = false;
             motionBlur = true;
 
-            tooltipSize = 2;
+            tooltipSize = 0;
         }
 
         public int winCount;
