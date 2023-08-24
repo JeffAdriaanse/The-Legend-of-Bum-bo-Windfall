@@ -1592,6 +1592,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                 enemyNameText = enemy.attackImmunity == Enemy.AttackImmunity.ReducePuzzleDamage ? "Nib" : "Jib";
             }
 
+            //Get Bygone Ghost
+            if (enemy.gameObject.name.Contains("Bygone Ghost"))
+            {
+                enemyNameText = "Bygone";
+            }
+
             return enemyNameText;
         }
         private static Dictionary<EnemyName, string> EnemyDisplayNamesByEnemyName
