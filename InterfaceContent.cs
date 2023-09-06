@@ -187,7 +187,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(ToolTip), nameof(ToolTip.Show))]
         static bool ToolTip_Show()
         {
-            if (WindfallPersistentDataController.LoadData().tooltipSize != 0)
+            if (WindfallPersistentDataController.LoadData().tooltipSize != -2)
             {
                 return false;
             }
