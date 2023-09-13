@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using System.Linq;
 using PathologicalGames;
 using System;
+using HarmonyLib;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -321,6 +322,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             float transformPositionX = (battlefieldPosition.x - 1f) * 1.25f;
             float transformPositionZ = -0.6f - (battlefieldPosition.y * 0.975f);
             return new Vector3(transformPositionX, 0f, transformPositionZ);
+        }
+
+        /// <summary>
+        /// Sets the initial scale of a ButtonHoverAnimation.
+        /// </summary>
+        /// <param name="buttonHoverAnimation">The ButtonHoverAnimation.</param>
+        /// <param name="initialScale">The scale.</param>
+        public static void SetHoverInitialScale(ButtonHoverAnimation buttonHoverAnimation, Vector3 initialScale)
+        {
+            if (buttonHoverAnimation == null) return;
+            AccessTools.Field(typeof(ButtonHoverAnimation), "initialScale").SetValue(buttonHoverAnimation, initialScale);
         }
     }
 

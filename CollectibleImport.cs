@@ -387,6 +387,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         (SpellName)1000,
                         "PLASMA_BALL_NAME"
                     },
+                    {
+                        (SpellName)1001,
+                        "MAGNIFYING_GLASS_NAME"
+                    },
                 };
                 return spellKA;
             }
@@ -400,6 +404,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         "1000",
                         (SpellName)1000
+                    },
+                    {
+                        "1001",
+                        (SpellName)1001
                     },
                 };
                 return spellNames;
@@ -415,6 +423,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         (SpellName)1000,
                         new PlasmaBallSpell()
                     },
+                    {
+                        (SpellName)1001,
+                        new MagnifyingGlassSpell()
+                    },
                 };
                 return spells;
             }
@@ -426,6 +438,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 List<SpellName> validSpells = new List<SpellName>()
                 {
                     (SpellName)1000,
+                    (SpellName)1001,
                 };
                 return validSpells;
             }

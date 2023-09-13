@@ -36,6 +36,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             CollectibleChanges.Awake();
             CollectibleImport.Awake();
             InterfaceFixes.Awake();
+            PuzzleChanges.Awake();
             SoundsModification.Awake();
             InterfaceContent.Awake();
             TypoFixes.Awake();

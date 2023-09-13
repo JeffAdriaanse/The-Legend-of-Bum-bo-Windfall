@@ -408,13 +408,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Changes puzzle block initial scale
-        [HarmonyPrefix, HarmonyPatch(typeof(Block), "Start")]
-        static bool Block_Start(Block __instance)
+        public static readonly float BLOCK_SIZE = 1f;
+        //Patch: Displays new blocks. This must be a postfix to function properly. Note that if a BlockGroup main block is placed using setBlock with animation enabled, its visual position will not display correctly.
+        [HarmonyPostfix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setBlock))]
+        static void Puzzle_setBlock(Puzzle __instance, short _x, short _y)
         {
-            float blockSize = 1f;
-            __instance.transform.localScale = new Vector3(blockSize, blockSize, blockSize);
-            return true;
+            PuzzleHelper.DisplayBlock(__instance.blocks[_x, _y].GetComponent<Block>());
+            return;
         }
 
         //Patch: Fixes ButtonHoverAnimation grabbing the wrong transform value when determining block initial scale
