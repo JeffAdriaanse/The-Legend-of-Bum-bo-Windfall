@@ -218,10 +218,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="shapes">The tile shapes to combine.</param>
         public static void CombineShapesThatShareBlockGroups(List<List<GameObject>> shapes)
         {
+            //Remove BlockGroups that are in puzzle matches
+            List<BlockGroup> consumedBlockGroups = new List<BlockGroup>();
+
             //Loop through all groups
             for (int groupIterator = 0; groupIterator < blockGroups.Count; groupIterator++)
             {
                 BlockGroup group = blockGroups[groupIterator];
+
                 //Find all shapes in the group
                 List<List<GameObject>> shapesConnectedToGroup = ShapesConnectedToGroup(group, shapes);
                 List<GameObject> firstShape = null;
@@ -244,6 +248,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                         //Delete subsequent shapes
                         shapes.Remove(shape);
                     }
+
+                    //BlockGroup is in a shape, so it must be removed
+                    consumedBlockGroups.Add(group);
                 }
 
                 if (firstShape != null)
@@ -257,6 +264,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                     }
                 }
+            }
+
+            //Remove BlockGroups
+            foreach (BlockGroup group in consumedBlockGroups)
+            {
+                if (blockGroups.Contains(group)) blockGroups.Remove(group);
             }
         }
 
