@@ -542,10 +542,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (GroupsAreAlignedAlongAxis(selectedGroup, blockGroup, horizontal))
                 {
-                    blockingGroups.Remove(blockGroup);
                     alignedGroups.Add(blockGroup);
                 }
             }
+
+            blockingGroups.RemoveAll((BlockGroup x) => alignedGroups.Contains(x));
 
             return alignedGroups;
         }
