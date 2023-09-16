@@ -333,7 +333,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Moves blocks that are being dragged by the player. Intended to replace <see cref="Puzzle.moveBlock"/>. TODO: Fix interaction with consolidatePuzzle!
+        /// Moves blocks that are being dragged by the player. Intended to replace <see cref="Puzzle.moveBlock"/>.
         /// </summary>
         public static void ReplaceMoveBlock(GameObject block, short _to_x, short _to_y, float _time)
         {
@@ -412,11 +412,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (!positiveDirection && moveDistance > 0) moveDistance = (_to_y - puzzle.height) - original_block_position.y;
             }
 
-            //if (moveDistance == 0)
-            //{
-            //    //No movement
-            //    return;
-            //}
+            moveDistance = Math.Abs(moveDistance);
 
             //Find all BlockGroups blocking the way
             List<BlockGroup> blockingGroups = null;
@@ -570,27 +566,144 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (moveBlock != null)
                     {
                         BlockGroup moveBlockGroup = BlockGroupModel.FindGroupOfBlock(moveBlock);
-                        if (moveBlockGroup != null && BlockGroupModel.IsMainBlock(moveBlock) && alignedGroups.Contains(moveBlockGroup))
+                        if (moveBlockGroup != null)
                         {
                             //Do not move blocks in blocking groups
                             if (!alignedGroups.Contains(moveBlockGroup)) return;
 
-                            if (BlockGroupModel.IsMainBlock(moveBlock))
-                            {
-                                //Move aligned groups
-
-                                //TODO: delay blockGroup movement
-                                moveBlockGroup.SetPosition(new Vector2Int(newX, newY));
-                            }
                         }
 
                         //Move blocks
+                        //TODO: delay blockGroup movement
                         MoveBlock(moveBlock.gameObject, newX, newY, _time);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Drops Blocks down after matches. Intended to replace <see cref="Puzzle.consolidatePuzzle"/>.
+        /// </summary>
+        public static void ReplaceConsolidatePuzzle()
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            int[] blockHeights = new int[puzzle.width];
+            for (int yIterator = 0; yIterator < puzzle.height; yIterator++)
+            {
+                for (int xIterator = 0; xIterator < puzzle.width; xIterator++)
+                {
+                    GameObject block = puzzle.blocks[xIterator, yIterator];
+                    if (block != null)
+                    {
+                        //Only drop down blocks that are not in BlockGroups
+                        BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                        if (blockGroup != null)
+                        {
+                            if (!BlockGroupModel.IsMainBlock(block)) continue;
+
+                            Console.WriteLine("1");
+
+                            //When encountering a BlockGroup, find the distance to the highest available space beneath it
+                            int distanceToHighestSpace = -1;
+                            for (int widthIterator = 0; widthIterator < blockGroup.GetDimensions().x; widthIterator++)
+                            {
+                                while(true)
+                                {
+                                    if (blockHeights[xIterator + widthIterator] >= puzzle.height) break;
+
+                                    Block spaceBlock = puzzle.blocks[xIterator + widthIterator, blockHeights[xIterator + widthIterator]]?.GetComponent<Block>();
+                                    if (spaceBlock != null)
+                                    {
+                                        BlockGroup spaceBlockGroup = BlockGroupModel.FindGroupOfBlock(puzzle.blocks[xIterator + widthIterator, blockHeights[xIterator + widthIterator]]);
+                                        if (spaceBlockGroup != null)
+                                        {
+                                            blockHeights[xIterator + widthIterator] += spaceBlockGroup.GetDimensions().y;
+                                            Console.WriteLine("2");
+                                            continue;
+                                        }
+                                    }
+                                    break;
+                                }
+
+                                int distanceToSpace = blockGroup.GetPosition().y - blockHeights[xIterator + widthIterator];
+                                if (distanceToHighestSpace == -1 || distanceToSpace < distanceToHighestSpace) distanceToHighestSpace = distanceToSpace;
+                            }
+
+                            //If there is space, move the BlockGroup down by the distance
+                            if (distanceToHighestSpace > 0)
+                            {
+                                Console.WriteLine("3");
+
+                                Vector2Int position = blockGroup.GetPosition();
+                                for (int heightIterator = 0; heightIterator < blockGroup.GetDimensions().y; heightIterator++)
+                                {
+                                    for (int widthIterator = 0; widthIterator < blockGroup.GetDimensions().x; widthIterator++)
+                                    {
+                                        int xPosition = position.x + widthIterator;
+                                        int yPosition = position.y + heightIterator;
+
+                                        GameObject groupBlock = puzzle.blocks[xPosition, yPosition];
+
+                                        MoveBlock(groupBlock, xPosition, yPosition - distanceToHighestSpace, 0.2f);
+                                        puzzle.blocks[xPosition, yPosition - distanceToHighestSpace] = puzzle.blocks[xPosition, yPosition];
+                                        puzzle.blocks[xPosition, yPosition] = null;
+
+                                        blockHeights[xPosition]++; /*TEST*/
+                                    }
+                                }
+
+                                blockGroup.SetPosition(new Vector2Int(position.x, position.y - distanceToHighestSpace)); /*TEST*/
+                            }
+                            continue;
+                        }
+
+                        while (true)
+                        {
+                            if (blockHeights[xIterator] >= puzzle.height) break;
+
+                            Block spaceBlock = puzzle.blocks[xIterator, blockHeights[xIterator]]?.GetComponent<Block>();
+                            if (spaceBlock != null)
+                            {
+                                BlockGroup spaceBlockGroup = BlockGroupModel.FindGroupOfBlock(puzzle.blocks[xIterator, blockHeights[xIterator]]);
+                                if (spaceBlockGroup != null)
+                                {
+                                    Console.WriteLine("4");
+
+                                    blockHeights[xIterator] += spaceBlockGroup.GetDimensions().y;
+                                    continue;
+                                }
+                            }
+                            break;
+                        }
+
+                        if (xIterator == 0)
+                        {
+                            Console.WriteLine(yIterator + ", " + blockHeights[xIterator]);
+                        }
+
+                        if (yIterator != blockHeights[xIterator])
+                        {
+                            if (blockHeights[xIterator] >= puzzle.height) continue;
+
+                            MoveBlock(block, xIterator, blockHeights[xIterator], 0.2f);
+                            puzzle.blocks[xIterator, blockHeights[xIterator]] = block;
+                            puzzle.blocks[xIterator, yIterator] = null;
+                        }
+
+                        blockHeights[xIterator]++;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Moves the given Block to the given position.
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="_to_x"></param>
+        /// <param name="_to_y"></param>
+        /// <param name="_time"></param>
         public static void MoveBlock(GameObject block, int _to_x, int _to_y, float _time)
         {
             //Block
@@ -606,7 +719,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (blockGroup != null && BlockGroupModel.IsMainBlock(blockComponent))
             {
                 worldSpaceBlockPosition = WorldSpaceBlockPosition(new Vector2Int(_to_x, _to_y), blockGroup.GetDimensions());
-                blockGroup.SetPosition(new Vector2Int(_to_x, _to_y));
+                //blockGroup.SetPosition(new Vector2Int(_to_x, _to_y)); TODO: Fix blockGroup move positions!
             }
 
             //Move block
