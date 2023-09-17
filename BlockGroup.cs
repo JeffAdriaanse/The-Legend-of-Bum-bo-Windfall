@@ -423,22 +423,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             int width = horizontal ? puzzle.width : dimensions.x;
             int height = !horizontal ? puzzle.height : dimensions.y;
 
+            int xPosition = horizontal ? 0 : position.x;
+            int yPosition = !horizontal ? 0 : position.y;
+
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)
                 {
                     //Get all positions along the given axis within the given dimensions
-                    int x = i + position.x;
-                    int y = j + position.y;
+                    int x = i + xPosition;
+                    int y = j + yPosition;
 
-                    if (x < 0 || x >= puzzle.blocks.GetLength(0)) continue;
-                    if (y < 0 || y >= puzzle.blocks.GetLength(1)) continue;
+                    if (x < 0 || x >= puzzle.width) continue;
+                    if (y < 0 || y >= puzzle.height) continue;
 
                     GameObject currentBlock = puzzle.blocks[x, y];
                     Block currentBlockComponent = currentBlock?.GetComponent<Block>();
 
                     BlockGroup currentBlockGroup = null;
-                    if (currentBlockComponent != null) currentBlockGroup = BlockGroupModel.FindGroupOfBlock(currentBlockComponent);
+                    if (currentBlockComponent != null) currentBlockGroup = FindGroupOfBlock(currentBlockComponent);
 
                     //Add each BlockGroup if it has not been added already
                     if (currentBlockGroup != null && !blockingGroups.Contains(currentBlockGroup))

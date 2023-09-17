@@ -396,7 +396,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Determine move distance
-            int moveDistance = 0;
+            int moveDistance;
             if (horizontal)
             {
                 moveDistance = _to_x - original_block_position.x;
@@ -415,8 +415,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             moveDistance = Math.Abs(moveDistance);
 
             //Find all BlockGroups blocking the way
-            List<BlockGroup> blockingGroups = null;
-            List<BlockGroup> alignedGroups = null;
+            List<BlockGroup> blockingGroups;
+            List<BlockGroup> alignedGroups = new List<BlockGroup>();
 
             if (selectedBlockGroup != null)
             {
@@ -439,17 +439,35 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Vector2Int alignedGroupPosition = alignedGroup.GetPosition();
                     Vector2Int alignedGroupDimensions = alignedGroup.GetDimensions();
 
-                    int position = horizontal ? alignedGroupPosition.x + alignedGroupDimensions.x + moveDistance : alignedGroupPosition.y + alignedGroupDimensions.y + moveDistance;
+                    int position;
+
                     if (horizontal)
                     {
+                        if (positiveDirection)
+                        {
+                            position = alignedGroupPosition.x + alignedGroupDimensions.x + moveDistance;
+                        }
+                        else
+                        {
+                            position = alignedGroupPosition.x - 1 - moveDistance;
+                        }
+
                         if (position >= puzzle.width) position -= puzzle.width;
                         if (position < 0) position += puzzle.width;
                     }
                     else
                     {
+                        if (positiveDirection)
+                        {
+                            position = alignedGroupPosition.y + alignedGroupDimensions.y + moveDistance;
+                        }
+                        else
+                        {
+                            position = alignedGroupPosition.y - 1 - moveDistance;
+                        }
+
                         if (position >= puzzle.height) position -= puzzle.height;
                         if (position < 0) position += puzzle.height;
-
                     }
 
                     Block nextBlock = horizontal ? puzzle.blocks[position, alignedGroupPosition.y]?.GetComponent<Block>() : puzzle.blocks[alignedGroupPosition.x, position]?.GetComponent<Block>();
@@ -473,8 +491,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             int startPosX;
             int startPosY;
 
-            int width = 0;
-            int height = 0;
+            int width;
+            int height;
 
             if (horizontal)
             {
@@ -533,7 +551,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                                     //Skip blocking groups
                                     if (horizontal)
                                     {
-                                        newX += targetBlockGroup.GetDimensions().x;
+                                        int offset = targetBlockGroup.GetDimensions().x;
+                                        newX += positiveDirection ? offset : -offset;
 
                                         if (newX >= puzzle.width) newX -= puzzle.width;
                                         if (newX < 0) newX += puzzle.width;
@@ -543,7 +562,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                                     }
                                     else
                                     {
-                                        newY += targetBlockGroup.GetDimensions().y;
+                                        int offset = targetBlockGroup.GetDimensions().y;
+                                        newY += positiveDirection ? offset : -offset;
 
                                         if (newY >= puzzle.height) newY -= puzzle.height;
                                         if (newY < 0) newY += puzzle.height;
@@ -569,8 +589,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         if (moveBlockGroup != null)
                         {
                             //Do not move blocks in blocking groups
-                            if (!alignedGroups.Contains(moveBlockGroup)) return;
-
+                            if (!alignedGroups.Contains(moveBlockGroup)) continue;
                         }
 
                         //Move blocks
