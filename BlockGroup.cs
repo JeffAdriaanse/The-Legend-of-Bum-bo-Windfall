@@ -6,42 +6,42 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
+using static Block;
 using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    public class BlockGroup
+    public class BlockGroup : MonoBehaviour
     {
-        private Vector2Int position;
         private Vector2Int dimensions;
 
         /// <summary>
         /// Creates a new BlockGroup.
         /// </summary>
-        /// <param name="position">The position on the puzzle board.</param>
         /// <param name="dimensions">The dimensions of the BlockGroup.</param>
-        public BlockGroup(Vector2Int position, Vector2Int dimensions)
+        public void Init(Vector2Int dimensions)
         {
-            this.position = position;
             this.dimensions = dimensions;
+        }
+
+        /// <summary>
+        /// The main Block of the BlockGroup.
+        /// </summary>
+        public Block MainBlock
+        {
+            get
+            {
+                return GetComponent<Block>();
+            }
         }
 
         /// <summary>
         /// Returns the position of this BlockGroup.
         /// </summary>
         /// <returns>The position of this BlockGroup.</returns>
-        public Vector2Int GetPosition()
+        public Position GetPosition()
         {
-            return position;
-        }
-
-        /// <summary>
-        /// Sets the position of this BlockGroup.
-        /// </summary>
-        /// <returns>The position to set.</returns>
-        public void SetPosition(Vector2Int position)
-        {
-            this.position = position;
+            return MainBlock.position;
         }
 
         /// <summary>
@@ -57,44 +57,35 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Moves the BlockGroup by the given distance.
         /// </summary>
         /// <param name="movement">The distance to move.</param>
-        public void Move(Vector2Int movement)
-        {
-            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+        //public void Move(Vector2Int movement)
+        //{
+        //    Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
-            position.x += movement.x;
-            if (position.x > puzzle.width) position.x -= puzzle.width;
-            if (position.x < 0) position.x += puzzle.width;
+        //    position.x += movement.x;
+        //    if (position.x > puzzle.width) position.x -= puzzle.width;
+        //    if (position.x < 0) position.x += puzzle.width;
 
-            position.y += movement.y;
-            if (position.y > puzzle.width) position.y -= puzzle.height;
-            if (position.y < 0) position.y += puzzle.height;
-        }
-
-        /// <summary>
-        /// Returns the main Block of this BlockGroup.
-        /// </summary>
-        /// <returns>The main Block of this BlockGroup.</returns>
-        public GameObject GetMainBlock()
-        {
-            return GetBlock(new Vector2Int(0, 0));
-        }
+        //    position.y += movement.y;
+        //    if (position.y > puzzle.width) position.y -= puzzle.height;
+        //    if (position.y < 0) position.y += puzzle.height;
+        //}
 
         /// <summary>
         /// Returns the Block at the given position relative to the bottom left of the BlockGroup.
         /// </summary>
         /// <param name="position">The Block position.</param>
         /// <returns>The Block at the given position.</returns>
-        public GameObject GetBlock(Vector2Int position)
+        public GameObject GetBlock(Position position)
         {
             //Get puzzle board
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             //Return null if position is beyond group dimensions
-            if (position.x > this.dimensions.x || position.y > this.dimensions.y) return null;
+            if (position.x > dimensions.x || position.y > dimensions.y) return null;
 
             //Locate block
-            int xPosition = this.position.x + position.x;
-            int yPosition = this.position.y + position.y;
+            int xPosition = GetPosition().x + position.x;
+            int yPosition = GetPosition().y + position.y;
 
             //Return null for positions beyond the puzzle board
             if (xPosition >= puzzle.width || yPosition >= puzzle.height) return null;
@@ -110,7 +101,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public List<GameObject> GetBlocks()
         {
             List<GameObject> blocks = new List<GameObject>();
-            Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             //Loop through all positions
             for (int xIterator = 0; xIterator < dimensions.x; xIterator++)
@@ -118,7 +108,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int yIterator = 0; yIterator < dimensions.y; yIterator++)
                 {
                     //Add the blocks
-                    GameObject block = GetBlock(new Vector2Int(xIterator, yIterator));
+                    GameObject block = GetBlock(new Position(xIterator, yIterator));
                     if (block != null) blocks.Add(block);
                 }
             }
@@ -129,14 +119,17 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Returns whether a position is in this group.
         /// </summary>
+        /// <param name="inputPosition">The input position.</param>
         /// <returns>Whether a position is in this group.</returns>
-        public bool Contains(Vector2Int position)
+        public bool Contains(Position inputPosition)
         {
+            Position groupPosition = GetPosition();
+
             //Check that the position is within the group horizontally
-            if (position.x >= this.position.x && position.x < this.position.x + dimensions.x)
+            if (inputPosition.x >= groupPosition.x && inputPosition.x < groupPosition.x + dimensions.x)
             {
                 //Check that the position is within the group vertically
-                if (position.y >= this.position.y && position.y < this.position.y + dimensions.y)
+                if (inputPosition.y >= groupPosition.y && inputPosition.y < groupPosition.y + dimensions.y)
                 {
                     return true;
                 }
@@ -151,7 +144,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>Whether a block is in this group.</returns>
         public bool Contains(Block block)
         {
-            return Contains(new Vector2Int(block.position.x, block.position.y));
+            return Contains(block.position);
         }
     }
 
@@ -164,6 +157,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         public static void RemoveBlockGroups()
         {
+            foreach (BlockGroup blockGroup in blockGroups)
+            {
+                UnityEngine.Object.Destroy(blockGroup);
+            }
+
             blockGroups.Clear();
         }
 
@@ -172,7 +170,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         public static void RemoveBlockGroup(BlockGroup blockGroup)
         {
-            if (blockGroup != null) blockGroups.Remove(blockGroup);
+            if (blockGroup != null)
+            {
+                blockGroups.Remove(blockGroup);
+                UnityEngine.Object.Destroy(blockGroup);
+            }
         }
 
         /// <summary>
@@ -185,31 +187,30 @@ namespace The_Legend_of_Bum_bo_Windfall
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             //Make sure new tile group is in bounds
-            Vector2Int newBlockPosition = new Vector2Int(_block.position.x, _block.position.y);
-            while (newBlockPosition.x >= puzzle.width) newBlockPosition.x--;
-            while (newBlockPosition.y >= puzzle.height) newBlockPosition.y--;
-
-            //Create block group
-            BlockGroup group = new BlockGroup(newBlockPosition, dimensions);
-            //Add blockGroup to list
-            blockGroups.Add(group);
+            Position newBlockPosition = new Position(_block.position.x, _block.position.y);
+            while (newBlockPosition.x + (dimensions.x - 1) >= puzzle.width) newBlockPosition.x--;
+            while (newBlockPosition.y + (dimensions.y - 1) >= puzzle.height) newBlockPosition.y--;
 
             //Replace backend tiles
-            PuzzleHelper.PlaceBlock(newBlockPosition, _block.block_type);
+            for (int i = newBlockPosition.x; i < newBlockPosition.x + dimensions.x; i++)
+            {
+                for (int j = newBlockPosition.y; j < newBlockPosition.y + dimensions.y; j++)
+                {
+                    //Place blocks
+                    PuzzleHelper.PlaceBlock(new Position(i, j), _block.block_type);
 
-            //List<GameObject> blocks = group.GetBlocks();
-            //foreach (GameObject blockObject in blocks)
-            //{
-            //    Block block = blockObject?.GetComponent<Block>();
-            //    if (block == null) continue;
+                    //Add BlockGroup to the bottom left block
+                    if (i == newBlockPosition.x && j == newBlockPosition.y)
+                    {
+                        BlockGroup blockGroup = puzzle.blocks[newBlockPosition.x, newBlockPosition.y].AddComponent<BlockGroup>();
+                        blockGroup.Init(dimensions);
+                        blockGroups.Add(blockGroup);
 
-            //    if (block != _block)
-            //    {
-            //        Vector2Int blockPosition = new Vector2Int(block.position.x, block.position.y);
-            //        block.GetComponent<Block>().Despawn(false);
-            //        puzzle.setBlock(_block.block_type, (short)blockPosition.x, (short)blockPosition.y, false, false);
-            //    }
-            //}
+                        //Update main block display
+                        PuzzleHelper.DisplayBlock(blockGroup.MainBlock);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -269,7 +270,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Remove BlockGroups
             foreach (BlockGroup group in consumedBlockGroups)
             {
-                if (blockGroups.Contains(group)) blockGroups.Remove(group);
+                RemoveBlockGroup(group);
             }
         }
 
@@ -305,7 +306,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Returns all groups in the given shape.
+        /// Returns all groups in the given shape. (Unused)
         /// </summary>
         /// <param name="shape">The shape to find groups for.</param>
         /// <returns>All groups in the shape.</returns>
@@ -334,7 +335,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return returnedBlockGroups;
         }
-
 
         /// <summary>
         /// Returns the BlockGroup of the given Block, or null if the Block is not in a BlockGroup.
@@ -374,11 +374,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>True if the Block of the given Gameobject is in a BlockGroup and is the main Block in its BlockGroup.</returns>
         public static bool IsMainBlock(GameObject blockObject)
         {
-            if (blockObject == null) return false;
+            Block block = blockObject?.GetComponent<Block>();
 
-            Block block = blockObject.GetComponent<Block>();
-
-            return IsMainBlock(block, FindGroupOfBlock(block));
+            return IsMainBlock(block);
         }
 
         /// <summary>
@@ -388,23 +386,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>True if the Block is in a BlockGroup and is the main Block in its BlockGroup.</returns>
         public static bool IsMainBlock(Block block)
         {
-            return IsMainBlock(block, FindGroupOfBlock(block));
-        }
-
-        /// <summary>
-        /// Returns whether the given Block is the main Block in the given BlockGroup.
-        /// </summary>
-        /// <param name="block">The Block.</param>
-        /// <param name="blockGroup">The BlockGroup.</param>
-        /// <returns>True if the Block is the main Block in the BlockGroup.</returns>
-        public static bool IsMainBlock(Block block, BlockGroup blockGroup)
-        {
-            if (block == null || blockGroup == null) return false;
-
-            Block mainBlock = blockGroup.GetMainBlock()?.GetComponent<Block>();
-            if (mainBlock == null) return false;
-
-            return block.position.x == mainBlock.position.x && block.position.y == mainBlock.position.y;
+            return block?.GetComponent<BlockGroup>() != null;
         }
 
         /// <summary>
@@ -414,7 +396,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="dimensions"></param>
         /// <param name="horizontal"></param>
         /// <returns></returns>
-        public static List<BlockGroup> BlockingGroupsAlongAxis(Vector2Int position, Vector2Int dimensions, bool horizontal)
+        public static List<BlockGroup> BlockingGroupsAlongAxis(Position position, Vector2Int dimensions, bool horizontal)
         {
             List<BlockGroup> blockingGroups = new List<BlockGroup>();
 
@@ -472,7 +454,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (blockGroup == null) continue;
 
                 //Find edge position of the puzzle board
-                Vector2Int groupPosition = blockGroup.GetPosition();
+                Position groupPosition = blockGroup.GetPosition();
                 Vector2Int groupDimensions = blockGroup.GetDimensions();
                 int groupEdgePosition = horizontal ? groupPosition.x : groupPosition.y;
                 if (positiveDirection) groupEdgePosition += (horizontal ? groupDimensions.x : groupDimensions.y);
@@ -499,8 +481,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (first == null || second == null) return false;
 
-            Vector2Int firstPosition = first.GetPosition();
-            Vector2Int secondPosition = second.GetPosition();
+            Position firstPosition = first.GetPosition();
+            Position secondPosition = second.GetPosition();
 
             Vector2Int firstDimensions = first.GetDimensions();
             Vector2Int secondDimensions = second.GetDimensions();

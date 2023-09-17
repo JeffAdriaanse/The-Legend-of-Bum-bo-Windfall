@@ -22,7 +22,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="avoidPositions">The positions to avoid overriding.</param>
         /// <param name="avoidTypes">The BlockTypes to avoid overriding.</param>
         /// <param name="avoidGroups">Whether to avoid overriding sub-Blocks in BlockGoups.</param>
-        public static void PlaceBlocks(Block.BlockType blockType, int blockCount, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidGroups = true)
+        public static void RandomlyPlaceBlocks(Block.BlockType blockType, int blockCount, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidGroups = true)
         {
             List<Block> validBlocks = new List<Block>();
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
@@ -72,7 +72,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (avoidGroups)
                     {
                         BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
-                        if (blockGroup != null && !BlockGroupModel.IsMainBlock(block, blockGroup))
+                        if (blockGroup != null && !BlockGroupModel.IsMainBlock(block))
                         {
                             //Block is in a BlockGroup but is not the main block
                             addBlock = false;
@@ -93,7 +93,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Place the block
                 Block block = validBlocks[index];
-                PlaceBlock(new Vector2Int(block.position.x, block.position.y), blockType);
+                PlaceBlock(block.position, blockType);
 
                 validBlocks.RemoveAt(index);
                 blockCount--;
@@ -101,59 +101,23 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Places a Block of the given BlockType at the given position. Intended to be triggered in spell effect logic.
+        /// Places a Block of the given BlockType at the given position. Intended to be triggered in BlockGroup logic or by spell effects.
         /// </summary>
         /// <param name="position">The position of the placed Block.</param>
         /// <param name="blockType">The BlockType of the placed Block.</param>
-        /// <param name="fromBlockGroup">Whether this Block is being placed by the main Block of its BlockGroup.</param>
-        public static void PlaceBlock(Vector2Int position, Block.BlockType blockType, bool fromBlockGroup = false)
+        public static void PlaceBlock(Position position, Block.BlockType blockType)
         {
-            GameObject[,] blocks = WindfallHelper.app.view.puzzle.blocks;
-            //Abort if the position is outside the range of the puzzle board
-            if (position.x >= blocks.GetLength(0) || position.y >= blocks.GetLength(1)) return;
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
-            //Get existing block
-            Block block = blocks[position.x, position.y]?.GetComponent<Block>();
-
-            //Track whether this is a main block
-            bool mainBlock = false;
-
-            if (!fromBlockGroup)
-            {
-                //Special behaviour for BlockGroups
-                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
-                if (blockGroup != null)
-                {
-                    //If the main block is targeted, replace itself and all sub-Blocks
-                    if (BlockGroupModel.IsMainBlock(block))
-                    {
-                        mainBlock = true;
-
-                        List<GameObject> groupBlocks = blockGroup.GetBlocks();
-                        groupBlocks.Remove(block.gameObject);
-
-                        foreach (GameObject subBlockObject in groupBlocks)
-                        {
-                            Block blockObject = subBlockObject.GetComponent<Block>();
-                            PlaceBlock(new Vector2Int(blockObject.position.x, blockObject.position.y), blockType, true);
-                        }
-                    }
-                    else //If a sub-Block is targeted, abort
-                    {
-                        return;
-                    }
-                }
-            }
+            //Abort if outside puzzle board
+            if (position.x >= puzzle.width || position.y >= puzzle.height) return;
 
             //Remove existing block
+            Block block = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();
             if (block != null) block.Despawn(false);
 
-            //Place block
-            WindfallHelper.app.view.puzzle.setBlock(blockType, (short)position.x, (short)position.y, false, true);
-
-            //Return the block
-            //Block newBlock = blocks[position.x, position.y]?.GetComponent<Block>();
-            //return newBlock;
+            //Place new block
+            puzzle.setBlock(blockType, (short)position.x, (short)position.y, false, true);
         }
 
         /// <summary>
@@ -271,7 +235,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Assigns correct scale and position to the given Block.
+        /// Assigns correct scale and position to the given Block, accounting for its BlockGroup status.
         /// </summary>
         /// <param name="block"></param>
         public static void DisplayBlock(Block block)
@@ -289,7 +253,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Vector2Int dimensions = blockGroup.GetDimensions();
 
                 //Is main block
-                bool mainBlock = BlockGroupModel.IsMainBlock(block, blockGroup);
+                bool mainBlock = BlockGroupModel.IsMainBlock(block);
 
                 //Set scale
                 scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : /*Vector3.zero DEBUG*/ new Vector3(0.2f, 0.2f, 0.2f);
@@ -436,7 +400,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //If an aligned group will collide with a blocking group, abort movement
                 foreach (BlockGroup alignedGroup in alignedGroups)
                 {
-                    Vector2Int alignedGroupPosition = alignedGroup.GetPosition();
+                    Position alignedGroupPosition = alignedGroup.GetPosition();
                     Vector2Int alignedGroupDimensions = alignedGroup.GetDimensions();
 
                     int position;
@@ -485,7 +449,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             else
             {
-                blockingGroups = BlockGroupModel.BlockingGroupsAlongAxis(new Vector2Int(original_block_position.x, original_block_position.y), new Vector2Int(1, 1), horizontal);
+                blockingGroups = BlockGroupModel.BlockingGroupsAlongAxis(new Position(original_block_position.x, original_block_position.y), new Vector2Int(1, 1), horizontal);
             }
 
             int startPosX;
@@ -654,7 +618,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             {
                                 Console.WriteLine("3");
 
-                                Vector2Int position = blockGroup.GetPosition();
+                                Position position = blockGroup.GetPosition();
                                 for (int heightIterator = 0; heightIterator < blockGroup.GetDimensions().y; heightIterator++)
                                 {
                                     for (int widthIterator = 0; widthIterator < blockGroup.GetDimensions().x; widthIterator++)
@@ -671,8 +635,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                                         blockHeights[xPosition]++; /*TEST*/
                                     }
                                 }
-
-                                blockGroup.SetPosition(new Vector2Int(position.x, position.y - distanceToHighestSpace)); /*TEST*/
                             }
                             continue;
                         }
