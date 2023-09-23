@@ -80,5 +80,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             PuzzleHelper.ReplaceConsolidatePuzzle();
             return false;
         }
+
+        /// <summary>
+        /// Replaces setPositions.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setPositions))]
+        static bool Puzzle_setPositions()
+        {
+            PuzzleHelper.ReplaceSetPositions();
+            return false;
+        }
     }
 }

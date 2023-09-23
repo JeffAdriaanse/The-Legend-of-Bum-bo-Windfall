@@ -449,7 +449,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             else
             {
-                blockingGroups = BlockGroupModel.BlockingGroupsAlongAxis(new Position(original_block_position.x, original_block_position.y), new Vector2Int(1, 1), horizontal);
+                blockingGroups = BlockGroupModel.BlockingGroupsAlongAxis(original_block_position, new Vector2Int(1, 1), horizontal);
             }
 
             int startPosX;
@@ -676,6 +676,118 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Sets positions of dragged Blocks. Intended to replace <see cref="Puzzle.setPositions"/>.
+        /// </summary>
+        public static void ReplaceSetPositions()
+        {
+            BumboView bumboView = WindfallHelper.app.view;
+            bumboView.puzzlePlacement.EndDrag();
+
+            Puzzle puzzle = bumboView.puzzle;
+
+            int delta_x = (int)AccessTools.Field(typeof(Puzzle), "delta_x").GetValue(puzzle);
+            int delta_y = (int)AccessTools.Field(typeof(Puzzle), "delta_y").GetValue(puzzle);
+
+            if (delta_x != 0 || delta_y != 0)
+            {
+                //Set last board state
+                short num = 0;
+                while ((int)num < puzzle.height)
+                {
+                    short num2 = 0;
+                    while ((int)num2 < puzzle.width)
+                    {
+                        WindfallHelper.app.model.puzzleModel.lastBoardState[num2, num] = puzzle.blocks[num2, num].GetComponent<Block>().block_type;
+                        num2 += 1;
+                    }
+                    num += 1;
+                }
+
+                //Get selected block position and dimensions
+                Block selectedBlock = puzzle.selected_block?.GetComponent<Block>();
+                if (selectedBlock == null) return;
+
+                Position selectedBlockPosition = selectedBlock.position;
+
+                BlockGroup selectedBlockGroup = BlockGroupModel.FindGroupOfBlock(selectedBlock);
+                Vector2Int selectedBlockDimensions = selectedBlockGroup != null ? selectedBlockGroup.GetDimensions() : new Vector2Int(1, 1);
+
+                //Iterator start position and dimensions
+                bool horizontal = delta_x != 0;
+
+                int width = horizontal ? puzzle.width : selectedBlockDimensions.x;
+                int height = !horizontal ? puzzle.height : selectedBlockDimensions.y;
+
+                int xPosition = horizontal ? 0 : selectedBlockPosition.x;
+                int yPosition = !horizontal ? 0 : selectedBlockPosition.y;
+
+                //Determine new positions
+                bool boardStateHasChanged = false;
+
+                GameObject[,] newBlocks = new GameObject[width, height];
+
+                for (int i = 0; i < width; i++)
+                {
+                    for (int j = 0; j < height; j++)
+                    {
+                        int x = i + xPosition;
+                        int y = j + yPosition;
+
+                        Block block = puzzle.blocks[x, y]?.GetComponent<Block>();
+                        if (block == null) continue;
+
+                        Position blockInternalPosition = new Position(block.position.x, block.position.y);
+                        Position newBlockIndexPosition = new Position(blockInternalPosition.x, blockInternalPosition.y);
+
+                        if (horizontal) newBlockIndexPosition.y = j;
+                        else newBlockIndexPosition.x = i;
+
+                        newBlocks[newBlockIndexPosition.x, newBlockIndexPosition.y] = block.gameObject;
+
+                        if (!boardStateHasChanged && (x != blockInternalPosition.x || y != blockInternalPosition.y))
+                        {
+                            boardStateHasChanged = true;
+                        }
+                    }
+                }
+
+                //Board state is unchanged, abort (broken!)
+                if (!boardStateHasChanged)
+                {
+                    puzzle.selected_block = null;
+                    WindfallHelper.app.controller.eventsController.SetEvent(new IdleEvent());
+                    return;
+                }
+
+                //Set positions
+                for (int i = 0; i < width; i++)
+                {
+                    for (int j = 0; j < height; j++)
+                    {
+                        int x = i + xPosition;
+                        int y = j + yPosition;
+
+                        int newBlocksIndexX = x;
+                        int newBlocksIndexY = y;
+                        if (horizontal) newBlocksIndexY = j;
+                        else newBlocksIndexX = i;
+
+                        Block block = newBlocks[newBlocksIndexX, newBlocksIndexY]?.GetComponent<Block>();
+                        if (block == null) continue;
+
+                        puzzle.blocks[x, y] = block.gameObject;
+                        puzzle.blocks[x, y]?.GetComponent<Block>()?.Goo(false, false);
+                    }
+                }
+
+                puzzle.processing = true;
+                WindfallHelper.app.controller.eventsController.SetEvent(new UpdatePuzzleEvent());
+            }
+
+            puzzle.selected_block = null;
         }
 
         /// <summary>
