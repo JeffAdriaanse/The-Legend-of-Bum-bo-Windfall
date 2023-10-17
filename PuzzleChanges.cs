@@ -22,7 +22,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="instructions">The method instructions.</param>
         /// <returns>Transpiled instructions.</returns>
-        [HarmonyPatch(typeof(Puzzle), "ClearMatches")]
+        [HarmonyPatch(typeof(Puzzle), nameof(Puzzle.ClearMatches))]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var code = new List<CodeInstruction>(instructions);

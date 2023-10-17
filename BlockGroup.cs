@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -84,14 +85,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (position.x > dimensions.x || position.y > dimensions.y) return null;
 
             //Locate block
-            int xPosition = GetPosition().x + position.x;
-            int yPosition = GetPosition().y + position.y;
+            Position blockPosition = new Position(GetPosition().x + position.x, GetPosition().y + position.y);
 
             //Return null for positions beyond the puzzle board
-            if (xPosition >= puzzle.width || yPosition >= puzzle.height) return null;
+            if (!PuzzleHelper.IsWithinGridBounds(blockPosition)) return null;
 
             //Return the block
-            return puzzle.blocks[xPosition, yPosition];
+            return puzzle.blocks[blockPosition.x, blockPosition.y];
         }
 
         /// <summary>
@@ -177,6 +177,87 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        private static List<Vector2Int> AttemptedPositions(Vector2Int dimensions)
+        {
+            List<Vector2Int> positions = new List<Vector2Int>();
+
+            for (int i = -dimensions.x + 1; i <= 0; i++)
+            {
+                for (int j = -dimensions.y + 1; j <= 0; j++)
+                {
+                    positions.Add(new Vector2Int(i, j));
+                }
+            }
+
+            positions.Reverse();
+
+            return positions;
+        }
+
+        private static Position AvailableGroupPosition(Position position, Vector2Int dimensions)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            List<Vector2Int> groupOffsets = new List<Vector2Int>();
+
+            //Offsets to attempt
+            if (dimensions.x == 2 && dimensions.y == 2)
+            {
+                groupOffsets.AddRange(GroupOffsetsTwoByTwo);
+            }
+            else if (dimensions.x == 3 && dimensions.y == 3)
+            {
+                groupOffsets.AddRange(GroupOffsetsThreeByThree);
+            }
+            else
+            {
+                groupOffsets.AddRange(AttemptedPositions(dimensions));
+            }
+
+            foreach (Vector2Int offset in groupOffsets)
+            {
+                Position newPosition = new Position(position.x + offset.x, position.y + offset.y);
+
+                if (!PuzzleHelper.IsWithinGridBounds(newPosition)) continue;
+
+                bool valid = true;
+
+                //Validate all positions
+                for (int i = newPosition.x; i < newPosition.x + dimensions.x; i++)
+                {
+                    for (int j = newPosition.y; j < newPosition.y + dimensions.y; j++)
+                    {
+                        Position blockPosition = new Position(i, j);
+                        if (!PuzzleHelper.IsWithinGridBounds(blockPosition))
+                        {
+                            valid = false;
+                            break;
+                        }
+
+                        Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
+                        if (block == null)
+                        {
+                            valid = false;
+                            break;
+                        }
+
+
+                        if (FindGroupOfBlock(block) != null)
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
+
+                    if (!valid) break;
+                }
+
+                if (valid) return newPosition;
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Creates a block group for the given block.
         /// </summary>
@@ -186,10 +267,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
-            //Make sure new tile group is in bounds
-            Position newBlockPosition = new Position(_block.position.x, _block.position.y);
-            while (newBlockPosition.x + (dimensions.x - 1) >= puzzle.width) newBlockPosition.x--;
-            while (newBlockPosition.y + (dimensions.y - 1) >= puzzle.height) newBlockPosition.y--;
+            //Make sure new tile group is valid
+            Position newBlockPosition = AvailableGroupPosition(new Position(_block.position.x, _block.position.y), dimensions);
+            if (newBlockPosition == null) return;
 
             //Replace backend tiles
             for (int i = newBlockPosition.x; i < newBlockPosition.x + dimensions.x; i++)
@@ -413,13 +493,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int j = 0; j < height; j++)
                 {
                     //Get all positions along the given axis within the given dimensions
-                    int x = i + xPosition;
-                    int y = j + yPosition;
+                    Position blockPosition = new Position(i + xPosition, j + yPosition);
 
-                    if (x < 0 || x >= puzzle.width) continue;
-                    if (y < 0 || y >= puzzle.height) continue;
+                    if (!PuzzleHelper.IsWithinGridBounds(blockPosition)) continue;
 
-                    GameObject currentBlock = puzzle.blocks[x, y];
+                    GameObject currentBlock = puzzle.blocks[blockPosition.x, blockPosition.y];
                     Block currentBlockComponent = currentBlock?.GetComponent<Block>();
 
                     BlockGroup currentBlockGroup = null;
@@ -457,10 +535,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Position groupPosition = blockGroup.GetPosition();
                 Vector2Int groupDimensions = blockGroup.GetDimensions();
                 int groupEdgePosition = horizontal ? groupPosition.x : groupPosition.y;
-                if (positiveDirection) groupEdgePosition += (horizontal ? groupDimensions.x : groupDimensions.y);
+                if (positiveDirection) groupEdgePosition += (horizontal ? groupDimensions.x - 1 : groupDimensions.y - 1);
 
                 //Find edge position of the BlockGroup
-                int positiveBoardEdgePosition = horizontal ? puzzle.width : puzzle.height;
+                int positiveBoardEdgePosition = horizontal ? puzzle.width - 1 : puzzle.height - 1;
                 int boardEdgePosition = positiveDirection ? positiveBoardEdgePosition : 0;
 
                 //If they are the same, the BlockGroup is touching the board edge
@@ -535,5 +613,26 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return alignedGroups;
         }
+
+        private static readonly List<Vector2Int> GroupOffsetsTwoByTwo = new List<Vector2Int>
+        {
+            new Vector2Int(0, 0),//Origin
+            new Vector2Int(0, -1),//Move down
+            new Vector2Int(-1, 0),//Move left
+            new Vector2Int(-1, -1),//Move down left
+        };
+
+        private static readonly List<Vector2Int> GroupOffsetsThreeByThree = new List<Vector2Int>
+        {
+            new Vector2Int(0, 0),//Origin
+            new Vector2Int(0, -1),//Move 1 down
+            new Vector2Int(-1, 0),//Move 1 left
+            new Vector2Int(-1, -1),//Move 1 down 1 left
+            new Vector2Int(0, -2),//Move 2 down
+            new Vector2Int(-2, 0),//Move 2 left
+            new Vector2Int(-1, -2),//Move 2 down 1 left
+            new Vector2Int(-2, -1),//Move 1 down 2 left
+            new Vector2Int(-2, -2),//Move 2 down 2 left
+        };
     }
 }

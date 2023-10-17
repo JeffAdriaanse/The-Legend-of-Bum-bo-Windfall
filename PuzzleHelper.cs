@@ -256,7 +256,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 bool mainBlock = BlockGroupModel.IsMainBlock(block);
 
                 //Set scale
-                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : /*Vector3.zero DEBUG*/ new Vector3(0.2f, 0.2f, 0.2f);
+                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : Vector3.zero;
 
                 //Set position
                 if (mainBlock)
@@ -377,6 +377,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             moveDistance = Math.Abs(moveDistance);
+            moveDistance %= 9;
 
             //Find all BlockGroups blocking the way
             List<BlockGroup> blockingGroups;
@@ -390,60 +391,81 @@ namespace The_Legend_of_Bum_bo_Windfall
                 alignedGroups = BlockGroupModel.RemoveAlignedGroups(selectedBlockGroup, blockingGroups, horizontal);
 
                 //If there is an aligned BlockGroup being moved at the edge of the puzzle board, the tiles must be moved further according to the group dimension (block wraparound)
-                BlockGroup edgeGroup = BlockGroupModel.FindGroupAtEdge(alignedGroups, horizontal, positiveDirection);
-                if (edgeGroup != null)
+                //TODO: Vertical
+                if (horizontal)
                 {
-                    Vector2Int dimensions = edgeGroup.GetDimensions();
-                    moveDistance += horizontal ? dimensions.x : dimensions.y;
+                    int movementOffset = 0;
+                    for (int i = 0; i < puzzle.width; i++)
+                    {
+                        Block targetBlock = puzzle.blocks[i, original_block_position.y]?.GetComponent<Block>();
+                        if (targetBlock != null)
+                        {
+                            BlockGroup targetBlockGroup = BlockGroupModel.FindGroupOfBlock(targetBlock);
+                            if (targetBlockGroup != null && BlockGroupModel.IsMainBlock(targetBlock) && alignedGroups.Contains(targetBlockGroup))
+                            {
+                                int newPositionLeft = i + (positiveDirection ? moveDistance : -moveDistance);
+                                int newPositionRight = newPositionLeft + targetBlockGroup.GetDimensions().x - 1;
+
+                                if (newPositionLeft < 0 && newPositionRight >= 0)
+                                {
+                                    movementOffset = Math.Abs(newPositionLeft);
+                                }
+                                else if (newPositionRight >= puzzle.width && newPositionLeft < puzzle.width)
+                                {
+                                    movementOffset = puzzle.width - newPositionRight - 1;
+                                }
+                            }
+                        }
+                    }
+                    moveDistance -= Math.Abs(movementOffset);
                 }
 
                 //If an aligned group will collide with a blocking group, abort movement
-                foreach (BlockGroup alignedGroup in alignedGroups)
+                if (horizontal)
                 {
-                    Position alignedGroupPosition = alignedGroup.GetPosition();
-                    Vector2Int alignedGroupDimensions = alignedGroup.GetDimensions();
-
-                    int position;
-
-                    if (horizontal)
+                    for (int i = 0; i < puzzle.width; i++)
                     {
-                        if (positiveDirection)
+                        Block targetBlock = puzzle.blocks[i, original_block_position.y]?.GetComponent<Block>();
+                        if (targetBlock != null)
                         {
-                            position = alignedGroupPosition.x + alignedGroupDimensions.x + moveDistance;
+                            BlockGroup targetBlockGroup = BlockGroupModel.FindGroupOfBlock(targetBlock);
+                            if (targetBlockGroup != null && BlockGroupModel.IsMainBlock(targetBlock) && alignedGroups.Contains(targetBlockGroup))
+                            {
+                                for (int offset = 0; offset <= moveDistance; offset++)
+                                {
+                                    int newPositionX = i + (positiveDirection ? offset : -offset);
+
+                                    Position alignedGroupPosition = new Position(newPositionX, targetBlockGroup.GetPosition().y);
+                                    Vector2Int alignedGroupDimensions = targetBlockGroup.GetDimensions();
+
+                                    //Test
+                                    Console.WriteLine(alignedGroupPosition.x.ToString() + ", " + alignedGroupPosition.y.ToString());
+
+                                    for (int j = alignedGroupPosition.x; j < alignedGroupPosition.x + alignedGroupDimensions.x; j++)
+                                    {
+                                        for (int k = alignedGroupPosition.y; k < alignedGroupPosition.y + alignedGroupDimensions.y; k++)
+                                        {
+                                            Position nextBlockPosition = new Position(j, k);
+                                            nextBlockPosition = MoveWithinGridBounds(nextBlockPosition, true);
+
+                                            //Test
+                                            Console.WriteLine("Block: " + nextBlockPosition.x.ToString() + ", " + nextBlockPosition.y.ToString());
+
+                                            Block nextBlock = puzzle.blocks[nextBlockPosition.x, nextBlockPosition.y]?.GetComponent<Block>();
+
+                                            BlockGroup nextBlockGroup = null;
+                                            if (nextBlock != null) nextBlockGroup = BlockGroupModel.FindGroupOfBlock(nextBlock);
+
+                                            if (nextBlockGroup != null && blockingGroups.Contains(nextBlockGroup))
+                                            {
+                                                //Abort
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        else
-                        {
-                            position = alignedGroupPosition.x - 1 - moveDistance;
-                        }
-
-                        if (position >= puzzle.width) position -= puzzle.width;
-                        if (position < 0) position += puzzle.width;
-                    }
-                    else
-                    {
-                        if (positiveDirection)
-                        {
-                            position = alignedGroupPosition.y + alignedGroupDimensions.y + moveDistance;
-                        }
-                        else
-                        {
-                            position = alignedGroupPosition.y - 1 - moveDistance;
-                        }
-
-                        if (position >= puzzle.height) position -= puzzle.height;
-                        if (position < 0) position += puzzle.height;
-                    }
-
-                    Block nextBlock = horizontal ? puzzle.blocks[position, alignedGroupPosition.y]?.GetComponent<Block>() : puzzle.blocks[alignedGroupPosition.x, position]?.GetComponent<Block>();
-
-                    BlockGroup nextBlockGroup = null;
-                    if (nextBlock != null) nextBlockGroup = BlockGroupModel.FindGroupOfBlock(nextBlock);
-
-                    if (nextBlockGroup != null && blockingGroups.Contains(nextBlockGroup))
-                    {
-                        //Abort
-                        moveDistance = 0;
-                        return;
                     }
                 }
             }
@@ -546,18 +568,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     Block moveBlock = puzzle.blocks[i, j]?.GetComponent<Block>();
 
-                    //Move blocks
                     if (moveBlock != null)
                     {
                         BlockGroup moveBlockGroup = BlockGroupModel.FindGroupOfBlock(moveBlock);
                         if (moveBlockGroup != null)
                         {
                             //Do not move blocks in blocking groups
-                            if (!alignedGroups.Contains(moveBlockGroup)) continue;
+                            if (blockingGroups.Contains(moveBlockGroup)) continue;
                         }
 
                         //Move blocks
-                        //TODO: delay blockGroup movement
                         MoveBlock(moveBlock.gameObject, newX, newY, _time);
                     }
                 }
@@ -585,8 +605,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         {
                             if (!BlockGroupModel.IsMainBlock(block)) continue;
 
-                            Console.WriteLine("1");
-
                             //When encountering a BlockGroup, find the distance to the highest available space beneath it
                             int distanceToHighestSpace = -1;
                             for (int widthIterator = 0; widthIterator < blockGroup.GetDimensions().x; widthIterator++)
@@ -602,7 +620,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                                         if (spaceBlockGroup != null)
                                         {
                                             blockHeights[xIterator + widthIterator] += spaceBlockGroup.GetDimensions().y;
-                                            Console.WriteLine("2");
                                             continue;
                                         }
                                     }
@@ -616,8 +633,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                             //If there is space, move the BlockGroup down by the distance
                             if (distanceToHighestSpace > 0)
                             {
-                                Console.WriteLine("3");
-
                                 Position position = blockGroup.GetPosition();
                                 for (int heightIterator = 0; heightIterator < blockGroup.GetDimensions().y; heightIterator++)
                                 {
@@ -632,7 +647,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                                         puzzle.blocks[xPosition, yPosition - distanceToHighestSpace] = puzzle.blocks[xPosition, yPosition];
                                         puzzle.blocks[xPosition, yPosition] = null;
 
-                                        blockHeights[xPosition]++; /*TEST*/
+                                        blockHeights[xPosition]++;
                                     }
                                 }
                             }
@@ -649,18 +664,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 BlockGroup spaceBlockGroup = BlockGroupModel.FindGroupOfBlock(puzzle.blocks[xIterator, blockHeights[xIterator]]);
                                 if (spaceBlockGroup != null)
                                 {
-                                    Console.WriteLine("4");
-
                                     blockHeights[xIterator] += spaceBlockGroup.GetDimensions().y;
                                     continue;
                                 }
                             }
                             break;
-                        }
-
-                        if (xIterator == 0)
-                        {
-                            Console.WriteLine(yIterator + ", " + blockHeights[xIterator]);
                         }
 
                         if (yIterator != blockHeights[xIterator])
@@ -818,6 +826,51 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Move block
             ShortcutExtensions.DOLocalMove(block.transform, worldSpaceBlockPosition, _time, false).SetEase(Ease.InOutQuad).SetId("block_move");
             blockComponent.position = new Position(_to_x, _to_y);
+        }
+
+        /// <summary>
+        /// Returns whether the given position is within grid bounds.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public static bool IsWithinGridBounds(Position position)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+            return (position.x >= 0 && position.x < puzzle.width) && (position.y >= 0 && position.y < puzzle.height);
+        }
+
+        /// <summary>
+        /// Returns a new position moved within the grid bounds.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="wraparound"></param>
+        /// <returns></returns>
+        public static Position MoveWithinGridBounds(Position position, bool wraparound)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            Position newPosition = new Position(position.x, position.y);
+
+            if (IsWithinGridBounds(newPosition)) return newPosition;
+
+            if (wraparound)
+            {
+                newPosition.x %= puzzle.width;
+                if (newPosition.x < 0) newPosition.x += puzzle.width;
+
+                newPosition.y %= puzzle.height;
+                if (newPosition.y < 0) newPosition.y += puzzle.height;
+
+                return newPosition;
+            }
+
+            if (newPosition.x < 0) newPosition.x = 0;
+            else if (newPosition.x >= puzzle.width) newPosition.x = puzzle.width - 1;
+
+            if (newPosition.y < 0) newPosition.y = 0;
+            else if (newPosition.y >= puzzle.height) newPosition.y = puzzle.height - 1;
+
+            return newPosition;
         }
     }
 }
