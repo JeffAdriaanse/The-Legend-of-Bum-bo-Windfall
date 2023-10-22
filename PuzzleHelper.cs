@@ -250,7 +250,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 bool mainBlock = BlockGroupModel.IsMainBlock(block);
 
                 //Set scale
-                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : /*Vector3.zero*/new Vector3(0.3f, 0.3f, 0.3f);
+                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : Vector3.zero;
 
                 //Set position
                 if (mainBlock)
@@ -465,14 +465,28 @@ namespace The_Legend_of_Bum_bo_Windfall
                             {
                                 if (horizontal)
                                 {
-                                    int blockingGroupOffset = blockingGroup.GetDimensions().x;
+                                    int farEdgePosition = blockingGroup.GetPosition().x;
+                                    if (positiveDirection)
+                                    {
+                                        farEdgePosition += blockingGroup.GetDimensions().x - 1;
+                                    }
+
+                                    //Offset position to be one tile past the blocking group
+                                    int blockingGroupOffset = Math.Abs(farEdgePosition - newPosition.x) + 1;
                                     newPosition.x += positiveDirection ? blockingGroupOffset : -blockingGroupOffset;
                                     //Repeat when a new position is reached
                                     continue;
                                 }
                                 else
                                 {
-                                    int blockingGroupOffset = blockingGroup.GetDimensions().y;
+                                    int farEdgePosition = blockingGroup.GetPosition().y;
+                                    if (positiveDirection)
+                                    {
+                                        farEdgePosition += blockingGroup.GetDimensions().y - 1;
+                                    }
+
+                                    //Offset position to be one tile past the blocking group
+                                    int blockingGroupOffset = Math.Abs(farEdgePosition - newPosition.y) + 1;
                                     newPosition.y += positiveDirection ? blockingGroupOffset : -blockingGroupOffset;
                                     //Repeat when a new position is reached
                                     continue;
