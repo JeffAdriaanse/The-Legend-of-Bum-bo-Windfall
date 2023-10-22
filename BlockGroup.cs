@@ -121,15 +121,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="inputPosition">The input position.</param>
         /// <returns>Whether a position is in this group.</returns>
-        public bool Contains(Position inputPosition)
+        public bool Contains(Position inputPosition, bool ignoreX = false, bool ignoreY = false)
         {
             Position groupPosition = GetPosition();
+            Vector2Int dimensions = GetDimensions();
 
             //Check that the position is within the group horizontally
-            if (inputPosition.x >= groupPosition.x && inputPosition.x < groupPosition.x + dimensions.x)
+            if (ignoreX || (inputPosition.x >= groupPosition.x && inputPosition.x < groupPosition.x + dimensions.x))
             {
                 //Check that the position is within the group vertically
-                if (inputPosition.y >= groupPosition.y && inputPosition.y < groupPosition.y + dimensions.y)
+                if (ignoreY || (inputPosition.y >= groupPosition.y && inputPosition.y < groupPosition.y + dimensions.y))
                 {
                     return true;
                 }
