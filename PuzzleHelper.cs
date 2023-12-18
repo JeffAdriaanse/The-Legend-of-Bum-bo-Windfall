@@ -120,12 +120,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="block">The Block to remove.</param>
         /// <param name="puzzleShape">The puzzle shape for marking the removal of the block.</param>
-        /// <param name="emptySpaces">The emptySpaces for marking the removal of the block.</param>
         /// <param name="playSound">Whether to play the removal sound.</param>
         /// <param name="manaGain">The amount of mana to gain from the Block.</param>
         /// <param name="showManaGain">Whether to show a mana gain notification.</param>
         /// <param name="fromBlockGroup">Whether this Block is being removed by the main Block of its BlockGroup.</param>
-        public static void RemoveBlock(Block block, PuzzleShape puzzleShape, int[] emptySpaces, bool playSound, short manaGain, bool showManaGain = true, bool fromBlockGroup = false)
+        public static void RemoveBlock(Block block, PuzzleShape puzzleShape, bool playSound, short manaGain, bool showManaGain = true, bool fromBlockGroup = false)
         {
             if (block == null) return;
 
@@ -145,7 +144,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                         foreach (GameObject subBlock in blocks)
                         {
-                            RemoveBlock(subBlock.GetComponent<Block>(), puzzleShape, emptySpaces, false, manaGain, false, true);
+                            RemoveBlock(subBlock.GetComponent<Block>(), puzzleShape, false, manaGain, false, true);
                         }
                     }
                     else //If a sub-Block is targeted, abort
@@ -159,9 +158,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.app.view.puzzle.blocks[block.position.x, block.position.y] = null;
             //Puzzle shape
             if (puzzleShape != null) puzzleShape.tiles.Add(block.gameObject);
-            //Empty spaces
-            int xPosition = block.position.x;
-            if (emptySpaces != null && xPosition < emptySpaces.Length) emptySpaces[xPosition]++;
 
             //Grant mana
             if (manaGain > 0 && block.block_type < Block.BlockType.Wild)
@@ -175,58 +171,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Play sound
             if (playSound) WindfallHelper.app.view.soundsView.PlaySound(SoundsView.eSound.TileDestroyed, block.transform.position, SoundsView.eAudioSlot.Default, false);
-        }
-
-        /// <summary>
-        /// Initializes empty spaces to be marked on the puzzle board.
-        /// </summary>
-        public static void InitializeEmptySpaces()
-        {
-            ref List<int> emptySpaces = ref WindfallHelper.app.model.puzzleModel.emptySpaces;
-
-            if (emptySpaces == null)
-            {
-                emptySpaces = new List<int>();
-            }
-            else
-            {
-                emptySpaces.Clear();
-            }
-
-            for (int i = 0; i < WindfallHelper.app.view.puzzle.width; i++)
-            {
-                emptySpaces.Add(0);
-            }
-        }
-
-        /// <summary>
-        /// Marks empty spaces on the puzzle board in the given column.
-        /// </summary>
-        /// <param name="column">The column to mark empty spaces in.</param>
-        /// <param name="numberOfSpaces">The number of spaces to mark.</param>
-        public static void MarkEmptySpaces(int column, int numberOfSpaces)
-        {
-            ref List<int> emptySpaces = ref WindfallHelper.app.model.puzzleModel.emptySpaces;
-            if (emptySpaces == null) return;
-
-            if (column < emptySpaces.Count)
-            {
-                emptySpaces[column] += numberOfSpaces;
-            }
-        }
-
-        /// <summary>
-        /// Marks empty spaces on the puzzle board in the given columns.
-        /// </summary>
-        /// <param name="markEmptySpaces">An array containing the number of empty spaces to add to each column, indexed according to column position.</param>
-        public static void MarkEmptySpaces(int[] markEmptySpaces)
-        {
-            if (markEmptySpaces == null) return;
-
-            for (int i = 0; i < markEmptySpaces.Length; i++)
-            {
-                MarkEmptySpaces(i, markEmptySpaces[i]);
-            }
         }
 
         /// <summary>
