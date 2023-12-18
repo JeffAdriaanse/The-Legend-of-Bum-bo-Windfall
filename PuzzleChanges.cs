@@ -90,5 +90,27 @@ namespace The_Legend_of_Bum_bo_Windfall
             PuzzleHelper.ReplaceSetPositions();
             return false;
         }
+
+        /// <summary>
+        /// Replaces FillPuzzle.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.fillPuzzle))]
+        static bool Puzzle_fillPuzzle(ref List<int> _empty_spaces)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Override default empty space implementation
+            if (_empty_spaces != null) _empty_spaces = PuzzleHelper.FindEmptySpaces();
+
+            //Abort custom refill logic unless the puzzle board is refilling
+            if (WindfallHelper.app.controller.savedStateController.IsLoading()) return true;
+            if (WindfallHelper.app.model.characterSheet.currentFloor == 0) return true;
+            if (_empty_spaces == null) return true;
+            if ((bool)AccessTools.Field(typeof(Puzzle), "totally_fill").GetValue(puzzle) == true) return true;
+
+            //Custom refill logic
+            PuzzleHelper.ReplaceFillPuzzle(_empty_spaces);
+            return false;
+        }
     }
 }

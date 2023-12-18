@@ -3,6 +3,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -695,10 +696,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 //Set last board state
                 short num = 0;
-                while ((int)num < puzzle.height)
+                while (num < puzzle.height)
                 {
                     short num2 = 0;
-                    while ((int)num2 < puzzle.width)
+                    while (num2 < puzzle.width)
                     {
                         WindfallHelper.app.model.puzzleModel.lastBoardState[num2, num] = puzzle.blocks[num2, num].GetComponent<Block>().block_type;
                         num2 += 1;
@@ -754,7 +755,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
 
-                //Board state is unchanged, abort (broken!)
+                //Board state is unchanged, abort
                 if (!boardStateHasChanged)
                 {
                     puzzle.selected_block = null;
@@ -863,6 +864,195 @@ namespace The_Legend_of_Bum_bo_Windfall
             else if (newPosition.y >= puzzle.height) newPosition.y = puzzle.height - 1;
 
             return newPosition;
+        }
+
+        /// <summary>
+        /// Refills the puzzle board with tiles. Intended to replace <see cref="Puzzle.fillPuzzle(List{int})"/> only in cases when the puzzle board is refilling.
+        /// </summary>
+        public static void ReplaceFillPuzzle(List<int> _empty_spaces)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Manually count empty spaces instead of using PuzzleModel.emptySpaces
+            _empty_spaces = FindEmptySpaces();
+
+            int totalEmptySpacesToGenerate = 0;
+
+            for (int columnIterator = 0; columnIterator < _empty_spaces.Count; columnIterator++)
+            {
+                int emptySpacesInColumn = _empty_spaces[columnIterator];
+                if (puzzle.nextBlockViews[columnIterator].HasBlockType() && emptySpacesInColumn > 0)
+                {
+                    //Random tiles do not need to be generated for 'next' blocks
+                    emptySpacesInColumn--;
+                }
+                totalEmptySpacesToGenerate += emptySpacesInColumn;
+            }
+
+            //Refill puzzle board
+            List<Block.BlockType> blocksToPlace = new List<Block.BlockType>();
+            int[] soulTilesToPlace = new int[_empty_spaces.Count];
+            if (WindfallHelper.app.model.soulTiles > 0)
+            {
+                int totalEmptySpaceCount = 0;
+                for (int emptySpacesIterator = 0; emptySpacesIterator < _empty_spaces.Count; emptySpacesIterator++)
+                {
+                    totalEmptySpaceCount += _empty_spaces[emptySpacesIterator];
+                }
+
+                //Add soul tiles
+                int numberOfSoulTilesToPlace = Mathf.Min(WindfallHelper.app.model.soulTiles, totalEmptySpaceCount);
+                WindfallHelper.app.model.soulTiles -= numberOfSoulTilesToPlace;
+
+                //Randomly find an index where there is an empty space available to put the soul tile
+                List<int> emptySpaceIndices = new List<int>(_empty_spaces.Count);
+                for (int emptySpacesIndex = 0; emptySpacesIndex < _empty_spaces.Count; emptySpacesIndex++)
+                {
+                    emptySpaceIndices.Add(emptySpacesIndex);
+                }
+                while (numberOfSoulTilesToPlace > 0)
+                {
+                    int index = UnityEngine.Random.Range(0, emptySpaceIndices.Count);
+                    int soulTilesIndex = emptySpaceIndices[index];
+                    if (_empty_spaces[soulTilesIndex] == 0 || soulTilesToPlace[soulTilesIndex] >= _empty_spaces[soulTilesIndex])
+                    {
+                        emptySpaceIndices.RemoveAt(index);
+                    }
+                    else
+                    {
+                        soulTilesToPlace[soulTilesIndex]++;
+                        numberOfSoulTilesToPlace--;
+                    }
+                }
+
+                totalEmptySpacesToGenerate = 0;
+                for (int emptySpacesIterator = 0; emptySpacesIterator < _empty_spaces.Count; emptySpacesIterator++)
+                {
+                    int numberOfTilesToRandomlyFillInColumn = _empty_spaces[emptySpacesIterator] - soulTilesToPlace[emptySpacesIterator];
+                    if (puzzle.nextBlockViews[emptySpacesIterator].HasBlockType() && numberOfTilesToRandomlyFillInColumn > 0)
+                    {
+                        numberOfTilesToRandomlyFillInColumn--;
+                    }
+                    totalEmptySpacesToGenerate += numberOfTilesToRandomlyFillInColumn;
+                }
+            }
+
+            //Fill with wild tiles
+            short wildTileCounter = 0;
+            while (wildTileCounter < WindfallHelper.app.model.wildTiles)
+            {
+                if (wildTileCounter < totalEmptySpacesToGenerate)
+                {
+                    blocksToPlace.Add(Block.BlockType.Wild);
+                }
+                wildTileCounter += 1;
+            }
+            WindfallHelper.app.model.wildTiles -= blocksToPlace.Count;
+
+            //Fill with random blocks
+            short nextBlocksCounter = 50;
+            while (nextBlocksCounter > 0 && blocksToPlace.Count < totalEmptySpacesToGenerate)
+            {
+                Block.BlockType nextBlock = puzzle.nextBlock();
+                blocksToPlace.Add(nextBlock);
+                nextBlocksCounter -= 1;
+            }
+
+            //Refill puzzle board
+            short widthIterator = 0;
+            while (widthIterator < puzzle.width)
+            {
+                bool placeNextBlock = true;
+                short emptySpaceIterator = 0;
+
+                //Fill all empty spaces in each column
+                while (emptySpaceIterator < _empty_spaces[widthIterator])
+                {
+                    Block.BlockType blockTypeToPlace = Block.BlockType.Bone;
+                    bool placeBlock = true;
+
+                    if (soulTilesToPlace[widthIterator] > 0)
+                    {
+                        blockTypeToPlace = Block.BlockType.Soul;
+                        soulTilesToPlace[widthIterator]--;
+                    }
+                    else if (placeNextBlock && puzzle.nextBlockViews[widthIterator].HasBlockType())
+                    {
+                        blockTypeToPlace = puzzle.nextBlockViews[widthIterator].GetBlockType();
+                        placeNextBlock = false;
+                    }
+                    else if (blocksToPlace.Count > 0)
+                    {
+                        int index2 = UnityEngine.Random.Range(0, blocksToPlace.Count);
+                        blockTypeToPlace = blocksToPlace[index2];
+                        blocksToPlace.RemoveAt(index2);
+                    }
+                    else
+                    {
+                        placeBlock = false;
+                    }
+
+                    if (placeBlock)
+                    {
+                        //Place block
+                        short height = (short)HeightOfLowestEmptySpaceInColumn(widthIterator);
+                        if (height >= 0) puzzle.setBlock(blockTypeToPlace, widthIterator, height, true, false);
+                    }
+
+                    emptySpaceIterator += 1;
+                }
+                widthIterator += 1;
+            }
+
+            AccessTools.Field(typeof(Puzzle), "totally_fill").SetValue(puzzle, false);
+        }
+
+        /// <summary>
+        /// Returns the height of the lowest empty space in the given column of the puzzle board. The purpose of this method is to account for cases where an empty space is below a BlockGroup. 
+        /// </summary>
+        /// <param name="column">The column of the puzzle board.</param>
+        /// <returns>The height of the lowest empty space in the given column of the puzzle board, or -1 if no empty space is found.</returns>
+        private static int HeightOfLowestEmptySpaceInColumn(int column)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Iterate upwards from the bottom of the puzzle board
+            for (int heightIterator = 0; heightIterator < puzzle.height; heightIterator++)
+            {
+                //Return first empty space
+                if (puzzle.blocks[column, heightIterator]?.GetComponent<Block>() == null) return heightIterator;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Manually finds all empty spaces in the puzzle board. Alleviates the need to manually input empty spaces to <see cref="PuzzleModel.emptySpaces"/> when removing tiles in spell logic or other situations.
+        /// </summary>
+        /// <returns>A list containing the number of empty spaces in each column of the puzzle board.</returns>
+        public static List<int> FindEmptySpaces()
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            List<int> emptySpaces = new List<int>();
+            emptySpaces.AddRange(new int[puzzle.width]);
+
+            for (int widthIterator = 0; widthIterator < puzzle.width; widthIterator++)
+            {
+                //Each space is empty by default
+                emptySpaces[widthIterator] = puzzle.height;
+
+                for (int heightIterator = 0; heightIterator < puzzle.height; heightIterator++)
+                {
+                    Block block = puzzle.blocks[widthIterator, heightIterator]?.GetComponent<Block>();
+                    if (block == null) continue;
+
+                    //If there is a block, mark the space as not empty
+                    emptySpaces[widthIterator]--;
+                }
+            }
+
+            return emptySpaces;
         }
     }
 }
