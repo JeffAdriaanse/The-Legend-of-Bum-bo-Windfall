@@ -1,14 +1,267 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
+using PathologicalGames;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class PuzzleHelper
     {
+        /// <summary>
+        /// Removes all Blocks from the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Despawn"/> method.
+        /// </summary>
+        public static void ClearPuzzleBoard()
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+            for (int i = 0; i < puzzle.width; i++)
+            {
+                for (int j = 0; j < puzzle.height; j++)
+                {
+                    //Get Block
+                    GameObject block = puzzle.blocks[i, j];
+
+                    if (block != null && block.activeSelf)
+                    {
+                        //Remove BlockGroups
+                        BlockGroup blockGroup = block.GetComponent<BlockGroup>();
+                        if (blockGroup != null)
+                        {
+                            BlockGroupModel.RemoveBlockGroup(blockGroup);
+                        }
+
+                        //Remove Blocks
+                        PoolManager.Pools["Blocks"].Despawn(block.transform);
+                        puzzle.blocks[i, j] = null;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Shuffles the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Shuffle"/> method and in spell logic. TODO: Fix shuffling while there are multiple BlockGroups present
+        /// </summary>
+        /// <param name="avoidCreatingCombos">Whether to attempt to avoid creating tile combos. Note that combos will not always be avoided perfectly, especially when there are a lot of BlockGroups being shuffled.</param>
+        public static void ShufflePuzzleBoard(bool avoidCreatingCombos = false)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Store all BlockTypes on the puzzle board
+            Dictionary<Block.BlockType, int> blockTypes = BlockTypeCounts(true, false);
+
+            //Store all BlockGroups on the puzzle board
+            List<Tuple<Block.BlockType, Vector2Int>> blockGroups = new List<Tuple<Block.BlockType, Vector2Int>>();
+            foreach (BlockGroup blockGroup in BlockGroupModel.blockGroups)
+            {
+                blockGroups.Add(new Tuple<Block.BlockType, Vector2Int>(blockGroup.MainBlock.block_type, blockGroup.GetDimensions()));
+            }
+
+            //Clear the puzzle board
+            ClearPuzzleBoard();
+
+            //Randomly place BlockGroups
+            foreach (Tuple<Block.BlockType, Vector2Int> blockGroup in blockGroups)
+            {
+                List<Position> randomPosition = RandomPositions(1, null, null, true, true, true);
+                if (randomPosition.Count < 1) continue;
+
+                //Place BlockGroup
+                Block block = PlaceBlock(randomPosition[0], blockGroup.Item1);
+                if (!BlockGroupModel.CreateBlockGroup(block, blockGroup.Item2))
+                {
+                    //If the BlockGroup cannot be created, it is split up into individual Blocks
+                    int numberOfSubBlocks = (blockGroup.Item2.x * blockGroup.Item2.y) - 1;
+
+                    if (blockTypes.ContainsKey(blockGroup.Item1)) blockTypes[blockGroup.Item1] += numberOfSubBlocks;
+                    else blockTypes.Add(blockGroup.Item1, numberOfSubBlocks);
+                }
+            }
+
+            //Randomly place Blocks
+            for (int j = 0; j < puzzle.height; j++)
+            {
+                for (int i = 0; i < puzzle.width; i++)
+                {
+                    //Avoid overriding Blocks
+                    if (puzzle.blocks[i, j] != null) continue;
+
+                    int totalBlockCount = 0;
+
+                    List<Block.BlockType> neighbouringBlockTypes = null;
+
+                    //Add all Blocks that are not of neighbouring BlockTypes
+                    if (avoidCreatingCombos)
+                    {
+                        //Avoid placing Blocks that match neighbouring BlockTypes
+                        neighbouringBlockTypes = NeighbouringBlockTypes(new Position(i, j));
+
+                        foreach (KeyValuePair<Block.BlockType, int> blockType in blockTypes)
+                        {
+                            if (!neighbouringBlockTypes.Contains(blockType.Key))
+                            {
+                                totalBlockCount += blockType.Value;
+                            }
+                        }
+                    }
+
+                    //If no Blocks have been added, add all Blocks of all BlockTypes
+                    if (totalBlockCount <= 0)
+                    {
+                        foreach (KeyValuePair<Block.BlockType, int> blockType in blockTypes)
+                        {
+                            totalBlockCount += blockType.Value;
+                        }
+
+                        //Neighbouring BlockTypes are not avoided in this case
+                        neighbouringBlockTypes = null;
+                    }
+
+                    //Choose the BlockType of a random Block
+                    int randomBlockType = UnityEngine.Random.Range(1, totalBlockCount + 1);
+
+                    for (int blockTypeCounter = 0; blockTypeCounter < blockTypes.Count; blockTypeCounter++)
+                    {
+                        KeyValuePair<Block.BlockType, int> blockType = blockTypes.ElementAt(blockTypeCounter);
+
+                        //Ignore neighbouring BlockTypes
+                        if (neighbouringBlockTypes != null && neighbouringBlockTypes.Contains(blockType.Key)) continue;
+
+                        //Count through all Blocks of the current BlockType
+                        randomBlockType -= blockType.Value;
+
+                        //Place Block when the current BlockType has been chosen
+                        if (randomBlockType <= 0)
+                        {
+                            //Place Block
+                            PlaceBlock(new Position(i, j), blockType.Key);
+                            blockTypes[blockType.Key]--;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns a List containing the BlockTypes of all neighbouring Blocks on the puzzle board.
+        /// </summary>
+        /// <param name="position">The position to find neighbouring BlockTypes of.</param>
+        /// <returns>A List containing the BlockTypes of all neighbouring Blocks on the puzzle board.</returns>
+        public static List<Block.BlockType> NeighbouringBlockTypes(Position position)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            List<Block.BlockType> blockTypes = new List<Block.BlockType>();
+
+            //Negative x
+            if (position.x > 0)
+            {
+                Block block = puzzle.blocks[position.x - 1, position.y]?.GetComponent<Block>();
+                if (block != null) blockTypes.Add(block.block_type);
+            }
+
+            //Positive x
+            if (position.x < puzzle.width - 1)
+            {
+                Block block = puzzle.blocks[position.x + 1, position.y]?.GetComponent<Block>();
+                if (block != null) blockTypes.Add(block.block_type);
+            }
+
+            //Negative y
+            if (position.y > 0)
+            {
+                Block block = puzzle.blocks[position.x, position.y - 1]?.GetComponent<Block>();
+                if (block != null) blockTypes.Add(block.block_type);
+            }
+
+            //Positive y
+            if (position.y < puzzle.height - 1)
+            {
+                Block block = puzzle.blocks[position.x, position.y + 1]?.GetComponent<Block>();
+                if (block != null) blockTypes.Add(block.block_type);
+            }
+
+            return blockTypes;
+        }
+
+        /// <summary>
+        /// Returns a list containing all blocks on the puzzle board.
+        /// </summary>
+        /// <param name="includeRegularBlocks">Whether to include regular blocks (blocks that are not in a BlockGroup)</param>
+        /// <param name="includeBlockGroups">Whether to include BlockGroup blocks. Note that only the main block of each BlockGroup is included. Sub-blocks are not included.</param>
+        /// <returns>All blocks on the puzzle board.</returns>
+        private static List<Block> GetBlocks(bool includeRegularBlocks, bool includeBlockGroups)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Store blocks
+            List<Block> blocks = new List<Block>();
+
+            for (int j = 0; j < puzzle.height; j++)
+            {
+                for (int i = 0; i < puzzle.width; i++)
+                {
+                    Block block = puzzle.blocks[i, j].GetComponent<Block>();
+
+                    //Handle blockGroups
+                    BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                    if (blockGroup != null)
+                    {
+                        //Ignore sub-blocks
+                        if (includeBlockGroups && !BlockGroupModel.IsMainBlock(block)) blocks.Add(block);
+                        continue;
+                    }
+
+                    //Regular blocks
+                    if (includeRegularBlocks) blocks.Add(block);
+                }
+            }
+            return blocks;
+        }
+
+        /// <summary>
+        /// Returns a Dictionary containing the total number of Blocks of each BlockType on the puzzle board.
+        /// </summary>
+        /// <param name="includeRegularBlocks">Whether to include regular Blocks (Blocks that are not in a BlockGroup).</param>
+        /// <param name="includeBlockGroups">Whether to include BlockGroup Blocks. Note that only the main Block of each BlockGroup is included. Sub-Blocks are not included.</param>
+        /// <returns>The total number of Blocks of each BlockType on the puzzle board.</returns>
+        public static Dictionary<Block.BlockType, int> BlockTypeCounts(bool includeRegularBlocks, bool includeBlockGroups)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Count the total number of tiles of each tile type
+            Dictionary<Block.BlockType, int> amountOfEachBlockType = new Dictionary<Block.BlockType, int>();
+
+            for (int j = 0; j < puzzle.height; j++)
+            {
+                for (int i = 0; i < puzzle.width; i++)
+                {
+                    Block block = puzzle.blocks[i, j].GetComponent<Block>();
+
+                    //Resolve argument conditions
+                    if (BlockGroupModel.FindGroupOfBlock(block) != null)
+                    {
+                        //Argument condition
+                        if (!includeBlockGroups) continue;
+                        //Ignore sub-Blocks
+                        if (!BlockGroupModel.IsMainBlock(block)) continue;
+                    }
+                    else
+                    {
+                        //Argument condition
+                        if (!includeRegularBlocks) continue;
+                    }
+
+                    //Increment Block count
+                    if (amountOfEachBlockType.ContainsKey(block.block_type)) amountOfEachBlockType[block.block_type]++;
+                    else amountOfEachBlockType.Add(block.block_type, 1);
+                }
+            }
+            return amountOfEachBlockType;
+        }
+
         /// <summary>
         /// Randomly places Blocks of the given BlockType. Avoids overriding tiles at the given avoid positions or of the given avoid types. Intended to be triggered in spell effect logic.
         /// </summary>
@@ -16,11 +269,42 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="blockCount">The number of Blocks to place.</param>
         /// <param name="avoidPositions">The positions to avoid overriding.</param>
         /// <param name="avoidTypes">The BlockTypes to avoid overriding.</param>
-        /// <param name="avoidGroups">Whether to avoid overriding sub-Blocks in BlockGoups.</param>
-        public static void RandomlyPlaceBlocks(Block.BlockType blockType, int blockCount, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidGroups = true)
+        /// <param name="avoidMainBlocks">Whether to avoid overriding main Blocks in BlockGoups.</param>
+        /// <param name="avoidSubBlocks">Whether to avoid overriding sub-Blocks in BlockGoups.</param>
+        /// <param name="avoidAllBlocks">Whether to avoid overriding any Blocks.</param>
+        public static void RandomlyPlaceBlocks(Block.BlockType blockType, int blockCount, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
         {
-            List<Block> validBlocks = new List<Block>();
+            //Find all valid placements
+            List<Position> positions = RandomPositions(blockCount, avoidPositions, avoidTypes, avoidMainBlocks, avoidSubBlocks, avoidAllBlocks);
+
+            //Randomly place Blocks
+            while (blockCount > 0 && positions.Count > 0)
+            {
+                int index = UnityEngine.Random.Range(0, positions.Count);
+
+                //Place the Block
+                PlaceBlock(positions[index], blockType);
+
+                positions.RemoveAt(index);
+                blockCount--;
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of random Positions on the puzzle board according to the given conditions.
+        /// </summary>
+        /// <param name="count">The number of Positions to select.</param>
+        /// <param name="avoidPositions">Specific Positions to avoid.</param>
+        /// <param name="avoidTypes">BlockTypes to avoid Positions of.</param>
+        /// <param name="avoidMainBlocks">Whether to avoid Positions of main Blocks in BlockGoups.</param>
+        /// <param name="avoidSubBlocks">Whether to avoid Positions of sub-Blocks in BlockGoups.</param>
+        /// <param name="avoidSubBlocks">Whether to avoid Positions any Blocks.</param>
+        /// <returns>A list of random Positions on the puzzle board.</returns>
+        public static List<Position> RandomPositions(int count, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
+        {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            List<Position> positions = new List<Position>();
 
             //Find all valid placements
             for (int i = 0; i < puzzle.width; i++)
@@ -28,10 +312,18 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int j = 0; j < puzzle.height; j++)
                 {
                     //Get block
-                    Block block = puzzle.blocks[i, j].GetComponent<Block>();
-                    if (block == null) continue;
+                    Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
 
-                    bool addBlock = true;
+                    //Add Position manually if space is empty
+                    if (block == null)
+                    {
+                        positions.Add(new Position(i, j));
+                        continue;
+                    }
+
+                    if (avoidAllBlocks) continue;
+
+                    bool addPosition = true;
 
                     //Avoid given BlockTypes
                     if (avoidTypes != null)
@@ -40,59 +332,73 @@ namespace The_Legend_of_Bum_bo_Windfall
                         {
                             if (block.block_type == avoidType)
                             {
-                                addBlock = false;
+                                addPosition = false;
                                 break;
                             }
                         }
                     }
 
-                    if (!addBlock) continue;
+                    if (!addPosition) continue;
 
-                    //Avoid given positions
+                    //Avoid given Positions
                     if (avoidPositions != null)
                     {
                         foreach (Vector2Int position in avoidPositions)
                         {
                             if (position.x == i && position.y == j)
                             {
-                                addBlock = false;
+                                addPosition = false;
                                 break;
                             }
                         }
                     }
 
-                    if (!addBlock) continue;
+                    if (!addPosition) continue;
 
-                    //Avoid BlockGroup sub-Blocks
-                    if (avoidGroups)
+                    //BlockGroup conditions
+                    BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                    if (blockGroup != null)
                     {
-                        BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
-                        if (blockGroup != null && !BlockGroupModel.IsMainBlock(block))
+                        if (BlockGroupModel.IsMainBlock(block))
                         {
-                            //Block is in a BlockGroup but is not the main block
-                            addBlock = false;
+                            if (avoidMainBlocks)
+                            {
+                                //Block is a main Block
+                                addPosition = false;
+                            }
+                        }
+                        else
+                        {
+                            if (avoidSubBlocks)
+                            {
+                                //Block is a sub-Block
+                                addPosition = false;
+                            }
                         }
                     }
 
-                    if (!addBlock) continue;
+                    if (!addPosition) continue;
 
                     //Add the block
-                    validBlocks.Add(block);
+                    positions.Add(block.position);
                 }
             }
 
-            //Randomly place blocks
-            while (blockCount > 0 && validBlocks.Count > 0)
+            //Random Positions
+            List<Position> randomPositions = new List<Position>();
+            for (int positionCounter = 0; positionCounter < count; positionCounter++)
             {
-                int index = UnityEngine.Random.Range(0, validBlocks.Count);
+                if (positions.Count < 1) break;
 
-                //Place the block
-                Block block = validBlocks[index];
-                PlaceBlock(block.position, blockType);
+                //Add random Position
+                int randomIndex = UnityEngine.Random.Range(0, positions.Count);
+                randomPositions.Add(positions[randomIndex]);
 
-                validBlocks.RemoveAt(index);
-                blockCount--;
+                //Remove from overall Positions
+                positions.RemoveAt(randomIndex);
             }
+
+            return randomPositions;
         }
 
         /// <summary>
@@ -100,19 +406,24 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="position">The position of the placed Block.</param>
         /// <param name="blockType">The BlockType of the placed Block.</param>
-        public static void PlaceBlock(Position position, Block.BlockType blockType)
+        /// <returns>The placed Block, or null if no Block was placed.</returns>
+        public static Block PlaceBlock(Position position, Block.BlockType blockType)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             //Abort if outside puzzle board
-            if (!IsWithinGridBounds(position)) return;
+            if (!IsWithinGridBounds(position)) return null;
 
-            //Remove existing block
+            //Remove existing Block
             Block block = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();
             if (block != null) block.Despawn(false);
 
-            //Place new block
+            //Place new Block
             puzzle.setBlock(blockType, (short)position.x, (short)position.y, false, true);
+
+            //Return placed Block
+            Block placedBlock = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();
+            return placedBlock;
         }
 
         /// <summary>

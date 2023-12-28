@@ -2587,9 +2587,40 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 			return -1;
         }
+
+        //Access base method
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(PuzzleSpell), nameof(PuzzleSpell.CastSpell))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static bool PuzzleSpell_CastSpellDummy(BumboShakeSpell instance) { return false; }
+        /// <summary>
+        /// Replaces <see cref="BumboShakeSpell.CastSpell"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(BumboShakeSpell), nameof(BumboShakeSpell.CastSpell))]
+        static bool BumboShakeSpell_CastSpell(BumboShakeSpell __instance, ref bool __result)
+        {
+			if (!PuzzleSpell_CastSpellDummy(__instance))
+			{
+				__result = false;
+                return false;
+			}
+
+			//Logic
+			PuzzleHelper.ShufflePuzzleBoard(/*false TEST*/true);
+
+			//Boilerplate
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
+            __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
+            __instance.app.controller.GUINotification("SHUFFLING_BOARD", GUINotificationView.NotifyType.Puzzle, __instance, true);
+            __instance.app.controller.PlayPuzzleParticles();
+
+            __result = true;
+            return false;
+        }
     }
 
-	static class SpellManaCosts
+    static class SpellManaCosts
 	{
 		public static int GetManaCost(SpellElement spell)
 		{

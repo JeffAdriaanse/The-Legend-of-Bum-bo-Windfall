@@ -62,7 +62,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Replaces moveBlock.
+        /// Replaces vanilla <see cref="Puzzle.moveBlock"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "moveBlock")]
         static bool Puzzle_moveBlock(GameObject block, short _to_x, short _to_y, float _time)
@@ -72,7 +72,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Replaces consolidatePuzzle.
+        /// Replaces vanilla <see cref="Puzzle.consolidatePuzzle"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.consolidatePuzzle))]
         static bool Puzzle_consolidatePuzzle()
@@ -82,7 +82,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Replaces setPositions.
+        /// Replaces vanilla <see cref="Puzzle.setPositions"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setPositions))]
         static bool Puzzle_setPositions()
@@ -92,7 +92,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Replaces FillPuzzle.
+        /// Replaces vanilla <see cref="Puzzle.fillPuzzle"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.fillPuzzle))]
         static bool Puzzle_fillPuzzle(ref List<int> _empty_spaces)
@@ -110,6 +110,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Custom refill logic
             PuzzleHelper.ReplaceFillPuzzle(_empty_spaces);
+            return false;
+        }
+
+        /// <summary>
+        /// Replaces vanilla <see cref="Puzzle.Shuffle"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.Shuffle))]
+        static bool Puzzle_Shuffle()
+        {
+            PuzzleHelper.ShufflePuzzleBoard(true);
             return false;
         }
     }

@@ -12,6 +12,9 @@ using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
+    /// <summary>
+    /// Defines a rectangular group of Blocks that act and appear as one larger Block. The bottom left Block is designated the 'main Block' and is enlarged to visually represent the entire group. All other Blocks are designated 'sub-Blocks' and are hidden. All Blocks in the BlockGroup are moved, placed, or destroyed in unison.
+    /// </summary>
     public class BlockGroup : MonoBehaviour
     {
         private Vector2Int dimensions;
@@ -52,6 +55,15 @@ namespace The_Legend_of_Bum_bo_Windfall
         public Vector2Int GetDimensions()
         {
             return dimensions;
+        }
+
+        /// <summary>
+        /// Returns the area of this BlockGroup.
+        /// </summary>
+        /// <returns>The total number of individual Blocks in this BlockGroup, including the main Block and all sub-Blocks.</returns>
+        public int Area()
+        {
+            return dimensions.x & dimensions.y;
         }
 
         /// <summary>
@@ -229,21 +241,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                     for (int j = newPosition.y; j < newPosition.y + dimensions.y; j++)
                     {
                         Position blockPosition = new Position(i, j);
+
+                        //Invalid: Out of bounds
                         if (!PuzzleHelper.IsWithinGridBounds(blockPosition))
                         {
                             valid = false;
                             break;
                         }
 
+                        //Invalid: A BlockGroup is in the way
                         Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
-                        if (block == null)
-                        {
-                            valid = false;
-                            break;
-                        }
-
-
-                        if (FindGroupOfBlock(block) != null)
+                        if (block != null && FindGroupOfBlock(block) != null)
                         {
                             valid = false;
                             break;
@@ -260,17 +268,18 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Creates a block group for the given block.
+        /// Attempts to create a BlockGroup for the given block at the given position. Overrides nearby blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
         /// </summary>
-        /// <param name="_block">The block.</param>
-        /// <param name="dimensions">The dimensions of the group.</param>
-        public static void CreateBlockGroup(Block _block, Vector2Int dimensions)
+        /// <param name="block">The block.</param>
+        /// <param name="dimensions">The dimensions of the BlockGroup.</param>
+        /// <returns>Whether the BlockGroup was successfully created.</returns>
+        public static bool CreateBlockGroup(Block block, Vector2Int dimensions)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             //Make sure new tile group is valid
-            Position newBlockPosition = AvailableGroupPosition(new Position(_block.position.x, _block.position.y), dimensions);
-            if (newBlockPosition == null) return;
+            Position newBlockPosition = AvailableGroupPosition(new Position(block.position.x, block.position.y), dimensions);
+            if (newBlockPosition == null) return false;
 
             //Replace backend tiles
             for (int i = newBlockPosition.x; i < newBlockPosition.x + dimensions.x; i++)
@@ -278,7 +287,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int j = newBlockPosition.y; j < newBlockPosition.y + dimensions.y; j++)
                 {
                     //Place blocks
-                    PuzzleHelper.PlaceBlock(new Position(i, j), _block.block_type);
+                    PuzzleHelper.PlaceBlock(new Position(i, j), block.block_type);
 
                     //Add BlockGroup to the bottom left block
                     if (i == newBlockPosition.x && j == newBlockPosition.y)
@@ -292,6 +301,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
+            return true;
         }
 
         /// <summary>
