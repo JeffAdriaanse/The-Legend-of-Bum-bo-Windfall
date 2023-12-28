@@ -207,7 +207,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return positions;
         }
 
-        private static Position AvailableGroupPosition(Position position, Vector2Int dimensions)
+        public static Position AvailableGroupPosition(Position position, Vector2Int dimensions)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
@@ -268,35 +268,48 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Attempts to create a BlockGroup for the given block at the given position. Overrides nearby blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
+        /// Attempts to create a BlockGroup at the given Position. Overrides nearby Blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
         /// </summary>
-        /// <param name="block">The block.</param>
+        /// <param name="position">The Position to place the BlockGroup.</param>
+        /// <param name="dimensions">The dimensions of the BlockGroup.</param>
+        /// <returns>Whether the BlockGroup was successfully created.</returns>
+        public static bool CreateBlockGroup(Position position, Block.BlockType blockType, Vector2Int dimensions)
+        {
+            Position newBlockPosition = AvailableGroupPosition(new Position(position.x, position.y), dimensions);
+            if (newBlockPosition == null) return false;
+
+            Block block = PuzzleHelper.PlaceBlock(position, blockType);
+            return CreateBlockGroup(block, dimensions);
+        }
+
+        /// <summary>
+        /// Attempts to create a BlockGroup for the given Block. Overrides nearby Blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
+        /// </summary>
+        /// <param name="block">The Block.</param>
         /// <param name="dimensions">The dimensions of the BlockGroup.</param>
         /// <returns>Whether the BlockGroup was successfully created.</returns>
         public static bool CreateBlockGroup(Block block, Vector2Int dimensions)
         {
-            Puzzle puzzle = WindfallHelper.app.view.puzzle;
-
-            //Make sure new tile group is valid
+            //Make sure new BlockGroup Position is valid
             Position newBlockPosition = AvailableGroupPosition(new Position(block.position.x, block.position.y), dimensions);
             if (newBlockPosition == null) return false;
 
-            //Replace backend tiles
+            //Replace backend Blocks
             for (int i = newBlockPosition.x; i < newBlockPosition.x + dimensions.x; i++)
             {
                 for (int j = newBlockPosition.y; j < newBlockPosition.y + dimensions.y; j++)
                 {
-                    //Place blocks
-                    PuzzleHelper.PlaceBlock(new Position(i, j), block.block_type);
+                    //Place Blocks
+                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), block.block_type);
 
-                    //Add BlockGroup to the bottom left block
+                    //Add BlockGroup to the bottom left Block
                     if (i == newBlockPosition.x && j == newBlockPosition.y)
                     {
-                        BlockGroup blockGroup = puzzle.blocks[newBlockPosition.x, newBlockPosition.y].AddComponent<BlockGroup>();
+                        BlockGroup blockGroup = placedBlock.gameObject.AddComponent<BlockGroup>();
                         blockGroup.Init(dimensions);
                         blockGroups.Add(blockGroup);
 
-                        //Update main block display
+                        //Update main Block display
                         PuzzleHelper.DisplayBlock(blockGroup.MainBlock);
                     }
                 }

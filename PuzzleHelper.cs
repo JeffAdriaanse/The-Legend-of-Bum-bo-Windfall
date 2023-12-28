@@ -65,19 +65,33 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Randomly place BlockGroups
             foreach (Tuple<Block.BlockType, Vector2Int> blockGroup in blockGroups)
             {
-                List<Position> randomPosition = RandomPositions(1, null, null, true, true, true);
-                if (randomPosition.Count < 1) continue;
-
-                //Place BlockGroup
-                Block block = PlaceBlock(randomPosition[0], blockGroup.Item1);
-                if (!BlockGroupModel.CreateBlockGroup(block, blockGroup.Item2))
+                //Add all possible BlockGroup Positions
+                List<Position> validGroupPositions = new List<Position>();
+                for (int j = 0; j < puzzle.height; j++)
                 {
-                    //If the BlockGroup cannot be created, it is split up into individual Blocks
-                    int numberOfSubBlocks = (blockGroup.Item2.x * blockGroup.Item2.y) - 1;
-
-                    if (blockTypes.ContainsKey(blockGroup.Item1)) blockTypes[blockGroup.Item1] += numberOfSubBlocks;
-                    else blockTypes.Add(blockGroup.Item1, numberOfSubBlocks);
+                    for (int i = 0; i < puzzle.width; i++)
+                    {
+                        Position boardPosition = new Position(i, j);
+                        Position availableGroupPosition = BlockGroupModel.AvailableGroupPosition(boardPosition, blockGroup.Item2);
+                        if (availableGroupPosition != null && !validGroupPositions.Contains(availableGroupPosition)) validGroupPositions.Add(availableGroupPosition);
+                    }
                 }
+
+                //Proceed if there is at least one valid Position
+                if (validGroupPositions.Count > 0)
+                {
+                    //Randomly select a BlockGroup Position
+                    Position randomPosition = validGroupPositions[UnityEngine.Random.Range(0, validGroupPositions.Count)];
+
+                    //Place BlockGroup
+                    if (BlockGroupModel.CreateBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2)) continue;
+                }
+
+                //If the BlockGroup could not be created, it is split up into individual Blocks
+                int numberOfBlocks = blockGroup.Item2.x * blockGroup.Item2.y;
+                if (blockTypes.ContainsKey(blockGroup.Item1)) blockTypes[blockGroup.Item1] += numberOfBlocks;
+                else blockTypes.Add(blockGroup.Item1, numberOfBlocks);
+                continue;
             }
 
             //Randomly place Blocks
