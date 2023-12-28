@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
+using Mono.Collections.Generic;
 using PathologicalGames;
 using System;
 using System.Collections.Generic;
@@ -87,59 +88,56 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Avoid overriding Blocks
                     if (puzzle.blocks[i, j] != null) continue;
 
-                    int totalBlockCount = 0;
-
                     List<Block.BlockType> neighbouringBlockTypes = null;
-
-                    //Add all Blocks that are not of neighbouring BlockTypes
                     if (avoidCreatingCombos)
                     {
                         //Avoid placing Blocks that match neighbouring BlockTypes
                         neighbouringBlockTypes = NeighbouringBlockTypes(new Position(i, j));
 
-                        foreach (KeyValuePair<Block.BlockType, int> blockType in blockTypes)
+                        //Check whether removing neighbours will leave any BlockTypes remaining
+                        bool blockTypeExists = false;
+                        for (int blockTypeCounter = 0; blockTypeCounter < blockTypes.Count; blockTypeCounter++)
                         {
+                            KeyValuePair<Block.BlockType, int> blockType = blockTypes.ElementAt(blockTypeCounter);
                             if (!neighbouringBlockTypes.Contains(blockType.Key))
                             {
-                                totalBlockCount += blockType.Value;
+                                blockTypeExists = true;
+                                break;
                             }
                         }
+
+                        //Abort if no BlockTypes will remain
+                        if (!blockTypeExists) neighbouringBlockTypes = null;
                     }
 
-                    //If no Blocks have been added, add all Blocks of all BlockTypes
-                    if (totalBlockCount <= 0)
-                    {
-                        foreach (KeyValuePair<Block.BlockType, int> blockType in blockTypes)
-                        {
-                            totalBlockCount += blockType.Value;
-                        }
-
-                        //Neighbouring BlockTypes are not avoided in this case
-                        neighbouringBlockTypes = null;
-                    }
-
-                    //Choose the BlockType of a random Block
-                    int randomBlockType = UnityEngine.Random.Range(1, totalBlockCount + 1);
-
+                    //Choose the BlockTypes with the most Blocks
+                    List<Block.BlockType> chosenBlockTypes = new List<Block.BlockType>();
+                    int max = 0;
                     for (int blockTypeCounter = 0; blockTypeCounter < blockTypes.Count; blockTypeCounter++)
                     {
                         KeyValuePair<Block.BlockType, int> blockType = blockTypes.ElementAt(blockTypeCounter);
 
-                        //Ignore neighbouring BlockTypes
+                        //Avoid neighbouring BlockTypes
                         if (neighbouringBlockTypes != null && neighbouringBlockTypes.Contains(blockType.Key)) continue;
 
-                        //Count through all Blocks of the current BlockType
-                        randomBlockType -= blockType.Value;
-
-                        //Place Block when the current BlockType has been chosen
-                        if (randomBlockType <= 0)
+                        //Select max BlockTypes
+                        if (blockType.Value > max)
                         {
-                            //Place Block
-                            PlaceBlock(new Position(i, j), blockType.Key);
-                            blockTypes[blockType.Key]--;
-                            break;
+                            chosenBlockTypes.Clear();
+                            max = blockType.Value;
                         }
+                        if (blockType.Value == max) chosenBlockTypes.Add(blockType.Key);
                     }
+
+                    //Randomly select a BlockType
+                    Block.BlockType randomBlockType = chosenBlockTypes[UnityEngine.Random.Range(0, chosenBlockTypes.Count)];
+
+                    //Place Block
+                    PlaceBlock(new Position(i, j), randomBlockType);
+                    //Reduce placed BlockType
+                    blockTypes[randomBlockType]--;
+                    //Remove empty BlockTypes
+                    if (blockTypes[randomBlockType] <= 0) blockTypes.Remove(randomBlockType);
                 }
             }
         }
