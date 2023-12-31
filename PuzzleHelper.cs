@@ -12,36 +12,6 @@ namespace The_Legend_of_Bum_bo_Windfall
     public static class PuzzleHelper
     {
         /// <summary>
-        /// Removes all Blocks from the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Despawn"/> method.
-        /// </summary>
-        public static void ClearPuzzleBoard()
-        {
-            Puzzle puzzle = WindfallHelper.app.view.puzzle;
-            for (int i = 0; i < puzzle.width; i++)
-            {
-                for (int j = 0; j < puzzle.height; j++)
-                {
-                    //Get Block
-                    GameObject block = puzzle.blocks[i, j];
-
-                    if (block != null && block.activeSelf)
-                    {
-                        //Remove BlockGroups
-                        BlockGroup blockGroup = block.GetComponent<BlockGroup>();
-                        if (blockGroup != null)
-                        {
-                            BlockGroupModel.RemoveBlockGroup(blockGroup);
-                        }
-
-                        //Remove Blocks
-                        PoolManager.Pools["Blocks"].Despawn(block.transform);
-                        puzzle.blocks[i, j] = null;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Shuffles the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Shuffle"/> method and in spell logic. TODO: Fix shuffling while there are multiple BlockGroups present
         /// </summary>
         /// <param name="avoidCreatingCombos">Whether to attempt to avoid creating tile combos. Note that combos will not always be avoided perfectly, especially when there are a lot of BlockGroups being shuffled.</param>
@@ -60,7 +30,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Clear the puzzle board
-            ClearPuzzleBoard();
+            puzzle.Despawn();
 
             //Randomly place BlockGroups
             foreach (Tuple<Block.BlockType, Vector2Int> blockGroup in blockGroups)
@@ -72,8 +42,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     for (int i = 0; i < puzzle.width; i++)
                     {
                         Position boardPosition = new Position(i, j);
-                        Position availableGroupPosition = BlockGroupModel.AvailableGroupPosition(boardPosition, blockGroup.Item2);
-                        if (availableGroupPosition != null && !validGroupPositions.Contains(availableGroupPosition)) validGroupPositions.Add(availableGroupPosition);
+                        if (BlockGroupModel.ValidGroupPosition(boardPosition, blockGroup.Item2)) validGroupPositions.Add(boardPosition);
                     }
                 }
 
@@ -518,7 +487,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 bool mainBlock = BlockGroupModel.IsMainBlock(block);
 
                 //Set scale
-                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : Vector3.zero;
+                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : /*Vector3.zero*/new Vector3(0.25f, 0.25f, 0.25f);
 
                 //Set position
                 if (mainBlock)

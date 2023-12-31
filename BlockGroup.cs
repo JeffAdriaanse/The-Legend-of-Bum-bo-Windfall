@@ -13,7 +13,7 @@ using static UnityEngine.UIElements.UIR.BestFitAllocator;
 namespace The_Legend_of_Bum_bo_Windfall
 {
     /// <summary>
-    /// Defines a rectangular group of Blocks that act and appear as one larger Block. The bottom left Block is designated the 'main Block' and is enlarged to visually represent the entire group. All other Blocks are designated 'sub-Blocks' and are hidden. All Blocks in the BlockGroup are moved, placed, or destroyed in unison.
+    /// Defines a rectangular group of Blocks that act and appear as one larger Block. The bottom left Block is designated the 'main Block' and is enlarged to visually represent the entire group. All other Blocks are designated 'sub-Blocks' and are hidden. All Blocks in the BlockGroup are moved, placed, and destroyed in unison.
     /// </summary>
     public class BlockGroup : MonoBehaviour
     {
@@ -63,25 +63,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The total number of individual Blocks in this BlockGroup, including the main Block and all sub-Blocks.</returns>
         public int Area()
         {
-            return dimensions.x & dimensions.y;
+            return dimensions.x * dimensions.y;
         }
-
-        /// <summary>
-        /// Moves the BlockGroup by the given distance.
-        /// </summary>
-        /// <param name="movement">The distance to move.</param>
-        //public void Move(Vector2Int movement)
-        //{
-        //    Puzzle puzzle = WindfallHelper.app.view.puzzle;
-
-        //    position.x += movement.x;
-        //    if (position.x > puzzle.width) position.x -= puzzle.width;
-        //    if (position.x < 0) position.x += puzzle.width;
-
-        //    position.y += movement.y;
-        //    if (position.y > puzzle.width) position.y -= puzzle.height;
-        //    if (position.y < 0) position.y += puzzle.height;
-        //}
 
         /// <summary>
         /// Returns the Block at the given position relative to the bottom left of the BlockGroup.
@@ -172,7 +155,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             foreach (BlockGroup blockGroup in blockGroups)
             {
-                UnityEngine.Object.Destroy(blockGroup);
+                //Due to Block pooling, the BlockGroup must be destroyed immediately. If the BlockGroup is not destroyed immediately, removing and placing BlockGroups on the same frame can cause newly spawned Blocks to erroneously appear to be main Blocks due to the lingering BlockGroup component.
+                UnityEngine.Object.DestroyImmediate(blockGroup);
             }
 
             blockGroups.Clear();
@@ -186,7 +170,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (blockGroup != null)
             {
                 blockGroups.Remove(blockGroup);
-                UnityEngine.Object.Destroy(blockGroup);
+                //Due to Block pooling, the BlockGroup must be destroyed immediately. If the BlockGroup is not destroyed immediately, removing and placing BlockGroups on the same frame can cause newly spawned Blocks to erroneously appear to be main Blocks due to the lingering BlockGroup component.
+                UnityEngine.Object.DestroyImmediate(blockGroup);
             }
         }
 
@@ -207,64 +192,54 @@ namespace The_Legend_of_Bum_bo_Windfall
             return positions;
         }
 
-        public static Position AvailableGroupPosition(Position position, Vector2Int dimensions)
+        public static Position FindValidGroupPosition(Position position, Vector2Int dimensions)
         {
-            Puzzle puzzle = WindfallHelper.app.view.puzzle;
-
             List<Vector2Int> groupOffsets = new List<Vector2Int>();
 
             //Offsets to attempt
-            if (dimensions.x == 2 && dimensions.y == 2)
-            {
-                groupOffsets.AddRange(GroupOffsetsTwoByTwo);
-            }
-            else if (dimensions.x == 3 && dimensions.y == 3)
-            {
-                groupOffsets.AddRange(GroupOffsetsThreeByThree);
-            }
-            else
-            {
-                groupOffsets.AddRange(AttemptedPositions(dimensions));
-            }
+            if (dimensions.x == 2 && dimensions.y == 2) groupOffsets.AddRange(GroupOffsetsTwoByTwo);
+            else if (dimensions.x == 3 && dimensions.y == 3) groupOffsets.AddRange(GroupOffsetsThreeByThree);
+            else groupOffsets.AddRange(AttemptedPositions(dimensions));
 
             foreach (Vector2Int offset in groupOffsets)
             {
                 Position newPosition = new Position(position.x + offset.x, position.y + offset.y);
 
-                if (!PuzzleHelper.IsWithinGridBounds(newPosition)) continue;
-
-                bool valid = true;
-
-                //Validate all positions
-                for (int i = newPosition.x; i < newPosition.x + dimensions.x; i++)
-                {
-                    for (int j = newPosition.y; j < newPosition.y + dimensions.y; j++)
-                    {
-                        Position blockPosition = new Position(i, j);
-
-                        //Invalid: Out of bounds
-                        if (!PuzzleHelper.IsWithinGridBounds(blockPosition))
-                        {
-                            valid = false;
-                            break;
-                        }
-
-                        //Invalid: A BlockGroup is in the way
-                        Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
-                        if (block != null && FindGroupOfBlock(block) != null)
-                        {
-                            valid = false;
-                            break;
-                        }
-                    }
-
-                    if (!valid) break;
-                }
-
-                if (valid) return newPosition;
+                //Validate Position
+                if (ValidGroupPosition(newPosition, dimensions)) return newPosition;
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Determines whether a BlockGroup of the given dimensions will fit at the given Position.
+        /// </summary>
+        /// <param name="position">The Position of the BlockGroup.</param>
+        /// <param name="dimensions">The dimensions of the BlockGroup.</param>
+        /// <returns>Whether a BlockGroup of the given dimensions will fit at the given Position.</returns>
+        public static bool ValidGroupPosition(Position position, Vector2Int dimensions)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            if (position == null || dimensions == null) return false;
+
+            //Validate Position
+            for (int i = position.x; i < position.x + dimensions.x; i++)
+            {
+                for (int j = position.y; j < position.y + dimensions.y; j++)
+                {
+                    Position blockPosition = new Position(i, j);
+
+                    //Invalid: Out of bounds
+                    if (!PuzzleHelper.IsWithinGridBounds(blockPosition)) return false;
+
+                    //Invalid: A BlockGroup is in the way
+                    Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
+                    if (block != null && FindGroupOfBlock(block) != null) return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>
@@ -275,11 +250,32 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>Whether the BlockGroup was successfully created.</returns>
         public static bool CreateBlockGroup(Position position, Block.BlockType blockType, Vector2Int dimensions)
         {
-            Position newBlockPosition = AvailableGroupPosition(new Position(position.x, position.y), dimensions);
-            if (newBlockPosition == null) return false;
+            //Make sure BlockGroup Position is valid
+            Position blockGroupPosition = position;
+            if (!ValidGroupPosition(position, dimensions)) blockGroupPosition = FindValidGroupPosition(position, dimensions);
+            if (blockGroupPosition == null) return false;
 
-            Block block = PuzzleHelper.PlaceBlock(position, blockType);
-            return CreateBlockGroup(block, dimensions);
+            //Replace backend Blocks
+            for (int i = blockGroupPosition.x; i < blockGroupPosition.x + dimensions.x; i++)
+            {
+                for (int j = blockGroupPosition.y; j < blockGroupPosition.y + dimensions.y; j++)
+                {
+                    //Place Blocks
+                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType);
+
+                    //Add BlockGroup to the bottom left Block
+                    if (i == blockGroupPosition.x && j == blockGroupPosition.y)
+                    {
+                        BlockGroup blockGroup = placedBlock.gameObject.AddComponent<BlockGroup>();
+                        blockGroup.Init(dimensions);
+                        blockGroups.Add(blockGroup);
+
+                        //Update Block display
+                        PuzzleHelper.DisplayBlock(placedBlock);
+                    }
+                }
+            }
+            return true;
         }
 
         /// <summary>
@@ -290,31 +286,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>Whether the BlockGroup was successfully created.</returns>
         public static bool CreateBlockGroup(Block block, Vector2Int dimensions)
         {
-            //Make sure new BlockGroup Position is valid
-            Position newBlockPosition = AvailableGroupPosition(new Position(block.position.x, block.position.y), dimensions);
-            if (newBlockPosition == null) return false;
-
-            //Replace backend Blocks
-            for (int i = newBlockPosition.x; i < newBlockPosition.x + dimensions.x; i++)
-            {
-                for (int j = newBlockPosition.y; j < newBlockPosition.y + dimensions.y; j++)
-                {
-                    //Place Blocks
-                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), block.block_type);
-
-                    //Add BlockGroup to the bottom left Block
-                    if (i == newBlockPosition.x && j == newBlockPosition.y)
-                    {
-                        BlockGroup blockGroup = placedBlock.gameObject.AddComponent<BlockGroup>();
-                        blockGroup.Init(dimensions);
-                        blockGroups.Add(blockGroup);
-
-                        //Update main Block display
-                        PuzzleHelper.DisplayBlock(blockGroup.MainBlock);
-                    }
-                }
-            }
-            return true;
+            return CreateBlockGroup(block.position, block.block_type, dimensions);
         }
 
         /// <summary>
@@ -451,7 +423,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             foreach (BlockGroup blockGroup in blockGroups)
             {
-                if (blockGroup.Contains(block))
+                if (blockGroup != null && blockGroup.Contains(block))
                 {
                     return blockGroup;
                 }
@@ -478,9 +450,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>True if the Block of the given Gameobject is in a BlockGroup and is the main Block in its BlockGroup.</returns>
         public static bool IsMainBlock(GameObject blockObject)
         {
-            Block block = blockObject?.GetComponent<Block>();
-
-            return IsMainBlock(block);
+            return IsMainBlock(blockObject?.GetComponent<Block>());
         }
 
         /// <summary>
@@ -490,7 +460,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>True if the Block is in a BlockGroup and is the main Block in its BlockGroup.</returns>
         public static bool IsMainBlock(Block block)
         {
-            return block?.GetComponent<BlockGroup>() != null;
+            BlockGroup blockGroup = block?.GetComponent<BlockGroup>();
+            return blockGroup != null && blockGroups.Contains(blockGroup);
         }
 
         /// <summary>

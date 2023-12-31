@@ -122,5 +122,24 @@ namespace The_Legend_of_Bum_bo_Windfall
             PuzzleHelper.ShufflePuzzleBoard(true);
             return false;
         }
+
+        /// <summary>
+        /// Removes all BlockGroups before Blocks despawn in <see cref="Puzzle.Despawn"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.Despawn))]
+        static void Puzzle_Despawn()
+        {
+            BlockGroupModel.RemoveBlockGroups();
+        }
+
+        /// <summary>
+        /// Removes BlockGroup before the Block despawns in <see cref="Block.Despawn(bool)"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(Block), nameof(Block.Despawn))]
+        static void Block_Despawn(Block __instance)
+        {
+            BlockGroup blockGroup = __instance.GetComponent<BlockGroup>();
+            if (blockGroup != null) BlockGroupModel.RemoveBlockGroup(blockGroup);
+        }
     }
 }
