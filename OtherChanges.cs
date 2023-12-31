@@ -14,6 +14,43 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(OtherChanges));
+            PatchAchievementsUnlock();
+        }
+
+        private static void PatchAchievementsUnlock()
+        {
+            if (Windfall.achievementsSteam)
+            {
+                var mOriginal = AccessTools.Method(typeof(AchievementsSteam), "Unlock");
+                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsSteam_Unlock));
+                if (mOriginal != null && mPrefix != null)
+                {
+                    Console.WriteLine("Steam");
+                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
+                }
+            }
+
+            if (Windfall.achievementsGOG)
+            {
+                var mOriginal = AccessTools.Method(typeof(AchievementsGOG), "Unlock");
+                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsGOG_Unlock));
+                if (mOriginal != null && mPrefix != null)
+                {
+                    Console.WriteLine("GOG");
+                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
+                }
+            }
+
+            if (Windfall.achievementsEGS)
+            {
+                var mOriginal = AccessTools.Method(typeof(AchievementsEGS), "Unlock");
+                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsEGS_Unlock));
+                if (mOriginal != null && mPrefix != null)
+                {
+                    Console.WriteLine("EGS");
+                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
+                }
+            }
         }
 
         //Patch: Fixes exiting to menu incorrectly deleting certain gameObjects
@@ -57,21 +94,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             return true;
-        }
-
-        //Patch: Fixes jackpot unlocks triggering the wrong achievements
-        [HarmonyPrefix, HarmonyPatch(typeof(AchievementsSteam), "Unlock")]
-        static void AchievementsSteam_Unlock(AchievementsSteam __instance, ref Achievements.eAchievement Achievement)
-        {
-            //Change achievement unlock index when using BumboUnlockController
-            BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
-            if (bumboUnlockController != null)
-            {
-                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
-                {
-                    Achievement -= 21;
-                }
-            }
         }
 
         //Patch: Heart tiles no longer appear naturally when playing as Bum-bo the Lost
@@ -330,6 +352,48 @@ namespace The_Legend_of_Bum_bo_Windfall
                             currentPosition.x += roomDirections[roomCounter] == MapRoom.Direction.E ? 1 : -1;
                         }
                     }
+                }
+            }
+        }
+
+        //Patch: Fixes jackpot unlocks triggering the wrong achievements (Steam)
+        static void AchievementsSteam_Unlock(AchievementsSteam __instance, ref Achievements.eAchievement Achievement)
+        {
+            //Change achievement unlock index when using BumboUnlockController
+            BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
+            if (bumboUnlockController != null)
+            {
+                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
+                {
+                    Achievement -= 21;
+                }
+            }
+        }
+
+        //Patch: Fixes jackpot unlocks triggering the wrong achievements (GOG)
+        static void AchievementsGOG_Unlock(AchievementsGOG __instance, ref Achievements.eAchievement Achievement)
+        {
+            //Change achievement unlock index when using BumboUnlockController
+            BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
+            if (bumboUnlockController != null)
+            {
+                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
+                {
+                    Achievement -= 21;
+                }
+            }
+        }
+
+        //Patch: Fixes jackpot unlocks triggering the wrong achievements (EGS)
+        static void AchievementsEGS_Unlock(AchievementsEGS __instance, ref Achievements.eAchievement Achievement)
+        {
+            //Change achievement unlock index when using BumboUnlockController
+            BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
+            if (bumboUnlockController != null)
+            {
+                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
+                {
+                    Achievement -= 21;
                 }
             }
         }
