@@ -14,7 +14,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private const string modGUID = "org.bepinex.plugins.thelegendofbumbowindfall";
         private const string modName = "The Legend of Bum-bo: Windfall";
         private const string modVersion = "1.2.0.0";
-        private readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
+        public static readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
 
         public static AssetBundle assetBundle;
         private void Awake()
@@ -27,6 +27,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Logger.LogError("Could not find assets file for The Legend of Bum-bo: Windfall. Ensure 'windfall' file is placed in the mod folder.");
                 return;
             }
+
+            //Determine which achievements unlock method exists to be patched
+            GetAchievementsUnlockMethodExistence();
 
             //Patching with harmony
             harmony.PatchAll();
@@ -75,6 +78,24 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 return paths;
             }
+        }
+
+        public static bool achievementsSteam = false;
+        public static bool achievementsGOG = false;
+        public static bool achievementsEGS = false;
+        private static void GetAchievementsUnlockMethodExistence()
+        {
+            //Steam
+            List<string> steamAchievementsMethods = AccessTools.GetMethodNames(typeof(AchievementsSteam));
+            achievementsSteam = steamAchievementsMethods.Contains("Unlock");
+
+            //GOG
+            List<string> GOGAchievementsMethods = AccessTools.GetMethodNames(typeof(AchievementsGOG));
+            achievementsGOG = GOGAchievementsMethods.Contains("Unlock");
+
+            //Epic
+            List<string> epicAchievementsMethods = AccessTools.GetMethodNames(typeof(AchievementsEGS));
+            achievementsEGS = epicAchievementsMethods.Contains("Unlock");
         }
     }
 }
