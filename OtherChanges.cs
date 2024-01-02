@@ -25,7 +25,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsSteam_Unlock));
                 if (mOriginal != null && mPrefix != null)
                 {
-                    Console.WriteLine("Steam");
                     Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
                 }
             }
@@ -36,7 +35,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsGOG_Unlock));
                 if (mOriginal != null && mPrefix != null)
                 {
-                    Console.WriteLine("GOG");
                     Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
                 }
             }
@@ -47,7 +45,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsEGS_Unlock));
                 if (mOriginal != null && mPrefix != null)
                 {
-                    Console.WriteLine("EGS");
                     Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
                 }
             }
