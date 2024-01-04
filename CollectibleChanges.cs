@@ -2616,7 +2616,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 
 			//Logic
-			PuzzleHelper.ShufflePuzzleBoard(/*false TEST*/true);
+			PuzzleHelper.ShufflePuzzleBoard(false);
 
 			//Boilerplate
             __instance.app.model.spellModel.currentSpell = null;

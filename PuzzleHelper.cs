@@ -487,7 +487,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 bool mainBlock = BlockGroupModel.IsMainBlock(block);
 
                 //Set scale
-                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : /*Vector3.zero*/new Vector3(0.25f, 0.25f, 0.25f);
+                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : Vector3.zero;
 
                 //Set position
                 if (mainBlock)
