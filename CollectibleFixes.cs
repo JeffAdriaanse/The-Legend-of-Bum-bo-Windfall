@@ -212,17 +212,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Access base method
-        [HarmonyReversePatch]
-        [HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static bool CastSpellDummy(MetronomeSpell instance) { return false; }
         //Patch: Metronome now overrides the triggered spell's cost
         //Also removes Metronome mana refund
         [HarmonyPrefix, HarmonyPatch(typeof(MetronomeSpell), "CastSpell")]
         static bool MetronomeSpell_CastSpell(MetronomeSpell __instance, ref bool __result)
         {
-            if (!CastSpellDummy(__instance))
+            if (!CollectibleChanges.CastSpellDummy_SpellElement(__instance))
             {
                 __result = false;
                 return false;

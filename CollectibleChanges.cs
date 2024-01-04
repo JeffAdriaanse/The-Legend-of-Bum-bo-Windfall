@@ -16,7 +16,33 @@ namespace The_Legend_of_Bum_bo_Windfall
 			Harmony.CreateAndPatchAll(typeof(CollectibleChanges));
 		}
 
-		public static float TrinketLuckModifier(CharacterSheet characterSheet)
+        //Allows access to base CastSpell methods in spell logic
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(AttackSpell), nameof(AttackSpell.CastSpell))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool CastSpellDummy_AttackSpell(AttackSpell instance) { return false; }
+
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(DefenseSpell), nameof(DefenseSpell.CastSpell))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool CastSpellDummy_DefenseSpell(DefenseSpell instance) { return false; }
+
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(PuzzleSpell), nameof(PuzzleSpell.CastSpell))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool CastSpellDummy_PuzzleSpell(PuzzleSpell instance) { return false; }
+
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool CastSpellDummy_SpellElement(SpellElement instance) { return false; }
+
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(UseSpell), nameof(UseSpell.CastSpell))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool CastSpellDummy_UseSpell(UseSpell instance) { return false; }
+
+        public static float TrinketLuckModifier(CharacterSheet characterSheet)
 		{
 			if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
 			{
@@ -1653,11 +1679,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		//Access base method
-		[HarmonyReversePatch]
-		[HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		static bool CastSpellDummy_GoldenTickSpell(GoldenTickSpell instance) { return false; }
 		//Patch: Golden Tick rework
 		[HarmonyPrefix, HarmonyPatch(typeof(GoldenTickSpell), "CastSpell")]
 		static bool GoldenTickSpell_CastSpell(GoldenTickSpell __instance, ref bool __result)
@@ -1667,7 +1688,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				return true;
 			}
 
-			if (!CastSpellDummy_GoldenTickSpell(__instance))
+			if (!CastSpellDummy_UseSpell(__instance))
 			{
 				__result = false;
 				return false;
@@ -1699,7 +1720,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 					}
 				}
 				else if (spellElement != __instance)
-
 				{
 					spellElement.ChargeSpell();
 				}
@@ -1714,11 +1734,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return false;
 		}
 
-		//Access base method
-		[HarmonyReversePatch]
-		[HarmonyPatch(typeof(SpellElement), nameof(SpellElement.CastSpell))]
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		static bool CastSpellDummy_SleightOfHandSpell(SleightOfHandSpell instance) { return false; }
 		//Patch: Sleight of Hand rework
 		[HarmonyPrefix, HarmonyPatch(typeof(SleightOfHandSpell), "CastSpell")]
 		static bool SleightOfHandSpell_CastSpell(SleightOfHandSpell __instance, ref bool __result)
@@ -1728,7 +1743,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				return true;
 			}
 
-			if (!CastSpellDummy_SleightOfHandSpell(__instance))
+			if (!CastSpellDummy_SpellElement(__instance))
 			{
 				__result = false;
 				return false;
@@ -2588,18 +2603,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 			return -1;
         }
 
-        //Access base method
-        [HarmonyReversePatch]
-        [HarmonyPatch(typeof(PuzzleSpell), nameof(PuzzleSpell.CastSpell))]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static bool PuzzleSpell_CastSpellDummy(BumboShakeSpell instance) { return false; }
         /// <summary>
         /// Replaces <see cref="BumboShakeSpell.CastSpell"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(BumboShakeSpell), nameof(BumboShakeSpell.CastSpell))]
         static bool BumboShakeSpell_CastSpell(BumboShakeSpell __instance, ref bool __result)
         {
-			if (!PuzzleSpell_CastSpellDummy(__instance))
+			if (!CastSpellDummy_PuzzleSpell(__instance))
 			{
 				__result = false;
                 return false;
