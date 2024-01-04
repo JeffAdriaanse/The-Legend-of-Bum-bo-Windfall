@@ -2628,6 +2628,35 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = true;
             return false;
         }
+
+        /// <summary>
+        /// Replaces <see cref="D4Spell.CastSpell"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(D4Spell), nameof(D4Spell.CastSpell))]
+        static bool D4Spell_CastSpell(D4Spell __instance, ref bool __result)
+        {
+            if (!CastSpellDummy_UseSpell(__instance))
+            {
+                __result = false;
+                return false;
+            }
+
+            //Logic
+            PuzzleHelper.ShufflePuzzleBoard(false);
+
+            //Sound
+            SoundsView.Instance.PlaySound(SoundsView.eSound.Tile_RerollBoard, SoundsView.eAudioSlot.Default, false);
+
+            //Boilerplate
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
+            __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
+            __instance.app.controller.GUINotification("BOARD_SHUFFLED", GUINotificationView.NotifyType.Puzzle, __instance, true);
+            __instance.app.controller.PlayPuzzleParticles();
+
+            __result = true;
+            return false;
+        }
     }
 
     static class SpellManaCosts
