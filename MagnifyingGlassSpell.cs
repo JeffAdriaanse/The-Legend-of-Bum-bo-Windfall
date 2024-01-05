@@ -31,6 +31,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
+        public override bool CanAlterTile()
+        {
+            return true;
+        }
+
         public override void AlterTile(Block _block)
         {
             //Abort if the tile is already in a BlockGroup
