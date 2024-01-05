@@ -261,7 +261,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int j = blockGroupPosition.y; j < blockGroupPosition.y + dimensions.y; j++)
                 {
                     //Place Blocks
-                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType);
+                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, false, true);
 
                     //Add BlockGroup to the bottom left Block
                     if (i == blockGroupPosition.x && j == blockGroupPosition.y)

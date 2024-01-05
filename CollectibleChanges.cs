@@ -2616,7 +2616,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			}
 
 			//Logic
-			PuzzleHelper.ShufflePuzzleBoard(false);
+			PuzzleHelper.ShufflePuzzleBoard(false, false, false);
 
 			//Boilerplate
             __instance.app.model.spellModel.currentSpell = null;
@@ -2642,7 +2642,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Logic
-            PuzzleHelper.ShufflePuzzleBoard(false);
+            PuzzleHelper.ShufflePuzzleBoard(false, false, true);
 
             //Sound
             SoundsView.Instance.PlaySound(SoundsView.eSound.Tile_RerollBoard, SoundsView.eAudioSlot.Default, false);
@@ -2652,7 +2652,42 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.model.spellModel.spellQueued = false;
             __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
             __instance.app.controller.GUINotification("BOARD_SHUFFLED", GUINotificationView.NotifyType.Puzzle, __instance, true);
+
+            __result = true;
+            return false;
+        }
+
+        /// <summary>
+        /// Replaces <see cref="D20Spell.CastSpell"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(D20Spell), nameof(D20Spell.CastSpell))]
+        static bool D20Spell_CastSpell(D20Spell __instance, ref bool __result)
+        {
+            if (!CastSpellDummy_UseSpell(__instance))
+            {
+                __result = false;
+                return false;
+            }
+
+			//Logic
+			WindfallHelper.UnprimeEnemies(-1);
+            __instance.app.controller.ModifyCoins(1);
+            PuzzleHelper.ShufflePuzzleBoard(false, false, false);
+			WindfallHelper.RerollMana();
+            __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 1f);
+
+            //Sound
+            SoundsView.Instance.PlaySound(SoundsView.eSound.Spell_SoMysterious, SoundsView.eAudioSlot.Default, false);
+
+            //Visuals
             __instance.app.controller.PlayPuzzleParticles();
+
+            //Boilerplate
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
+
+			//Next event
+            __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
 
             __result = true;
             return false;

@@ -12,10 +12,12 @@ namespace The_Legend_of_Bum_bo_Windfall
     public static class PuzzleHelper
     {
         /// <summary>
-        /// Shuffles the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Shuffle"/> method and in spell logic. TODO: Fix shuffling while there are multiple BlockGroups present
+        /// Shuffles the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Shuffle"/> method and in spell logic.
         /// </summary>
         /// <param name="avoidCreatingCombos">Whether to attempt to avoid creating tile combos. Note that combos will not always be avoided perfectly, especially when there are a lot of BlockGroups being shuffled.</param>
-        public static void ShufflePuzzleBoard(bool avoidCreatingCombos = false)
+        /// <param name="animateBlocks">Whether to animate the Blocks.</param>
+        /// <param name="wiggleBlocks">Whether to wiggle the Blocks.</param>
+        public static void ShufflePuzzleBoard(bool avoidCreatingCombos, bool animateBlocks, bool wiggleBlocks)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
@@ -116,13 +118,37 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Block.BlockType randomBlockType = chosenBlockTypes[UnityEngine.Random.Range(0, chosenBlockTypes.Count)];
 
                     //Place Block
-                    PlaceBlock(new Position(i, j), randomBlockType);
+                    PlaceBlock(new Position(i, j), randomBlockType, animateBlocks, wiggleBlocks);
                     //Reduce placed BlockType
                     blockTypes[randomBlockType]--;
                     //Remove empty BlockTypes
                     if (blockTypes[randomBlockType] <= 0) blockTypes.Remove(randomBlockType);
                 }
             }
+        }
+
+        /// <summary>
+        /// Rerolls the puzzle board. Intended to replace vanilla implementation in spell logic.
+        /// </summary>
+        /// <param name="animateBlocks">Whether to animate the Blocks.</param>
+        /// <param name="wiggleBlocks">Whether to wiggle the Blocks.</param>
+        public static void RerollPuzzleBoard(bool animateBlocks, bool wiggleBlocks)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Clear the puzzle board
+            puzzle.Despawn();
+
+            //Place random tiles
+            for (int i = 0; i < puzzle.width; i++)
+            {
+                for (int j = 0; j < puzzle.height; j++)
+                {
+                    puzzle.setBlock(puzzle.nextBlock(), (short)i, (short)j, animateBlocks, wiggleBlocks);
+                }
+            }
+
+            WindfallHelper.app.controller.PlayPuzzleParticles();
         }
 
         /// <summary>
@@ -264,7 +290,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 int index = UnityEngine.Random.Range(0, positions.Count);
 
                 //Place the Block
-                PlaceBlock(positions[index], blockType);
+                PlaceBlock(positions[index], blockType, false, true);
 
                 positions.RemoveAt(index);
                 blockCount--;
@@ -387,8 +413,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="position">The position of the placed Block.</param>
         /// <param name="blockType">The BlockType of the placed Block.</param>
+        /// <param name="animateBlock">Whether to animate the Block.</param>
+        /// <param name="wiggleBlock">Whether to wiggle the Block.</param>
         /// <returns>The placed Block, or null if no Block was placed.</returns>
-        public static Block PlaceBlock(Position position, Block.BlockType blockType)
+        public static Block PlaceBlock(Position position, Block.BlockType blockType, bool animateBlock, bool wiggleBlock)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
@@ -400,7 +428,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (block != null) block.Despawn(false);
 
             //Place new Block
-            puzzle.setBlock(blockType, (short)position.x, (short)position.y, false, true);
+            puzzle.setBlock(blockType, (short)position.x, (short)position.y, animateBlock, wiggleBlock);
 
             //Return placed Block
             Block placedBlock = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();

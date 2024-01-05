@@ -334,6 +334,92 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (buttonHoverAnimation == null) return;
             AccessTools.Field(typeof(ButtonHoverAnimation), "initialScale").SetValue(buttonHoverAnimation, initialScale);
         }
+
+        /// <summary>
+        /// Randomly unprimes Enemies on the battlefield.
+        /// </summary>
+        /// <param name="count">The number of Enemies to unprime. If this is negative, all Enemies will be unprimed.</param>
+        public static void UnprimeEnemies(int count)
+        {
+            //List all primed Enemies
+            List<Enemy> primedEnemies = new List<Enemy>();
+            for (int enemyIterator = 0; enemyIterator < app.model.enemies.Count; enemyIterator++)
+            {
+                Enemy enemy = app.model.enemies[enemyIterator];
+                if (enemy.primed)
+                {
+                    primedEnemies.Add(enemy);
+                }
+            }
+
+            //Unprime all Enemies?
+            bool unprimeAllEnemies = false;
+            if (count < 0 || count >= primedEnemies.Count)
+            {
+                unprimeAllEnemies = true;
+                count = primedEnemies.Count;
+            }
+
+            for (int unprimeCounter = 0; unprimeCounter < count; unprimeCounter++)
+            {
+                if (primedEnemies.Count < 1) return; //Failsafe
+
+                Enemy primedEnemy;
+                if (unprimeAllEnemies) primedEnemy = primedEnemies[0]; //Choose the first Enemy
+                else primedEnemy = primedEnemies[UnityEngine.Random.Range(0, primedEnemies.Count)]; //Choose a random Enemy
+
+                primedEnemies.Remove(primedEnemy);
+                if (primedEnemy == null) continue; //Failsafe
+
+                //Unprime the Enemy
+                primedEnemy.Unprime(true);
+                if (primedEnemy.boogerCounter == 0)
+                {
+                    primedEnemy.AnimateIdle();
+                }
+                else
+                {
+                    primedEnemy.AnimateBoogered();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Rerolls the player's mana.
+        /// </summary>
+        public static void RerollMana()
+        {
+            short[] randomMana = new short[6];
+
+            //Get total current mana
+            int totalMana = 0;
+            for (short manaIterator = 0; manaIterator < 6; manaIterator++) totalMana += app.model.mana[manaIterator];
+
+            //Drain all mana
+            app.model.mana = new short[6];
+
+            List<ManaType> manaTypes = new List<ManaType>
+            {
+                ManaType.Bone,
+                ManaType.Booger,
+                ManaType.Pee,
+                ManaType.Poop,
+                ManaType.Tooth
+            };
+
+            while (totalMana > 0 && manaTypes.Count > 0)
+            {
+                int randomManaIndex = UnityEngine.Random.Range(0, manaTypes.Count);
+                int randomManaType = (int)manaTypes[randomManaIndex];
+                randomMana[randomManaType] += 1;
+                totalMana--;
+
+                //Avoid overfilling mana
+                if (randomMana[(int)manaTypes[randomManaIndex]] == 9) manaTypes.RemoveAt(randomManaIndex);
+            }
+
+            app.controller.UpdateMana(randomMana, false);
+        }
     }
 
     //Disables unwanted notifiactions immediately after they are created

@@ -119,7 +119,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.Shuffle))]
         static bool Puzzle_Shuffle()
         {
-            PuzzleHelper.ShufflePuzzleBoard(true);
+            PuzzleHelper.ShufflePuzzleBoard(true, false, false);
             return false;
         }
 
