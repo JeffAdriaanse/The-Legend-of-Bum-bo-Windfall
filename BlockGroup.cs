@@ -45,7 +45,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The position of this BlockGroup.</returns>
         public Position GetPosition()
         {
-            return MainBlock.position;
+            return new Position(MainBlock.position.x, MainBlock.position.y);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The dimensions of this BlockGroup.</returns>
         public Vector2Int GetDimensions()
         {
-            return dimensions;
+            return new Vector2Int(dimensions.x, dimensions.y);
         }
 
         /// <summary>
