@@ -1097,6 +1097,44 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
+        /// Returns the distance between two Positions on the Puzzle Board.
+        /// </summary>
+        /// <param name="startPosition">The start Position.</param>
+        /// <param name="endPosition">The end Position.</param>
+        /// <param name="wraparound">Whether to allow wrapping around the edge of the puzzle board. In this case, the shortest distance is always chosen.</param>
+        /// <returns>The distance between the two Positions.</returns>
+        public static Vector2Int Distance(Position startPosition, Position endPosition, bool wraparound)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+            Vector2Int distance = new Vector2Int(endPosition.x - startPosition.x, endPosition.y - startPosition.y);
+
+            if (wraparound)
+            {
+                //Horizontal
+                int horizontalDistance = Math.Abs(distance.x);
+                int wraparoundhorizontalDistance = Math.Abs(horizontalDistance - puzzle.width);
+
+                //If the wraparound distance is shorter than the initial distance, use the wraparound distance in the opposite direction of the inital distance
+                if (wraparoundhorizontalDistance < horizontalDistance)
+                {
+                    distance.x = wraparoundhorizontalDistance * -Math.Sign(distance.x);
+                }
+
+                //Vertical
+                int verticalDistance = Math.Abs(distance.y);
+                int wraparoundVerticalDistance = Math.Abs(verticalDistance - puzzle.height);
+
+                //If the wraparound distance is shorter than the initial distance, use the wraparound distance in the opposite direction of the inital distance
+                if (wraparoundVerticalDistance < verticalDistance)
+                {
+                    distance.y = wraparoundVerticalDistance * -Math.Sign(distance.y);
+                }
+            }
+
+            return distance;
+        }
+
+        /// <summary>
         /// Returns a new position moved within the grid bounds.
         /// </summary>
         /// <param name="position"></param>

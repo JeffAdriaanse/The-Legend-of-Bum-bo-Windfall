@@ -141,5 +141,73 @@ namespace The_Legend_of_Bum_bo_Windfall
             BlockGroup blockGroup = __instance.GetComponent<BlockGroup>();
             if (blockGroup != null) BlockGroupModel.RemoveBlockGroup(blockGroup);
         }
+
+        /// <summary>
+        /// Modifies Gamepad puzzle logic to account for BlockGroups when moving the hover cursor. (broken)
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(GamepadPuzzleController), "attach_hover_block")]
+        static bool GamepadPuzzleController_attach_hover_block(GamepadPuzzleController __instance)
+        {
+            //Only apply to gamepad input
+            if (!InputManager.Instance.IsUsingGamepadInput()) return true;
+
+            //Hover Block null check failsafe
+            GameObject m_HoverBlock = (GameObject)AccessTools.Field(typeof(GamepadPuzzleController), "m_HoverBlock").GetValue(__instance);
+            if (m_HoverBlock == null) return false;
+
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //Get Position of intended new hover Block
+            int m_HoverColumn = (int)AccessTools.Field(typeof(GamepadPuzzleController), "m_HoverColumn").GetValue(__instance);
+            int m_HoverRow = (int)AccessTools.Field(typeof(GamepadPuzzleController), "m_HoverRow").GetValue(__instance);
+
+            Block previousHoverBlock = m_HoverBlock.transform.parent?.gameObject?.GetComponent<Block>();
+            Block newHoverBlock = puzzle.blocks[m_HoverColumn, m_HoverRow]?.GetComponent<Block>();
+            //New hover block null check failsafe
+            if (newHoverBlock == null) return false;
+
+            //Handle BlockGroup collisions
+            BlockGroup newBlockGroup = BlockGroupModel.FindGroupOfBlock(newHoverBlock);
+            if (newBlockGroup != null)
+            {
+
+                //Always allow movement into the main Block
+                if (BlockGroupModel.IsMainBlock(newHoverBlock)) return true;
+
+                //By default, move the cursor to the main Block of the BlockGroup
+                Position setCursorPosition = newBlockGroup.GetPosition();
+
+                if (previousHoverBlock != null)
+                {
+                    BlockGroup previousBlockGroup = BlockGroupModel.FindGroupOfBlock(previousHoverBlock);
+
+                    //The cursor is attempting to move around inside the BlockGroup; it must be moved further to the edge of the BlockGroup instead
+                    if (previousBlockGroup != null && newBlockGroup == previousBlockGroup)
+                    {
+                        Vector2Int distanceMoved = PuzzleHelper.Distance(previousHoverBlock.position, newHoverBlock.position, true);
+
+                        if (distanceMoved.x == 1) setCursorPosition.x += newBlockGroup.GetDimensions().x; //Move cursor just beyond the right edge of the BlockGroup
+                        else if (distanceMoved.x == -1) setCursorPosition.x -= 1; //Move cursor just beyond the left edge of the BlockGroup (should not be necessary)
+
+                        if (distanceMoved.y == 1) setCursorPosition.y += newBlockGroup.GetDimensions().y; //Move cursor just beyond the top edge of the BlockGroup
+                        else if (distanceMoved.y == -1) setCursorPosition.y -= 1; //Move cursor just beyond the bottom edge of the BlockGroup (should not be necessary)
+
+                        //Move within grid bounds
+                        setCursorPosition = PuzzleHelper.MoveWithinGridBounds(setCursorPosition, true);
+
+                        //Account for new position being inside another BlockGroup
+                        BlockGroup blockGroupCollision = BlockGroupModel.FindGroupOfBlock(puzzle.blocks[setCursorPosition.x, setCursorPosition.y]?.GetComponent<Block>());
+                        if (blockGroupCollision != null) setCursorPosition = blockGroupCollision.GetPosition();
+                    }
+                }
+
+                //Set row & column
+                AccessTools.Field(typeof(GamepadPuzzleController), "m_HoverColumn").SetValue(__instance, setCursorPosition.x);
+                AccessTools.Field(typeof(GamepadPuzzleController), "m_HoverRow").SetValue(__instance, setCursorPosition.y);
+                return true;
+            }
+
+            return true;
+        }
     }
 }
