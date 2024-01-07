@@ -243,17 +243,19 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Attempts to create a BlockGroup at the given Position. Overrides nearby Blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
+        /// Attempts to place a BlockGroup at the given Position. Overrides nearby Blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
         /// </summary>
         /// <param name="position">The Position to place the BlockGroup.</param>
         /// <param name="dimensions">The dimensions of the BlockGroup.</param>
-        /// <returns>Whether the BlockGroup was successfully created.</returns>
-        public static bool CreateBlockGroup(Position position, Block.BlockType blockType, Vector2Int dimensions)
+        /// <returns>The created BlockGroup, or null if no BlockGroup was created.</returns>
+        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, Vector2Int dimensions)
         {
+            BlockGroup placedBlockGroup = null;
+
             //Make sure BlockGroup Position is valid
             Position blockGroupPosition = position;
             if (!ValidGroupPosition(position, dimensions)) blockGroupPosition = FindValidGroupPosition(position, dimensions);
-            if (blockGroupPosition == null) return false;
+            if (blockGroupPosition == null) return null;
 
             //Replace backend Blocks
             for (int i = blockGroupPosition.x; i < blockGroupPosition.x + dimensions.x; i++)
@@ -266,16 +268,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Add BlockGroup to the bottom left Block
                     if (i == blockGroupPosition.x && j == blockGroupPosition.y)
                     {
-                        BlockGroup blockGroup = placedBlock.gameObject.AddComponent<BlockGroup>();
-                        blockGroup.Init(dimensions);
-                        blockGroups.Add(blockGroup);
-
-                        //Update Block display
-                        PuzzleHelper.DisplayBlock(placedBlock);
+                        placedBlockGroup = placedBlock.gameObject.AddComponent<BlockGroup>();
+                        placedBlockGroup.Init(dimensions);
+                        blockGroups.Add(placedBlockGroup);
                     }
+
+                    //Update Block displays
+                    PuzzleHelper.DisplayBlock(placedBlock);
                 }
             }
-            return true;
+            return placedBlockGroup;
         }
 
         /// <summary>
@@ -284,9 +286,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="block">The Block.</param>
         /// <param name="dimensions">The dimensions of the BlockGroup.</param>
         /// <returns>Whether the BlockGroup was successfully created.</returns>
-        public static bool CreateBlockGroup(Block block, Vector2Int dimensions)
+        public static bool PlaceBlockGroup(Block block, Vector2Int dimensions)
         {
-            return CreateBlockGroup(block.position, block.block_type, dimensions);
+            return PlaceBlockGroup(block.position, block.block_type, dimensions);
         }
 
         /// <summary>

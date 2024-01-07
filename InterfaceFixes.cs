@@ -408,15 +408,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        public static readonly float BLOCK_SIZE = 1f;
-        //Patch: Displays new blocks. This must be a postfix to function properly. Note that if a BlockGroup main block is placed using setBlock with animation enabled, its visual position will not display correctly.
-        [HarmonyPostfix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setBlock))]
-        static void Puzzle_setBlock(Puzzle __instance, short _x, short _y)
-        {
-            PuzzleHelper.DisplayBlock(__instance.blocks[_x, _y].GetComponent<Block>());
-            return;
-        }
-
         //Patch: Fixes ButtonHoverAnimation grabbing the wrong transform value when determining block initial scale
         [HarmonyPostfix, HarmonyPatch(typeof(ButtonHoverAnimation), "Start")]
         static void ButtonHoverAnimation_Start(ButtonHoverAnimation __instance, ref Vector3 ___initialScale, Block ___tileBlock)
@@ -966,7 +957,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     __instance.app.model.trinketReward = __instance.trinket.trinketName;
                     SoundsView.Instance.PlaySound(SoundsView.eSound.Trinket_Sign_Away, __instance.transform.position, SoundsView.eAudioSlot.Default, false);
-                    if (__instance.shopIndex == 0) 
+                    if (__instance.shopIndex == 0)
                     {
                         __instance.app.view.mainCameraView.transform.DOMove(new Vector3(-0.12f, 0.27f, -3.02f), 0.25f, false).SetEase(Ease.InOutQuad);
                         __instance.app.view.mainCameraView.transform.DORotate(new Vector3(-1.43f, -19.54f, 0f), 0.25f, RotateMode.Fast).SetEase(Ease.InOutQuad);

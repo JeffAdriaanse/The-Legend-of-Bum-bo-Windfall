@@ -5,12 +5,22 @@ using PathologicalGames;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class PuzzleHelper
     {
+        //Block display size
+        public static readonly float BLOCK_SIZE = 1f;
+
+        //Access to original setBlock method
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setBlock))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void SetBlockDummy(Puzzle instance, Block.BlockType _block_type, short _x, short _y, bool _animate, bool _wiggle) { }
+
         /// <summary>
         /// Shuffles the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Shuffle"/> method and in spell logic.
         /// </summary>
@@ -55,7 +65,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Position randomPosition = validGroupPositions[UnityEngine.Random.Range(0, validGroupPositions.Count)];
 
                     //Place BlockGroup
-                    if (BlockGroupModel.CreateBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2)) continue;
+                    if (BlockGroupModel.PlaceBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2)) continue;
                 }
 
                 //If the BlockGroup could not be created, it is split up into individual Blocks
@@ -144,7 +154,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 for (int j = 0; j < puzzle.height; j++)
                 {
-                    puzzle.setBlock(puzzle.nextBlock(), (short)i, (short)j, animateBlocks, wiggleBlocks);
+                    PlaceBlock(new Position(i, j), puzzle.nextBlock(), animateBlocks, wiggleBlocks);
                 }
             }
 
@@ -409,7 +419,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Places a Block of the given BlockType at the given position. Intended to be triggered in BlockGroup logic or by spell effects.
+        /// Places a Block of the given BlockType at the given position. If a BlockGroup occupies the given Position, the entire BlockGroup will be replaced. Intended to be triggered in BlockGroup logic or by spell effects.
         /// </summary>
         /// <param name="position">The position of the placed Block.</param>
         /// <param name="blockType">The BlockType of the placed Block.</param>
@@ -423,15 +433,32 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Abort if outside puzzle board
             if (!IsWithinGridBounds(position)) return null;
 
-            //Remove existing Block
             Block block = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();
-            if (block != null) block.Despawn(false);
+            if (block != null)
+            {
+                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                if (blockGroup != null)
+                {
+                    //If the existing Block is in a BlockGroup, replace the entire BlockGroup
+                    BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroup.GetPosition(), blockType, blockGroup.GetDimensions());
+                    return newBlockGroup?.MainBlock;
+                }
+                else
+                {
+                    //If the existing Block is not in a BlockGroup, remove it
+                    block.Despawn(false);
+                }
+            }
 
             //Place new Block
-            puzzle.setBlock(blockType, (short)position.x, (short)position.y, animateBlock, wiggleBlock);
+            SetBlockDummy(puzzle, blockType, (short)position.x, (short)position.y, animateBlock, wiggleBlock);
 
-            //Return placed Block
+            //Get placed Block
             Block placedBlock = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();
+
+            //Update Block display
+            DisplayBlock(placedBlock); //Note that if a BlockGroup main Block is placed with animation true, its visual position will not display correctly.
+
             return placedBlock;
         }
 
@@ -504,7 +531,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
 
             //Scale
-            Vector3 scale = new Vector3(InterfaceFixes.BLOCK_SIZE, InterfaceFixes.BLOCK_SIZE, InterfaceFixes.BLOCK_SIZE);
+            Vector3 scale = new Vector3(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
 
             if (blockGroup != null)
             {
@@ -515,7 +542,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 bool mainBlock = BlockGroupModel.IsMainBlock(block);
 
                 //Set scale
-                scale = mainBlock ? new Vector3(InterfaceFixes.BLOCK_SIZE * dimensions.x, InterfaceFixes.BLOCK_SIZE * dimensions.y, InterfaceFixes.BLOCK_SIZE) : Vector3.zero;
+                scale = mainBlock ? new Vector3(BLOCK_SIZE * dimensions.x, BLOCK_SIZE * dimensions.y, BLOCK_SIZE) : Vector3.zero;
 
                 //Set position
                 if (mainBlock)
@@ -866,7 +893,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             int distanceToHighestSpace = -1;
                             for (int widthIterator = 0; widthIterator < blockGroup.GetDimensions().x; widthIterator++)
                             {
-                                while(true)
+                                while (true)
                                 {
                                     if (blockHeights[xIterator + widthIterator] >= puzzle.height) break;
 
@@ -1298,7 +1325,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         //Place block
                         short height = (short)HeightOfLowestEmptySpaceInColumn(widthIterator);
-                        if (height >= 0) puzzle.setBlock(blockTypeToPlace, widthIterator, height, true, false);
+                        if (height >= 0) PlaceBlock(new Position(widthIterator, height), blockTypeToPlace, true, false);
                     }
 
                     emptySpaceIterator += 1;

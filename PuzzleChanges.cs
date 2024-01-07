@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -208,6 +209,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Replaces vanilla <see cref="Puzzle.setBlock(Block.BlockType, short, short, bool, bool)"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setBlock))]
+        static bool Puzzle_setBlock(Block.BlockType _block_type, short _x, short _y, bool _animate, bool _wiggle)
+        {
+            PuzzleHelper.PlaceBlock(new Position(_x, _y), _block_type, _animate, _wiggle);
+            return false;
         }
     }
 }
