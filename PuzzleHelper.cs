@@ -15,12 +15,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Block display size
         public static readonly float BLOCK_SIZE = 1f;
 
-        //Access to original setBlock method
-        [HarmonyReversePatch]
-        [HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setBlock))]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SetBlockDummy(Puzzle instance, Block.BlockType _block_type, short _x, short _y, bool _animate, bool _wiggle) { }
-
         /// <summary>
         /// Shuffles the puzzle board. Intended to replace vanilla implementation in the <see cref="Puzzle.Shuffle"/> method and in spell logic.
         /// </summary>
@@ -439,19 +433,24 @@ namespace The_Legend_of_Bum_bo_Windfall
                 BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
                 if (blockGroup != null)
                 {
+                    Position blockGroupPosition = blockGroup.GetPosition();
+                    Vector2Int blockGroupDimensions = blockGroup.GetDimensions();
+
                     //If the existing Block is in a BlockGroup, replace the entire BlockGroup
-                    BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroup.GetPosition(), blockType, blockGroup.GetDimensions());
+                    BlockGroupModel.RemoveBlockGroup(blockGroup);
+                    BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupDimensions);
                     return newBlockGroup?.MainBlock;
                 }
                 else
                 {
                     //If the existing Block is not in a BlockGroup, remove it
-                    block.Despawn(false);
+                    if (block.gameObject.activeSelf) block.Despawn(true);
                 }
             }
 
             //Place new Block
-            SetBlockDummy(puzzle, blockType, (short)position.x, (short)position.y, animateBlock, wiggleBlock);
+            //Add 1000 to x position to use vanilla method (see setBlock prefix patch)
+            puzzle.setBlock(blockType, (short)(position.x + 1000), (short)position.y, animateBlock, wiggleBlock);
 
             //Get placed Block
             Block placedBlock = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();

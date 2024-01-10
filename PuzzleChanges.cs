@@ -135,16 +135,31 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         /// <summary>
         /// Removes BlockGroup before the Block despawns in <see cref="Block.Despawn(bool)"/> implementation.
+        /// The method is set up to abort when used in vanilla logic (except during ClearShapeEvent) by detecting the spawnPaper boolean value.
+        /// This is because Block despawns are already handled by <see cref="PuzzleHelper.PlaceBlock"/> and need to be removed from vanilla spell logic.
+        /// The vanilla method can still be used by calling the method with spawnPaper equal to true.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(Block), nameof(Block.Despawn))]
-        static void Block_Despawn(Block __instance)
+        static bool Block_Despawn(Block __instance, ref bool spawnPaper)
         {
+            if (!(WindfallHelper.app.model.bumboEvent.ToString() == "ClearShapeEvent"))
+            {
+                if (!spawnPaper)
+                {
+                    return false;
+                }
+
+                spawnPaper = false;
+            }
+
             BlockGroup blockGroup = __instance.GetComponent<BlockGroup>();
             if (blockGroup != null) BlockGroupModel.RemoveBlockGroup(blockGroup);
+
+            return true;
         }
 
         /// <summary>
-        /// Modifies Gamepad puzzle logic to account for BlockGroups when moving the hover cursor. (broken)
+        /// Modifies Gamepad puzzle logic to account for BlockGroups when moving the hover cursor.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(GamepadPuzzleController), "attach_hover_block")]
         static bool GamepadPuzzleController_attach_hover_block(GamepadPuzzleController __instance)
@@ -212,13 +227,70 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Replaces vanilla <see cref="Puzzle.setBlock(Block.BlockType, short, short, bool, bool)"/> implementation.
+        /// Replaces vanilla <see cref="Puzzle.setBlock"/> implementation.
+        /// A hacky solution is used to access the vanilla PlaceBlock method (otherwise an infinite loop would occur)
+        /// Ideally this would be accomplished with a Harmony Reverse Patch to copy the vanilla method, but the Reverse Patch doesn't seem to work for this method
+        /// The vanilla method be accessed by adding 1000 to the _x argument before calling the method.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setBlock))]
-        static bool Puzzle_setBlock(Block.BlockType _block_type, short _x, short _y, bool _animate, bool _wiggle)
+        static bool Puzzle_setBlock(Block.BlockType _block_type, ref short _x, short _y, bool _animate, bool _wiggle)
         {
+            if (_x >= 900)
+            {
+                _x = (short)(_x - 1000);
+                return true;
+            }
+
             PuzzleHelper.PlaceBlock(new Position(_x, _y), _block_type, _animate, _wiggle);
             return false;
+        }
+
+        /// <summary>
+        /// Adapts <see cref="ClearShapeEvent.Execute"/> for compatibility with BlockGroups. Ensures the entire BlockGroup is cleared in cases where only part of the BlockGroup is in the next shape to clear. This often occurs when a spell effect removes tiles from the puzzle board.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(ClearShapeEvent), nameof(ClearShapeEvent.Execute))]
+        static void ClearShapeEvent_Execute(ClearShapeEvent __instance)
+        {
+            List<PuzzleShape> shapesToClear = WindfallHelper.app.model.puzzleModel.shapesToClear;
+            if (shapesToClear.Count < 1) return;
+
+            PuzzleShape puzzleShape = shapesToClear[0];
+            if (puzzleShape == null) return;
+
+            List<BlockGroup> blockGroups = new List<BlockGroup>();
+
+            //Get all BlockGroups in the puzzleShape
+            foreach (GameObject tile in puzzleShape.tiles)
+            {
+                Block block = tile.GetComponent<Block>();
+                if (block == null) continue;
+
+                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                if (blockGroup != null && !blockGroups.Contains(blockGroup)) blockGroups.Add(blockGroup);
+            }
+
+            List<GameObject> blocksToAdd = new List<GameObject>();
+
+            //Get all Blocks from the BlockGroups that are not already in the puzzleShape
+            foreach (BlockGroup blockGroup in blockGroups)
+            {
+                List<GameObject> blockGroupBlocks = blockGroup.GetBlocks();
+
+                foreach (GameObject blockGroupBlock in blockGroupBlocks)
+                {
+                    if (!puzzleShape.tiles.Contains(blockGroupBlock) && !blocksToAdd.Contains(blockGroupBlock)) blocksToAdd.Add(blockGroupBlock);
+                }
+            }
+
+            foreach(GameObject block in blocksToAdd)
+            {
+                //Add the Blocks to the puzzleShape
+                puzzleShape.tiles.Add(block);
+
+                //Set blocks space to null
+                Block blockComponent = block.GetComponent<Block>();
+                WindfallHelper.app.view.puzzle.blocks[blockComponent.position.x, blockComponent.position.y] = null;
+            }
         }
     }
 }

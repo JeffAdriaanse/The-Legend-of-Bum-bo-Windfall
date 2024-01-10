@@ -257,6 +257,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (!ValidGroupPosition(position, dimensions)) blockGroupPosition = FindValidGroupPosition(position, dimensions);
             if (blockGroupPosition == null) return null;
 
+            Block mainBlock = null;
+            List<Block> placedBlocks = new List<Block>();
+
             //Replace backend Blocks
             for (int i = blockGroupPosition.x; i < blockGroupPosition.x + dimensions.x; i++)
             {
@@ -264,19 +267,24 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     //Place Blocks
                     Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, false, true);
+                    placedBlocks.Add(placedBlock);
 
-                    //Add BlockGroup to the bottom left Block
-                    if (i == blockGroupPosition.x && j == blockGroupPosition.y)
-                    {
-                        placedBlockGroup = placedBlock.gameObject.AddComponent<BlockGroup>();
-                        placedBlockGroup.Init(dimensions);
-                        blockGroups.Add(placedBlockGroup);
-                    }
-
-                    //Update Block displays
-                    PuzzleHelper.DisplayBlock(placedBlock);
+                    //The bottom left Block is the main Block
+                    if (i == blockGroupPosition.x && j == blockGroupPosition.y) mainBlock = placedBlock;
                 }
             }
+
+            //Add BlockGroup to the main Block
+            if (mainBlock != null)
+            {
+                placedBlockGroup = mainBlock.gameObject.AddComponent<BlockGroup>();
+                placedBlockGroup.Init(dimensions);
+                blockGroups.Add(placedBlockGroup);
+            }
+
+            //Update Block displays
+            foreach (Block placedBlock in placedBlocks) PuzzleHelper.DisplayBlock(placedBlock);
+
             return placedBlockGroup;
         }
 
