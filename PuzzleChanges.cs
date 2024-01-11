@@ -19,7 +19,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Connects matches that share BlockGroups when the puzzle board is creating matches. Triggers <see cref="BlockGroupModel.CombineShapesThatShareBlockGroups"/> in <see cref="Puzzle.ClearMatches"/>.
+        /// Modifies created shapes for compatibility with BlockGroups such that they follow BlockGroup matching logic. Triggers <see cref="BlockGroupModel.ModifyPuzzleShapes"/> in <see cref="Puzzle.ClearMatches"/>.
         /// </summary>
         /// <param name="instructions">The method instructions.</param>
         /// <returns>Transpiled instructions.</returns>
@@ -44,7 +44,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 var instructionsToInsert = new List<CodeInstruction>
                 {
                     new CodeInstruction(OpCodes.Ldloc_1),
-                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BlockGroupModel), nameof(BlockGroupModel.CombineShapesThatShareBlockGroups))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BlockGroupModel), nameof(BlockGroupModel.ModifyPuzzleShapes))),
                 };
 
                 code.InsertRange(insertionIndex, instructionsToInsert);
@@ -246,10 +246,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Adapts <see cref="ClearShapeEvent.Execute"/> for compatibility with BlockGroups. Ensures the entire BlockGroup is cleared in cases where only part of the BlockGroup is in the next shape to clear. This often occurs when a spell effect removes tiles from the puzzle board.
+        /// Adapts <see cref="ClearShapeEvent.DespawnTiles"/> for compatibility with BlockGroups.
+        /// Ensures the entire BlockGroup is cleared in cases where only part of the BlockGroup is in the next shape to clear. This often occurs when a spell effect removes tiles from the puzzle board.
+        /// The Blocks are added to the puzzleShape after <see cref="ClearShapeEvent.Execute"/> because otherwise the tiles would contribute to tile combo size and mana gain.
+        /// TODO: Fix BumboWoo triggering based on the larger combo size as a result of this patch.
         /// </summary>
-        [HarmonyPrefix, HarmonyPatch(typeof(ClearShapeEvent), nameof(ClearShapeEvent.Execute))]
-        static void ClearShapeEvent_Execute(ClearShapeEvent __instance)
+        [HarmonyPrefix, HarmonyPatch(typeof(ClearShapeEvent), nameof(ClearShapeEvent.DespawnTiles))]
+        static void ClearShapeEvent_DespawnTiles(ClearShapeEvent __instance)
         {
             List<PuzzleShape> shapesToClear = WindfallHelper.app.model.puzzleModel.shapesToClear;
             if (shapesToClear.Count < 1) return;

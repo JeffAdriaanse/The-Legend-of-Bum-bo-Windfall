@@ -17,15 +17,25 @@ namespace The_Legend_of_Bum_bo_Windfall
     /// </summary>
     public class BlockGroup : MonoBehaviour
     {
+        /// <summary>
+        /// The dimensions of the BlockGroup on the puzzle board.
+        /// </summary>
         private Vector2Int dimensions;
+
+        /// <summary>
+        /// Determines the number of Blocks the BlockGroup contributes towards matching tile combos.
+        /// </summary>
+        private int shapeValue;
 
         /// <summary>
         /// Creates a new BlockGroup.
         /// </summary>
         /// <param name="dimensions">The dimensions of the BlockGroup.</param>
-        public void Init(Vector2Int dimensions)
+        /// <param name="shapeValue">The number of Blocks the BlockGroup contributes towards matching tile combos.</param>
+        public void Init(Vector2Int dimensions, int shapeValue = 1)
         {
             this.dimensions = dimensions;
+            this.shapeValue = shapeValue;
         }
 
         /// <summary>
@@ -64,6 +74,15 @@ namespace The_Legend_of_Bum_bo_Windfall
         public int Area()
         {
             return dimensions.x * dimensions.y;
+        }
+
+        /// <summary>
+        /// Returns the shape value of this BlockGroup.
+        /// </summary>
+        /// <returns>The number of Blocks the BlockGroup contributes towards matching tile combos.</returns>
+        public int GetShapeValue()
+        {
+            return shapeValue;
         }
 
         /// <summary>
@@ -300,10 +319,76 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Ensures all tile shapes in the given list are connected between one another if they share any BlockGroups. Intended to be triggered in <see cref="Puzzle.ClearMatches"/>.
+        /// Modifies shapes that have been created in <see cref="ClearPuzzleEvent"/> for compatibility with BlockGroups such that they follow BlockGroup matching logic.
+        /// Intended to be triggered in <see cref="Puzzle.ClearMatches"/> just after the shapes have been created.
         /// </summary>
-        /// <param name="shapes">The tile shapes to combine.</param>
-        public static void CombineShapesThatShareBlockGroups(List<List<GameObject>> shapes)
+        public static void ModifyPuzzleShapes(List<List<GameObject>> shapes)
+        {
+            DisqualifyShapes(shapes);
+            CombineShapesThatShareBlockGroups(shapes);
+        }
+
+        /// <summary>
+        /// Determines shape value contribution of BlockGroups in each shape, then removes shapes that have a shape value below four.
+        /// </summary>
+        /// <param name="shapes">The shapes to check for disqualification.</param>
+        private static void DisqualifyShapes(List<List<GameObject>> shapes)
+        {
+            List<List<GameObject>> disqualifiedShapes = new List<List<GameObject>>();
+            //Disqualify shapes
+            foreach (List<GameObject> shape in shapes)
+            {
+                //The number of Blocks contributing to the size of this puzzleShape
+                int shapeValue = 0;
+
+                List<BlockGroup> blockGroups = new List<BlockGroup>();
+                Dictionary<BlockGroup, int> shapeValueContributions = new Dictionary<BlockGroup, int>();
+
+                foreach (GameObject block in shape)
+                {
+                    Block blockComponent = block?.GetComponent<Block>();
+                    if (block == null) continue;
+
+                    BlockGroup blockGroup = FindGroupOfBlock(block);
+
+                    //Determine shape value contribution of each BlockGroup
+                    if (blockGroup != null)
+                    {
+                        if (!shapeValueContributions.ContainsKey(blockGroup))
+                        {
+                            shapeValueContributions.Add(blockGroup, 1);
+                        }
+                        else shapeValueContributions[blockGroup]++;
+                        continue;
+                    }
+
+                    //Add shape value contribution of regular Blocks
+                    shapeValue++;
+                }
+
+                //Add shape value contribution of BlockGroups
+                for (int blockGroupCounter = 0; blockGroupCounter < shapeValueContributions.Count; blockGroupCounter++)
+                {
+                    KeyValuePair<BlockGroup, int> shapeValueContribution = shapeValueContributions.ElementAt(blockGroupCounter);
+
+                    //Limit BlockGroup shape value contribution according to the BlockGroup's internal shapeValue
+                    shapeValue += Math.Min(shapeValueContribution.Value, shapeValueContribution.Key.GetShapeValue());
+                }
+
+                //Disqualify shapes that are too small
+                //Tile combos can only be matched when the shape value is four or greater
+                if (shapeValue < 4) disqualifiedShapes.Add(shape);
+            }
+
+            //Remove disqualified shapes
+            shapes.RemoveAll((List<GameObject> disqualifiedShape) => disqualifiedShapes.Contains(disqualifiedShape));
+        }
+
+        /// <summary>
+        /// Ensures all shapes in the given list are connected between one another if they share any BlockGroups.
+        /// </summary>
+        /// <param name="shapes">The shapes to combine.</param>
+        private static void CombineShapesThatShareBlockGroups(List<List<GameObject>> shapes)
         {
             //Remove BlockGroups that are in puzzle matches
             List<BlockGroup> consumedBlockGroups = new List<BlockGroup>();
@@ -315,6 +400,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Find all shapes in the group
                 List<List<GameObject>> shapesConnectedToGroup = ShapesConnectedToGroup(group, shapes);
+
                 List<GameObject> firstShape = null;
 
                 if (shapesConnectedToGroup.Count >= 1)
@@ -396,26 +482,21 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="shape">The shape to find groups for.</param>
         /// <returns>All groups in the shape.</returns>
-        private static List<BlockGroup> FindGroupsInShape(List<GameObject> shape)
+        private static List<BlockGroup> FindBlockGroupsInShape(List<GameObject> shape)
         {
             List<BlockGroup> returnedBlockGroups = new List<BlockGroup>();
 
             //Find the group of each block
             for (int blockIterator = 0; blockIterator < shape.Count; blockIterator++)
             {
-                GameObject gameObject = shape[blockIterator];
-                if (gameObject == null) continue;
-
-                Block block = gameObject.GetComponent<Block>();
+                Block block = shape[blockIterator]?.GetComponent<Block>();
                 if (block == null) continue;
 
-                foreach (BlockGroup blockGroup in blockGroups)
+                BlockGroup blockGroup = FindGroupOfBlock(block);
+                if (blockGroup != null && !returnedBlockGroups.Contains(blockGroup)/*Ignore duplicates*/)
                 {
-                    if (blockGroup.Contains(block) && !returnedBlockGroups.Contains(blockGroup)/*Ignore duplicates*/)
-                    {
-                        //Add the block group
-                        returnedBlockGroups.Add(blockGroup);
-                    }
+                    //Add the block group
+                    returnedBlockGroups.Add(blockGroup);
                 }
             }
 
