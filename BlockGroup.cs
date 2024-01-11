@@ -351,14 +351,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     BlockGroup blockGroup = FindGroupOfBlock(block);
 
-                    //Determine shape value contribution of each BlockGroup
+                    //Find all BlockGroups
                     if (blockGroup != null)
                     {
-                        if (!shapeValueContributions.ContainsKey(blockGroup))
-                        {
-                            shapeValueContributions.Add(blockGroup, 1);
-                        }
-                        else shapeValueContributions[blockGroup]++;
+                        if (!blockGroups.Contains(blockGroup)) blockGroups.Add(blockGroup);
                         continue;
                     }
 
@@ -366,13 +362,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     shapeValue++;
                 }
 
-                //Add shape value contribution of BlockGroups
-                for (int blockGroupCounter = 0; blockGroupCounter < shapeValueContributions.Count; blockGroupCounter++)
+                //Add shape value contribution each BlockGroup
+                foreach (BlockGroup blockGroup in blockGroups)
                 {
-                    KeyValuePair<BlockGroup, int> shapeValueContribution = shapeValueContributions.ElementAt(blockGroupCounter);
-
-                    //Limit BlockGroup shape value contribution according to the BlockGroup's internal shapeValue
-                    shapeValue += Math.Min(shapeValueContribution.Value, shapeValueContribution.Key.GetShapeValue());
+                    shapeValue += blockGroup.GetShapeValue();
                 }
 
                 //Disqualify shapes that are too small
