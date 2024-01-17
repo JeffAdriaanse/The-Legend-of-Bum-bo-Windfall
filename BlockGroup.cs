@@ -324,57 +324,217 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         public static void ModifyPuzzleShapes(List<List<GameObject>> shapes)
         {
-            DisqualifyShapes(shapes);
+            shapes = DisassembleShapes(shapes);
+            shapes = ShapeValueThreshold(shapes, 4);
+
             CombineShapesThatShareBlockGroups(shapes);
         }
 
         /// <summary>
-        /// Determines shape value contribution of BlockGroups in each shape, then removes shapes that have a shape value below four.
+        /// Breaks up the given shapes into individual lines of Blocks.
         /// </summary>
-        /// <param name="shapes">The shapes to check for disqualification.</param>
-        private static void DisqualifyShapes(List<List<GameObject>> shapes)
+        /// <param name="shapes">The shapes to disassemble.</param>
+        /// <returns>The disassembled shapes.</returns>
+        private static List<List<GameObject>> DisassembleShapes(List<List<GameObject>> shapes)
         {
-            List<List<GameObject>> disqualifiedShapes = new List<List<GameObject>>();
-            //Disqualify shapes
+            List<List<GameObject>> disassembledShapes = new List<List<GameObject>>();
             foreach (List<GameObject> shape in shapes)
             {
-                //The number of Blocks contributing to the size of this puzzleShape
-                int shapeValue = 0;
-
-                List<BlockGroup> blockGroups = new List<BlockGroup>();
-                Dictionary<BlockGroup, int> shapeValueContributions = new Dictionary<BlockGroup, int>();
-
-                foreach (GameObject block in shape)
-                {
-                    Block blockComponent = block?.GetComponent<Block>();
-                    if (block == null) continue;
-
-                    BlockGroup blockGroup = FindGroupOfBlock(block);
-
-                    //Find all BlockGroups
-                    if (blockGroup != null)
-                    {
-                        if (!blockGroups.Contains(blockGroup)) blockGroups.Add(blockGroup);
-                        continue;
-                    }
-
-                    //Add shape value contribution of regular Blocks
-                    shapeValue++;
-                }
-
-                //Add shape value contribution each BlockGroup
-                foreach (BlockGroup blockGroup in blockGroups)
-                {
-                    shapeValue += blockGroup.GetShapeValue();
-                }
-
-                //Disqualify shapes that are too small
-                //Tile combos can only be matched when the shape value is four or greater
-                if (shapeValue < 4) disqualifiedShapes.Add(shape);
+                disassembledShapes.AddRange(SeparateLines(shape));
             }
 
-            //Remove disqualified shapes
-            shapes.RemoveAll((List<GameObject> disqualifiedShape) => disqualifiedShapes.Contains(disqualifiedShape));
+            return disassembledShapes;
+        }
+
+        /// <summary>
+        /// Breaks up the given shape into individual lines of Blocks. Indended for breaking up shapes that have overlapping horizontal and vertical lines of Blocks.
+        /// </summary>
+        /// <param name="shape">The shape to disassemble.</param>
+        /// <returns>The newly formed shapes.</returns>
+        private static List<List<GameObject>> SeparateLines(List<GameObject> shape)
+        {
+            List<List<GameObject>> returnedLines = new List<List<GameObject>>();
+
+            List<GameObject> encounteredJunctions = new List<GameObject>();
+
+            foreach (GameObject block in shape)
+            {
+                Block blockComponent = block?.GetComponent<Block>();
+                if (blockComponent == null) continue;
+
+                List<List<GameObject>> linesAtJunction = LinesAtJunction(block, shape);
+
+                //A junction must have sufficiently long lines in each direction
+                if (linesAtJunction[0].Count > 3 && linesAtJunction[1].Count > 3)
+                {
+                    foreach (List<GameObject> lineAtJunction in linesAtJunction)
+                    {
+                        //Ensure that newly added lines contain no previously encountered junctions
+                        if (lineAtJunction.Intersect(encounteredJunctions).Count() < 1)
+                        {
+                            returnedLines.Add(lineAtJunction);
+                        }
+                    }
+                    encounteredJunctions.Add(block);
+                }
+            }
+
+            if (returnedLines.Count > 0) return returnedLines;
+            return new List<List<GameObject>>() { shape };
+        }
+
+        /// <summary>
+        /// Returns consecutive lines of Blocks at the given junction within the given shape on the X and Y axes (slow).
+        /// </summary>
+        /// <param name="junction">The junction to find lines for.</param>
+        /// <param name="shape">The shape of Blocks that the lines are contained within.</param>
+        /// <returns>Consecutive lines of Blocks at the given junction.<returns>
+        private static List<List<GameObject>> LinesAtJunction(GameObject junction, List<GameObject> shape)
+        {
+            Block junctionComponent = junction?.GetComponent<Block>();
+            if (junctionComponent == null) return null;
+
+            List<GameObject> lineX = new List<GameObject>() { junction };
+            int offsetX;
+            //Find all consecutive Blocks in a line beside the junction on the X axis
+            for (int directionIterator = 0; directionIterator < 2; directionIterator++)
+            {
+                //Search in both directions
+                offsetX = (directionIterator == 0) ? 1 : -1;
+
+                while (true)
+                {
+                    bool continuedLine = false;
+
+                    foreach (GameObject block in shape)
+                    {
+                        Block blockComponent = block?.GetComponent<Block>();
+                        if (blockComponent == null) continue;
+
+                        if (blockComponent.position.y == junctionComponent.position.y && blockComponent.position.x == junctionComponent.position.x + offsetX)
+                        {
+                            lineX.Add(block);
+                            continuedLine = true;
+                            break;
+                        }
+                    }
+
+                    //Proceed down the line
+                    offsetX += (directionIterator == 0) ? 1 : -1;
+
+                    //Stop when the line goes no further
+                    if (!continuedLine) break;
+                }
+            }
+
+            List<GameObject> lineY = new List<GameObject>() { junction };
+            int offsetY;
+            //Find all consecutive Blocks in a line beside the junction on the Y axis
+            for (int directionIterator = 0; directionIterator < 2; directionIterator++)
+            {
+                //Search in both directions
+                offsetY = (directionIterator == 0) ? 1 : -1;
+
+                while (true)
+                {
+                    bool continuedLine = false;
+
+                    foreach (GameObject block in shape)
+                    {
+                        Block blockComponent = block?.GetComponent<Block>();
+                        if (blockComponent == null) continue;
+
+                        if (blockComponent.position.y == junctionComponent.position.y + offsetY && blockComponent.position.x == junctionComponent.position.x)
+                        {
+                            lineY.Add(block);
+                            continuedLine = true;
+                            break;
+                        }
+                    }
+
+                    //Proceed down the line
+                    offsetY += (directionIterator == 0) ? 1 : -1;
+
+                    //Stop when the line goes no further
+                    if (!continuedLine) break;
+                }
+            }
+
+            return new List<List<GameObject>>()
+            {
+                lineX,
+                lineY,
+            };
+        }
+
+        /// <summary>
+        /// Returns all shapes in the given list of shapes with a shape value equal to or greater than the given threshold.
+        /// </summary>
+        /// <param name="shapes">The shapes to choose from.</param>
+        /// <param name="threshold">The shape value threshold.</param>
+        /// <returns>All shapes with a shape value equal to or greater than the given threshold.</returns>
+        private static List<List<GameObject>> ShapeValueThreshold(List<List<GameObject>> shapes, int threshold)
+        {
+            List<List<GameObject>> validShapes = new List<List<GameObject>>();
+            foreach (List<GameObject> shape in shapes)
+            {
+                if (ShapeValue(shape) >= threshold)
+                {
+                    validShapes.Add(shape);
+                }
+            }
+
+            return validShapes;
+        }
+
+        /// <summary>
+        /// Determines the shape value contribution of Blocks and BlockGroups in the shape, then returns the overall shape value.
+        /// </summary>
+        /// <param name="shape">The shape to determine the shape value contribution of.</param>
+        /// <returns>The shape value of the given shape.</returns>
+        private static int ShapeValue(List<GameObject> shape)
+        {
+            //The number of Blocks contributing to the size of this puzzleShape
+            int shapeValue = 0;
+
+            List<BlockGroup> blockGroups = new List<BlockGroup>();
+
+            //Iterate over every Block
+            foreach (GameObject block in shape)
+            {
+                Block blockComponent = block?.GetComponent<Block>();
+                if (blockComponent == null) continue;
+
+                BlockGroup blockGroup = FindGroupOfBlock(blockComponent);
+
+                if (blockGroup != null)
+                {
+                    //Find all BlockGroups
+                    if (!blockGroups.Contains(blockGroup)) blockGroups.Add(blockGroup);
+
+                    //Individual Blocks in BlockGroups do not contribute towards shape value.
+                    continue;
+                }
+
+                //Add shape value contribution of regular Blocks
+                shapeValue++;
+            }
+
+            //Add shape value contribution of each BlockGroup
+            foreach (BlockGroup blockGroup in blockGroups)
+            {
+                shapeValue += blockGroup.GetShapeValue();
+            }
+
+            return shapeValue;
+        }
+
+        private static void CombineShapesAtJunctions(List<List<GameObject>> shapes)
+        {
+            foreach (List<GameObject> shape in shapes)
+            {
+
+            }
         }
 
         /// <summary>
@@ -383,9 +543,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="shapes">The shapes to combine.</param>
         private static void CombineShapesThatShareBlockGroups(List<List<GameObject>> shapes)
         {
-            //Remove BlockGroups that are in puzzle matches
-            List<BlockGroup> consumedBlockGroups = new List<BlockGroup>();
-
             //Loop through all groups
             for (int groupIterator = 0; groupIterator < blockGroups.Count; groupIterator++)
             {
@@ -414,9 +571,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         //Delete subsequent shapes
                         shapes.Remove(shape);
                     }
-
-                    //BlockGroup is in a shape, so it must be removed
-                    consumedBlockGroups.Add(group);
                 }
 
                 if (firstShape != null)
@@ -430,12 +584,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                     }
                 }
-            }
-
-            //Remove BlockGroups
-            foreach (BlockGroup group in consumedBlockGroups)
-            {
-                RemoveBlockGroup(group);
             }
         }
 
