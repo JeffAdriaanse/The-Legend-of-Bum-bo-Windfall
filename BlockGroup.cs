@@ -324,10 +324,21 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         public static void ModifyPuzzleShapes(List<List<GameObject>> shapes)
         {
-            shapes = DisassembleShapes(shapes);
-            shapes = ShapeValueThreshold(shapes, 4);
+            //shapes = DisassembleShapes(shapes);
+            //shapes = ShapeValueThreshold(shapes, 4);
 
-            CombineShapesThatShareBlockGroups(shapes);
+            List<List<GameObject>> modifiedShapes = new List<List<GameObject>>();
+
+            foreach (List<GameObject> shape in shapes)
+            {
+                modifiedShapes.AddRange(DisqualifyLines(shape, 4));
+            }
+
+            CombineShapesThatShareBlockGroups(modifiedShapes);
+
+            //Replace vanilla shapes
+            shapes.Clear();
+            shapes.AddRange(modifiedShapes);
         }
 
         /// <summary>
@@ -346,6 +357,57 @@ namespace The_Legend_of_Bum_bo_Windfall
             return disassembledShapes;
         }
 
+        private static List<List<GameObject>> DisqualifyLines(List<GameObject> shape, int threshold)
+        {
+            List<List<GameObject>> lines = SeparateLines(shape);
+
+            List<List<GameObject>> validLines = new List<List<GameObject>>();
+
+            //Disqualify lines that are too short
+            foreach (List<GameObject> line in lines)
+            {
+                if (ShapeValue(line) >= threshold) validLines.Add(line);
+            }
+
+            List<List<GameObject>> returnedShapes = new List<List<GameObject>>();
+
+            foreach (List<GameObject> line in validLines)
+            {
+                bool lineIsConnectedToExistingShape = false;
+
+                foreach (List<GameObject> returnedShape in returnedShapes)
+                {
+                    foreach (GameObject block in line)
+                    {
+                        if (returnedShape.Contains(block))
+                        {
+                            lineIsConnectedToExistingShape = true;
+
+                            //Prevent duplicate Blocks
+                            line.Remove(block);
+
+                            //Add line to existing shape
+                            returnedShape.AddRange(line);
+
+                            break;
+                        }
+                    }
+
+                    //Line has been added to an existing shape already
+                    if (lineIsConnectedToExistingShape) break;
+                }
+
+                //Line shape has not been added yet
+                if (!lineIsConnectedToExistingShape)
+                {
+                    //Add line shape
+                    returnedShapes.Add(line);
+                }
+            }
+
+            return returnedShapes;
+        }
+
         /// <summary>
         /// Breaks up the given shape into individual lines of Blocks. Indended for breaking up shapes that have overlapping horizontal and vertical lines of Blocks.
         /// </summary>
@@ -353,7 +415,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The newly formed shapes.</returns>
         private static List<List<GameObject>> SeparateLines(List<GameObject> shape)
         {
-            List<List<GameObject>> returnedLines = new List<List<GameObject>>();
+            List<List<GameObject>> lines = new List<List<GameObject>>();
 
             List<GameObject> encounteredJunctions = new List<GameObject>();
 
@@ -364,22 +426,33 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 List<List<GameObject>> linesAtJunction = LinesAtJunction(block, shape);
 
-                //A junction must have sufficiently long lines in each direction
-                if (linesAtJunction[0].Count > 3 && linesAtJunction[1].Count > 3)
+                //A junction must have lines in each direction
+                if (linesAtJunction[0].Count > 1 && linesAtJunction[1].Count > 1)
                 {
                     foreach (List<GameObject> lineAtJunction in linesAtJunction)
                     {
                         //Ensure that newly added lines contain no previously encountered junctions
-                        if (lineAtJunction.Intersect(encounteredJunctions).Count() < 1)
+                        bool newLine = true;
+                        foreach (GameObject lineBlock in lineAtJunction)
                         {
-                            returnedLines.Add(lineAtJunction);
+                            if (encounteredJunctions.Contains(lineBlock))
+                            {
+                                newLine = false;
+                                break;
+                            }
+                        }
+
+                        if (newLine)
+                        {
+                            lines.Add(lineAtJunction);
                         }
                     }
+
                     encounteredJunctions.Add(block);
                 }
             }
 
-            if (returnedLines.Count > 0) return returnedLines;
+            if (lines.Count > 0) return lines;
             return new List<List<GameObject>>() { shape };
         }
 
