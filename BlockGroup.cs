@@ -23,19 +23,26 @@ namespace The_Legend_of_Bum_bo_Windfall
         private Vector2Int dimensions;
 
         /// <summary>
-        /// Determines the number of Blocks the BlockGroup contributes towards matching tile combos.
+        /// Determines the number of Blocks the BlockGroup contributes towards the matching length of puzzle lines.
         /// </summary>
         private int shapeValue;
+
+        /// <summary>
+        /// Determines the number of Blocks the BlockGroup contributes towards the size of matched tile combos.
+        /// </summary>
+        private int comboContribution;
 
         /// <summary>
         /// Creates a new BlockGroup.
         /// </summary>
         /// <param name="dimensions">The dimensions of the BlockGroup.</param>
-        /// <param name="shapeValue">The number of Blocks the BlockGroup contributes towards matching tile combos.</param>
-        public void Init(Vector2Int dimensions, int shapeValue = 1)
+        /// <param name="shapeValue">The number of Blocks the BlockGroup contributes towards the matching length of puzzle lines.</param>
+        /// <param name="shapeValue">The number of Blocks the BlockGroup contributes towards the size of matched tile combos.</param>
+        public void Init(Vector2Int dimensions, int shapeValue = 1, int comboContribution = 2)
         {
             this.dimensions = dimensions;
             this.shapeValue = shapeValue;
+            this.comboContribution = comboContribution;
         }
 
         /// <summary>
@@ -79,10 +86,19 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Returns the shape value of this BlockGroup.
         /// </summary>
-        /// <returns>The number of Blocks the BlockGroup contributes towards matching tile combos.</returns>
+        /// <returns>The number of Blocks the BlockGroup contributes towards the matching length of puzzle lines.</returns>
         public int GetShapeValue()
         {
             return shapeValue;
+        }
+
+        /// <summary>
+        /// Returns the combo contribution of this BlockGroup.
+        /// </summary>
+        /// <returns>The number of Blocks the BlockGroup contributes towards the size of matched tile combos.</returns>
+        public int GetComboContribution()
+        {
+            return comboContribution;
         }
 
         /// <summary>
@@ -324,9 +340,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         public static void ModifyPuzzleShapes(List<List<GameObject>> shapes)
         {
-            //shapes = DisassembleShapes(shapes);
-            //shapes = ShapeValueThreshold(shapes, 4);
-
             List<List<GameObject>> modifiedShapes = new List<List<GameObject>>();
 
             foreach (List<GameObject> shape in shapes)
@@ -336,25 +349,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             CombineShapesThatShareBlockGroups(modifiedShapes);
 
+            foreach (List<GameObject> shape in modifiedShapes)
+            {
+                ResizeByComboContribution(shape);
+            }
+
             //Replace vanilla shapes
             shapes.Clear();
             shapes.AddRange(modifiedShapes);
-        }
-
-        /// <summary>
-        /// Breaks up the given shapes into individual lines of Blocks.
-        /// </summary>
-        /// <param name="shapes">The shapes to disassemble.</param>
-        /// <returns>The disassembled shapes.</returns>
-        private static List<List<GameObject>> DisassembleShapes(List<List<GameObject>> shapes)
-        {
-            List<List<GameObject>> disassembledShapes = new List<List<GameObject>>();
-            foreach (List<GameObject> shape in shapes)
-            {
-                disassembledShapes.AddRange(SeparateLines(shape));
-            }
-
-            return disassembledShapes;
         }
 
         private static List<List<GameObject>> DisqualifyLines(List<GameObject> shape, int threshold)
@@ -362,50 +364,63 @@ namespace The_Legend_of_Bum_bo_Windfall
             List<List<GameObject>> lines = SeparateLines(shape);
 
             List<List<GameObject>> validLines = new List<List<GameObject>>();
-
-            //Disqualify lines that are too short
+            //Disqualify lines that are too small
             foreach (List<GameObject> line in lines)
             {
                 if (ShapeValue(line) >= threshold) validLines.Add(line);
             }
 
-            List<List<GameObject>> returnedShapes = new List<List<GameObject>>();
+            List<List<GameObject>> shapes = new List<List<GameObject>>();
 
+            //Merge lines back into shapes
             foreach (List<GameObject> line in validLines)
             {
-                bool lineIsConnectedToExistingShape = false;
+                List<List<GameObject>> connectedShapes = new List<List<GameObject>>();
 
-                foreach (List<GameObject> returnedShape in returnedShapes)
+                bool lineIsConnectedToExistingShapes = false;
+
+                //Search previously encountered shapes to determine if this line overlaps existing shapes
+                foreach (List<GameObject> returnedShape in shapes)
                 {
                     foreach (GameObject block in line)
                     {
                         if (returnedShape.Contains(block))
                         {
-                            lineIsConnectedToExistingShape = true;
+                            lineIsConnectedToExistingShapes = true;
+
+                            //Track which shapes the line is connected to
+                            connectedShapes.Add(returnedShape);
 
                             //Prevent duplicate Blocks
                             line.Remove(block);
 
-                            //Add line to existing shape
-                            returnedShape.AddRange(line);
-
                             break;
                         }
                     }
-
-                    //Line has been added to an existing shape already
-                    if (lineIsConnectedToExistingShape) break;
                 }
 
-                //Line shape has not been added yet
-                if (!lineIsConnectedToExistingShape)
+                //Merge connected shapes with the line
+                if (lineIsConnectedToExistingShapes)
                 {
-                    //Add line shape
-                    returnedShapes.Add(line);
+                    //Remove connected shapes
+                    shapes.RemoveAll((List<GameObject> x) => connectedShapes.Contains(x));
+
+                    //Add new merged shape
+                    List<GameObject> mergedShape = new List<GameObject>();
+
+                    foreach(List<GameObject> connectedShape in connectedShapes) mergedShape.AddRange(connectedShape);
+                    mergedShape.AddRange(line);
+
+                    shapes.Add(mergedShape);
+                }
+                else
+                {
+                    //Line shape has not been added yet
+                    shapes.Add(line);
                 }
             }
 
-            return returnedShapes;
+            return shapes;
         }
 
         /// <summary>
@@ -541,26 +556,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Returns all shapes in the given list of shapes with a shape value equal to or greater than the given threshold.
-        /// </summary>
-        /// <param name="shapes">The shapes to choose from.</param>
-        /// <param name="threshold">The shape value threshold.</param>
-        /// <returns>All shapes with a shape value equal to or greater than the given threshold.</returns>
-        private static List<List<GameObject>> ShapeValueThreshold(List<List<GameObject>> shapes, int threshold)
-        {
-            List<List<GameObject>> validShapes = new List<List<GameObject>>();
-            foreach (List<GameObject> shape in shapes)
-            {
-                if (ShapeValue(shape) >= threshold)
-                {
-                    validShapes.Add(shape);
-                }
-            }
-
-            return validShapes;
-        }
-
-        /// <summary>
         /// Determines the shape value contribution of Blocks and BlockGroups in the shape, then returns the overall shape value.
         /// </summary>
         /// <param name="shape">The shape to determine the shape value contribution of.</param>
@@ -602,12 +597,73 @@ namespace The_Legend_of_Bum_bo_Windfall
             return shapeValue;
         }
 
-        private static void CombineShapesAtJunctions(List<List<GameObject>> shapes)
+        /// <summary>
+        /// Adds or removes Blocks from the shape such that each BlockGroup involved does not contribute more Blocks than its combo contribution.
+        /// </summary>
+        /// <param name="shape">The shape to resize.</param>
+        private static void ResizeByComboContribution(List<GameObject> shape)
         {
-            foreach (List<GameObject> shape in shapes)
-            {
+            List<GameObject> allowedBlocks = new List<GameObject>();
 
+            //Track the shape contriution of each BlockGroup
+            Dictionary<BlockGroup, int> blockGroupContributions = new Dictionary<BlockGroup, int>();
+
+            //Reduce the contribution of overcontributing BlockGroups
+            foreach (GameObject block in shape)
+            {
+                Block blockComponent = block?.GetComponent<Block>();
+                if (blockComponent == null) continue;
+
+                BlockGroup blockGroup = FindGroupOfBlock(blockComponent);
+
+                if (blockGroup != null)
+                {
+                    //Encountered a new BlockGroup
+                    if (!blockGroupContributions.ContainsKey(blockGroup))
+                    {
+                        blockGroupContributions.Add(blockGroup, 0);
+                    }
+
+                    //Add the BlockGroup Block if the BlockGroup has not reached its combo contribution
+                    if (blockGroupContributions[blockGroup] < blockGroup.GetComboContribution())
+                    {
+                        blockGroupContributions[blockGroup]++;
+                        allowedBlocks.Add(block);
+                    }
+                }
+                else
+                {
+                    allowedBlocks.Add(block);
+                }
             }
+
+            //Increase the contribution of undercontributing BlockGroups
+            for (int blockGroupCounter = 0; blockGroupCounter < blockGroupContributions.Count; blockGroupCounter++)
+            {
+                KeyValuePair<BlockGroup, int> blockGroupContribution = blockGroupContributions.ElementAt(blockGroupCounter);
+
+                BlockGroup blockGroup = blockGroupContribution.Key;
+                int blockGroupContributionValue = blockGroupContribution.Value;
+                int comboContribution = blockGroup.GetComboContribution();
+
+                List<GameObject> blockGroupBlocks = blockGroup.GetBlocks();
+
+                //Add Blocks from the BlockGroup
+                foreach (GameObject block in blockGroupBlocks)
+                {
+                    //Exit once the combo contribution is reached
+                    if (blockGroupContributionValue >= comboContribution) break;
+
+                    if (!allowedBlocks.Contains(block))
+                    {
+                        blockGroupContributionValue++;
+                        allowedBlocks.Add(block);
+                    }
+                }
+            }
+
+            shape.Clear();
+            shape.AddRange(allowedBlocks);
         }
 
         /// <summary>
