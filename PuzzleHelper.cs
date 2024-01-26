@@ -29,17 +29,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             Dictionary<Block.BlockType, int> blockTypes = BlockTypeCounts(true, false);
 
             //Store all BlockGroups on the puzzle board
-            List<Tuple<Block.BlockType, Vector2Int>> blockGroups = new List<Tuple<Block.BlockType, Vector2Int>>();
+            List<Tuple<Block.BlockType, BlockGroupData>> blockGroups = new List<Tuple<Block.BlockType, BlockGroupData>>();
             foreach (BlockGroup blockGroup in BlockGroupModel.blockGroups)
             {
-                blockGroups.Add(new Tuple<Block.BlockType, Vector2Int>(blockGroup.MainBlock.block_type, blockGroup.GetDimensions()));
+                blockGroups.Add(new Tuple<Block.BlockType, BlockGroupData>(blockGroup.MainBlock.block_type, blockGroup.GetBlockGroupData()));
             }
 
             //Clear the puzzle board
             puzzle.Despawn();
 
             //Randomly place BlockGroups
-            foreach (Tuple<Block.BlockType, Vector2Int> blockGroup in blockGroups)
+            foreach (Tuple<Block.BlockType, BlockGroupData> blockGroup in blockGroups)
             {
                 //Add all possible BlockGroup Positions
                 List<Position> validGroupPositions = new List<Position>();
@@ -48,7 +48,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     for (int i = 0; i < puzzle.width; i++)
                     {
                         Position boardPosition = new Position(i, j);
-                        if (BlockGroupModel.ValidGroupPosition(boardPosition, blockGroup.Item2)) validGroupPositions.Add(boardPosition);
+                        if (BlockGroupModel.ValidGroupPosition(boardPosition, blockGroup.Item2.dimensions)) validGroupPositions.Add(boardPosition);
                     }
                 }
 
@@ -63,7 +63,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //If the BlockGroup could not be created, it is split up into individual Blocks
-                int numberOfBlocks = blockGroup.Item2.x * blockGroup.Item2.y;
+                int numberOfBlocks = blockGroup.Item2.dimensions.x * blockGroup.Item2.dimensions.y;
                 if (blockTypes.ContainsKey(blockGroup.Item1)) blockTypes[blockGroup.Item1] += numberOfBlocks;
                 else blockTypes.Add(blockGroup.Item1, numberOfBlocks);
                 continue;
@@ -434,11 +434,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (blockGroup != null)
                 {
                     Position blockGroupPosition = blockGroup.GetPosition();
-                    Vector2Int blockGroupDimensions = blockGroup.GetDimensions();
+                    BlockGroupData blockGroupData = blockGroup.GetBlockGroupData();
 
                     //If the existing Block is in a BlockGroup, replace the entire BlockGroup
                     BlockGroupModel.RemoveBlockGroup(blockGroup);
-                    BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupDimensions);
+                    BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData);
                     return newBlockGroup?.MainBlock;
                 }
                 else

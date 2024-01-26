@@ -42,7 +42,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (BlockGroupModel.FindGroupOfBlock(_block) != null) return;
 
             //Logic
-            if (!BlockGroupModel.PlaceBlockGroup(_block, new Vector2Int(2, 2))) return;
+            if (!BlockGroupModel.PlaceBlockGroup(_block, new BlockGroupData(new Vector2Int(4, 4), 1, 1))) return;
 
             //Sound
             app.view.soundsView.PlaySound(SoundsView.eSound.TileDestroyed, _block.transform.position, SoundsView.eAudioSlot.Default, false);

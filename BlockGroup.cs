@@ -18,31 +18,17 @@ namespace The_Legend_of_Bum_bo_Windfall
     public class BlockGroup : MonoBehaviour
     {
         /// <summary>
-        /// The dimensions of the BlockGroup on the puzzle board.
+        /// The properties of the BlockGroup.
         /// </summary>
-        private Vector2Int dimensions;
-
-        /// <summary>
-        /// Determines the number of Blocks the BlockGroup contributes towards the matching length of puzzle lines.
-        /// </summary>
-        private int shapeValue;
-
-        /// <summary>
-        /// Determines the number of Blocks the BlockGroup contributes towards the size of matched tile combos.
-        /// </summary>
-        private int comboContribution;
+        private BlockGroupData blockGroupData;
 
         /// <summary>
         /// Creates a new BlockGroup.
         /// </summary>
-        /// <param name="dimensions">The dimensions of the BlockGroup.</param>
-        /// <param name="shapeValue">The number of Blocks the BlockGroup contributes towards the matching length of puzzle lines.</param>
-        /// <param name="shapeValue">The number of Blocks the BlockGroup contributes towards the size of matched tile combos.</param>
-        public void Init(Vector2Int dimensions, int shapeValue = 1, int comboContribution = 2)
+        /// <param name="blockGroupData">The properties of the BlockGroup.</param>
+        public void Init(BlockGroupData blockGroupData)
         {
-            this.dimensions = dimensions;
-            this.shapeValue = shapeValue;
-            this.comboContribution = comboContribution;
+            this.blockGroupData = blockGroupData;
         }
 
         /// <summary>
@@ -54,6 +40,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return GetComponent<Block>();
             }
+        }
+
+        public BlockGroupData GetBlockGroupData()
+        {
+            return new BlockGroupData(blockGroupData);
         }
 
         /// <summary>
@@ -71,7 +62,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The dimensions of this BlockGroup.</returns>
         public Vector2Int GetDimensions()
         {
-            return new Vector2Int(dimensions.x, dimensions.y);
+            return new Vector2Int(blockGroupData.dimensions.x, blockGroupData.dimensions.y);
         }
 
         /// <summary>
@@ -80,6 +71,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The total number of individual Blocks in this BlockGroup, including the main Block and all sub-Blocks.</returns>
         public int Area()
         {
+            Vector2Int dimensions = GetDimensions();
             return dimensions.x * dimensions.y;
         }
 
@@ -89,7 +81,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The number of Blocks the BlockGroup contributes towards the matching length of puzzle lines.</returns>
         public int GetShapeValue()
         {
-            return shapeValue;
+            return blockGroupData.shapeValue;
         }
 
         /// <summary>
@@ -98,7 +90,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <returns>The number of Blocks the BlockGroup contributes towards the size of matched tile combos.</returns>
         public int GetComboContribution()
         {
-            return comboContribution;
+            return blockGroupData.comboContribution;
         }
 
         /// <summary>
@@ -112,6 +104,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             //Return null if position is beyond group dimensions
+            Vector2Int dimensions = GetDimensions();
             if (position.x > dimensions.x || position.y > dimensions.y) return null;
 
             //Locate block
@@ -133,6 +126,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             List<GameObject> blocks = new List<GameObject>();
 
             //Loop through all positions
+            Vector2Int dimensions = GetDimensions();
             for (int xIterator = 0; xIterator < dimensions.x; xIterator++)
             {
                 for (int yIterator = 0; yIterator < dimensions.y; yIterator++)
@@ -177,6 +171,38 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             return Contains(block.position);
         }
+    }
+
+    public class BlockGroupData
+    {
+        public BlockGroupData(BlockGroupData blockGroupData)
+        {
+            this.dimensions = blockGroupData.dimensions;
+            this.shapeValue = blockGroupData.shapeValue;
+            this.comboContribution = blockGroupData.comboContribution;
+        }
+
+        public BlockGroupData(Vector2Int dimensions, int shapeValue, int comboContribution)
+        {
+            this.dimensions = dimensions;
+            this.shapeValue = shapeValue;
+            this.comboContribution = comboContribution;
+        }
+
+        /// <summary>
+        /// The dimensions of the BlockGroup on the puzzle board.
+        /// </summary>
+        public Vector2Int dimensions;
+
+        /// <summary>
+        /// Determines the number of Blocks the BlockGroup contributes towards the matching length of puzzle lines.
+        /// </summary>
+        public int shapeValue;
+
+        /// <summary>
+        /// Determines the number of Blocks the BlockGroup contributes towards the size of matched tile combos.
+        /// </summary>
+        public int comboContribution;
     }
 
     public static class BlockGroupModel
@@ -281,24 +307,24 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Attempts to place a BlockGroup at the given Position. Overrides nearby Blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
         /// </summary>
         /// <param name="position">The Position to place the BlockGroup.</param>
-        /// <param name="dimensions">The dimensions of the BlockGroup.</param>
+        /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
         /// <returns>The created BlockGroup, or null if no BlockGroup was created.</returns>
-        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, Vector2Int dimensions)
+        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, BlockGroupData blockGroupData)
         {
             BlockGroup placedBlockGroup = null;
 
             //Make sure BlockGroup Position is valid
             Position blockGroupPosition = position;
-            if (!ValidGroupPosition(position, dimensions)) blockGroupPosition = FindValidGroupPosition(position, dimensions);
+            if (!ValidGroupPosition(position, blockGroupData.dimensions)) blockGroupPosition = FindValidGroupPosition(position, blockGroupData.dimensions);
             if (blockGroupPosition == null) return null;
 
             Block mainBlock = null;
             List<Block> placedBlocks = new List<Block>();
 
             //Replace backend Blocks
-            for (int i = blockGroupPosition.x; i < blockGroupPosition.x + dimensions.x; i++)
+            for (int i = blockGroupPosition.x; i < blockGroupPosition.x + blockGroupData.dimensions.x; i++)
             {
-                for (int j = blockGroupPosition.y; j < blockGroupPosition.y + dimensions.y; j++)
+                for (int j = blockGroupPosition.y; j < blockGroupPosition.y + blockGroupData.dimensions.y; j++)
                 {
                     //Place Blocks
                     Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, false, true);
@@ -313,7 +339,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (mainBlock != null)
             {
                 placedBlockGroup = mainBlock.gameObject.AddComponent<BlockGroup>();
-                placedBlockGroup.Init(dimensions);
+                placedBlockGroup.Init(new BlockGroupData(blockGroupData));
                 blockGroups.Add(placedBlockGroup);
             }
 
@@ -327,11 +353,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Attempts to create a BlockGroup for the given Block. Overrides nearby Blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
         /// </summary>
         /// <param name="block">The Block.</param>
-        /// <param name="dimensions">The dimensions of the BlockGroup.</param>
+        /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
         /// <returns>Whether the BlockGroup was successfully created.</returns>
-        public static bool PlaceBlockGroup(Block block, Vector2Int dimensions)
+        public static bool PlaceBlockGroup(Block block, BlockGroupData blockGroupData)
         {
-            return PlaceBlockGroup(block.position, block.block_type, dimensions);
+            return PlaceBlockGroup(block.position, block.block_type, blockGroupData);
         }
 
         /// <summary>
