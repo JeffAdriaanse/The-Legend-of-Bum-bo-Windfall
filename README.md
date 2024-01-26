@@ -27,7 +27,9 @@ If you already have BepInEx 5.4 installed for The Legend of Bum-bo, skip steps 1
 2. Extract the contents of `BepInEx_x64_5.4.21.0.zip` into The Legend of Bum-bo root folder. You can find the root folder by clicking `Manage > Browse local files` in the options menu on the game's page in your Steam library.
 3. Run the game once. This generates BepInEx configuration files.
 4. Download `The.Legend.of.Bum-bo_Windfall.zip` from the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page. The latest version of the mod is [v1.2.1.0](https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall/releases/tag/v1.2.1.0).
-5. Extract the contents of `The.Legend.of.Bum-bo_Windfall.zip` into the `BepInEx/Plugins` directory in the game folder. Replace files if prompted.
+5. Extract the contents of `The.Legend.of.Bum-bo_Windfall.zip` directly* into the `BepInEx/Plugins` directory in the game folder. Replace files if prompted.
+
+*For the mod to function properly, the `BepInEx/Plugins` directory must contain `The Legend of Bum-bo_Windfall` folder. `The Legend of Bum-bo_Windfall` folder must contain two files: `The Legend of Bum-bo_Windfall.dll` and `windfall`.
 
 If you are having trouble installing BepInEx, consult the BepInEx [installation guide](https://docs.bepinex.dev/articles/user_guide/installation/index.html).
 
