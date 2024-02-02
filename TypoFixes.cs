@@ -204,6 +204,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Spells/D4_DESCRIPTION", "Shuffles the Puzzle Board"},
                     { "Spells/DOG_TOOTH_DESCRIPTION", "Attack that Heals You"},
                     { "Spells/EUTHANASIA_DESCRIPTION", "Hurts an Attacking Enemy"},
+                    { "Spells/PENTAGRAM_DESCRIPTION", "Gain +1 Spell Damage"},
                     { "Spells/ROCK_DESCRIPTION", "Hits the Furthest Enemy"},
                     { "Spells/ROCK_FRIENDS_DESCRIPTION", "Hits Enemies = to Spell Damage"},
                     { "Spells/STICK_DESCRIPTION", "Whack Away!"},
