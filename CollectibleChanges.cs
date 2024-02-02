@@ -2672,7 +2672,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			//Logic
 			WindfallHelper.UnprimeEnemies(-1);
             __instance.app.controller.ModifyCoins(1);
-            PuzzleHelper.ShufflePuzzleBoard(false, false, false);
+            PuzzleHelper.RerollPuzzleBoard(false, false);
 			WindfallHelper.RerollMana();
             __instance.app.view.hearts.GetComponent<HealthController>().modifyHealth(0f, 1f);
 
