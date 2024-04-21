@@ -182,11 +182,29 @@ namespace The_Legend_of_Bum_bo_Windfall
             this.comboContribution = blockGroupData.comboContribution;
         }
 
+        public BlockGroupData(int size)
+        {
+            this.dimensions = new Vector2Int(size, size);
+            this.shapeValue = size;
+            this.comboContribution = size;
+        }
+
         public BlockGroupData(Vector2Int dimensions, int shapeValue, int comboContribution)
         {
             this.dimensions = dimensions;
             this.shapeValue = shapeValue;
             this.comboContribution = comboContribution;
+        }
+
+        /// <summary>
+        /// Increments or decrements the size of the BlockGroup by the given integer.
+        /// </summary>
+        /// <param name="addend">The size to change by.</param>
+        public void ChangeSize(int addend)
+        {
+            dimensions = new Vector2Int(dimensions.x + addend, dimensions.y + addend);
+            shapeValue += addend;
+            comboContribution += addend;
         }
 
         /// <summary>
@@ -253,7 +271,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return positions;
         }
 
-        public static Position FindValidGroupPosition(Position position, Vector2Int dimensions)
+        public static Position FindValidGroupPosition(Position position, Vector2Int dimensions, bool allowOverridingBlockGroups)
         {
             List<Vector2Int> groupOffsets = new List<Vector2Int>();
 
@@ -267,7 +285,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Position newPosition = new Position(position.x + offset.x, position.y + offset.y);
 
                 //Validate Position
-                if (ValidGroupPosition(newPosition, dimensions)) return newPosition;
+                if (ValidGroupPosition(newPosition, dimensions, allowOverridingBlockGroups)) return newPosition;
             }
 
             return null;
@@ -278,8 +296,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="position">The Position of the BlockGroup.</param>
         /// <param name="dimensions">The dimensions of the BlockGroup.</param>
+        /// <param name="allowOverridingBlockGroups">Whether to consider positions valid if they would result in BlockGroups being entirely replaced by the new BlockGroup.</param>
         /// <returns>Whether a BlockGroup of the given dimensions will fit at the given Position.</returns>
-        public static bool ValidGroupPosition(Position position, Vector2Int dimensions)
+        public static bool ValidGroupPosition(Position position, Vector2Int dimensions, bool allowOverridingBlockGroups)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
@@ -295,12 +314,51 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Invalid: Out of bounds
                     if (!PuzzleHelper.IsWithinGridBounds(blockPosition)) return false;
 
-                    //Invalid: A BlockGroup is in the way
+                    //Check for blockGroups
                     Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
-                    if (block != null && FindGroupOfBlock(block) != null) return false;
+                    if (block != null)
+                    {
+                        BlockGroup blockGroup = FindGroupOfBlock(block);
+                        if (blockGroup != null && (!allowOverridingBlockGroups || !ContainsArea(position, dimensions, blockGroup.GetPosition(), blockGroup.GetDimensions())))
+                        {
+                            //Invalid: A BlockGroup is in the way
+                            return false;
+                        }
+                    }
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Returns whether the first rectangular area completely encompasses the second rectangular area.
+        /// </summary>
+        /// <param name="firstPosition">The Position of the first area.</param>
+        /// <param name="firstDimensions">The dimensions of the first area.</param>
+        /// <param name="secondPosition">The Position of the second area.</param>
+        /// <param name="secondDimensions">The dimensions of the second area.</param>
+        /// <returns>Whether the first rectangular area completely encompasses the second rectangular area.</returns>
+        private static bool ContainsArea(Position firstPosition, Vector2Int firstDimensions, Position secondPosition, Vector2Int secondDimensions)
+        {
+            int firstAreaXmin = firstPosition.x;
+            int firstAreaXmax = firstPosition.x + firstDimensions.x;
+
+            int firstAreaYmin = firstPosition.y;
+            int firstAreaYmax = firstPosition.y + firstDimensions.y;
+
+            int secondAreaXmin = secondPosition.x;
+            int secondAreaXmax = secondPosition.x + secondDimensions.x;
+
+            int secondAreaYmin = secondPosition.y;
+            int secondAreaYmax = secondPosition.y + secondDimensions.y;
+
+            bool containsAreaX = false;
+            if (secondAreaXmin >= firstAreaXmin && secondAreaXmax <= firstAreaXmax) containsAreaX = true;
+
+            bool containsAreaY = false;
+            if (secondAreaYmin >= firstAreaYmin && secondAreaYmax <= firstAreaYmax) containsAreaY = true;
+
+            return containsAreaX && containsAreaY;
         }
 
         /// <summary>
@@ -315,7 +373,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Make sure BlockGroup Position is valid
             Position blockGroupPosition = position;
-            if (!ValidGroupPosition(position, blockGroupData.dimensions)) blockGroupPosition = FindValidGroupPosition(position, blockGroupData.dimensions);
+            if (!ValidGroupPosition(position, blockGroupData.dimensions, true)) blockGroupPosition = FindValidGroupPosition(position, blockGroupData.dimensions, true);
             if (blockGroupPosition == null) return null;
 
             Block mainBlock = null;
@@ -327,7 +385,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int j = blockGroupPosition.y; j < blockGroupPosition.y + blockGroupData.dimensions.y; j++)
                 {
                     //Place Blocks
-                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, false, true);
+                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, false, true, false);
                     placedBlocks.Add(placedBlock);
 
                     //The bottom left Block is the main Block

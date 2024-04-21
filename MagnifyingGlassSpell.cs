@@ -38,11 +38,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public override void AlterTile(Block _block)
         {
-            //Abort if the tile is already in a BlockGroup
-            if (BlockGroupModel.FindGroupOfBlock(_block) != null) return;
+            BlockGroupData blockGroupData = new BlockGroupData(2);
+
+            //If the tile is already in a BlockGroup, the BlockGroup is replaced by a bigger BlockGroup
+            BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(_block);
+            if (blockGroup != null)
+            {
+                blockGroupData = new BlockGroupData(blockGroup.GetBlockGroupData());
+                blockGroupData.ChangeSize(1);
+            }
 
             //Logic
-            if (!BlockGroupModel.PlaceBlockGroup(_block, new BlockGroupData(new Vector2Int(4, 4), 1, 1))) return;
+            if (!BlockGroupModel.PlaceBlockGroup(_block, blockGroupData)) return;
 
             //Sound
             app.view.soundsView.PlaySound(SoundsView.eSound.TileDestroyed, _block.transform.position, SoundsView.eAudioSlot.Default, false);
