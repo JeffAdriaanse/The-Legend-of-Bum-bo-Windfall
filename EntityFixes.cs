@@ -21,11 +21,26 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPatch(typeof(PooferEnemy), nameof(PooferEnemy.timeToDie))]
         [MethodImpl(MethodImplOptions.NoInlining)]
         static void timeToDieDummy_MegaPooferEnemy(MegaPooferEnemy instance) { }
-        //Patch: Fixed Mega Poofers triggering a Poofer explosion alongside their regular explosion
+        //Patch: Fixes Mega Poofers triggering a Poofer explosion alongside their regular explosion
         [HarmonyPrefix, HarmonyPatch(typeof(MegaPooferEnemy), nameof(MegaPooferEnemy.timeToDie))]
         static bool MegaPooferEnemy_timeToDie(MegaPooferEnemy __instance)
         {
             timeToDieDummy_MegaPooferEnemy(__instance);
+            return false;
+        }
+
+        //Patch: Fixes Poofer and Mega Poofer death explosions not producing healing visuals and sound effects when healing nearby enemies
+        [HarmonyPrefix, HarmonyPatch(typeof(PooferEnemy), nameof(PooferEnemy.HealSurrounding))]
+        static bool PooferEnemy_HealSurrounding(PooferEnemy __instance)
+        {
+            for (int i = 0; i < __instance.app.model.enemies.Count; i++)
+            {
+                if (__instance.app.model.enemies[i] == __instance) continue;
+                if (__instance.app.model.enemies[i].alive && __instance.app.model.enemies[i].position.x >= __instance.position.x - 1 && __instance.app.model.enemies[i].position.y >= __instance.position.y - 1 && __instance.app.model.enemies[i].position.x <= __instance.position.x + 1 && __instance.app.model.enemies[i].position.y <= __instance.position.y + 1)
+                {
+                    __instance.app.model.enemies[i].AddHealth(__instance.healAmount());
+                }
+            }
             return false;
         }
 
