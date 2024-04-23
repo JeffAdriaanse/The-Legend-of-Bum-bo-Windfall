@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using static Block;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -1384,6 +1385,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             return emptySpaces;
+        }
+
+        public static BlockType BlockTypeOfShape(List<GameObject> shape)
+        {
+            foreach (GameObject blockObject in shape)
+            {
+                Block block = blockObject.GetComponent<Block>();
+                if (block == null) continue;
+
+                if (block.block_type != BlockType.Wild) return block.block_type;
+            }
+
+            return BlockType.Wild;
         }
     }
 }

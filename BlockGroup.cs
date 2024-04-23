@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
 using static Block;
+using static UnityEngine.ParticleSystem.PlaybackState;
 using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -754,7 +755,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Ensures all shapes in the given list are connected between one another if they share any BlockGroups.
         /// </summary>
         /// <param name="shapes">The shapes to combine.</param>
-        private static void CombineShapesThatShareBlockGroups(List<List<GameObject>> shapes)
+        /// <param name="allowMixingTileTypes">Whether to combine shapes that have tiles of different types.</param>
+        private static void CombineShapesThatShareBlockGroups(List<List<GameObject>> shapes, bool allowMixingTileTypes = false)
         {
             //Loop through all groups
             for (int groupIterator = 0; groupIterator < blockGroups.Count; groupIterator++)
@@ -764,16 +766,19 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Find all shapes in the group
                 List<List<GameObject>> shapesConnectedToGroup = ShapesConnectedToGroup(group, shapes);
 
-                List<GameObject> firstShape = null;
-
-                if (shapesConnectedToGroup.Count >= 1)
+                while (shapesConnectedToGroup.Count > 0)
                 {
+                    List<List<GameObject>> shapesToCombine = new List<List<GameObject>>();
+
                     //Store the first shape
-                    firstShape = shapesConnectedToGroup[0];
+                    List<GameObject> firstShape = shapesConnectedToGroup[0];
+                    BlockType firstShapeBlockType = PuzzleHelper.BlockTypeOfShape(firstShape);
 
                     for (int shapeIterator = 1; shapeIterator < shapesConnectedToGroup.Count; shapeIterator++)
                     {
                         List<GameObject> shape = shapesConnectedToGroup[shapeIterator];
+
+                        if (!allowMixingTileTypes && PuzzleHelper.BlockTypeOfShape(shape) != firstShapeBlockType) continue;
 
                         //Add blocks from all subsequent shapes to the first shape
                         foreach (GameObject block in shape)
@@ -783,11 +788,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                         //Delete subsequent shapes
                         shapes.Remove(shape);
+                        shapesToCombine.Add(shape);
                     }
-                }
 
-                if (firstShape != null)
-                {
+                    shapesConnectedToGroup.RemoveAll(x => shapesToCombine.Contains(x));
+
                     //Add remaining blocks from the group to the first shape
                     foreach (GameObject block in group.GetBlocks())
                     {
@@ -796,6 +801,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                             firstShape.Add(block);
                         }
                     }
+
+                    shapesConnectedToGroup.Remove(firstShape);
                 }
             }
         }

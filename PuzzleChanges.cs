@@ -248,7 +248,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Adapts <see cref="ClearShapeEvent.DespawnTiles"/> for compatibility with BlockGroups.
         /// Ensures the entire BlockGroup is cleared in cases where only part of the BlockGroup is in the next shape to clear. This often occurs when a spell effect removes tiles from the puzzle board.
-        /// The Blocks are added to the puzzleShape after <see cref="ClearShapeEvent.Execute"/> because otherwise the tiles would contribute to tile combo size and mana gain.
+        /// This must also trigger for conventional tile matches to clear properly due tile combo shape resizing in <see cref="BlockGroup.ResizeByComboContribution"/>.
+        /// The Blocks are added to the puzzleShape in this method (after <see cref="ClearShapeEvent.Execute"/>, not before) because otherwise the tiles would contribute to tile combo size and mana gain.
+        /// Also overrides vanilla wild tile logic to ensure wild tiles that are in BlockGroups have the correct number of uses as they are being triggered in tile combos.
         /// TODO: Fix BumboWoo triggering based on the larger combo size as a result of this patch.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(ClearShapeEvent), nameof(ClearShapeEvent.DespawnTiles))]
@@ -293,6 +295,32 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Set blocks space to null
                 Block blockComponent = block.GetComponent<Block>();
                 WindfallHelper.app.view.puzzle.blocks[blockComponent.position.x, blockComponent.position.y] = null;
+            }
+
+            SetWildUses(shapesToClear);
+        }
+
+        /// <summary>
+        /// Updates wild tiles in the first shape to have the correct number of uses remaining according to the given shapesToClear.
+        /// </summary>
+        private static void SetWildUses(List<PuzzleShape> shapesToClear)
+        {
+            PuzzleShape puzzleShape = shapesToClear[0];
+            if (puzzleShape == null) return;
+
+            foreach (GameObject tile in puzzleShape.tiles)
+            {
+                Block block = tile.GetComponent<Block>();
+                if (block == null) continue;
+                if (block.block_type != Block.BlockType.Wild) continue;
+
+                int wildUses = 0;
+                foreach (PuzzleShape shape in shapesToClear)
+                {
+                    if (shape.tiles.Contains(tile)) wildUses++;
+                }
+
+                block.wildUses = wildUses;
             }
         }
     }
