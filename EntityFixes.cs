@@ -26,7 +26,15 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool MegaPooferEnemy_timeToDie(MegaPooferEnemy __instance)
         {
             timeToDieDummy_MegaPooferEnemy(__instance);
+            __instance.app.view.soundsView.PlaySound(SoundsView.eSound.Boom, __instance.enemySprites.transform.position, SoundsView.eAudioSlot.Default, false);
             return false;
+        }
+
+        //Patch: Fixes Poofer and Mega Poofer death explosions not producing a 'boom' sound effect
+        [HarmonyPostfix, HarmonyPatch(typeof(PooferEnemy), nameof(PooferEnemy.timeToDie))]
+        static void PooferEnemy_timeToDie(PooferEnemy __instance)
+        {
+            __instance.app.view.soundsView.PlaySound(SoundsView.eSound.Boom, __instance.enemySprites.transform.position, SoundsView.eAudioSlot.Default, false);
         }
 
         //Patch: Fixes Poofer and Mega Poofer death explosions not producing healing visuals and sound effects when healing nearby enemies
