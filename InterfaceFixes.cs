@@ -447,10 +447,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
-            if (offsetCounter > 0)
-            {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] Offsetting position of newly spawned ManaDrainView object; object was offset " + offsetCounter + (offsetCounter == 1 ? " time" : " times"));
-            }
         }
 
         //Patch: Fixes a bug that caused invincible enemies to make the boss health bar display their healh amount when healed; the invincible enemy will now not be healed instead
