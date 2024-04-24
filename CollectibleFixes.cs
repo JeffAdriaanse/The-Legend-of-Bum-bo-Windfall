@@ -6,6 +6,8 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Linq;
 using DG.Tweening;
+using static Block;
+using PathologicalGames;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -14,6 +16,19 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(CollectibleFixes));
+        }
+
+        //Patch: Fixes Puzzle Flick not despawning tiles because of mod changes to despawning logic
+        [HarmonyPrefix, HarmonyPatch(typeof(PuzzleFlickSpell), nameof(PuzzleFlickSpell.AlterTile))]
+        static void PuzzleFlickSpell_AlterTile_Prefix(PuzzleFlickSpell __instance, ref Block _block, out List<Block> __state)
+        {
+            List<Block> blocksMatchingType = PuzzleHelper.GetBlocks(true, true, new List<BlockType> { _block.block_type });
+            __state = blocksMatchingType;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(PuzzleFlickSpell), nameof(PuzzleFlickSpell.AlterTile))]
+        static void PuzzleFlickSpell_AlterTile_Postfix(PuzzleFlickSpell __instance, ref Block _block, List<Block> __state)
+        {
+            foreach (Block block in __state) PuzzleHelper.RemoveBlock(block, null, false, 0, false, false);
         }
 
         //Patch: Fixes TrinketController.NewRound not triggering when starting a room

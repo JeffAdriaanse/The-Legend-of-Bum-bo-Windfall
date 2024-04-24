@@ -201,10 +201,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Returns a list containing all blocks on the puzzle board.
         /// </summary>
-        /// <param name="includeRegularBlocks">Whether to include regular blocks (blocks that are not in a BlockGroup)</param>
+        /// <param name="includeRegularBlocks">Whether to include regular blocks (blocks that are not in a BlockGroup).</param>
         /// <param name="includeBlockGroups">Whether to include BlockGroup blocks. Note that only the main block of each BlockGroup is included. Sub-blocks are not included.</param>
+        /// <param name="blockTypes">The BlockTypes to include. If this is null or empty, all BlockTypes are included.</param>
         /// <returns>All blocks on the puzzle board.</returns>
-        private static List<Block> GetBlocks(bool includeRegularBlocks, bool includeBlockGroups)
+        public static List<Block> GetBlocks(bool includeRegularBlocks, bool includeBlockGroups, List<BlockType> blockTypes)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
@@ -216,6 +217,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int i = 0; i < puzzle.width; i++)
                 {
                     Block block = puzzle.blocks[i, j].GetComponent<Block>();
+                    if (block == null) continue;
+
+                    if (blockTypes != null && blockTypes.Count != 0 && !blockTypes.Contains(block.block_type)) continue;
 
                     //Handle blockGroups
                     BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
@@ -505,6 +509,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Remove block
+            block.Despawn(true);
             WindfallHelper.app.view.puzzle.blocks[block.position.x, block.position.y] = null;
             //Puzzle shape
             if (puzzleShape != null) puzzleShape.tiles.Add(block.gameObject);
