@@ -16,6 +16,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(EntityFixes));
         }
 
+        //Patch: Fixes Bygone Body booger counter being hidden behind its sprite
+        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.Booger))]
+        static void Enemy_Booger(Enemy __instance)
+        {
+            if (__instance is not BygoneBoss) return;
+            BoogerCounterView boogerCounterView = (BoogerCounterView)AccessTools.Field(typeof(Enemy), "boogerCounterView").GetValue(__instance);
+            if (boogerCounterView != null) boogerCounterView.transform.localPosition = new Vector3(0.8f, boogerCounterView.transform.localPosition.y, 0.5f);
+        }
+
         //Access child method
         [HarmonyReversePatch]
         [HarmonyPatch(typeof(PooferEnemy), nameof(PooferEnemy.timeToDie))]
