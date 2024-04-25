@@ -1531,7 +1531,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.RatTail, "Raises dodge chance by 10%" },
                     { TrinketName.Rib, "Randomly places <nobr>2-4</nobr> bone tiles at the start of each room" },
                     { TrinketName.Sample, "Randomly places <nobr>2-4</nobr> pee tiles at the start of each room" },
-                    { TrinketName.SantaSangre, "Grants a 10% chance to gain 1/2 soul heart upon damaging an enemy" },
+                    { TrinketName.SantaSangre, "Grants a 10% chance to gain 1/2 soul heart upon killing an enemy" },
                     { TrinketName.SharpNail, "Grants a 10% chance to deal 1 spell damage to enemies when they move" },
                     { TrinketName.SilverSkull, "Grants 1 random mana upon killing an enemy" },
                     { TrinketName.SinusInfection, "Causes boogers to deal 1 puzzle damage upon hitting an enemy" },
