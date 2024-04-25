@@ -6,6 +6,7 @@ using System.Linq;
 using PathologicalGames;
 using System;
 using HarmonyLib;
+using System.IO;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -109,6 +110,20 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 return gamepadGamblingController;
             }
+        }
+
+        /// <summary>
+        /// Searches for a file of the given search pattern in the current mod directory.
+        /// </summary>
+        /// <param name="searchPattern">The search pattern to use.</param>
+        /// <returns>The file path to the first valid file found, or null if no valid file is found.</returns>
+        public static string FindFileInCurrentDirectory(string searchPattern)
+        {
+            string path = Directory.GetCurrentDirectory();
+            string[] filePaths = Directory.GetFiles(path, searchPattern, SearchOption.AllDirectories);
+
+            if (filePaths.Length > 0) return filePaths[0];
+            return null;
         }
 
         private readonly static string edmundmcmillen_font_path = "Edmundmcmillen-regular SDF";

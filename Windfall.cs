@@ -16,7 +16,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         private const string modVersion = "1.2.0.0";
         public static readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
 
-        public static AssetBundle assetBundle;
         private void Awake()
         {
             Logger.LogInfo($"Loading {modGUID}");
@@ -49,35 +48,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             Logger.LogInfo($"Loaded {modGUID}");
         }
 
+        public static AssetBundle assetBundle;
+        private static string AssetBundleName = "windfall";
         public static bool LoadAssets()
         {
-            foreach (string path in AssetBundlePaths)
-            {
-                if (File.Exists(path))
-                {
-                    assetBundle = AssetBundle.LoadFromFile(path);
-                }
-                if (assetBundle != null)
-                {
-                    break;
-                }
-            }
+            string assetBundlePath = WindfallHelper.FindFileInCurrentDirectory(AssetBundleName);
+
+            if (assetBundlePath != null) assetBundle = AssetBundle.LoadFromFile(assetBundlePath);
+            else { Debug.LogError("Could not find Windfall assetBundle. Please ensure asset file is placed in the mod directory."); }
 
             return assetBundle != null;
-        }
-
-        private static List<string> AssetBundlePaths
-        {
-            get
-            {
-                List<string> paths = new List<string>()
-                {
-                    Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfall",
-                    Directory.GetCurrentDirectory() + "/Bepinex/plugins/windfall",
-                };
-
-                return paths;
-            }
         }
 
         public static bool achievementsSteam = false;

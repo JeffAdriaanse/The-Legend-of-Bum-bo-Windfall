@@ -38,27 +38,28 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     public static class WindfallPersistentDataController
     {
+        private static readonly string fileName = "windfall.sav";
+        private static string DataPath { get { return WindfallHelper.FindFileInCurrentDirectory(fileName); } }
+
         public static void SaveData(WindfallPersistentData windfallPersistentData)
         {
             BinaryFormatter binaryFormatter = new BinaryFormatter();
-            FileStream fileStream = new FileStream(dataPath, FileMode.Create, FileAccess.Write);
+            FileStream fileStream = new FileStream(DataPath, FileMode.Create, FileAccess.Write);
             binaryFormatter.Serialize(fileStream, windfallPersistentData);
             fileStream.Close();
         }
 
         public static WindfallPersistentData LoadData()
         {
-            if (File.Exists(dataPath))
+            if (File.Exists(DataPath))
             {
                 BinaryFormatter binaryFormatter = new BinaryFormatter();
-                FileStream fileStream = new FileStream(dataPath, FileMode.Open, FileAccess.Read);
+                FileStream fileStream = new FileStream(DataPath, FileMode.Open, FileAccess.Read);
                 WindfallPersistentData windfallPersistentData = (WindfallPersistentData)binaryFormatter.Deserialize(fileStream);
                 fileStream.Close();
                 return windfallPersistentData;
             }
             return new WindfallPersistentData();
         }
-
-        private static readonly string dataPath = Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfall.sav";
     }
 }
