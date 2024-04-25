@@ -11,7 +11,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
 	public static class WindfallSavedState
 	{
-		private static string FilePath { get { return Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall/windfallstate.sav"; } }
+        private static readonly string fileName = "windfallstate.sav";
+        private static string FilePath { get { return WindfallHelper.FindFileInCurrentDirectory(fileName); } }
 
 		private static XmlDocument windfallDoc;
 
