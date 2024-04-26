@@ -1315,6 +1315,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return new Dictionary<SpellName, string>
                 {
                     { (SpellName)1000, "Attacks an enemy for [damage] spell damage, chaining to nearby enemies up to [spread] additional times" },
+                    { (SpellName)1001, "Randomly enlarges a tile, granting it twice as much value in tile combos" },
+                    { (SpellName)1002, "Enlarges a tile, granting it twice as much value in tile combos" },
                     { SpellName.Addy, "Raises spell damage and puzzle damage by 1 for the current turn" },
                     { SpellName.AttackFly, "Attacks for [damage] spell damage, repeating in the same lane for 1 damage each turn" },
                     { SpellName.Backstabber, "Attacks for [damage] spell damage to the furthest enemy. Always crits primed enemies" },

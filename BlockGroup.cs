@@ -272,7 +272,15 @@ namespace The_Legend_of_Bum_bo_Windfall
             return positions;
         }
 
-        public static Position FindValidGroupPosition(Position position, Vector2Int dimensions, bool allowOverridingBlockGroups)
+        /// <summary>
+        /// Finds a valid offset for the BlockGroup with the given position and dimensions to fit on the puzzle board.
+        /// </summary>
+        /// <param name="position">The position that the BlockGroup must occupy.</param>
+        /// <param name="dimensions">The dimensions of the BlockGroup.</param>
+        /// <param name="allowOverridingBlockGroups">Whether to allow offsets that will result in another BlockGroup being fully engulfed by the BlockGroup.</param>
+        /// <param name="random">Whether to prioritize offsets randomly as opposed to prioritizing deterministically with hard coded offsets.</param>
+        /// <returns>The offset Position where the BlockGroup will be able to fit on the puzzle board, or null if no valid offset is found.</returns>
+        public static Position FindValidGroupOffset(Position position, Vector2Int dimensions, bool allowOverridingBlockGroups, bool random)
         {
             List<Vector2Int> groupOffsets = new List<Vector2Int>();
 
@@ -281,9 +289,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             else if (dimensions.x == 3 && dimensions.y == 3) groupOffsets.AddRange(GroupOffsetsThreeByThree);
             else groupOffsets.AddRange(AttemptedPositions(dimensions));
 
-            foreach (Vector2Int offset in groupOffsets)
+
+            while (groupOffsets.Count > 0)
             {
-                Position newPosition = new Position(position.x + offset.x, position.y + offset.y);
+                //Choose a random position or the first position
+                int index = random ? UnityEngine.Random.Range(0, groupOffsets.Count) : 0;
+                Position newPosition = new Position(position.x + groupOffsets[index].x, position.y + groupOffsets[index].y);
+                groupOffsets.RemoveAt(index);
 
                 //Validate Position
                 if (ValidGroupPosition(newPosition, dimensions, allowOverridingBlockGroups)) return newPosition;
@@ -367,14 +379,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="position">The Position to place the BlockGroup.</param>
         /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
+        /// <param name="random">Whether to prioritize the offset of the BlockGroup randomly.</param>
         /// <returns>The created BlockGroup, or null if no BlockGroup was created.</returns>
-        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, BlockGroupData blockGroupData)
+        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, BlockGroupData blockGroupData, bool random)
         {
             BlockGroup placedBlockGroup = null;
 
             //Make sure BlockGroup Position is valid
-            Position blockGroupPosition = position;
-            if (!ValidGroupPosition(position, blockGroupData.dimensions, true)) blockGroupPosition = FindValidGroupPosition(position, blockGroupData.dimensions, true);
+            Position blockGroupPosition = FindValidGroupOffset(position, blockGroupData.dimensions, true, random);
             if (blockGroupPosition == null) return null;
 
             Block mainBlock = null;
@@ -413,10 +425,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="block">The Block.</param>
         /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
+        /// <param name="random">Whether to prioritize the offset of the BlockGroup randomly.</param>
         /// <returns>Whether the BlockGroup was successfully created.</returns>
-        public static bool PlaceBlockGroup(Block block, BlockGroupData blockGroupData)
+        public static bool PlaceBlockGroup(Block block, BlockGroupData blockGroupData, bool random)
         {
-            return PlaceBlockGroup(block.position, block.block_type, blockGroupData);
+            return PlaceBlockGroup(block.position, block.block_type, blockGroupData, random);
         }
 
         /// <summary>

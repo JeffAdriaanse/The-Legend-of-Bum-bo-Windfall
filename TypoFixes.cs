@@ -260,10 +260,15 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Dictionary<string, string> additions = new Dictionary<string, string>
                 {
                     //Spells
+                    { "Spells/MAGNIFYING_GLASS_NAME", "Magnifying Glass"},
+                    { "Spells/MAGNIFYING_GLASS_DESCRIPTION", "Enlarges a Random Tile"},
                     { "Spells/PLASMA_BALL_NAME", "Plasma Ball"},
                     { "Spells/PLASMA_BALL_DESCRIPTION", "Chain Attack"},
+                    { "Spells/READING_STONE_NAME", "Reading Stone"},
+                    { "Spells/READING_STONE_DESCRIPTION", "Enlarges a Tile"},
 
                     //GUI Notifications
+                    { "GUI Notifications/ENLARGE_TILE", "Pick Tile to Enlarge!"},
                     { "GUI Notifications/NO_VIABLE_SPELLS", "No Viable Spells"},
 
                     //Unlocks

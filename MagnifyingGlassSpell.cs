@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -21,44 +22,42 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public override bool CastSpell()
         {
+            //Boilerplate
             if (!base.CastSpell())
             {
                 return false;
             }
-            app.model.spellModel.currentSpell = this;
-            app.controller.eventsController.SetEvent(new PuzzleSpellEvent());
-            app.controller.GUINotification("ENLARGE_TILE", GUINotificationView.NotifyType.Puzzle, this, false);
-            return true;
-        }
-
-        public override bool CanAlterTile()
-        {
-            return true;
-        }
-
-        public override void AlterTile(Block _block)
-        {
-            BlockGroupData blockGroupData = new BlockGroupData(2);
-
-            //If the tile is already in a BlockGroup, the BlockGroup is replaced by a bigger BlockGroup
-            BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(_block);
-            if (blockGroup != null)
-            {
-                blockGroupData = new BlockGroupData(blockGroup.GetBlockGroupData());
-                blockGroupData.ChangeSize(1);
-            }
-
-            //Logic
-            if (!BlockGroupModel.PlaceBlockGroup(_block, blockGroupData)) return;
-
-            //Sound
-            app.view.soundsView.PlaySound(SoundsView.eSound.TileDestroyed, _block.transform.position, SoundsView.eAudioSlot.Default, false);
-
-            //Boilerplate
-            app.controller.HideNotifications(true);
             app.model.spellModel.currentSpell = null;
             app.model.spellModel.spellQueued = false;
-            app.controller.eventsController.SetEvent(new ClearPuzzleEvent());
+
+            //Logic
+            BlockGroupData blockGroupData;
+
+            List<Block> blocks = PuzzleHelper.GetBlocks(true, true, null);
+            while (blocks.Count > 0)
+            {
+                //Default BlockGroup size is 2
+                blockGroupData = new BlockGroupData(2);
+
+                //Choose a random tile
+                int randomIndex = UnityEngine.Random.Range(0, blocks.Count);
+                Block block = blocks[randomIndex];
+                blocks.RemoveAt(randomIndex);
+
+                //If the tile is already in a BlockGroup, the BlockGroup is replaced by a bigger BlockGroup
+                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                if (blockGroup != null)
+                {
+                    blockGroupData = new BlockGroupData(blockGroup.GetBlockGroupData());
+                    blockGroupData.ChangeSize(1);
+                }
+
+                //Effect
+                if (BlockGroupModel.PlaceBlockGroup(block, blockGroupData, true)) break;
+            }
+
+            app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
+            return true;
         }
     }
 }

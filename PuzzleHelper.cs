@@ -60,7 +60,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Position randomPosition = validGroupPositions[UnityEngine.Random.Range(0, validGroupPositions.Count)];
 
                     //Place BlockGroup
-                    if (BlockGroupModel.PlaceBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2)) continue;
+                    if (BlockGroupModel.PlaceBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2, false)) continue;
                 }
 
                 //If the BlockGroup could not be created, it is split up into individual Blocks
@@ -314,7 +314,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="avoidTypes">BlockTypes to avoid Positions of.</param>
         /// <param name="avoidMainBlocks">Whether to avoid Positions of main Blocks in BlockGoups.</param>
         /// <param name="avoidSubBlocks">Whether to avoid Positions of sub-Blocks in BlockGoups.</param>
-        /// <param name="avoidSubBlocks">Whether to avoid Positions any Blocks.</param>
+        /// <param name="avoidAllBlocks">Whether to avoid Positions any Blocks.</param>
         /// <returns>A list of random Positions on the puzzle board.</returns>
         public static List<Position> RandomPositions(int count, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
         {
@@ -447,7 +447,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         Position blockGroupPosition = blockGroup.GetPosition();
                         BlockGroupData blockGroupData = blockGroup.GetBlockGroupData();
 
-                        BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData);
+                        BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData, false);
                         return newBlockGroup?.MainBlock;
                     }
                 }
