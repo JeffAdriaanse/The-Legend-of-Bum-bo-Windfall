@@ -1589,7 +1589,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if ((InputManager.eInputType)AccessTools.Field(typeof(InputManager), "m_InputType")?.GetValue(__instance) != Type && allowInputTypeChange)
             {
-                Console.WriteLine("[The Legend of Bum-bo: Windfall] InputTypeChange");
                 allowInputTypeChange = false;
                 __instance.StartCoroutine(InputTypeChangeDelay());
                 return true;
