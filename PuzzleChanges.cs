@@ -351,5 +351,60 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
+
+        /// <summary>
+        /// Adjusts <see cref="Puzzle.highlightRowsAndColumns"/> to account for BlocKGroups when highlighting tiles.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.highlightRowsAndColumns))]
+        static bool Puzzle_highlightRowsAndColumns(Puzzle __instance)
+        {
+            Block selectedBlock = __instance.selected_block?.GetComponent<Block>();
+
+            if (selectedBlock != null)
+            {
+                BlockGroup selectedBlockGroup = BlockGroupModel.FindGroupOfBlock(selectedBlock);
+                Position position = selectedBlock.position;
+
+                Vector2Int dimensions = selectedBlockGroup != null ? selectedBlockGroup.GetDimensions() : new Vector2Int(1, 1);
+
+                List<BlockGroup> blockingGroups = new List<BlockGroup>();
+                blockingGroups.AddRange(BlockGroupModel.BlockingGroupsAlongAxis(position, dimensions, true));
+                blockingGroups.AddRange(BlockGroupModel.BlockingGroupsAlongAxis(position, dimensions, false));
+
+                if (selectedBlockGroup != null)
+                {
+                    BlockGroupModel.RemoveAlignedGroups(selectedBlockGroup, blockingGroups, true);
+                    BlockGroupModel.RemoveAlignedGroups(selectedBlockGroup, blockingGroups, false);
+                }
+
+                for (int i = 0; i < __instance.width; i++)
+                {
+                    for (int j = 0; j < __instance.height; j++)
+                    {
+                        Block block = __instance.blocks[i, j].GetComponent<Block>();
+                        if (block == null || block == selectedBlock) continue;
+
+                        BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+
+                        bool outsideRangeX = i < position.x || i > position.x + (dimensions.x - 1);
+                        bool outsideRangeY = j < position.y || j > position.y + (dimensions.y - 1);
+
+                        bool insideBlockingGroup = blockGroup != null && blockingGroups.Contains(blockGroup);
+
+                        bool darken = (outsideRangeX && outsideRangeY) || insideBlockingGroup;
+
+                        if (darken)
+                        {
+                            __instance.blocks[i, j].SendMessage("DarkenColor");
+                        }
+                        else
+                        {
+                            __instance.blocks[i, j].SendMessage("LightenColor");
+                        }
+                    }
+                }
+            }
+            return false;
+        }
     }
 }
