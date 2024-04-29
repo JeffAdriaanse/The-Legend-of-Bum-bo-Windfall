@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using DG.Tweening;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -321,6 +322,33 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 block.wildUses = wildUses;
+            }
+        }
+
+        /// <summary>
+        /// Adjusts <see cref="PuzzlePlacementView.StartDrag"/> to correcly scale the tile placement indicator when a BlockGroup is being dragged.
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(PuzzlePlacementView), nameof(PuzzlePlacementView.StartDrag))]
+        static void PuzzlePlacementView_StartDrag(PuzzlePlacementView __instance)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            if (puzzle.selected_block != null)
+            {
+                //If a BlockGroup is being dragged, scale the placement object according to the BlockGroup dimensions
+                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(puzzle.selected_block);
+                if (blockGroup != null)
+                {
+                    //Scale dimensions
+                    Vector2Int dimensions = blockGroup.GetDimensions();
+                    float firstPlacementScaleX = 1.1f * dimensions.x;
+                    float secondPlacementScaleX = 1f * dimensions.x;
+                    float placementScaleZ = 1.1f * dimensions.y;
+
+                    //Replace the original tweening sequence
+                    DOTween.Kill(__instance.name, false);
+                    DOTween.Sequence().Append(ShortcutExtensions.DOScale(__instance.placementObject.transform, new Vector3(firstPlacementScaleX, 0.5f, placementScaleZ), 0.15f).SetEase(Ease.InOutQuad)).Join(ShortcutExtensions.DOScale(__instance.positionObject.transform, new Vector3(1.1f, 0.25f, 1.1f), 0.15f).SetEase(Ease.InOutQuad)).Append(ShortcutExtensions.DOScale(__instance.placementObject.transform, new Vector3(secondPlacementScaleX, 0.5f, placementScaleZ), 0.15f).SetEase(Ease.InOutQuad)).Join(ShortcutExtensions.DOScale(__instance.positionObject.transform, new Vector3(1f, 0.25f, 1.1f), 0.15f).SetEase(Ease.InOutQuad)).SetId(__instance.name);
+                }
             }
         }
     }
