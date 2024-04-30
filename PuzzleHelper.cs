@@ -609,9 +609,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Only trigger logic on selected block
             if (blockComponent != selectedBlockComponent) return;
 
-            BlockGroup selectedBlockGroup = null;
-            if (selectedBlockComponent != null) selectedBlockGroup = BlockGroupModel.FindGroupOfBlock(selectedBlockComponent);
-
             bool horizontal = (Puzzle.MoveDirection)AccessTools.Field(typeof(Puzzle), "move_direction").GetValue(puzzle) == Puzzle.MoveDirection.Horizontal;
 
             //Original Block position
@@ -673,6 +670,17 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             moveDistance = Math.Abs(moveDistance);
             moveDistance %= 9;
+
+            DragTilesAlongAxis(originalBlockPosition, selectedBlockComponent, moveDistance, horizontal, positiveDirection, _time);
+        }
+
+        public static void DragTilesAlongAxis(Position originalBlockPosition, Block selectedBlockComponent, int moveDistance, bool horizontal, bool positiveDirection, float _time)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            //BlockGroup logic
+            BlockGroup selectedBlockGroup = null;
+            if (selectedBlockComponent != null) selectedBlockGroup = BlockGroupModel.FindGroupOfBlock(selectedBlockComponent);
 
             //Position and dimensions
             Position selectedGroupPosition = new Position(originalBlockPosition.x, originalBlockPosition.y);
@@ -1009,79 +1017,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Get selected block position and dimensions
                 Block selectedBlock = puzzle.selected_block?.GetComponent<Block>();
-                if (selectedBlock == null) return;
 
-                Position selectedBlockPosition = selectedBlock.position;
-
-                BlockGroup selectedBlockGroup = BlockGroupModel.FindGroupOfBlock(selectedBlock);
-                Vector2Int selectedBlockDimensions = selectedBlockGroup != null ? selectedBlockGroup.GetDimensions() : new Vector2Int(1, 1);
-
-                //Iterator start position and dimensions
                 bool horizontal = delta_x != 0;
 
-                int width = horizontal ? puzzle.width : selectedBlockDimensions.x;
-                int height = !horizontal ? puzzle.height : selectedBlockDimensions.y;
-
-                int xPosition = horizontal ? 0 : selectedBlockPosition.x;
-                int yPosition = !horizontal ? 0 : selectedBlockPosition.y;
-
-                //Determine new positions
-                bool boardStateHasChanged = false;
-
-                GameObject[,] newBlocks = new GameObject[width, height];
-
-                for (int i = 0; i < width; i++)
+                if (!SetPositions(selectedBlock, horizontal))
                 {
-                    for (int j = 0; j < height; j++)
-                    {
-                        int x = i + xPosition;
-                        int y = j + yPosition;
-
-                        Block block = puzzle.blocks[x, y]?.GetComponent<Block>();
-                        if (block == null) continue;
-
-                        Position blockInternalPosition = new Position(block.position.x, block.position.y);
-                        Position newBlockIndexPosition = new Position(blockInternalPosition.x, blockInternalPosition.y);
-
-                        if (horizontal) newBlockIndexPosition.y = j;
-                        else newBlockIndexPosition.x = i;
-
-                        newBlocks[newBlockIndexPosition.x, newBlockIndexPosition.y] = block.gameObject;
-
-                        if (!boardStateHasChanged && (x != blockInternalPosition.x || y != blockInternalPosition.y))
-                        {
-                            boardStateHasChanged = true;
-                        }
-                    }
-                }
-
-                //Board state is unchanged, abort
-                if (!boardStateHasChanged)
-                {
+                    //Board state is unchanged, abort
                     puzzle.selected_block = null;
                     WindfallHelper.app.controller.eventsController.SetEvent(new IdleEvent());
                     return;
-                }
-
-                //Set positions
-                for (int i = 0; i < width; i++)
-                {
-                    for (int j = 0; j < height; j++)
-                    {
-                        int x = i + xPosition;
-                        int y = j + yPosition;
-
-                        int newBlocksIndexX = x;
-                        int newBlocksIndexY = y;
-                        if (horizontal) newBlocksIndexY = j;
-                        else newBlocksIndexX = i;
-
-                        Block block = newBlocks[newBlocksIndexX, newBlocksIndexY]?.GetComponent<Block>();
-                        if (block == null) continue;
-
-                        puzzle.blocks[x, y] = block.gameObject;
-                        puzzle.blocks[x, y]?.GetComponent<Block>()?.Goo(false, false);
-                    }
                 }
 
                 puzzle.processing = true;
@@ -1089,6 +1033,88 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             puzzle.selected_block = null;
+        }
+
+        /// <summary>
+        /// Sets positions of dragged Blocks.
+        /// </summary>
+        /// <returns>Whether the board state has changed.</returns>
+        public static bool SetPositions(Block selectedBlock, bool horizontal)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            if (selectedBlock == null) return false;
+
+            Position selectedBlockPosition = selectedBlock.position;
+
+            BlockGroup selectedBlockGroup = BlockGroupModel.FindGroupOfBlock(selectedBlock);
+            Vector2Int selectedBlockDimensions = selectedBlockGroup != null ? selectedBlockGroup.GetDimensions() : new Vector2Int(1, 1);
+
+            //Iterator start position and dimensions
+            int width = horizontal ? puzzle.width : selectedBlockDimensions.x;
+            int height = !horizontal ? puzzle.height : selectedBlockDimensions.y;
+
+            int xPosition = horizontal ? 0 : selectedBlockPosition.x;
+            int yPosition = !horizontal ? 0 : selectedBlockPosition.y;
+
+            //Determine new positions
+            bool boardStateHasChanged = false;
+
+            GameObject[,] newBlocks = new GameObject[width, height];
+
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    int x = i + xPosition;
+                    int y = j + yPosition;
+
+                    Block block = puzzle.blocks[x, y]?.GetComponent<Block>();
+                    if (block == null) continue;
+
+                    Position blockInternalPosition = new Position(block.position.x, block.position.y);
+                    Position newBlockIndexPosition = new Position(blockInternalPosition.x, blockInternalPosition.y);
+
+                    if (horizontal) newBlockIndexPosition.y = j;
+                    else newBlockIndexPosition.x = i;
+
+                    newBlocks[newBlockIndexPosition.x, newBlockIndexPosition.y] = block.gameObject;
+
+                    if (!boardStateHasChanged && (x != blockInternalPosition.x || y != blockInternalPosition.y))
+                    {
+                        boardStateHasChanged = true;
+                    }
+                }
+            }
+
+            //Board state is unchanged, abort
+            if (!boardStateHasChanged)
+            {
+                return false;
+            }
+
+            //Set positions
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    int x = i + xPosition;
+                    int y = j + yPosition;
+
+                    int newBlocksIndexX = x;
+                    int newBlocksIndexY = y;
+                    if (horizontal) newBlocksIndexY = j;
+                    else newBlocksIndexX = i;
+
+                    Block block = newBlocks[newBlocksIndexX, newBlocksIndexY]?.GetComponent<Block>();
+                    if (block == null) continue;
+
+                    puzzle.blocks[x, y] = block.gameObject;
+                    puzzle.blocks[x, y]?.GetComponent<Block>()?.Goo(false, false);
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

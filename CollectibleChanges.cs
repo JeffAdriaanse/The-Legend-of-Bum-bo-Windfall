@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using TMPro;
 using DG.Tweening;
 using UnityEngine.Playables;
+using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -2690,6 +2691,74 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
 
             __result = true;
+            return false;
+        }
+
+		private static readonly float BUZZ_SPELLS_TILE_DRAG_TIME = 0.15f;
+
+        /// <summary>
+        /// Replaces <see cref="BuzzDownSpell.AlterTile"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(BuzzDownSpell), nameof(BuzzDownSpell.AlterTile))]
+        static bool BuzzDownSpell_CastSpell(BuzzDownSpell __instance, Block _block)
+        {
+            __instance.app.controller.HideNotifications(true);
+
+			//Logic
+			PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, false, false, BUZZ_SPELLS_TILE_DRAG_TIME);
+			if (!PuzzleHelper.SetPositions(_block, false)) return false;
+
+			//Sound
+            __instance.app.view.soundsView.PlaySound(SoundsView.eSound.Tile_MoveRow, _block.transform.position, SoundsView.eAudioSlot.Default, false);
+
+            //Boilerplate
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
+            __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
+            return false;
+        }
+
+        /// <summary>
+        /// Replaces <see cref="BuzzRightSpell.AlterTile"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(BuzzRightSpell), nameof(BuzzRightSpell.AlterTile))]
+        static bool BuzzRightSpell_CastSpell(BuzzRightSpell __instance, Block _block)
+        {
+            __instance.app.controller.HideNotifications(true);
+
+            //Logic
+            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, true, true, BUZZ_SPELLS_TILE_DRAG_TIME);
+            if (!PuzzleHelper.SetPositions(_block, true)) return false;
+
+            //Sound
+            __instance.app.view.soundsView.PlaySound(SoundsView.eSound.Tile_MoveRow, _block.transform.position, SoundsView.eAudioSlot.Default, false);
+
+            //Boilerplate
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
+            __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
+            return false;
+        }
+
+        /// <summary>
+        /// Replaces <see cref="BuzzUpSpell.AlterTile"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(BuzzUpSpell), nameof(BuzzUpSpell.AlterTile))]
+        static bool BuzzUpSpell_CastSpell(BuzzUpSpell __instance, Block _block)
+        {
+            __instance.app.controller.HideNotifications(true);
+
+            //Logic
+            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, false, true, BUZZ_SPELLS_TILE_DRAG_TIME);
+            if (!PuzzleHelper.SetPositions(_block, false)) return false;
+
+            //Sound
+            __instance.app.view.soundsView.PlaySound(SoundsView.eSound.Tile_MoveRow, _block.transform.position, SoundsView.eAudioSlot.Default, false);
+
+            //Boilerplate
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
+            __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
             return false;
         }
     }
