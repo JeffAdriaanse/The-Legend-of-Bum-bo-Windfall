@@ -9,11 +9,11 @@ using I2.Loc;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    class TypoFixes
+    class TextFixes
     {
         public static void Awake()
         {
-            Harmony.CreateAndPatchAll(typeof(TypoFixes));
+            Harmony.CreateAndPatchAll(typeof(TextFixes));
         }
 
         //Patch: Modify source data
