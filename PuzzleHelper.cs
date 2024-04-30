@@ -418,15 +418,15 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Places a Block of the given BlockType at the given position. If a BlockGroup occupies the given Position, the entire BlockGroup will be replaced. Intended to be triggered in BlockGroup logic or by spell effects.
+        /// Places a Block of the given BlockType at the given position. Intended to be triggered in BlockGroup logic or by spell effects.
         /// </summary>
         /// <param name="position">The position of the placed Block.</param>
         /// <param name="blockType">The BlockType of the placed Block.</param>
         /// <param name="animateBlock">Whether to animate the Block.</param>
         /// <param name="wiggleBlock">Whether to wiggle the Block.</param>
-        /// <param name="replaceBlockGroups">Whether to fully replace the BlockGroup if the existing Block is in a BlockGroup.</param>
+        /// <param name="replaceBlockGroups">Whether to fully replace the BlockGroup if the Block in the given position is in a BlockGroup. Otherwise, the BlockGroup will be removed.</param>
         /// <returns>The placed Block, or null if no Block was placed.</returns>
-        public static Block PlaceBlock(Position position, Block.BlockType blockType, bool animateBlock, bool wiggleBlock, bool replaceBlockGroups = true)
+        public static Block PlaceBlock(Position position, BlockType blockType, bool animateBlock, bool wiggleBlock, bool replaceBlockGroups = true)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
@@ -439,14 +439,15 @@ namespace The_Legend_of_Bum_bo_Windfall
                 BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
                 if (blockGroup != null)
                 {
+                    Position blockGroupPosition = blockGroup.GetPosition();
+                    BlockGroupData blockGroupData = blockGroup.GetBlockGroupData();
+
+                    //Remove the old BlockGroup
                     BlockGroupModel.RemoveBlockGroup(blockGroup);
 
-                    //If the existing Block is in a BlockGroup, replace the entire BlockGroup
+                    //Replace the BlockGroup
                     if (replaceBlockGroups)
                     {
-                        Position blockGroupPosition = blockGroup.GetPosition();
-                        BlockGroupData blockGroupData = blockGroup.GetBlockGroupData();
-
                         BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData, false);
                         return newBlockGroup?.MainBlock;
                     }
