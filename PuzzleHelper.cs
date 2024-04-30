@@ -60,7 +60,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Position randomPosition = validGroupPositions[UnityEngine.Random.Range(0, validGroupPositions.Count)];
 
                     //Place BlockGroup
-                    if (BlockGroupModel.PlaceBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2, false)) continue;
+                    if (BlockGroupModel.PlaceBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2, animateBlocks, wiggleBlocks, false)) continue;
                 }
 
                 //If the BlockGroup could not be created, it is split up into individual Blocks
@@ -448,7 +448,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Replace the BlockGroup
                     if (replaceBlockGroups)
                     {
-                        BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData, false);
+                        BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData, animateBlock, wiggleBlock, false);
                         return newBlockGroup?.MainBlock;
                     }
                 }

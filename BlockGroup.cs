@@ -381,7 +381,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
         /// <param name="random">Whether to prioritize the offset of the BlockGroup randomly.</param>
         /// <returns>The created BlockGroup, or null if no BlockGroup was created.</returns>
-        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, BlockGroupData blockGroupData, bool random)
+        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, BlockGroupData blockGroupData, bool animateBlock, bool wiggleBlock, bool random)
         {
             BlockGroup placedBlockGroup = null;
 
@@ -397,8 +397,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 for (int j = blockGroupPosition.y; j < blockGroupPosition.y + blockGroupData.dimensions.y; j++)
                 {
-                    //Place Blocks
-                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, false, true, false);
+                    //Place Blocks *Note: BlockGroups are overridden to never animate bacause it causes them to align improperly
+                    Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, /*animateBlock*/false, wiggleBlock, false);
                     placedBlocks.Add(placedBlock);
 
                     //The bottom left Block is the main Block
@@ -427,9 +427,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
         /// <param name="random">Whether to prioritize the offset of the BlockGroup randomly.</param>
         /// <returns>Whether the BlockGroup was successfully created.</returns>
-        public static bool PlaceBlockGroup(Block block, BlockGroupData blockGroupData, bool random)
+        public static bool PlaceBlockGroup(Block block, BlockGroupData blockGroupData, bool animateBlock, bool wiggleBlock, bool random)
         {
-            return PlaceBlockGroup(block.position, block.block_type, blockGroupData, random);
+            return PlaceBlockGroup(block.position, block.block_type, blockGroupData, animateBlock, wiggleBlock, random);
         }
 
         /// <summary>

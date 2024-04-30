@@ -53,7 +53,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Effect
-                if (BlockGroupModel.PlaceBlockGroup(block, blockGroupData, true)) break;
+                if (BlockGroupModel.PlaceBlockGroup(block, blockGroupData, false, true, true)) break;
             }
 
             app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
