@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {

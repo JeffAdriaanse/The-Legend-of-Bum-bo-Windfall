@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using BepInEx;
+﻿using DG.Tweening;
 using HarmonyLib;
-using UnityEngine;
-using System.Reflection.Emit;
-using DG.Tweening;
-using UnityEngine.UI;
-using TMPro;
-using UnityEngine.EventSystems;
-using System.Collections;
 using PathologicalGames;
+using System;
+using System.Collections.Generic;
 using System.Reflection;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -1112,7 +1108,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 cutscenesTextMeshPro.enableWordWrapping = false;
             }
-            
+
             ButtonHoverAnimation cutscenesButtonHover = cutscenesButton.GetComponent<ButtonHoverAnimation>();
             if (cutscenesButtonHover != null)
             {

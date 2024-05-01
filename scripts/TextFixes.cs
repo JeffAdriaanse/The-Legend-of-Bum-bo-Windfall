@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using BepInEx;
-using HarmonyLib;
-using UnityEngine;
-using System.Reflection.Emit;
-using TMPro;
+﻿using HarmonyLib;
 using I2.Loc;
+using System;
+using System.Collections.Generic;
+using TMPro;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {

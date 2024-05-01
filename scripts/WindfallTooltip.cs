@@ -1,21 +1,12 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
-using PathologicalGames;
 using System;
-using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityStandardAssets.ImageEffects;
-using static UnityEngine.UIElements.UIR.BestFitAllocator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -54,7 +45,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         public void UpdateDisplayData()
         {
             active = true;
-            
+
             BumboModifier bumboModifier = gameObject.GetComponent<BumboModifier>();
             if (bumboModifier != null)
             {
@@ -80,7 +71,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = bumboModifier.Description();
                 return;
             }
-            
+
             BumboModifierTemporary bumboModifierTemporary = gameObject.GetComponent<BumboModifierTemporary>();
             if (bumboModifierTemporary != null)
             {
@@ -106,7 +97,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = bumboModifierTemporary.description;
                 return;
             }
-            
+
             BumboModifierStacking bumboModifierStacking = gameObject.GetComponent<BumboModifierStacking>();
             if (bumboModifierStacking != null)
             {
@@ -132,7 +123,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = bumboModifierStacking.bumboModifier.StackingDescription();
                 return;
             }
-            
+
             SpellView spellView = gameObject.GetComponent<SpellView>();
             if (spellView != null)
             {
@@ -163,7 +154,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 return;
             }
-            
+
             SpellPickup spellPickup = gameObject.GetComponent<SpellPickup>();
             if (spellPickup != null)
             {
@@ -195,7 +186,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 return;
             }
-            
+
             TrinketView trinketView = gameObject.GetComponent<TrinketView>();
             if (trinketView != null && trinketView.trinketIndex < WindfallHelper.app.model.characterSheet.trinkets.Count)
             {
@@ -226,7 +217,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
                 return;
             }
-            
+
             if (gameObject.transform.parent != null)
             {
                 TrinketView trinketViewParent = gameObject.transform.parent.GetComponent<TrinketView>();
@@ -260,7 +251,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     return;
                 }
             }
-            
+
             TrinketPickupView trinketPickupView = gameObject.GetComponent<TrinketPickupView>();
             if (trinketPickupView != null)
             {
@@ -292,7 +283,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 return;
             }
-            
+
             BumboFacesController bumboFacesController = gameObject.GetComponent<BumboFacesController>();
             if (bumboFacesController != null)
             {
@@ -337,7 +328,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 displayAtMouse = !displayGamepad;
-                
+
                 if (displayAtMouse)
                 {
                     displayPosition = Vector3.zero;
@@ -578,7 +569,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             //Access gamepad objects and add them to the list
             List<GameObject> gamepadObjects = new List<GameObject>();
-            
+
             //GamepadSpellSelector
             if (WindfallHelper.GamepadSpellSelector != null)
             {
@@ -610,19 +601,19 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
-            
+
             //GamepadTreasureRoomController
             if (WindfallHelper.GamepadTreasureRoomController != null)
             {
                 //Access m_Selections
                 object m_Selections_object = AccessTools.Field(typeof(GamepadTreasureRoomController), "m_Selections").GetValue(WindfallHelper.GamepadTreasureRoomController);
-                
+
                 List<MonoBehaviour> m_Selections = new List<MonoBehaviour>();
                 if (m_Selections_object != null && m_Selections_object is List<MonoBehaviour>)
                 {
                     m_Selections = m_Selections_object as List<MonoBehaviour>;
                 }
-                
+
                 foreach (MonoBehaviour monoBehaviour in m_Selections)
                 {
                     if (monoBehaviour != null)
@@ -631,7 +622,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
-            
+
             //GamepadBossRoomController
             if (WindfallHelper.GamepadBossRoomController != null)
             {
@@ -651,7 +642,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
-            
+
             //GamepadGamblingController
             if (WindfallHelper.GamepadGamblingController != null)
             {
@@ -671,7 +662,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     }
                 }
             }
-            
+
             //Find the first selected gamepad object and display the return the associated tooltip
             foreach (GameObject gamepadObject in gamepadObjects)
             {
@@ -705,7 +696,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     selected = true;
                 }
-                
+
                 TrinketPickupView trinketPickupView = gamepadObject.GetComponent<TrinketPickupView>();
                 if (trinketPickupView != null && trinketPickupView.selectionArrow != null && trinketPickupView.selectionArrow.activeSelf)
                 {
@@ -721,11 +712,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         continue;
                     }
-                    
+
                     return windfallTooltip;
                 }
             }
-            
+
             return null;
         }
 
@@ -775,7 +766,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Use main camera to determine tooltip object direction if the tooltip object is not part of the hud and the tooltip is not displaying at the mouse
             if (windfallTooltip.gameObject.layer != 5 && !windfallTooltip.displayAtMouse)
-            { 
+            {
                 //Main Camera
                 Camera mainCamera;
                 if (WindfallHelper.app.view.gamblingView == null)
@@ -1063,7 +1054,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     offset = Vector3.zero;
                     break;
             }
-            
+
             return offset;
         }
 

@@ -1,13 +1,8 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -288,7 +283,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
 
-            foreach(GameObject block in blocksToAdd)
+            foreach (GameObject block in blocksToAdd)
             {
                 //Add the Blocks to the puzzleShape
                 puzzleShape.tiles.Add(block);

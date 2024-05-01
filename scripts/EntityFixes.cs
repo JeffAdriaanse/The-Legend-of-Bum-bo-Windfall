@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using BepInEx;
+﻿using DG.Tweening;
 using HarmonyLib;
-using UnityEngine;
+using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using DG.Tweening;
+using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -443,6 +441,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 };
             }
         }
-            
+
     }
 }

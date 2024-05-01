@@ -1,12 +1,9 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
-using HarmonyLib;
-using UnityEngine;
 using System.Runtime.CompilerServices;
 using TMPro;
-using DG.Tweening;
-using UnityEngine.Playables;
-using static UnityEngine.UIElements.UIR.BestFitAllocator;
+using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {

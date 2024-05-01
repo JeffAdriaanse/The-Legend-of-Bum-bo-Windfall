@@ -1,16 +1,10 @@
-﻿using System;
+﻿using I2.Loc;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using TMPro;
-using I2.Loc;
-using static UnityStandardAssets.ImageEffects.BloomOptimized;
-using UnityStandardAssets.ImageEffects;
-using ScionEngine;
-using UnityEngine.Assertions;
-using UnityEngine.TextCore;
-using System.Linq;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
