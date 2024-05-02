@@ -37,6 +37,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     public static class WindfallPersistentDataController
     {
+        private static WindfallPersistentData windfallPersistentData;
         private static readonly string fileName = "windfall.sav";
         private static string DataPath { get { return WindfallHelper.FindFileInCurrentDirectory(fileName); } }
 
@@ -46,19 +47,29 @@ namespace The_Legend_of_Bum_bo_Windfall
             FileStream fileStream = new FileStream(DataPath, FileMode.Create, FileAccess.Write);
             binaryFormatter.Serialize(fileStream, windfallPersistentData);
             fileStream.Close();
+
+            //Erase currently cached data
+            WindfallPersistentDataController.windfallPersistentData = null;
         }
 
         public static WindfallPersistentData LoadData()
         {
+            //Load cached data
+            if (windfallPersistentData != null) return windfallPersistentData;
+
             if (File.Exists(DataPath))
             {
                 BinaryFormatter binaryFormatter = new BinaryFormatter();
                 FileStream fileStream = new FileStream(DataPath, FileMode.Open, FileAccess.Read);
-                WindfallPersistentData windfallPersistentData = (WindfallPersistentData)binaryFormatter.Deserialize(fileStream);
+                //Cache newly loaded data
+                windfallPersistentData = (WindfallPersistentData)binaryFormatter.Deserialize(fileStream);
                 fileStream.Close();
                 return windfallPersistentData;
             }
-            return new WindfallPersistentData();
+
+            //Cache newly generated data
+            windfallPersistentData = new WindfallPersistentData();
+            return windfallPersistentData;
         }
     }
 }
