@@ -798,7 +798,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 anchor.localPosition = AnchorOffset(windfallTooltip);
 
                 //Constrain tooltip to camera view
-                MeshRenderer toolipBack = ActiveToolipBack();
+                MeshRenderer toolipBack = ActiveTooltipBack();
                 if (toolipBack != null)
                 {
                     ConstrainTooltipToCamera(hudCamera, toolipBack, tooltipDisplayPlane);
@@ -836,7 +836,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (!show) showTooltipAnimation.AppendCallback(delegate { tooltip.SetActive(false); });
         }
 
-        private static MeshRenderer ActiveToolipBack()
+        private static MeshRenderer ActiveTooltipBack()
         {
             foreach (MeshRenderer meshRenderer in tooltip.GetComponentsInChildren<MeshRenderer>(false))
             {
