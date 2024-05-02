@@ -49,7 +49,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             fileStream.Close();
 
             //Erase currently cached data
-            WindfallPersistentDataController.windfallPersistentData = null;
+            WindfallPersistentDataController.windfallPersistentData = windfallPersistentData;
         }
 
         public static WindfallPersistentData LoadData()
