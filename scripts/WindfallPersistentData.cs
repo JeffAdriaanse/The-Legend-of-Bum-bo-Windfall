@@ -48,7 +48,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             binaryFormatter.Serialize(fileStream, windfallPersistentData);
             fileStream.Close();
 
-            //Erase currently cached data
+            //Update currently cached data
             WindfallPersistentDataController.windfallPersistentData = windfallPersistentData;
         }
 
