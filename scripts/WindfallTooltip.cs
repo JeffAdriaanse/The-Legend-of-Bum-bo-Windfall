@@ -1541,6 +1541,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { TrinketName.Hierophant, "Grants 2 soul hearts" },
                     { TrinketName.TheStars, "Skips to the next treasure room or the Wooden Nickel, whichever is closer" },
                     { TrinketName.Thermos, "Fully charges all spells and heals 1 heart" },
+                    { TrinketName.ThreeDollarBill, "Randomly places a wild tile at the start of each room" },
                     { TrinketName.ToiletSeat, "Grants 1 yellow mana at the start of each turn" },
                     { TrinketName.Turdy, "Grants 1 brown mana at the start of each turn" },
                     { TrinketName.TurtleShell, "Limits total damage taken from enemies each enemy phase to 1 heart" },
