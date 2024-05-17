@@ -20,36 +20,58 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void SpellModel_spellKA(SpellModel __instance, ref Dictionary<SpellName, string> __result)
         {
             Dictionary<SpellName, string> returnedDict = new Dictionary<SpellName, string>(__result);
-
             returnedDict.AddRange(CollectibleImportData.spellKA);
-
             __result = returnedDict;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spellNames", MethodType.Getter)]
         static void SpellModel_spellNames(SpellModel __instance, ref Dictionary<string, SpellName> __result)
         {
             Dictionary<string, SpellName> returnedDict = new Dictionary<string, SpellName>(__result);
-
             returnedDict.AddRange(CollectibleImportData.spellNames);
-
             __result = returnedDict;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spells", MethodType.Getter)]
         static void SpellModel_spells(SpellModel __instance, ref Dictionary<SpellName, SpellElement> __result)
         {
             Dictionary<SpellName, SpellElement> returnedDict = new Dictionary<SpellName, SpellElement>(__result);
-
             returnedDict.AddRange(CollectibleImportData.spells);
-
             __result = returnedDict;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "validSpells", MethodType.Getter)]
         static void SpellModel_validSpells(SpellModel __instance, ref List<SpellName> __result)
         {
             List<SpellName> returnedList = new List<SpellName>(__result);
-
             returnedList.AddRange(CollectibleImportData.validSpells);
+            __result = returnedList;
+        }
 
+        //Modify TrinketModel data
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "trinketKA", MethodType.Getter)]
+        static void TrinketModel_trinketKA(TrinketModel __instance, ref Dictionary<TrinketName, string> __result)
+        {
+            Dictionary<TrinketName, string> returnedDict = new Dictionary<TrinketName, string>(__result);
+            returnedDict.AddRange(CollectibleImportData.trinketKA);
+            __result = returnedDict;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "trinketNames", MethodType.Getter)]
+        static void TrinketModel_trinketNames(TrinketModel __instance, ref Dictionary<string, TrinketName> __result)
+        {
+            Dictionary<string, TrinketName> returnedDict = new Dictionary<string, TrinketName>(__result);
+            returnedDict.AddRange(CollectibleImportData.trinketNames);
+            __result = returnedDict;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "trinkets", MethodType.Getter)]
+        static void TrinketModel_trinkets(TrinketModel __instance, ref Dictionary<TrinketName, TrinketElement> __result)
+        {
+            Dictionary<TrinketName, TrinketElement> returnedDict = new Dictionary<TrinketName, TrinketElement>(__result);
+            returnedDict.AddRange(CollectibleImportData.trinkets);
+            __result = returnedDict;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "validTrinkets", MethodType.Getter)]
+        static void TrinketModel_validTrinkets(TrinketModel __instance, ref List<TrinketName> __result)
+        {
+            List<TrinketName> returnedList = new List<TrinketName>(__result);
+            returnedList.AddRange(CollectibleImportData.validTrinkets);
             __result = returnedList;
         }
 
@@ -449,6 +471,60 @@ namespace The_Legend_of_Bum_bo_Windfall
                     (SpellName)1001,
                 };
                 return validSpells;
+            }
+        }
+
+        //***************TrinketModel***************//
+        public static Dictionary<TrinketName, string> trinketKA
+        {
+            get
+            {
+                Dictionary<TrinketName, string> trinketKA = new Dictionary<TrinketName, string>()
+                {
+                    {
+                        (TrinketName)1000,
+                        "OCCULTS_ABILITY_NAME"
+                    },
+                };
+                return trinketKA;
+            }
+        }
+        public static Dictionary<string, TrinketName> trinketNames
+        {
+            get
+            {
+                Dictionary<string, TrinketName> trinketNames = new Dictionary<string, TrinketName>()
+                {
+                    {
+                        "1000",
+                        (TrinketName)1000
+                    },
+                };
+                return trinketNames;
+            }
+        }
+        public static Dictionary<TrinketName, TrinketElement> trinkets
+        {
+            get
+            {
+                Dictionary<TrinketName, TrinketElement> trinkets = new Dictionary<TrinketName, TrinketElement>()
+                {
+                    //{
+                    //    (TrinketName)1000,
+                    //    new OccultHiddenTrinket()
+                    //},
+                };
+                return trinkets;
+            }
+        }
+        public static List<TrinketName> validTrinkets
+        {
+            get
+            {
+                List<TrinketName> validTrinkets = new List<TrinketName>()
+                {
+                };
+                return validTrinkets;
             }
         }
     }
