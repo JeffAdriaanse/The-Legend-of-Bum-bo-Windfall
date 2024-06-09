@@ -235,8 +235,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Estimate enemy position
-            float enemyTypeHeightModifier = enemy.enemyType == Enemy.EnemyType.Flying ? 1f : 0f;
-            Vector3 plasmaPosition = enemy.transform.position + new Vector3(0f, 0.33f + enemyTypeHeightModifier, 0f);
+            Vector3 plasmaPosition = WindfallHelper.EnemyTransformPosition(enemy);
 
             //Spawn plasma particles
             if (PLASMA_PARTICLES != null)

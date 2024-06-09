@@ -109,6 +109,20 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        public static Vector3 BattlefieldDefaultEnemyPosition(Position battlefieldPosition)
+        {
+            return new Vector3(battlefieldPosition.x - 1.25f, 0f, -(battlefieldPosition.y * 0.975f + 0.6f));
+        }
+
+        /// <summary>
+        /// Estimates enemy position.
+        /// </summary>
+        public static Vector3 EnemyTransformPosition(Enemy enemy)
+        {
+            float enemyTypeHeightModifier = enemy.enemyType == Enemy.EnemyType.Flying ? 1f : 0f;
+            return enemy.transform.position + new Vector3(0f, 0.33f + enemyTypeHeightModifier, 0f);
+        }
+
         /// <summary>
         /// Searches for a file of the given search pattern in the current mod directory.
         /// </summary>

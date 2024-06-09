@@ -509,10 +509,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 Dictionary<TrinketName, TrinketElement> trinkets = new Dictionary<TrinketName, TrinketElement>()
                 {
-                    //{
-                    //    (TrinketName)1000,
-                    //    new OccultHiddenTrinket()
-                    //},
+                    {
+                        (TrinketName)1000,
+                        new OccultHiddenTrinket()
+                    },
                 };
                 return trinkets;
             }
