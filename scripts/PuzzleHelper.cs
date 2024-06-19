@@ -1026,7 +1026,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 puzzle.processing = true;
-                WindfallHelper.app.controller.eventsController.SetEvent(new UpdatePuzzleEvent());
+                WindfallHelper.app.controller.eventsController.SetEvent(new TileDragFinishEvent(puzzle.selected_block));
             }
 
             puzzle.selected_block = null;

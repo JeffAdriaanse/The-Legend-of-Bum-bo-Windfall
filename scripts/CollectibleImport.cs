@@ -483,7 +483,11 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     {
                         (TrinketName)1000,
-                        "OCCULTS_ABILITY_NAME"
+                        "OCCULT_HIDDEN_NAME"
+                    },
+                    {
+                        (TrinketName)1001,
+                        "WISE_HIDDEN_NAME"
                     },
                 };
                 return trinketKA;
@@ -499,6 +503,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         "1000",
                         (TrinketName)1000
                     },
+                    {
+                        "1001",
+                        (TrinketName)1001
+                    },
                 };
                 return trinketNames;
             }
@@ -512,6 +520,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         (TrinketName)1000,
                         new OccultHiddenTrinket()
+                    },
+                    {
+                        (TrinketName)1001,
+                        new WiseHiddenTrinket()
                     },
                 };
                 return trinkets;

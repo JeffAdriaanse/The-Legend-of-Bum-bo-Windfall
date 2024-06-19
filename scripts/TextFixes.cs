@@ -218,6 +218,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Trinkets
                     { "Trinkets/CURVED_HORN_NAME", "Curved Horn"},
                     { "Trinkets/DRAKULA_TEETH_NAME", "Dracula Teeth"},
+                    { "Trinkets/WISE_HIDDEN_NAME", "Wise's Ability"},
 
                     //Trinket descriptions
                     { "Trinkets/BAG_O_SUCKING_DESCRIPTION", "Gain Mana when You Hit!"},
@@ -227,6 +228,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Trinkets/RAINBOW_TICK_DESCRIPTION", "Reduces Spell Cost"},
                     { "Trinkets/STRAY_BARB_DESCRIPTION", "Attackers May Take Damage"},
                     { "Trinkets/THERMOS_DESCRIPTION", "Charge All Items + Heal"},
+                    { "Trinkets/WISE_HIDDEN_DESCRIPTION", "Compost Bag"},
 
                     //Gizzarda
                     { "Bosses/GIZZARDA_TIP_2", "\"she's very resistant!\nplan ahead!\""},
