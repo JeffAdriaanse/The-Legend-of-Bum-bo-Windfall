@@ -374,10 +374,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 			short trinketCounter = 0;
 			while ((int)trinketCounter < model.characterSheet.trinkets.Count)
 			{
-				HoofCount += __instance.GetTrinket((int)trinketCounter).trinketName == TrinketName.Hoof ? 1 : 0;
+				if (__instance.app.model.firstTurn) HoofCount += __instance.GetTrinket((int)trinketCounter).trinketName == TrinketName.Hoof ? 1 : 0;
 
-				//Bypass AddToDex
-				AAABatteryCount += __instance.GetTrinket((int)trinketCounter).trinketName == TrinketName.AAABattery ? 1 : 0;
+                //Bypass AddToDex
+                AAABatteryCount += __instance.GetTrinket((int)trinketCounter).trinketName == TrinketName.AAABattery ? 1 : 0;
 				trinketCounter += 1;
 			}
 
