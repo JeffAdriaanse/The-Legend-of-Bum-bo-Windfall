@@ -20,12 +20,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             motionBlur = true;
 
             tooltipSize = 0;
+
+            wiseWins = 0;
+            wiseMoneyWins = 0;
         }
 
         public int winCount;
 
         public bool expandModifiers;
 
+        //Windfall settings
         public bool implementBalanceChanges;
 
         public bool antiAliasing;
@@ -33,6 +37,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         public bool motionBlur;
 
         public int tooltipSize;
+
+        //Progression
+        public int wiseWins;
+        public int wiseMoneyWins;
     }
 
     public static class WindfallPersistentDataController
@@ -70,6 +78,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Cache newly generated data
             windfallPersistentData = new WindfallPersistentData();
             return windfallPersistentData;
+        }
+
+        public static void ResetProgression()
+        {
+            WindfallPersistentData resetData = LoadData();
+            resetData.wiseWins = 0;
+            resetData.wiseMoneyWins = 0;
+            SaveData(resetData);
         }
     }
 }

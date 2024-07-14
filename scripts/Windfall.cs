@@ -32,6 +32,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             harmony.PatchAll();
             EntityFixes.Awake();
             EntityChanges.Awake();
+            CharacterImport.Awake();
             CollectibleFixes.Awake();
             CollectibleChanges.Awake();
             CollectibleImport.Awake();

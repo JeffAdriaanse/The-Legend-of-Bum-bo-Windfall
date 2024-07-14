@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using MonoMod.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -75,12 +76,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = returnedList;
         }
 
-        //Patch: Fix spell texture maps
-        [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "Init")]
-        static void BumboController_Init_Collectible_Textures(BumboController __instance)
+        //Patch: Fix spell texture maps and add new pages
+        [HarmonyPrefix, HarmonyPatch(typeof(SpellModel), nameof(SpellModel.Icon))]
+        static void SpellModel_Icon(SpellModel __instance)
         {
-            ReplaceSpellIconMaterials(__instance.app);
-            AddSpellMaterialPages(__instance.app);
+            if (!ObjectDataStorage.GetData<bool>(__instance, "hasImportedMaterials"))
+            {
+                ObjectDataStorage.StoreData<bool>(__instance, "hasImportedMaterials", true);
+
+                ReplaceSpellIconMaterials(__instance);
+                AddSpellMaterialPages(__instance);
+            }
         }
 
         //Patch: Fix trinket texture maps
@@ -99,7 +105,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Adds spell icon material pages
-        private static void AddSpellMaterialPages(BumboApplication app)
+        private static void AddSpellMaterialPages(SpellModel spellModel)
         {
             AssetBundle assets = Windfall.assetBundle;
 
@@ -117,7 +123,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 switch (spellCategory)
                 {
                     case SpellCategory.Attack:
-                        activeMaterial = new Material(WindfallHelper.app.model.spellModel.Icon(spellCategory, true, 0));
+                        activeMaterial = new Material(spellModel.Icon(spellCategory, true, 0));
                         if (activeMaterial != null)
                         {
                             if (assets.Contains("Attack Spells Active Basecolor"))
@@ -130,7 +136,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             }
                         }
 
-                        inactiveMaterial = new Material(WindfallHelper.app.model.spellModel.Icon(spellCategory, false, 0));
+                        inactiveMaterial = new Material(spellModel.Icon(spellCategory, false, 0));
                         if (inactiveMaterial != null)
                         {
                             if (assets.Contains("Attack Spells Inactive Basecolor"))
@@ -151,14 +157,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (inactiveMaterial == null) { return; }
 
                 //Loop through spell model material arrays
-                for (int spellMaterialCounter = 0; spellMaterialCounter < app.model.spellModel.spellMaterial.Length; spellMaterialCounter++)
+                for (int spellMaterialCounter = 0; spellMaterialCounter < spellModel.spellMaterial.Length; spellMaterialCounter++)
                 {
                     //Find array for current spell category
-                    if (app.model.spellModel.spellMaterial[spellMaterialCounter] != null && app.model.spellModel.spellMaterial[spellMaterialCounter].category == spellCategory)
+                    if (spellModel.spellMaterial[spellMaterialCounter] != null && spellModel.spellMaterial[spellMaterialCounter].category == spellCategory)
                     {
                         //Add material pages
-                        app.model.spellModel.spellMaterial[spellMaterialCounter].active.Add(activeMaterial);
-                        app.model.spellModel.spellMaterial[spellMaterialCounter].inactive.Add(inactiveMaterial);
+                        spellModel.spellMaterial[spellMaterialCounter].active.Add(activeMaterial);
+                        spellModel.spellMaterial[spellMaterialCounter].inactive.Add(inactiveMaterial);
                     }
                 }
             }
@@ -197,7 +203,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             "_MetallicGlossMap",
         };
 
-        private static void ReplaceSpellIconMaterials(BumboApplication app)
+        private static void ReplaceSpellIconMaterials(SpellModel spellModel)
         {
             AssetBundle assets = Windfall.assetBundle;
 
@@ -272,31 +278,31 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Loop through spell model material arrays
-                for (int spellMaterialCounter = 0; spellMaterialCounter < app.model.spellModel.spellMaterial.Length; spellMaterialCounter++)
+                for (int spellMaterialCounter = 0; spellMaterialCounter < spellModel.spellMaterial.Length; spellMaterialCounter++)
                 {
                     //Find array for current spell category
-                    if (app.model.spellModel.spellMaterial[spellMaterialCounter] != null && app.model.spellModel.spellMaterial[spellMaterialCounter].category == spellCategory)
+                    if (spellModel.spellMaterial[spellMaterialCounter] != null && spellModel.spellMaterial[spellMaterialCounter].category == spellCategory)
                     {
                         //Access active materials for each page of current spell category
-                        for (int materialCounter = 0; materialCounter < app.model.spellModel.spellMaterial[spellMaterialCounter].active.Count; materialCounter++)
+                        for (int materialCounter = 0; materialCounter < spellModel.spellMaterial[spellMaterialCounter].active.Count; materialCounter++)
                         {
-                            Material unmodifiedMaterial = app.model.spellModel.spellMaterial[spellMaterialCounter].active[materialCounter];
+                            Material unmodifiedMaterial = spellModel.spellMaterial[spellMaterialCounter].active[materialCounter];
                             if (unmodifiedMaterial == null) { continue; }
 
                             //Replace material textures
                             Material modifiedMaterial = ReplaceMaterialTextures(unmodifiedMaterial, activeTextureReplacements);
-                            app.model.spellModel.spellMaterial[spellMaterialCounter].active[materialCounter] = modifiedMaterial;
+                            spellModel.spellMaterial[spellMaterialCounter].active[materialCounter] = modifiedMaterial;
                         }
 
                         //Access inactive materials for each page of current spell category
-                        for (int materialCounter = 0; materialCounter < app.model.spellModel.spellMaterial[spellMaterialCounter].inactive.Count; materialCounter++)
+                        for (int materialCounter = 0; materialCounter < spellModel.spellMaterial[spellMaterialCounter].inactive.Count; materialCounter++)
                         {
-                            Material unmodifiedMaterial = app.model.spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter];
+                            Material unmodifiedMaterial = spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter];
                             if (unmodifiedMaterial == null) { continue; }
 
                             //Replace material textures
                             Material modifiedMaterial = ReplaceMaterialTextures(unmodifiedMaterial, inactiveTextureReplacements);
-                            app.model.spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter] = modifiedMaterial;
+                            spellModel.spellMaterial[spellMaterialCounter].inactive[materialCounter] = modifiedMaterial;
                         }
                     }
                 }

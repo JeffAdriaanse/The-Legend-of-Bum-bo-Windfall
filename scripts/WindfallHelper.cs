@@ -446,6 +446,24 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             app.controller.UpdateMana(randomMana, false);
         }
+
+        /// <summary>
+        /// Replaces visuals of the given GameObject with the given replacements, and adjusts the object's transforms according to the given vectors.
+        /// </summary>
+        public static void Reskin(GameObject gameObject, Mesh mesh, Material material, Texture2D texture2D, Vector3 localPosition, Vector3 localRotation, Vector3 localScale)
+        {
+            MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
+            if (meshFilter != null && mesh != null) meshFilter.mesh = mesh;
+
+            MeshRenderer meshRenderer = gameObject.GetComponent<MeshRenderer>();
+            if (meshRenderer != null && material != null) meshRenderer.material = material;
+
+            if (meshRenderer != null && meshRenderer.material != null && texture2D != null) meshRenderer.material.mainTexture = texture2D;
+
+            if (localPosition != null) gameObject.transform.localPosition = localPosition;
+            if (localRotation != null) gameObject.transform.localRotation = Quaternion.Euler(localRotation);
+            if (localScale != null) gameObject.transform.localScale = localScale;
+        }
     }
 
     //Disables unwanted notifiactions immediately after they are created
