@@ -262,7 +262,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static GameObject CreateWiseHurt(BumboHurtView bumboHurtView)
         {
-            GameObject wiseHurtParent = GameObject.Instantiate(bumboHurtView.transform.Find("Hurt Object").Find("Brave").gameObject, bumboHurtView.transform.Find("Hurt Object")).gameObject;
+            GameObject wiseHurtParent = GameObject.Instantiate(bumboHurtView.transform.Find("Hurt Object").Find("Brave").gameObject, bumboHurtView.transform.Find("Hurt Object"));
             wiseHurtParent.name = "Wise";
             wiseHurtParent.transform.localPosition = Vector3.zero;
 
@@ -275,6 +275,37 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.Reskin(wiseHurt, Windfall.assetBundle.LoadAsset<Mesh>("Wise Hurt"), null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise"), new Vector3(0.04f, 0.42f, -0.0153f), new Vector3(0f, 0f, 355f), new Vector3(165f, 165f, 165f), string.Empty);
 
             return wiseHurtParent;
+        }
+
+        //Bum-bo the Wise throw
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboThrowView), nameof(BumboThrowView.ChangeArm), new Type[] { typeof(Block.BlockType), typeof(CharacterSheet.BumboType) })]
+        static void BumboThrowView_ChangeArm(BumboThrowView __instance, CharacterSheet.BumboType _bumbo_type)
+        {
+            GameObject wiseThrowParent = __instance.transform.Find("wise throw")?.gameObject;
+
+            if (_bumbo_type != (CharacterSheet.BumboType)10)
+            {
+                wiseThrowParent?.SetActive(false);
+                return;
+            }
+
+            if (wiseThrowParent == null) wiseThrowParent = CreateWiseThrow(__instance);
+
+            wiseThrowParent.SetActive(true);
+        }
+
+        private static GameObject CreateWiseThrow(BumboThrowView bumboThrowView)
+        {
+            GameObject wiseThrowParent = GameObject.Instantiate(bumboThrowView.transform.Find("brave throw").gameObject, bumboThrowView.transform);
+            wiseThrowParent.name = "wise throw";
+
+            GameObject wiseThrow = wiseThrowParent.transform.Find("Chuck").gameObject;
+            WindfallHelper.Reskin(wiseThrow, Windfall.assetBundle.LoadAsset<Mesh>("Wise Throw"), null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise"), new Vector3(0.0778f, 0.345f, -0.0604f), new Vector3(0f, 0f, 0f), new Vector3(100f, 100f, 100f), string.Empty);
+
+            GameObject wiseAim = wiseThrowParent.transform.Find("Windup").gameObject;
+            WindfallHelper.Reskin(wiseAim, Windfall.assetBundle.LoadAsset<Mesh>("Wise Aim"), null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise"), new Vector3(-0.04f, 0.3273f, 0.0024f), new Vector3(0f, 180f, 50f), new Vector3(100f, 100f, 100f), string.Empty);
+
+            return wiseThrowParent;
         }
 
         //Make Bum-bo the Wise use the same voice lines as Bum-bo the Dead
