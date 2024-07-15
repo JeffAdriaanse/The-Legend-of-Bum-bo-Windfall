@@ -277,5 +277,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             AccessTools.Field(typeof(BumboFacesController), "toolTips").SetValue(__instance, newTooltips);
         }
+
+        //Add Bum-bo the Wise death image
+        [HarmonyPostfix, HarmonyPatch(typeof(DeadBumboPicView), nameof(DeadBumboPicView.SetPic))]
+        static void DeadBumboPicView_SetPic(DeadBumboPicView __instance, CharacterSheet.BumboType _bumbo_type)
+        {
+            GameObject wise = __instance.transform.Find("Wise")?.gameObject;
+            if (wise == null) wise = GameObject.Instantiate(__instance.brave, __instance.transform);
+            wise.name = "Wise";
+            WindfallHelper.Reskin(wise, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise Dead"), Vector3.zero, Vector3.zero, Vector3.zero, "position rotation scale");
+            wise.SetActive(_bumbo_type == (CharacterSheet.BumboType)10);
+        }
     }
 }
