@@ -1207,11 +1207,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { CharacterSheet.BumboType.TheDead, "Bum-bo the Dead" },
                     { CharacterSheet.BumboType.TheLost, "Bum-bo the Lost" },
                     { CharacterSheet.BumboType.Eden, "Bum-bo the Empty" },
-                    { (CharacterSheet.BumboType) 1000, "Bum-bo the Wise" },
+                    { (CharacterSheet.BumboType) 10, "Bum-bo the Wise" },
                 };
             }
         }
 
+        public static readonly string WISE_DESCRIPTION = "Turns tiles wild after moving them";
         public static Dictionary<CharacterSheet.BumboType, string> BumboDescriptions
         {
             get
@@ -1225,7 +1226,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { CharacterSheet.BumboType.TheDead, "Gains 2 mana of each color at the start of each room. Rerolls spell mana costs upon activation" },
                     { CharacterSheet.BumboType.TheLost, "Cannot gain health past 1/2 heart. Ghost tiles appear on the puzzle board" },
                     { CharacterSheet.BumboType.Eden, "Starts with random stats. Rerolls each spell into another spell of the same type at the start of each room" },
-                    { (CharacterSheet.BumboType) 1000, "Turns dragged tiles into wild tiles" },
+                    { (CharacterSheet.BumboType) 10, WISE_DESCRIPTION },
                 };
             }
         }

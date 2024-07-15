@@ -42,7 +42,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             soulHearts = 0f,
             hitPoints = 2f,
             itemDamage = 1,
-            luck = 2,
+            luck = 1,
             puzzleDamage = 1,
             dexterity = 1,
             startingSpells = new StartingSpell[]
@@ -63,15 +63,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             hiddenTrinket = (TrinketName)1001,
         };
 
-        private static readonly string WISE_DESCRIPTION = "moved tile becomes wild!";
+        private static readonly string WISE_SELECT_DESCRIPTION = "moved tile becomes wild!";
 
+        private static readonly Vector3 WISE_NAME_LOCALPOSITION = new Vector3(-0.006f, 0.0002f, 0.004f);
         private static readonly float WISE_SCALE = 1f;
         private static readonly Vector3 WISE_LOCALSCALE = new Vector3(WISE_SCALE, WISE_SCALE, WISE_SCALE);
-        private static readonly Vector3 WISE_SELECT_LOCALPOSITION = new Vector3(-0.0001f, 0f, 0.0044f);
+        private static readonly Vector3 WISE_SELECT_LOCALPOSITION = new Vector3(-0.0001f, 0.0002f, 0.0044f);
         private static readonly Vector3 WISE_SELECT_LOCALROTATION = new Vector3(90f, 0f, 0f);
-        private static readonly Vector3 WISE_DUCK_LOCALPOSITION = new Vector3(-0.0001f, -0.0004f, 0.0044f);
+        private static readonly Vector3 WISE_DUCK_LOCALPOSITION = new Vector3(-0.0001f, -0.0002f, 0.0044f);
         private static readonly Vector3 WISE_DUCK_LOCALROTATION = new Vector3(270f, 90f, 0f);
-        private static readonly Vector3 WISE_UPPERCUT_LOCALPOSITION = new Vector3(0.0001f, 0f, 0.0044f);
+        private static readonly Vector3 WISE_UPPERCUT_LOCALPOSITION = new Vector3(0.0001f, 0.0002f, 0.0044f);
         private static readonly Vector3 WISE_UPPERCUT_LOCALROTATION = new Vector3(90f, 14f, 0f);
         private static readonly Vector3 WISE_ANTICIPATE_LOCALPOSITION = new Vector3(0.0002f, -0.0002f, 0.0043f);
         private static readonly Vector3 WISE_ANTICIPATE_LOCALROTATION = new Vector3(270f, 58f, 0f);
@@ -95,21 +96,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Materials and meshes
             Texture2D wiseTexture = Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise");
 
+            //Bumbo name
+            GameObject wiseName = wiseSelectParent.transform.Find("bumbo_select_name").gameObject;
+            WindfallHelper.Reskin(wiseName, null, null, null, WISE_NAME_LOCALPOSITION, Vector3.zero, Vector3.zero, "rotation scale");
+
             //Bumbo select
             GameObject wiseSelect = wiseSelectParent.transform.Find("Bumbo Select").gameObject;
-            WindfallHelper.Reskin(wiseSelect, Windfall.assetBundle.LoadAsset<Mesh>("Wise Select"), null, wiseTexture, WISE_SELECT_LOCALPOSITION, WISE_SELECT_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseSelect, Windfall.assetBundle.LoadAsset<Mesh>("Wise Select"), null, wiseTexture, WISE_SELECT_LOCALPOSITION, WISE_SELECT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
 
             //Bumbo duck
             GameObject wiseDuck = wiseSelectParent.transform.Find("Bumbo Duck").gameObject;
-            WindfallHelper.Reskin(wiseDuck, Windfall.assetBundle.LoadAsset<Mesh>("Wise Duck"), null, wiseTexture, WISE_DUCK_LOCALPOSITION, WISE_DUCK_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseDuck, Windfall.assetBundle.LoadAsset<Mesh>("Wise Duck"), null, wiseTexture, WISE_DUCK_LOCALPOSITION, WISE_DUCK_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
 
             //Bumbo uppercut
             GameObject wiseUppercut = wiseSelectParent.transform.Find("Bumbo Uppercut").gameObject;
-            WindfallHelper.Reskin(wiseUppercut, Windfall.assetBundle.LoadAsset<Mesh>("Wise Uppercut"), null, wiseTexture, WISE_UPPERCUT_LOCALPOSITION, WISE_UPPERCUT_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseUppercut, Windfall.assetBundle.LoadAsset<Mesh>("Wise Uppercut"), null, wiseTexture, WISE_UPPERCUT_LOCALPOSITION, WISE_UPPERCUT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
 
             //Bumbo anticipate
             GameObject wiseAnticipate = wiseSelectParent.transform.Find("Lost Anticipate").gameObject;
-            WindfallHelper.Reskin(wiseAnticipate, Windfall.assetBundle.LoadAsset<Mesh>("Wise Anticipate"), null, wiseTexture, WISE_ANTICIPATE_LOCALPOSITION, WISE_ANTICIPATE_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseAnticipate, Windfall.assetBundle.LoadAsset<Mesh>("Wise Anticipate"), null, wiseTexture, WISE_ANTICIPATE_LOCALPOSITION, WISE_ANTICIPATE_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
 
             //Collectibles
             Transform wiseSpells = wiseSelectView.spells.transform.Find("bumbo_select_brave_spells")?.Find("Brave Spells");
@@ -137,7 +142,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (i == (int)(CharacterSheet.BumboType)10)
                 {
                     newText[i] = GameObject.Instantiate(newText[0], newText[0].transform.parent);
-                    newText[i].GetComponent<TextMeshPro>().text = WISE_DESCRIPTION;
+                    newText[i].GetComponent<TextMeshPro>().text = WISE_SELECT_DESCRIPTION;
                     newText[i].SetActive(false);
                     continue;
                 }
@@ -186,19 +191,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Bumbo select
             GameObject wiseSelect = wiseBumboAnimation.bumboSelect;
-            WindfallHelper.Reskin(wiseSelect, Windfall.assetBundle.LoadAsset<Mesh>("Wise Select"), null, wiseTexture, WISE_SELECT_LOCALPOSITION, WISE_SELECT_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseSelect, Windfall.assetBundle.LoadAsset<Mesh>("Wise Select"), null, wiseTexture, WISE_SELECT_LOCALPOSITION, WISE_SELECT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
 
             //Bumbo duck
             GameObject wiseDuck = wiseBumboAnimation.bumboDuck;
-            WindfallHelper.Reskin(wiseDuck, Windfall.assetBundle.LoadAsset<Mesh>("Wise Duck"), null, wiseTexture, WISE_DUCK_LOCALPOSITION, WISE_DUCK_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseDuck, Windfall.assetBundle.LoadAsset<Mesh>("Wise Duck"), null, wiseTexture, WISE_DUCK_LOCALPOSITION, WISE_DUCK_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
 
             //Bumbo uppercut
             GameObject wiseUppercut = wiseBumboAnimation.bumboUppercut;
-            WindfallHelper.Reskin(wiseUppercut, Windfall.assetBundle.LoadAsset<Mesh>("Wise Uppercut"), null, wiseTexture, WISE_UPPERCUT_LOCALPOSITION, WISE_UPPERCUT_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseUppercut, Windfall.assetBundle.LoadAsset<Mesh>("Wise Uppercut"), null, wiseTexture, WISE_UPPERCUT_LOCALPOSITION, WISE_UPPERCUT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
 
             //Bumbo anticipate
             GameObject wiseAnticipate = wiseBumboAnimation.bumboBackside;
-            WindfallHelper.Reskin(wiseAnticipate, Windfall.assetBundle.LoadAsset<Mesh>("Wise Anticipate"), null, wiseTexture, WISE_ANTICIPATE_LOCALPOSITION, WISE_ANTICIPATE_LOCALROTATION, WISE_LOCALSCALE);
+            WindfallHelper.Reskin(wiseAnticipate, Windfall.assetBundle.LoadAsset<Mesh>("Wise Anticipate"), null, wiseTexture, WISE_ANTICIPATE_LOCALPOSITION, WISE_ANTICIPATE_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
         }
 
         //Make The Wise appear in the carousel
@@ -243,6 +248,34 @@ namespace The_Legend_of_Bum_bo_Windfall
             for (int i = 0; i < __instance.bumboList.Length; i++) newBumboList[i] = __instance.bumboList[i];
             newBumboList[(int)(CharacterSheet.BumboType)10] = new BumboObject(WiseObject);
             __instance.bumboList = newBumboList;
+        }
+
+        //Add Bum-bo the Wise face and vanilla tooltip
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboFacesController), "Start")]
+        static void BumboFacesController_Start(BumboFacesController __instance)
+        {
+            GameObject wiseFace = GameObject.Instantiate(__instance.bumboFace, __instance.bumboFace.transform.parent);
+            WindfallHelper.Reskin(wiseFace, Windfall.assetBundle.LoadAsset<Mesh>("Wise Head"), null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise"), new Vector3(-0.0141f, 0.0222f, -0.002f), new Vector3(90f, 0f, 0f), new Vector3(30f, 30f, 30f), string.Empty);
+            wiseFace.SetActive(__instance.app.model.characterSheet.bumboType == (CharacterSheet.BumboType)10);
+
+            string[] tooltips = (string[])AccessTools.Field(typeof(BumboFacesController), "toolTips").GetValue(__instance);
+
+            string[] newTooltips = new string[11];
+            for (int i = 0; i < newTooltips.Length; i++)
+            {
+                if (i == (int)(CharacterSheet.BumboType)10)
+                {
+                    newTooltips[i] = WindfallTooltipDescriptions.WISE_DESCRIPTION;
+                    continue;
+                }
+
+                string tooltip;
+
+                if (i < tooltips.Length && tooltips[i] != null) tooltip = tooltips[i];
+                else tooltip = null;
+                newTooltips[i] = tooltip;
+            }
+            AccessTools.Field(typeof(BumboFacesController), "toolTips").SetValue(__instance, newTooltips);
         }
     }
 }
