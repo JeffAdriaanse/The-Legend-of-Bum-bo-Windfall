@@ -222,6 +222,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
+        //Bum-bo the Wise unlock requirement
         [HarmonyPrefix, HarmonyPatch(typeof(SelectCharacterView), nameof(SelectCharacterView.BumboIsUnlocked))]
         static bool SelectCharacterView_BumboIsUnlocked(SelectCharacterView __instance, CharacterSheet.BumboType _type, ref bool __result)
         {
@@ -231,6 +232,49 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return false;
             }
             return true;
+        }
+
+        //Bum-bo the Wise hurt
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboHurtView), nameof(BumboHurtView.TurnOnHurt))]
+        static void BumboHurtView_TurnOnHurt(BumboHurtView __instance)
+        {
+            if (__instance.app.model.characterSheet.bumboType == (CharacterSheet.BumboType)10) ToggleWiseHurtAndAnticipate(__instance, true, false);
+        }
+
+        //Bum-bo the Wise anticipate
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboHurtView), nameof(BumboHurtView.TurnOnAnticipate))]
+        static void BumboHurtView_TurnOnAnticipate(BumboHurtView __instance)
+        {
+            if (__instance.app.model.characterSheet.bumboType == (CharacterSheet.BumboType)10) ToggleWiseHurtAndAnticipate(__instance, false, true);
+        }
+
+        private static void ToggleWiseHurtAndAnticipate(BumboHurtView bumboHurtView, bool hurt, bool anticipate)
+        {
+            GameObject wise = bumboHurtView.transform.Find("Hurt Object").Find("Wise")?.gameObject;
+            if (wise == null) wise = CreateWiseHurt(bumboHurtView);
+
+            GameObject wiseHurt = wise.transform.Find("Wise Hurt").gameObject;
+            GameObject wiseAnticipate = wise.transform.Find("Wise Anticipate").gameObject;
+
+            wiseHurt?.SetActive(hurt);
+            wiseAnticipate?.SetActive(anticipate);
+        }
+
+        private static GameObject CreateWiseHurt(BumboHurtView bumboHurtView)
+        {
+            GameObject wiseHurtParent = GameObject.Instantiate(bumboHurtView.transform.Find("Hurt Object").Find("Brave").gameObject, bumboHurtView.transform.Find("Hurt Object")).gameObject;
+            wiseHurtParent.name = "Wise";
+            wiseHurtParent.transform.localPosition = Vector3.zero;
+
+            GameObject wiseAnticipate = wiseHurtParent.transform.Find("Brave Anticipate").gameObject;
+            wiseAnticipate.name = "Wise Anticipate";
+            WindfallHelper.Reskin(wiseAnticipate, Windfall.assetBundle.LoadAsset<Mesh>("Wise Anticipate"), null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise"), new Vector3(0.04f, 0.53f, -0.0153f), new Vector3(0f, 0f, 239f), new Vector3(165f, 165f, 165f), string.Empty);
+
+            GameObject wiseHurt = wiseHurtParent.transform.Find("Brave Hurt").gameObject;
+            wiseHurt.name = "Wise Hurt";
+            WindfallHelper.Reskin(wiseHurt, Windfall.assetBundle.LoadAsset<Mesh>("Wise Hurt"), null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise"), new Vector3(0.04f, 0.42f, -0.0153f), new Vector3(0f, 0f, 355f), new Vector3(165f, 165f, 165f), string.Empty);
+
+            return wiseHurtParent;
         }
 
         //Make Bum-bo the Wise use the same voice lines as Bum-bo the Dead
