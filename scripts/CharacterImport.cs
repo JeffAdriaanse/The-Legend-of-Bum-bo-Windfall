@@ -308,6 +308,34 @@ namespace The_Legend_of_Bum_bo_Windfall
             return wiseThrowParent;
         }
 
+        //Bum-bo the Wise VS
+        [HarmonyPostfix, HarmonyPatch(typeof(BossSignView), nameof(BossSignView.SetBumbo))]
+        static void BossSignView_SetBumbo(BossSignView __instance, CharacterSheet.BumboType _bumbo)
+        {
+            Transform bumbo = __instance.bumbos[0].transform.parent;
+            GameObject wise = bumbo.Find("BumboWise")?.gameObject;
+
+            if (_bumbo != (CharacterSheet.BumboType)10)
+            {
+                wise?.SetActive(false);
+                return;
+            }
+
+            if (wise == null) wise = CreateWiseVS(bumbo);
+
+            wise.SetActive(true);
+        }
+
+        private static GameObject CreateWiseVS(Transform bumbo)
+        {
+            GameObject wise = GameObject.Instantiate(bumbo.Find("BumboStout").gameObject, bumbo);
+            wise.name = "BumboWise";
+
+            WindfallHelper.Reskin(wise, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise VS"), Vector3.zero, Vector3.zero, Vector3.zero, "position rotation scale");
+
+            return wise;
+        }
+
         //Make Bum-bo the Wise use the same voice lines as Bum-bo the Dead
         [HarmonyPrefix, HarmonyPatch(typeof(SoundsView), nameof(SoundsView.PlayBumboSound))]
         static void SoundsView_PlayBumboSound(ref CharacterSheet.BumboType BumboType)
