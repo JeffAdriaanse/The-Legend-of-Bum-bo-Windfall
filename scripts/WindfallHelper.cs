@@ -450,7 +450,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Replaces visuals of the given GameObject with the given replacements, and adjusts the object's transforms according to the given vectors.
         /// </summary>
-        public static void Reskin(GameObject gameObject, Mesh mesh, Material material, Texture2D texture2D, Vector3 localPosition, Vector3 localRotation, Vector3 localScale, string omitTransform)
+        public static void Reskin(GameObject gameObject, Mesh mesh, Material material, Texture2D texture2D)
         {
             MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
             if (meshFilter != null && mesh != null) meshFilter.mesh = mesh;
@@ -459,7 +459,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (meshRenderer != null && material != null) meshRenderer.material = material;
 
             if (meshRenderer != null && meshRenderer.material != null && texture2D != null) meshRenderer.material.mainTexture = texture2D;
+        }
 
+        /// <summary>
+        /// Adjusts the given GameObject's transforms according to the given vectors.
+        /// </summary>
+        public static void ReTransform(GameObject gameObject, Vector3 localPosition, Vector3 localRotation, Vector3 localScale, string omitTransform)
+        {
             if (omitTransform == null || !omitTransform.Contains("position")) gameObject.transform.localPosition = localPosition;
             if (omitTransform == null || !omitTransform.Contains("rotation")) gameObject.transform.localRotation = Quaternion.Euler(localRotation);
             if (omitTransform == null || !omitTransform.Contains("scale")) gameObject.transform.localScale = localScale;
