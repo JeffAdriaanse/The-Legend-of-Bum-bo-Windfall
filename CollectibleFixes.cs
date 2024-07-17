@@ -286,7 +286,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Repositions fake trinkets when 1up! is triggered
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "InsteadOfDeath")]
-        public static void TrinketController_InsteadOfDeath(TrinketController __instance, ref bool __result)
+        public static bool TrinketController_InsteadOfDeath(TrinketController __instance, ref bool __result)
         {
             short num = 0;
             while ((int)num < __instance.app.model.characterSheet.trinkets.Count)
@@ -318,12 +318,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __instance.app.model.characterSheet.trinkets.RemoveAt((int)num);
                     __instance.app.controller.UpdateTrinkets();
                     __result = true;
-                    return;
+                    return false;
                 }
                 num += 1;
             }
             __result = false;
-            return;
+            return false;
         }
 
         //Patch: Removes fake trinkets when they are used while acting as activated trinkets
