@@ -1,9 +1,6 @@
 ﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
@@ -404,6 +401,51 @@ namespace The_Legend_of_Bum_bo_Windfall
             wise.name = "Wise";
             WindfallHelper.Reskin(wise, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise Dead"));
             wise.SetActive(_bumbo_type == (CharacterSheet.BumboType)10);
+        }
+
+        //Bum-bo the Wise stat wheel
+        [HarmonyPrefix, HarmonyPatch(typeof(GamblingController), nameof(GamblingController.InitWheel))]
+        static bool GamblingController_InitWheel(GamblingController __instance)
+        {
+            WheelView.WheelSlices[] array = new WheelView.WheelSlices[]
+            {
+                WheelView.WheelSlices.Coin20,
+                WheelView.WheelSlices.Dexterity,
+                WheelView.WheelSlices.PuzzleDamage,
+                WheelView.WheelSlices.Luck,
+                WheelView.WheelSlices.ItemDamage,
+                WheelView.WheelSlices.Health
+            };
+
+            switch (__instance.model.characterSheet.bumboType)
+            {
+                case (CharacterSheet.BumboType)10:
+                    array[1] = WheelView.WheelSlices.ItemDamage;
+                    break;
+                default:
+                    return true;
+            }
+
+            __instance.model.wheelSlices = array;
+            for (int i = 0; i < 6; i++)
+            {
+                if (array[i] > WheelView.WheelSlices.Coin20)
+                {
+                    Material material = __instance.view.wheelView.statSlices[i].GetComponent<MeshRenderer>().materials[0];
+                    __instance.view.wheelView.statSlices[i].SetActive(true);
+                    material.SetTextureOffset("_MainTex", new Vector2(0.2f * (float)array[i] - 4f, 0f));
+                    __instance.view.wheelView.statSlices[i].GetComponent<MeshRenderer>().materials[0] = material;
+                }
+                else
+                {
+                    Material material = __instance.view.wheelView.coinSlices[i].GetComponent<MeshRenderer>().materials[0];
+                    __instance.view.wheelView.coinSlices[i].SetActive(true);
+                    material.SetTextureOffset("_MainTex", new Vector2(0.2f * (float)array[i], 0f));
+                    __instance.view.wheelView.coinSlices[i].GetComponent<MeshRenderer>().materials[0] = material;
+                }
+            }
+
+            return false;
         }
     }
 }
