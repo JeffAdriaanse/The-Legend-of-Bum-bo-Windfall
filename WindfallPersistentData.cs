@@ -40,7 +40,13 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         private static WindfallPersistentData windfallPersistentData;
         private static readonly string fileName = "windfall.sav";
-        private static string DataPath { get { return WindfallHelper.FindFileInCurrentDirectory(fileName); } }
+        private static string DataPath { get
+            {
+                string path = WindfallHelper.FindFileInCurrentDirectory(fileName);
+                if (path == null) path = Directory.CreateDirectory(Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall").FullName + "/" + fileName;
+                return path;
+            }
+        }
 
         public static void SaveData(WindfallPersistentData windfallPersistentData)
         {
