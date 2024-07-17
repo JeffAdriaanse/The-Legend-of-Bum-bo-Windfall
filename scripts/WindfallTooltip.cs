@@ -194,8 +194,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             TrinketView trinketView = gameObject.GetComponent<TrinketView>();
-            if (trinketView != null && trinketView.trinketIndex < WindfallHelper.app.model.characterSheet.trinkets.Count)
+            if (trinketView != null)
             {
+                if (trinketView.trinketIndex >= WindfallHelper.app.model.characterSheet.trinkets.Count)
+                {
+                    active = false;
+                    return;
+                }
+
                 TrinketElement trinket = WindfallHelper.app.controller.GetTrinket(trinketView.trinketIndex);
                 if (trinket == null || trinket.trinketName == TrinketName.None)
                 {

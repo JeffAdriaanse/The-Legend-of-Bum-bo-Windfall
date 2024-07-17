@@ -11,10 +11,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
 	public static class WindfallSavedState
 	{
-		private static readonly string fileName = "windfallstate.sav";
-		private static string FilePath { get { return WindfallHelper.FindFileInCurrentDirectory(fileName); } }
+        private static readonly string fileName = "windfallstate.sav";
+        private static string FilePath { get
+			{
+				string path = WindfallHelper.FindFileInCurrentDirectory(fileName);
+				if (path == null) path = Directory.CreateDirectory(Directory.GetCurrentDirectory() + "/Bepinex/plugins/The Legend of Bum-bo_Windfall").FullName + "/" + fileName;
+				return path;
+			}
+		}
 
-		private static XmlDocument windfallDoc;
+        private static XmlDocument windfallDoc;
 
 		private static byte[] Key = Encoding.ASCII.GetBytes("[XXS^FTiLsL8!7_=GmCkj1pGP$g^gyqX!v");
 
