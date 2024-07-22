@@ -204,6 +204,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         static Shader defaultShader;
+        static Shader DefaultShader
+        {
+            get
+            {
+                if (defaultShader == null) defaultShader = Shader.Find("Standard");
+                return defaultShader;
+            }
+        }
         public static Transform ResetShader(Transform transform)
         {
             if (transform == null)
@@ -215,14 +223,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (meshRenderer != null && !meshRenderer.GetComponent<TextMeshPro>())
                 {
-                    if (defaultShader == null)
+                    if (meshRenderer?.material?.shader != null && DefaultShader != null)
                     {
-                        defaultShader = Shader.Find("Standard");
-                    }
-
-                    if (meshRenderer?.material?.shader != null && defaultShader != null)
-                    {
-                        meshRenderer.material.shader = defaultShader;
+                        meshRenderer.material.shader = DefaultShader;
                     }
 
                     meshRenderer.material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
@@ -450,15 +453,18 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Replaces visuals of the given GameObject with the given replacements, and adjusts the object's transforms according to the given vectors.
         /// </summary>
-        public static void Reskin(GameObject gameObject, Mesh mesh, Material material, Texture2D texture2D)
+        public static void Reskin(GameObject gameObject, Mesh mesh, Material material, Texture2D texture2D, bool resetShader = true)
         {
             MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
             if (meshFilter != null && mesh != null) meshFilter.mesh = mesh;
 
             MeshRenderer meshRenderer = gameObject.GetComponent<MeshRenderer>();
-            if (meshRenderer != null && material != null) meshRenderer.material = material;
-
-            if (meshRenderer != null && meshRenderer.material != null && texture2D != null) meshRenderer.material.mainTexture = texture2D;
+            if (meshRenderer != null)
+            {
+                if (material != null) meshRenderer.material = material;
+                if (meshRenderer.material != null && texture2D != null) meshRenderer.material.mainTexture = texture2D;
+                if (resetShader && meshRenderer.material != null) meshRenderer.material.shader = DefaultShader;
+            }
         }
 
         /// <summary>
