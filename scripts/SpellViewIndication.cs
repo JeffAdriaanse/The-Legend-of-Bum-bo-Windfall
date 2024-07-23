@@ -1,5 +1,7 @@
 ﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
+using System.Web;
 using UnityEngine;
 using static The_Legend_of_Bum_bo_Windfall.SpellViewIndicator;
 
@@ -17,34 +19,89 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void BumboController_SetSpell(BumboController __instance, int _spell_index, SpellElement _spell)
         {
             SpellView spellView = __instance.app.view.spells[_spell_index];
+
+            //Adjust collider size
+            BoxCollider boxCollider = spellView.GetComponent<BoxCollider>();
+            if (boxCollider != null && boxCollider.size.z > 0.02f) boxCollider.size = new Vector3(boxCollider.size.x, boxCollider.size.y, 0.01f);
+
             UpdateSpellViewIndicators(spellView);
         }
 
-        private static readonly Vector3 SPELL_VIEW_INDICATOR_LOCALPOSITION = new Vector3(0f, 0f, 0f);
-        private static readonly float SPELL_VIEW_INDICATOR_OFFSET_X = 0f;
+        private static readonly float SPELL_VIEW_INDICATOR_SCALE = 0.045f;
+        private static readonly Vector3 SPELL_VIEW_INDICATOR_BASE_LOCALPOSITION = new Vector3(0.185f, 0.015f, -0.003f);
+        private static readonly float SPELL_VIEW_INDICATOR_SPACING_Y = 0.01f;
+        private static readonly float SPELL_VIEW_INDICATOR_SPACING_X = 0.01f;
+        private static readonly Vector3 SPELL_VIEW_INDICATOR_LOCALROTATION = new Vector3(270f, 0f, 0f);
+        private static readonly Vector3 SPELL_VIEW_INDICATOR_LOCALSCALE = new Vector3(SPELL_VIEW_INDICATOR_SCALE, SPELL_VIEW_INDICATOR_SCALE, SPELL_VIEW_INDICATOR_SCALE);
+
         private static void UpdateSpellViewIndicators(SpellView spellView)
         {
             List<SpellViewIndicator> spellViewIndicators = new List<SpellViewIndicator>();
 
             //Spell scales with spell damage stat
+
+            SpellViewIndicator spellDamageScalingIndicator = spellView.transform.Find("Spell Damage Scaling Indicator")?.GetComponent<SpellViewIndicator>();
             if (SpellsThatScaleWithSpellDamageStat.Contains(spellView.SpellObject.spellName))
             {
-                SpellViewIndicator spellDamageScalingIndicator = spellView.transform.Find("Spell Damage Scaling Indicator")?.GetComponent<SpellViewIndicator>();
-                if (spellDamageScalingIndicator == null) spellDamageScalingIndicator = PlaceSpellViewIndicator(spellView, SpellViewIndicatorType.SpellDamageScaling).GetComponent<SpellViewIndicator>();
+                if (spellDamageScalingIndicator == null) spellDamageScalingIndicator = CreateSpellViewIndicator(spellView, SpellViewIndicatorType.SpellDamageScaling).GetComponent<SpellViewIndicator>();
+                spellDamageScalingIndicator.gameObject.name = "Spell Damage Scaling Indicator";
+
+                spellViewIndicators.Add(spellDamageScalingIndicator);
+                spellDamageScalingIndicator.gameObject.SetActive(true);
+            }
+            else spellDamageScalingIndicator?.gameObject.SetActive(false);
+
+            int numberOfRows = 1;
+            int firstRowCutoff = 99;
+            if (spellViewIndicators.Count > 4)
+            {
+                numberOfRows = 2;
+                firstRowCutoff = Mathf.CeilToInt(spellViewIndicators.Count / 2);
             }
 
             for (int i = 0; i < spellViewIndicators.Count; i++)
             {
-                spellViewIndicators[i].transform.localPosition = SPELL_VIEW_INDICATOR_LOCALPOSITION;
-                spellViewIndicators[i].transform.localPosition += new Vector3(0f, SPELL_VIEW_INDICATOR_OFFSET_X * i, 0f);
+                Vector3 localposition = new Vector3(SPELL_VIEW_INDICATOR_BASE_LOCALPOSITION.x, SPELL_VIEW_INDICATOR_BASE_LOCALPOSITION.y, SPELL_VIEW_INDICATOR_BASE_LOCALPOSITION.z);
+                bool firstRow = i < firstRowCutoff;
+
+                //X offset
+                int rowSize = spellViewIndicators.Count;
+                if (numberOfRows > 1) rowSize = firstRow ? firstRowCutoff : spellViewIndicators.Count - firstRowCutoff;
+                rowSize--;
+
+                int indexInRow = i;
+                if (numberOfRows > 1 && !firstRow) indexInRow -= firstRowCutoff;
+
+                float xOffset = ((rowSize/2) - indexInRow) * -SPELL_VIEW_INDICATOR_SPACING_X;
+
+                //Y offset
+                float yOffset = 0f;
+                if (numberOfRows > 1) yOffset = firstRow ? SPELL_VIEW_INDICATOR_SPACING_Y : -SPELL_VIEW_INDICATOR_SPACING_Y;
+
+                localposition += new Vector3(xOffset, yOffset, 0f);
+
+                WindfallHelper.ReTransform(spellViewIndicators[i].gameObject, localposition, SPELL_VIEW_INDICATOR_LOCALROTATION, SPELL_VIEW_INDICATOR_LOCALSCALE, string.Empty);
             }
         }
 
-        private static GameObject PlaceSpellViewIndicator(SpellView spellView, SpellViewIndicatorType type)
+        private static GameObject CreateSpellViewIndicator(SpellView spellView, SpellViewIndicatorType type)
         {
-            GameObject spellViewIndicatorObject = GameObject.Instantiate(new GameObject()); //TODO: load asset
+            GameObject spellViewIndicatorObject = GameObject.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Spell View Indicator"), spellView.transform);
+            SpellViewIndicator spellViewIndicator = spellViewIndicatorObject.AddComponent<SpellViewIndicator>();
+            spellViewIndicator.type = type;
+            spellViewIndicator.spell = spellView.SpellObject;
+            spellViewIndicatorObject.AddComponent<WindfallTooltip>();
+
+            if (SpellViewIndicatorTypeNames.TryGetValue(type, out string value)) WindfallHelper.Reskin(spellViewIndicatorObject, Windfall.assetBundle.LoadAsset<Mesh>(value), null, Windfall.assetBundle.LoadAsset<Texture2D>(value));
+
+            return spellViewIndicatorObject;
         }
 
+        static Dictionary<SpellViewIndicatorType, string> SpellViewIndicatorTypeNames = new Dictionary<SpellViewIndicatorType, string>()
+        {
+            { SpellViewIndicatorType.SpellDamageScaling, "Spell Damage Scaling" },
+        };
+        
         public static List<SpellName> SpellsThatScaleWithSpellDamageStat
         {
             get
@@ -96,10 +153,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             ManaCostUpgrade,
             SpellDamageScaling,
             TurnTimer,
+            FreeUse,
         }
 
-        SpellViewIndicatorType type;
-        SpellElement spell;
+        public SpellViewIndicatorType type;
+        public SpellElement spell;
 
         public string TooltipDescription()
         {

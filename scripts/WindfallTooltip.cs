@@ -158,7 +158,20 @@ namespace The_Legend_of_Bum_bo_Windfall
             SpellViewIndicator spellViewIndicator = gameObject.GetComponent<SpellViewIndicator>();
             if (spellViewIndicator != null)
             {
+                displayAtMouse = false;
 
+                if (displayAtMouse)
+                {
+                    displayPosition = Vector3.zero;
+                    displayAnchor = Anchor.TopRight;
+                }
+                else
+                {
+                    displayPosition = spellViewIndicator.transform.position + new Vector3(-0.02f, 0.05f, 0f);
+                    displayAnchor = Anchor.Top;
+                }
+
+                displayDescription = spellViewIndicator.TooltipDescription();
             }
 
             SpellPickup spellPickup = gameObject.GetComponent<SpellPickup>();

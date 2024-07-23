@@ -42,6 +42,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             InterfaceContent.Awake();
             TextFixes.Awake();
             SaveChanges.Awake();
+            SpellViewIndication.Awake();
             OccultSpirits.Awake();
             OtherChanges.Awake();
 
