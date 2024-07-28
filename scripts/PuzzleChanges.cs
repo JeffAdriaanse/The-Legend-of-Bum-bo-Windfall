@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
+using PathologicalGames;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -12,6 +13,56 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(PuzzleChanges));
+        }
+
+        /// <summary>
+        /// Fixes an odd texure offset issue
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(Block), nameof(Block.SetBlockActive))]
+        static void Block_SetBlockActive(Block __instance)
+        {
+            __instance.NormalizeColor();
+        }
+
+        private static readonly string[] tileTypesToReplaceTextures = new string[]
+        {
+            "Bone",
+            "Heart",
+            "Poop",
+            "Booger",
+            "Tooth",
+            "Pee",
+            "Wild",
+        };
+
+        /// <summary>
+        /// Changes puzzle tile textures
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.Init))]
+        static void BumboController_Init()
+        {
+            PrefabsDict tilePrefabsDict = PoolManager.Pools["Blocks"].prefabs;
+            string[] tileKeys = tilePrefabsDict.Keys.ToArray();
+
+            //Change block active material texture
+            if (tilePrefabsDict.TryGetValue("Block", out Transform block) && block != null && block.TryGetComponent(out Block blockComponent)) blockComponent.activeMaterial.mainTexture = Windfall.assetBundle.LoadAsset<Texture2D>("Tiles Active");
+
+            //Change tile prefab textures
+            List<string> replaceTileKeys = new List<string>();
+            foreach (string key in tileKeys)
+            {
+                //If the key contains any target tile types and is not inactive, add it to the list
+                if (tileTypesToReplaceTextures.Any(key.Contains) && !key.Contains("Inactive")) replaceTileKeys.Add(key);
+            }
+
+            foreach (string key in replaceTileKeys)
+            {
+                if (tilePrefabsDict.TryGetValue(key, out var tile) && tile != null)
+                {
+                    MeshRenderer[] meshRenderers = tile.GetComponentsInChildren<MeshRenderer>();
+                    foreach (MeshRenderer renderer in meshRenderers) renderer.material.mainTexture = Windfall.assetBundle.LoadAsset<Texture2D>("Tiles Active");
+                }
+            }
         }
 
         /// <summary>
