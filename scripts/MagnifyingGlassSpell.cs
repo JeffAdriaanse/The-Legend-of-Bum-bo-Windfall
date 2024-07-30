@@ -9,7 +9,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Name = "MAGNIFYING_GLASS_DESCRIPTION";
             Category = SpellCategory.Puzzle;
-            texturePage = 1;
+            texturePage = 2;
             IconPosition = new Vector2(0f, 0f);
             spellName = (SpellName)1001;
             manaSize = ManaSize.M;

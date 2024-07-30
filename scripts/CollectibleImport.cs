@@ -90,16 +90,13 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Patch: Fix trinket texture maps
-        [HarmonyPrefix, HarmonyPatch(typeof(TrinketModel), nameof(TrinketModel.FillDictionary))]
-        static void TrinketModel_FillDictionary_Prefix(TrinketModel __instance, out bool __state)
+        [HarmonyPrefix, HarmonyPatch(typeof(TrinketModel), nameof(TrinketModel.Icon))]
+        static void TrinketModel_Icon(TrinketModel __instance)
         {
-            __state = __instance.populatedMaterial;
-        }
-        [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), nameof(TrinketModel.FillDictionary))]
-        static void TrinketModel_FillDictionary(TrinketModel __instance, bool __state)
-        {
-            if (!__state)
+            if (!ObjectDataStorage.GetData<bool>(__instance, "hasImportedMaterials"))
             {
+                ObjectDataStorage.StoreData<bool>(__instance, "hasImportedMaterials", true);
+
                 ReplaceTrinketIconMaterials(__instance);
             }
         }
@@ -112,6 +109,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             SpellCategory[] spellCategories = new SpellCategory[]
             {
                 SpellCategory.Attack,
+                SpellCategory.Puzzle,
             };
 
             foreach (SpellCategory spellCategory in spellCategories)
@@ -126,27 +124,30 @@ namespace The_Legend_of_Bum_bo_Windfall
                         activeMaterial = new Material(spellModel.Icon(spellCategory, true, 0));
                         if (activeMaterial != null)
                         {
-                            if (assets.Contains("Attack Spells Active Basecolor"))
-                            {
-                                activeMaterial.SetTexture("_MainTex", (Texture)assets.LoadAsset("Attack Spells Active Basecolor"));
-                            }
-                            if (assets.Contains("Attack Spells Active Metallic"))
-                            {
-                                activeMaterial.SetTexture("_MetallicGlossMap", (Texture)assets.LoadAsset("Attack Spells Active Metallic"));
-                            }
+                            activeMaterial.SetTexture("_MainTex", (Texture)assets.LoadAsset(WindfallSpellAttack1ActiveBasecolorPath));
+                            activeMaterial.SetTexture("_MetallicGlossMap", (Texture)assets.LoadAsset(CollectiblePageMetallicBlotchesPath));
                         }
 
                         inactiveMaterial = new Material(spellModel.Icon(spellCategory, false, 0));
                         if (inactiveMaterial != null)
                         {
-                            if (assets.Contains("Attack Spells Inactive Basecolor"))
-                            {
-                                inactiveMaterial.SetTexture("_MainTex", (Texture)assets.LoadAsset("Attack Spells Inactive Basecolor"));
-                            }
-                            if (assets.Contains("Attack Spells Inactive Metallic"))
-                            {
-                                inactiveMaterial.SetTexture("_MetallicGlossMap", (Texture)assets.LoadAsset("Attack Spells Inactive Metallic"));
-                            }
+                            inactiveMaterial.SetTexture("_MainTex", (Texture)assets.LoadAsset(WindfallSpellAttack1InactiveBasecolorPath));
+                            inactiveMaterial.SetTexture("_MetallicGlossMap", (Texture)assets.LoadAsset(WindfallSpellAttack1InactiveMetallicPath));
+                        }
+                        break;
+                    case SpellCategory.Puzzle:
+                        activeMaterial = new Material(spellModel.Icon(spellCategory, true, 0));
+                        if (activeMaterial != null)
+                        {
+                            activeMaterial.SetTexture("_MainTex", (Texture)assets.LoadAsset(WindfallSpellPuzzle1ActiveBasecolorPath));
+                            activeMaterial.SetTexture("_MetallicGlossMap", (Texture)assets.LoadAsset(CollectiblePageMetallicBlotchesPath));
+                        }
+
+                        inactiveMaterial = new Material(spellModel.Icon(spellCategory, false, 0));
+                        if (inactiveMaterial != null)
+                        {
+                            inactiveMaterial.SetTexture("_MainTex", (Texture)assets.LoadAsset(WindfallSpellPuzzle1InactiveBasecolorPath));
+                            inactiveMaterial.SetTexture("_MetallicGlossMap", (Texture)assets.LoadAsset(WindfallSpellPuzzle1InactiveMetallicPath));
                         }
                         break;
                     default:
@@ -184,15 +185,24 @@ namespace The_Legend_of_Bum_bo_Windfall
             spellMaterial.inactive.Add(inactiveMaterial);
         }
 
-        private static readonly string spell_attack_ambient_occlusion_path = "Attack Spells Ambient Occlusion";
-        private static readonly string spell_attack_normal_path = "Attack Spells Normal";
-        private static readonly string collectible_page_ambient_occlusion_path = "Collectible_page_ambient_occlusion";
-        private static readonly string collectible_page_height_path = "Collectible_page_height";
-        private static readonly string collectible_page_normal_path = "Collectible_page_normal";
-        private static readonly string spell_use_metallic_path = "Spell_use_metallic_V3";
-        private static readonly string trinket_page_metallic_path = "Trinket_Page_metallic";
-        private static readonly string spell_defense_active_basecolor_path = "Spell_Defense_1_active_basecolor";
-        private static readonly string spell_defense_inactive_basecolor_path = "Spell_Defense_1_inactive_basecolor";
+        private static readonly string CollectiblePageAmbientOcclusionPath = "Collectible Page Ambient Occlusion";
+        private static readonly string CollectiblePageHeightPath = "Collectible Page Height";
+        private static readonly string CollectiblePageNormalPath = "Collectible Page Normal";
+
+        private static readonly string CollectiblePageMetallicBlotchesPath = "Collectible Page Metallic Blotches";
+
+        private static readonly string WindfallSpellAttack1ActiveBasecolorPath = "Windfall Spell Attack 1 Active Basecolor";
+        private static readonly string WindfallSpellAttack1InactiveBasecolorPath = "Windfall Spell Attack 1 Inactive Basecolor";
+        private static readonly string WindfallSpellAttack1InactiveMetallicPath = "Windfall Spell Attack 1 Inactive Metallic";
+
+        private static readonly string VanillaSpellDefense1ActiveBasecolorPath = "Vanilla Spell Defense 1 Active Basecolor";
+        private static readonly string VanillaSpellDefense1InactiveBasecolorPath = "Vanilla Spell Defense 1 Inactive Basecolor";
+
+        private static readonly string WindfallSpellPuzzle1ActiveBasecolorPath = "Windfall Spell Puzzle 1 Active Basecolor";
+        private static readonly string WindfallSpellPuzzle1InactiveBasecolorPath = "Windfall Spell Puzzle 1 Inactive Basecolor";
+        private static readonly string WindfallSpellPuzzle1InactiveMetallicPath = "Windfall Spell Puzzle 1 Inactive Metallic";
+
+        private static readonly string VanillaSpellUse1InactiveMetallicPath = "Vanilla Spell Use 1 Inactive Metallic";
 
         private static readonly string[] defaultMaterialTextureMapIDs = new string[]
         {
@@ -224,25 +234,25 @@ namespace The_Legend_of_Bum_bo_Windfall
                 switch (spellCategory)
                 {
                     case SpellCategory.Attack:
-                        activeTexturePaths[1] = spell_attack_ambient_occlusion_path;
-                        activeTexturePaths[3] = spell_attack_normal_path;
-                        inactiveTexturePaths[1] = spell_attack_ambient_occlusion_path;
-                        inactiveTexturePaths[3] = spell_attack_normal_path;
+                        activeTexturePaths[1] = CollectiblePageAmbientOcclusionPath;
+                        activeTexturePaths[3] = CollectiblePageNormalPath;
+                        inactiveTexturePaths[1] = CollectiblePageAmbientOcclusionPath;
+                        inactiveTexturePaths[3] = CollectiblePageNormalPath;
                         break;
                     case SpellCategory.Defense:
-                        activeTexturePaths[0] = spell_defense_active_basecolor_path;
-                        inactiveTexturePaths[0] = spell_defense_inactive_basecolor_path;
+                        activeTexturePaths[0] = VanillaSpellDefense1ActiveBasecolorPath;
+                        inactiveTexturePaths[0] = VanillaSpellDefense1InactiveBasecolorPath;
                         break;
                     case SpellCategory.Puzzle:
-                        inactiveTexturePaths[1] = collectible_page_ambient_occlusion_path;
-                        inactiveTexturePaths[2] = collectible_page_height_path;
-                        inactiveTexturePaths[3] = collectible_page_normal_path;
+                        inactiveTexturePaths[1] = CollectiblePageAmbientOcclusionPath;
+                        inactiveTexturePaths[2] = CollectiblePageHeightPath;
+                        inactiveTexturePaths[3] = CollectiblePageNormalPath;
                         break;
                     case SpellCategory.Use:
-                        inactiveTexturePaths[1] = collectible_page_ambient_occlusion_path;
-                        inactiveTexturePaths[2] = collectible_page_height_path;
-                        inactiveTexturePaths[3] = collectible_page_normal_path;
-                        inactiveTexturePaths[4] = spell_use_metallic_path;
+                        inactiveTexturePaths[1] = CollectiblePageAmbientOcclusionPath;
+                        inactiveTexturePaths[2] = CollectiblePageHeightPath;
+                        inactiveTexturePaths[3] = CollectiblePageNormalPath;
+                        inactiveTexturePaths[4] = VanillaSpellUse1InactiveMetallicPath;
                         break;
                     default:
                         break;
@@ -326,10 +336,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                 switch (trinketCategory)
                 {
                     case TrinketCategory.Special:
-                        texturePaths[1] = collectible_page_ambient_occlusion_path;
-                        texturePaths[2] = collectible_page_height_path;
-                        texturePaths[3] = collectible_page_normal_path;
-                        texturePaths[4] = trinket_page_metallic_path;
+                        texturePaths[1] = CollectiblePageAmbientOcclusionPath;
+                        texturePaths[2] = CollectiblePageHeightPath;
+                        texturePaths[3] = CollectiblePageNormalPath;
+                        texturePaths[4] = CollectiblePageMetallicBlotchesPath;
                         break;
                     default:
                         break;
