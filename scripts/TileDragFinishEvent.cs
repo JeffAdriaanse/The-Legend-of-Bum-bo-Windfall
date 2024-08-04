@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 
@@ -20,17 +21,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             for (int trinketIterator = 0; trinketIterator < WindfallHelper.app.model.characterSheet.trinkets.Count; trinketIterator++)
             {
                 TrinketElement trinketElement = WindfallHelper.app.controller.GetTrinket(trinketIterator);
-                if (trinketElement.trinketName == (TrinketName)1001) turnWildOnDrag = true;
+                if (turnWildOnDragTrinkets.Contains(trinketElement.trinketName)) turnWildOnDrag = true;
             }
-            if (WindfallHelper.app.model.characterSheet.hiddenTrinket.trinketName == (TrinketName)1001) turnWildOnDrag = true;
+            if (turnWildOnDragTrinkets.Contains(WindfallHelper.app.model.characterSheet.hiddenTrinket.trinketName)) turnWildOnDrag = true;
 
-            if (turnWildOnDrag && selected_block != null)
-            {
-                PuzzleHelper.PlaceBlock(selected_block.position, Block.BlockType.Wild, false, true);
-
-                //Sequence turnWildSequence = DOTween.Sequence();
-                //turnWildSequence.AppendCallback(delegate { End(); });
-            }
+            if (turnWildOnDrag && selected_block != null) PuzzleHelper.PlaceBlock(selected_block.position, Block.BlockType.Wild, false, true);
 
             End();
         }
@@ -39,5 +34,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             return new UpdatePuzzleEvent();
         }
+
+        private static readonly List<TrinketName> turnWildOnDragTrinkets = new List<TrinketName>()
+        {
+            (TrinketName)1001,
+            (TrinketName)1002,
+        };
     }
 }

@@ -218,7 +218,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Trinkets
                     { "Trinkets/CURVED_HORN_NAME", "Curved Horn"},
                     { "Trinkets/DRAKULA_TEETH_NAME", "Dracula Teeth"},
-                    { "Trinkets/WISE_HIDDEN_NAME", "Wise's Ability"},
 
                     //Trinket descriptions
                     { "Trinkets/BAG_O_SUCKING_DESCRIPTION", "Gain Mana when You Hit!"},
@@ -228,13 +227,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Trinkets/RAINBOW_TICK_DESCRIPTION", "Reduces Spell Cost"},
                     { "Trinkets/STRAY_BARB_DESCRIPTION", "Attackers May Take Damage"},
                     { "Trinkets/THERMOS_DESCRIPTION", "Charge All Items + Heal"},
-                    { "Trinkets/WISE_HIDDEN_DESCRIPTION", "Compost Bag"},
 
                     //Gizzarda
                     { "Bosses/GIZZARDA_TIP_2", "\"she's very resistant!\nplan ahead!\""},
 
                     //Characters
-                    { "Characters/EMPTY_UNLOCK", "beat the game twice with the first five characters."},
+                    { "Characters/EMPTY_UNLOCK", "beat the game twice with the Brave, Nimble, Stout, Weird, and Dead."},
 
                     //Unlocks
                     { "Unlocks/BUMBO_SMASH", "BUM-BO SMASH"},
@@ -266,13 +264,26 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Spells/READING_STONE_NAME", "Reading Stone"},
                     { "Spells/READING_STONE_DESCRIPTION", "Enlarges a Tile"},
 
+                    //Trinkets
+                    { "Trinkets/COMPOST_BAG_NAME", "Compost Bag"},
+                    { "Trinkets/COMPOST_BAG_DESCRIPTION", "Moved Tile Becomes Wild!"},
+                    { "Trinkets/WISE_HIDDEN_NAME", "Wise's Ability"},
+                    { "Trinkets/WISE_HIDDEN_DESCRIPTION", "Compost Bag"},
+
                     //GUI Notifications
                     { "GUI Notifications/ENLARGE_TILE", "Pick Tile to Enlarge!"},
                     { "GUI Notifications/NO_VIABLE_SPELLS", "No Viable Spells"},
 
+                    //Characters
+                    { "Characters/WISE_UNLOCK", "beat chapter 4."},
+
                     //Unlocks
                     { "Unlocks/EVERYTHING_IS_TERRIBLE_NEW", "EVERYTHING IS TERRIBLE!"},
                     { "Unlocks/THE_GAME_IS_HARDER", "THE GAME IS HARDER!"},
+                    { "Unlocks/BUMBO_THE_WISE", "BUM-BO THE WISE"},
+                    { "Unlocks/PLASMA_BALL", "PLASMA BALL"},
+                    { "Unlocks/MAGNIFYING_GLASS", "MAGNIFYING GLASS"},
+                    { "Unlocks/COMPOST_BAG", "COMPOST BAG"},
 
                     //Menu
                     { "Menu/WINDFALL_OPTIONS", "Windfall Options"},

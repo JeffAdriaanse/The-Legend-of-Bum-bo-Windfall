@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using I2.Loc;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -136,7 +137,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Deactivate object
             wiseSelectView.gameObject.SetActive(false);
 
-            //Add character description
+            //Unlock requirement text
+            Localize unlockLocalize = wiseSelectView.lockedObject.transform.Find("Unlock_Condition").Find("Unlock Text").GetComponent<Localize>();
+            Localization.SetKey(unlockLocalize, eI2Category.Characters, "WISE_UNLOCK");
+
+            //Character description text
             CharDescView charDescView = GameObject.FindObjectOfType<CharDescView>();
             GameObject[] newText = new GameObject[11];
             for (int i = 0; i < newText.Length; i++)
@@ -228,13 +233,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             return true;
         }
 
-        //Bum-bo the Wise unlock requirement
+        //Bum-bo the Wise unlock requirement: Beat The Basement
         [HarmonyPrefix, HarmonyPatch(typeof(SelectCharacterView), nameof(SelectCharacterView.BumboIsUnlocked))]
         static bool SelectCharacterView_BumboIsUnlocked(SelectCharacterView __instance, CharacterSheet.BumboType _type, ref bool __result)
         {
             if (_type == (CharacterSheet.BumboType)10)
             {
-                __result = __instance.progression.unlocks[5];
+                __result = __instance.progression.unlocks[6];
                 return false;
             }
             return true;

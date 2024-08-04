@@ -1489,6 +1489,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new Dictionary<TrinketName, string>
                 {
+                    { (TrinketName)1002, "Tiles turn wild after being dragged using a movement point" },
                     { TrinketName.ChargePrick, "Reduces the selected spell's recharge time by 1" },
                     { TrinketName.DamagePrick, "Raises the selected spell's damage by 1" },
                     { TrinketName.ManaPrick, "Reduces the selected spell's mana cost by 25%" },

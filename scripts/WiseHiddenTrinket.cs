@@ -13,6 +13,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             trinketName = (TrinketName)1001;
             Name = "WISE_HIDDEN_DESCRIPTION";
             IconPosition = new Vector2(0f, 0f);
+            texturePage = 1;
             Category = TrinketCategory.Puzzle;
         }
     }

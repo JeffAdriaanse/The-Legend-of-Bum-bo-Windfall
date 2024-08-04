@@ -23,6 +23,20 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             wiseWins = 0;
             wiseMoneyWins = 0;
+
+            unlocks = new bool[4];
+            //Unlock 0: Bum-bo the Wise
+            //Unlock 1: Plasma Ball
+            //Unlock 2: Magnifying Glass
+            //Unlock 3: Compost Bag
+        }
+
+        /// <summary>
+        /// Ensures saved objects are not null
+        /// </summary>
+        public void Verify()
+        {
+            if (unlocks == null) unlocks = new bool[4];
         }
 
         public int winCount;
@@ -41,6 +55,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Progression
         public int wiseWins;
         public int wiseMoneyWins;
+
+        public bool[] unlocks;
     }
 
     public static class WindfallPersistentDataController
@@ -78,6 +94,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Cache newly loaded data
                 windfallPersistentData = (WindfallPersistentData)binaryFormatter.Deserialize(fileStream);
                 fileStream.Close();
+                windfallPersistentData.Verify();
                 return windfallPersistentData;
             }
 
@@ -91,6 +108,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallPersistentData resetData = LoadData();
             resetData.wiseWins = 0;
             resetData.wiseMoneyWins = 0;
+            resetData.unlocks = new bool[4];
             SaveData(resetData);
         }
     }

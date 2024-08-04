@@ -1010,7 +1010,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     }
 }
 
-static class FastSpellRetrieval
+public static class FastSpellRetrieval
 {
     public static SpellElement.SpellCategory GetSpellCategory(SpellName spell)
     {
@@ -1020,6 +1020,12 @@ static class FastSpellRetrieval
         {
             case (SpellName)1000:
                 category = SpellElement.SpellCategory.Attack;
+                break;
+            case (SpellName)1001:
+                category = SpellElement.SpellCategory.Puzzle;
+                break;
+            case (SpellName)1002:
+                category = SpellElement.SpellCategory.Puzzle;
                 break;
             case SpellName.Addy:
                 category = SpellElement.SpellCategory.Other;
@@ -1510,6 +1516,8 @@ static class FastSpellRetrieval
         {
             List<SpellName> list = new List<SpellName>
             {
+                (SpellName)1001,
+                (SpellName)1002,
                 SpellName.TwentyLbsWeight,
                 SpellName.Magic8Ball,
                 SpellName.BlackD12,

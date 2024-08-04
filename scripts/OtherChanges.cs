@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using UnityEngine;
@@ -12,39 +13,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             Harmony.CreateAndPatchAll(typeof(OtherChanges));
             PatchAchievementsUnlock();
-        }
-
-        private static void PatchAchievementsUnlock()
-        {
-            if (Windfall.achievementsSteam)
-            {
-                var mOriginal = AccessTools.Method(typeof(AchievementsSteam), "Unlock");
-                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsSteam_Unlock));
-                if (mOriginal != null && mPrefix != null)
-                {
-                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
-                }
-            }
-
-            if (Windfall.achievementsGOG)
-            {
-                var mOriginal = AccessTools.Method(typeof(AchievementsGOG), "Unlock");
-                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsGOG_Unlock));
-                if (mOriginal != null && mPrefix != null)
-                {
-                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
-                }
-            }
-
-            if (Windfall.achievementsEGS)
-            {
-                var mOriginal = AccessTools.Method(typeof(AchievementsEGS), "Unlock");
-                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsEGS_Unlock));
-                if (mOriginal != null && mPrefix != null)
-                {
-                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
-                }
-            }
         }
 
         //Patch: Fixes exiting to menu incorrectly deleting certain gameObjects
@@ -346,6 +314,156 @@ namespace The_Legend_of_Bum_bo_Windfall
                             currentPosition.x += roomDirections[roomCounter] == MapRoom.Direction.E ? 1 : -1;
                         }
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Increments Bum-bo the Wise win progression
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.FinishFloor))]
+        static void BumboController_FinishFloor(BumboController __instance)
+        {
+            CharacterSheet characterSheet = __instance.app.model.characterSheet;
+            if (characterSheet.currentFloor == 5 && characterSheet.bumboType == (CharacterSheet.BumboType)10)
+            {
+                WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
+                windfallPersistentData.wiseWins++;
+                if (characterSheet.coins >= 45) windfallPersistentData.wiseMoneyWins++;
+                WindfallPersistentDataController.SaveData(windfallPersistentData);
+            }
+        }
+
+        /// <summary>
+        /// Grants Windfall unlocks
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboUnlockController), "Start")]
+        static void BumboUnlockController_Start(BumboUnlockController __instance)
+        {
+            List<int> unlocks = (List<int>)AccessTools.Field(typeof(BumboUnlockController), "unlocks").GetValue(__instance);
+            WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
+
+            //Bum-bo the Wise: Beat The Basement
+            if (!windfallPersistentData.unlocks[0] && __instance.progress.wins > 0)
+            {
+                windfallPersistentData.unlocks[0] = true;
+                if (__instance.progress.wins == 1) unlocks.Add(45); //Do not show Bum-bo the Wise unlock unless this is the first win
+            }
+
+            //Plasma Ball: Win once as Bum-bo the Wise
+            if (!windfallPersistentData.unlocks[1] && windfallPersistentData.wiseWins > 0)
+            {
+                windfallPersistentData.unlocks[1] = true;
+                unlocks.Add(46);
+            }
+
+            //Magnifying Glass: Win twice as Bum-bo the Wise
+            if (!windfallPersistentData.unlocks[2] && windfallPersistentData.wiseWins > 1)
+            {
+                windfallPersistentData.unlocks[2] = true;
+                unlocks.Add(47);
+            }
+
+            //Compost Bag: Win as Bum-bo the Wise with 45+ coins
+            if (!windfallPersistentData.unlocks[3] && windfallPersistentData.wiseMoneyWins > 1)
+            {
+                windfallPersistentData.unlocks[3] = true;
+                unlocks.Add(48);
+            }
+
+            AccessTools.Field(typeof(BumboUnlockController), "unlocks").SetValue(__instance, unlocks);
+            WindfallPersistentDataController.SaveData(windfallPersistentData);
+        }
+
+        /// <summary>
+        /// Imports new unlock page materials and text keys
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboUnlockController), "Start")]
+        static void BumboUnlockController_Start_UnlockImage(BumboUnlockController __instance)
+        {
+            UnlockImageView unlockImageView = __instance.app.view.unlockImageView;
+
+            //Unlock page materials
+            List<Material> unlockMaterials = new List<Material>();
+            unlockMaterials.AddRange(unlockImageView.unlockMaterials);
+
+            Material newMaterial = new Material(unlockMaterials[unlockMaterials.Count - 1]); //Copy last material
+            newMaterial.mainTexture = Windfall.assetBundle.LoadAsset<Texture2D>("Unlocks 1"); //Change to new texture
+            unlockMaterials.Add(newMaterial);
+
+            unlockImageView.unlockMaterials = unlockMaterials.ToArray();
+
+            //Text keys
+            List<string> unlockKeys = new List<string>();
+
+            for (int unlockKeyCounter = 0; unlockKeyCounter <= 48; unlockKeyCounter++)
+            {
+                string unlockKey = string.Empty;
+                if (unlockKeyCounter <= 40) unlockKey = unlockImageView.unlockKeys[unlockKeyCounter];
+                else
+                {
+                    switch (unlockKeyCounter)
+                    {
+                        case 45:
+                            unlockKey = "BUMBO_THE_WISE";
+                            break;
+                        case 46:
+                            unlockKey = "PLASMA_BALL";
+                            break;
+                        case 47:
+                            unlockKey = "MAGNIFYING_GLASS";
+                            break;
+                        case 48:
+                            unlockKey = "COMPOST_BAG";
+                            break;
+                    }
+                }
+
+                unlockKeys.Add(unlockKey);
+            }
+
+            unlockImageView.unlockKeys = unlockKeys.ToArray();
+        }
+
+        //Patch: Resets mod progression when progress is deleted
+        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), nameof(TitleController.DeleteProgress))]
+        static void TitleController_DeleteProgress()
+        {
+            WindfallPersistentDataController.ResetProgression();
+        }
+
+        /// <summary>
+        /// Fixes jackpot achievements according to the current platform
+        /// </summary>
+        private static void PatchAchievementsUnlock()
+        {
+            if (Windfall.achievementsSteam)
+            {
+                var mOriginal = AccessTools.Method(typeof(AchievementsSteam), "Unlock");
+                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsSteam_Unlock));
+                if (mOriginal != null && mPrefix != null)
+                {
+                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
+                }
+            }
+
+            if (Windfall.achievementsGOG)
+            {
+                var mOriginal = AccessTools.Method(typeof(AchievementsGOG), "Unlock");
+                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsGOG_Unlock));
+                if (mOriginal != null && mPrefix != null)
+                {
+                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
+                }
+            }
+
+            if (Windfall.achievementsEGS)
+            {
+                var mOriginal = AccessTools.Method(typeof(AchievementsEGS), "Unlock");
+                var mPrefix = AccessTools.Method(typeof(OtherChanges), nameof(AchievementsEGS_Unlock));
+                if (mOriginal != null && mPrefix != null)
+                {
+                    Windfall.harmony.Patch(mOriginal, new HarmonyMethod(mPrefix));
                 }
             }
         }

@@ -98,8 +98,39 @@ namespace The_Legend_of_Bum_bo_Windfall
                 ObjectDataStorage.StoreData<bool>(__instance, "hasImportedMaterials", true);
 
                 ReplaceTrinketIconMaterials(__instance);
+                AddTrinketMaterialPages(__instance);
             }
         }
+
+        private static readonly string CollectiblePageAmbientOcclusionPath = "Collectible Page Ambient Occlusion";
+        private static readonly string CollectiblePageHeightPath = "Collectible Page Height";
+        private static readonly string CollectiblePageNormalPath = "Collectible Page Normal";
+
+        private static readonly string CollectiblePageMetallicBlotchesPath = "Collectible Page Metallic Blotches";
+
+        private static readonly string WindfallSpellAttack1ActiveBasecolorPath = "Windfall Spell Attack 1 Active Basecolor";
+        private static readonly string WindfallSpellAttack1InactiveBasecolorPath = "Windfall Spell Attack 1 Inactive Basecolor";
+        private static readonly string WindfallSpellAttack1InactiveMetallicPath = "Windfall Spell Attack 1 Inactive Metallic";
+
+        private static readonly string VanillaSpellDefense1ActiveBasecolorPath = "Vanilla Spell Defense 1 Active Basecolor";
+        private static readonly string VanillaSpellDefense1InactiveBasecolorPath = "Vanilla Spell Defense 1 Inactive Basecolor";
+
+        private static readonly string WindfallSpellPuzzle1ActiveBasecolorPath = "Windfall Spell Puzzle 1 Active Basecolor";
+        private static readonly string WindfallSpellPuzzle1InactiveBasecolorPath = "Windfall Spell Puzzle 1 Inactive Basecolor";
+        private static readonly string WindfallSpellPuzzle1InactiveMetallicPath = "Windfall Spell Puzzle 1 Inactive Metallic";
+
+        private static readonly string VanillaSpellUse1InactiveMetallicPath = "Vanilla Spell Use 1 Inactive Metallic";
+
+        private static readonly string WindfallTrinketPuzzleMod1BasecolorPath = "Windfall Trinket Puzzle Mod 1 Basecolor";
+
+        private static readonly string[] defaultMaterialTextureMapIDs = new string[]
+        {
+            "_MainTex",
+            "_OcclusionMap",
+            "_ParallaxMap",
+            "_BumpMap",
+            "_MetallicGlossMap",
+        };
 
         //Adds spell icon material pages
         private static void AddSpellMaterialPages(SpellModel spellModel)
@@ -170,48 +201,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
-
-        //Adds a spell icon material page to the SpellMaterial of a spell category
-        private static void AddSpellMaterialPage(SpellMaterial spellMaterial, Material activeMaterial, Material inactiveMaterial)
-        {
-            if (spellMaterial == null) { return; }
-
-            //Add active material
-            if (activeMaterial == null || spellMaterial.active == null) { return; }
-            spellMaterial.active.Add(activeMaterial);
-
-            //Add inactive material
-            if (inactiveMaterial == null || spellMaterial.inactive == null) { return; }
-            spellMaterial.inactive.Add(inactiveMaterial);
-        }
-
-        private static readonly string CollectiblePageAmbientOcclusionPath = "Collectible Page Ambient Occlusion";
-        private static readonly string CollectiblePageHeightPath = "Collectible Page Height";
-        private static readonly string CollectiblePageNormalPath = "Collectible Page Normal";
-
-        private static readonly string CollectiblePageMetallicBlotchesPath = "Collectible Page Metallic Blotches";
-
-        private static readonly string WindfallSpellAttack1ActiveBasecolorPath = "Windfall Spell Attack 1 Active Basecolor";
-        private static readonly string WindfallSpellAttack1InactiveBasecolorPath = "Windfall Spell Attack 1 Inactive Basecolor";
-        private static readonly string WindfallSpellAttack1InactiveMetallicPath = "Windfall Spell Attack 1 Inactive Metallic";
-
-        private static readonly string VanillaSpellDefense1ActiveBasecolorPath = "Vanilla Spell Defense 1 Active Basecolor";
-        private static readonly string VanillaSpellDefense1InactiveBasecolorPath = "Vanilla Spell Defense 1 Inactive Basecolor";
-
-        private static readonly string WindfallSpellPuzzle1ActiveBasecolorPath = "Windfall Spell Puzzle 1 Active Basecolor";
-        private static readonly string WindfallSpellPuzzle1InactiveBasecolorPath = "Windfall Spell Puzzle 1 Inactive Basecolor";
-        private static readonly string WindfallSpellPuzzle1InactiveMetallicPath = "Windfall Spell Puzzle 1 Inactive Metallic";
-
-        private static readonly string VanillaSpellUse1InactiveMetallicPath = "Vanilla Spell Use 1 Inactive Metallic";
-
-        private static readonly string[] defaultMaterialTextureMapIDs = new string[]
-        {
-            "_MainTex",
-            "_OcclusionMap",
-            "_ParallaxMap",
-            "_BumpMap",
-            "_MetallicGlossMap",
-        };
 
         private static void ReplaceSpellIconMaterials(SpellModel spellModel)
         {
@@ -319,6 +308,49 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Adds trinket icon material pages
+        private static void AddTrinketMaterialPages(TrinketModel trinketModel)
+        {
+            AssetBundle assets = Windfall.assetBundle;
+
+            TrinketCategory[] trinketCategories = new TrinketCategory[]
+            {
+                TrinketCategory.Puzzle,
+            };
+
+            foreach (TrinketCategory trinketCategory in trinketCategories)
+            {
+                Material material = null;
+
+                //Assign hardcoded texture asset paths to each texture of the trinket material
+                switch (trinketCategory)
+                {
+                    case TrinketCategory.Puzzle:
+                        material = new Material(trinketModel.Icon(trinketCategory, 0));
+                        if (material != null)
+                        {
+                            material.SetTexture("_MainTex", (Texture)assets.LoadAsset(WindfallTrinketPuzzleMod1BasecolorPath));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                if (material == null) { return; }
+
+                //Loop through trinket model material arrays
+                for (int trinketMaterialCounter = 0; trinketMaterialCounter < trinketModel.materials.Length; trinketMaterialCounter++)
+                {
+                    //Find array for current trinket category
+                    if (trinketModel.materials[trinketMaterialCounter] != null && trinketModel.materials[trinketMaterialCounter].category == trinketCategory)
+                    {
+                        //Add material pages
+                        trinketModel.materials[trinketMaterialCounter].material.Add(material);
+                    }
+                }
+            }
+        }
+
         private static void ReplaceTrinketIconMaterials(TrinketModel trinketModel)
         {
             AssetBundle assets = Windfall.assetBundle;
@@ -365,18 +397,22 @@ namespace The_Legend_of_Bum_bo_Windfall
                     textureReplacements.Add(defaultMaterialTextureMapID, texture);
                 }
 
-                //Find list for current trinket category
-                if (trinketModel.trinketMaterial.ContainsKey(trinketCategory) && trinketModel.trinketMaterial[trinketCategory] != null)
+                //Loop through trinket model material arrays
+                for (int trinketMaterialCounter = 0; trinketMaterialCounter < trinketModel.materials.Length; trinketMaterialCounter++)
                 {
-                    //Access materials for each page of current trinket category
-                    for (int materialCounter = 0; materialCounter < trinketModel.trinketMaterial[trinketCategory].Count; materialCounter++)
+                    //Find array for current trinket category
+                    if (trinketModel.materials[trinketMaterialCounter] != null && trinketModel.materials[trinketMaterialCounter].category == trinketCategory)
                     {
-                        Material unmodifiedMaterial = trinketModel.trinketMaterial[trinketCategory][materialCounter];
-                        if (unmodifiedMaterial == null) { continue; }
+                        //Access materials for each page of current trinket category
+                        for (int materialCounter = 0; materialCounter < trinketModel.materials[trinketMaterialCounter].material.Count; materialCounter++)
+                        {
+                            Material unmodifiedMaterial = trinketModel.materials[trinketMaterialCounter].material[materialCounter];
+                            if (unmodifiedMaterial == null) { continue; }
 
-                        //Replace material textures
-                        Material modifiedMaterial = ReplaceMaterialTextures(unmodifiedMaterial, textureReplacements);
-                        trinketModel.trinketMaterial[trinketCategory][materialCounter] = modifiedMaterial;
+                            //Replace material textures
+                            Material modifiedMaterial = ReplaceMaterialTextures(unmodifiedMaterial, textureReplacements);
+                            trinketModel.materials[trinketMaterialCounter].material[materialCounter] = modifiedMaterial;
+                        }
                     }
                 }
             }
@@ -483,9 +519,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 List<SpellName> validSpells = new List<SpellName>()
                 {
-                    (SpellName)1000,
-                    (SpellName)1001,
+
                 };
+
+                WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
+                if (windfallPersistentData.unlocks[1]) validSpells.Add((SpellName)1000); //Plasma Ball
+                if (windfallPersistentData.unlocks[2]) validSpells.Add((SpellName)1001); //Magnifying Glass
+
                 return validSpells;
             }
         }
@@ -505,6 +545,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         (TrinketName)1001,
                         "WISE_HIDDEN_NAME"
                     },
+                    {
+                        (TrinketName)1002,
+                        "COMPOST_BAG_NAME"
+                    },
                 };
                 return trinketKA;
             }
@@ -522,6 +566,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     {
                         "1001",
                         (TrinketName)1001
+                    },
+                    {
+                        "1002",
+                        (TrinketName)1002
                     },
                 };
                 return trinketNames;
@@ -541,6 +589,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         (TrinketName)1001,
                         new WiseHiddenTrinket()
                     },
+                    {
+                        (TrinketName)1002,
+                        new CompostBagTrinket()
+                    },
                 };
                 return trinkets;
             }
@@ -551,7 +603,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 List<TrinketName> validTrinkets = new List<TrinketName>()
                 {
+
                 };
+
+                WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
+                if (windfallPersistentData.unlocks[3]) validTrinkets.Add((TrinketName)1002); //Compost Bag
+
                 return validTrinkets;
             }
         }
