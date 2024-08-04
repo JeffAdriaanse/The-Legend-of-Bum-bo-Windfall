@@ -15,7 +15,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             texturePage = 1;
             IconPosition = new Vector2(0f, 0f);
             spellName = (SpellName)1000;
-            manaSize = ManaSize.L;
+            manaSize = ManaSize.M;
             statusEffects = new StatusEffect();
             AnimationType = AttackAnimationType.Poke;
             baseDamage = 0;
@@ -25,24 +25,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly GameObject PLASMA_PARTICLES = Windfall.assetBundle.LoadAsset<GameObject>("Plasma_Trail_Particles");
 
         //Deals 1 damage. Damage can be buffed by Damage Needles
-        public override int Damage()
-        {
-            return baseDamage + 1 + SpellDamageModifier();
-        }
+        public override int Damage() { return baseDamage + 1 + SpellDamageModifier(); }
 
         //Electricity iteration count scales with spell damage
-        public int ChainDistance()
-        {
-            return WindfallHelper.app.model.characterSheet.getItemDamage() + 1;
-        }
+        public int ChainDistance() { return WindfallHelper.app.model.characterSheet.getItemDamage() + 1; }
 
         private readonly float chainAnimationDelay = 0.6f;
         public override Sequence AttackAnimation()
         {
             //Spell ends attack manually
             app.model.waitTilAttackIsFinished = true;
-
-            //Play Zap sound
 
             //Locate closest enemy
             Transform transform = app.controller.ClosestEnemy(app.model.attackColumn);
@@ -87,22 +79,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             bool endAttack = false;
 
             //End attack if overall chained enemies is null
-            if (overallChainedEnemies == null)
-            {
-                endAttack = true;
-            }
+            if (overallChainedEnemies == null) endAttack = true;
 
             //End attack if current enemy chains is null or empty
-            if (currentEnemyChains == null || currentEnemyChains.Count < 1)
-            {
-                endAttack = true;
-            }
+            if (currentEnemyChains == null || currentEnemyChains.Count < 1) endAttack = true;
 
             //End attack when electricity is finished
-            if (chainIterator >= ChainDistance())
-            {
-                endAttack = true;
-            }
+            if (chainIterator >= ChainDistance()) endAttack = true;
 
             AIModel aiModel = app.model.aiModel;
 
@@ -113,23 +96,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             foreach (List<Enemy> enemyChain in currentEnemyChains)
             {
                 //End attack if current enemy chain is null or empty
-                if (enemyChain == null || enemyChain.Count < 1)
-                {
-                    endAttack = true;
-                }
+                if (enemyChain == null || enemyChain.Count < 1) endAttack = true;
 
                 Enemy chainedEnemy = enemyChain[enemyChain.Count - 1];
                 //End attack if current enemy is null
-                if (chainedEnemy == null)
-                {
-                    endAttack = true;
-                }
+                if (chainedEnemy == null) endAttack = true;
 
                 //End attack
-                if (endAttack)
-                {
-                    break;
-                }
+                if (endAttack) break;
 
                 bool ground = chainedEnemy.enemyType == Enemy.EnemyType.Ground;
                 BattlefieldPosition chainedEnemyBattlefieldPosition = aiModel.battlefieldPositions[aiModel.battlefieldPositionIndex[chainedEnemy.position.x, chainedEnemy.position.y]];
@@ -140,10 +114,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 
                 //If the enemy is wide, add side positions to the list
-                if (chainedEnemy.enemyWidth == 3)
-                {
-                    currentChainedEnemyPositions.AddRange(WindfallHelper.AdjacentBattlefieldPositions(aiModel, chainedEnemyBattlefieldPosition, false, true, false));
-                }
+                if (chainedEnemy.enemyWidth == 3) currentChainedEnemyPositions.AddRange(WindfallHelper.AdjacentBattlefieldPositions(aiModel, chainedEnemyBattlefieldPosition, false, true, false));
 
                 //List all enemies adjacent to the current enemy
                 List<Enemy> adjacentUnchainedEnemies = new List<Enemy>();
@@ -167,18 +138,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                         foreach (BattlefieldPosition adjacentBattlefieldPosition in WindfallHelper.AdjacentBattlefieldPositions(aiModel, battlefieldPosition, true))
                         {
                             //Do not include the current enemy positions
-                            if (currentChainedEnemyPositions.Contains(adjacentBattlefieldPosition))
-                            {
-                                continue;
-                            }
+                            if (currentChainedEnemyPositions.Contains(adjacentBattlefieldPosition)) continue;
 
                             //Add adjacent enemies
                             Enemy adjacentEnemy = WindfallHelper.GetEnemyByBattlefieldPosition(adjacentBattlefieldPosition, groundIteration, true);
                             //Ignore already chained enemies
-                            if (adjacentEnemy != null && !overallChainedEnemies.Contains(adjacentEnemy))
-                            {
-                                adjacentUnchainedEnemies.Add(adjacentEnemy);
-                            }
+                            if (adjacentEnemy != null && !overallChainedEnemies.Contains(adjacentEnemy)) adjacentUnchainedEnemies.Add(adjacentEnemy);
                         }
                     }
                 }
@@ -213,10 +178,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             DOTween.Sequence().AppendCallback(delegate
             {
-                foreach (List<Enemy> enemyChain in nextEnemyChains)
-                {
-                    ShockEnemy(enemyChain);
-                }
+                foreach (List<Enemy> enemyChain in nextEnemyChains) ShockEnemy(enemyChain);
             }).AppendInterval(chainAnimationDelay).AppendCallback(delegate
             {
                 //Recursive method
@@ -229,10 +191,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (enemyChain == null) { return; }
 
             Enemy enemy = enemyChain[enemyChain.Count - 1];
-            if (enemy == null)
-            {
-                return;
-            }
+            if (enemy == null) return;
 
             //Estimate enemy position
             Vector3 plasmaPosition = WindfallHelper.EnemyTransformPosition(enemy);
@@ -250,7 +209,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             SoundsView.Instance.PlaySound((SoundsView.eSound)1000, plasmaPosition);
 
             //Hurt enemy
-            enemy.Hurt((float)Damage(), Enemy.AttackImmunity.ReduceSpellDamage, statusEffects, enemy.position.x);
+            enemy.Hurt(Damage(), Enemy.AttackImmunity.ReduceSpellDamage, statusEffects, enemy.position.x);
         }
     }
 }
