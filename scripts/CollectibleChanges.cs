@@ -1584,23 +1584,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 				return;
             }
 
-            StartingSpell[] deadStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheDead].startingSpells;
-			for (int i = 0; i < deadStartingSpells.Length; i++)
-			{
-				StartingSpell deadStartingSpell = deadStartingSpells[i];
-				if (deadStartingSpell.spell == SpellName.AttackFly)
-				{
-					deadStartingSpell.toothCost = 5;
-				}
-			}
-
 			StartingSpell[] weirdStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheWeird].startingSpells;
 			for (int i = 0; i < weirdStartingSpells.Length; i++)
 			{
 				StartingSpell weirdStartingSpell = weirdStartingSpells[i];
 				if (weirdStartingSpell.spell == SpellName.MagicMarker)
 				{
-					weirdStartingSpell.peeCost = 6;
+					weirdStartingSpell.peeCost = 5;
 				}
 			}
 		}
@@ -2806,7 +2796,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 		public static Dictionary<SpellName, int> rebalancedManaCosts = new Dictionary<SpellName, int>()
 		{
             { (SpellName)1001, 3},
-            { SpellName.AttackFly, 6 },
+            { SpellName.AttackFly, 5 },
             { SpellName.BlenderBlade, 5 },
             { SpellName.DeadDove, 4 },
             { SpellName.HairBall, 5 },
