@@ -158,22 +158,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallSavedState.SaveCoins(__instance.app);
         }
 
-        //Patch: Saves damage taken
-        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), nameof(CharacterSheet.RegisterDamage))]
-        static void CharacterSheet_RegisterDamage(CharacterSheet __instance, float damage)
-        {
-            if (damage > 0f)
-            {
-                WindfallSavedState.SaveDamageTaken(damage);
-            }
-        }
+        ////Patch: Saves damage taken
+        //[HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), nameof(CharacterSheet.RegisterDamage))]
+        //static void CharacterSheet_RegisterDamage(CharacterSheet __instance, float damage)
+        //{
+        //    if (damage > 0f)
+        //    {
+        //        WindfallSavedState.SaveDamageTaken(damage);
+        //    }
+        //}
 
-        //Patch: Loads damage taken
-        [HarmonyPostfix, HarmonyPatch(typeof(SavedStateController), nameof(SavedStateController.LoadCharacterSheet))]
-        static void SavedStateController_LoadCharacterSheet_DamageTaken(SavedStateController __instance)
-        {
-            WindfallSavedState.LoadDamageTaken(__instance.app);
-        }
+        ////Patch: Loads damage taken
+        //[HarmonyPostfix, HarmonyPatch(typeof(SavedStateController), nameof(SavedStateController.LoadCharacterSheet))]
+        //static void SavedStateController_LoadCharacterSheet_DamageTaken(SavedStateController __instance)
+        //{
+        //    WindfallSavedState.LoadDamageTaken(__instance.app);
+        //}
 
         //Patch: Removes navigation arrows and moves camera when loading directly into a treasure room (namely, when reloading a treasure room save)
         [HarmonyPostfix, HarmonyPatch(typeof(FloorStartEvent), nameof(FloorStartEvent.Execute))]
