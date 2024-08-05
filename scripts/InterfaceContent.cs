@@ -1502,6 +1502,133 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             return true;
         }
+
+        private static readonly float CharacterSelectIndicatorLocalScaleMin = 0.1f;
+        private static readonly float CharacterSelectIndicatorLocalScaleMax = CharacterSelectIndicatorLocalScaleMin * 1.15f;
+
+        private static readonly Vector3 LocalRotation = new Vector3(270f, 0f, 0f);
+        private static readonly Vector3 NimblePosition = new Vector3(0.2515f, 0.5791f, -10.8167f);
+        private static readonly Vector3 StoutPosition = new Vector3(0.3417f, 0.5576f, -10.8167f);
+        private static readonly Vector3 WeirdPosition = new Vector3(0.3235f, 0.554f, -10.8167f);
+        private static readonly Vector3 LeftNavigationPosition = new Vector3(0.9427f, 0.4104f, -11.1155f);
+        private static readonly Vector3 RightNavigationPosition = new Vector3(-0.9427f, 0.4104f, -11.1155f);
+
+        //Patch: Adds character select indicator
+        [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), "Start")]
+        static void SelectCharacterView_Start(SelectCharacterView __instance)
+        {
+            GameObject characterSelectIndicatorObject = GameObject.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Spell View Indicator"), __instance.transform.parent);
+            characterSelectIndicatorObject.name = "Character Select Indicator";
+            WindfallHelper.Reskin(characterSelectIndicatorObject, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Character Select Indicator"));
+            WindfallHelper.ReTransform(characterSelectIndicatorObject, Vector3.zero, LocalRotation, new Vector3(CharacterSelectIndicatorLocalScaleMin, CharacterSelectIndicatorLocalScaleMin, CharacterSelectIndicatorLocalScaleMin), string.Empty);
+            characterSelectIndicatorObject.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            UpdateCharacterSelectIndicator(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), nameof(SelectCharacterView.UpdateCarousel))]
+        static void SelectCharacterView_UpdateCarousel(SelectCharacterView __instance)
+        {
+            UpdateCharacterSelectIndicator(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), nameof(SelectCharacterView.UpdatePlayable))]
+        static void SelectCharacterView_UpdatePlayable(SelectCharacterView __instance)
+        {
+            UpdateCharacterSelectIndicator(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(ChooseBumbo), nameof(ChooseBumbo.ConfirmSelection))]
+        static void ChooseBumbo_ConfirmSelection(ChooseBumbo __instance, bool __result)
+        {
+            if (!__result) return;
+            GameObject characterSelectIndicatorObject = __instance.selectCharacterView.transform.parent.Find("Character Select Indicator")?.gameObject;
+
+            Tween localscaleTween = null;
+
+            List<Tween> t = DOTween.TweensByTarget(characterSelectIndicatorObject.transform);
+            if (t != null)
+            {
+                foreach (Tween tween in t)
+                {
+                    if (tween.id is string && (string)tween.id == "localScale") localscaleTween = tween;
+                }
+            }
+
+            if (localscaleTween != null) localscaleTween.Kill();
+            characterSelectIndicatorObject.transform.DOScale(Vector3.zero, 0.3f).SetId("scaleToZero").OnComplete(delegate { UnityEngine.Object.Destroy(characterSelectIndicatorObject); });
+        }
+
+        private static void UpdateCharacterSelectIndicator(SelectCharacterView selectCharacterView)
+        {
+            GameObject characterSelectIndicatorObject = selectCharacterView.transform.parent.Find("Character Select Indicator")?.gameObject;
+            if (characterSelectIndicatorObject == null) return;
+            if (selectCharacterView.progression != null)
+            {
+                CharacterSheet.BumboType suggestedBumbo = CharacterSheet.BumboType.Random;
+
+                Vector3 indicatorPosition = Vector3.zero;
+
+                if (selectCharacterView.progression.Unlocked(Unlocks.BumboTheNimble) && !selectCharacterView.progression.Unlocked(Unlocks.BumboTheStout))
+                {
+                    //Suggest playing as Bum-bo the Nimble
+                    suggestedBumbo = CharacterSheet.BumboType.TheNimble;
+                    indicatorPosition = NimblePosition;
+                }
+
+                if (selectCharacterView.progression.Unlocked(Unlocks.BumboTheStout) && !selectCharacterView.progression.Unlocked(Unlocks.BumboTheWeird))
+                {
+                    //Suggest playing as Bum-bo the Stout
+                    suggestedBumbo = CharacterSheet.BumboType.TheStout;
+                    indicatorPosition = StoutPosition;
+                }
+
+                if (selectCharacterView.progression.Unlocked(Unlocks.BumboTheWeird) && !selectCharacterView.progression.Unlocked(Unlocks.TheBasement))
+                {
+                    //Suggest playing as Bum-bo the Weird
+                    suggestedBumbo = CharacterSheet.BumboType.TheWeird;
+                    indicatorPosition = WeirdPosition;
+                }
+
+                if (suggestedBumbo != CharacterSheet.BumboType.Random)
+                {
+                    characterSelectIndicatorObject.SetActive(true);
+
+                    List<CharacterSheet.BumboType> bumboTypes = (List<CharacterSheet.BumboType>)AccessTools.Field(typeof(SelectCharacterView), "bumboTypes").GetValue(selectCharacterView);
+                    int index = (int)AccessTools.Field(typeof(SelectCharacterView), "index").GetValue(selectCharacterView);
+                    CharacterSheet.BumboType currentBumbo = bumboTypes[index];
+
+                    int distance = selectCharacterView.GetBumboTypeDistance(currentBumbo, suggestedBumbo);
+                    if (Math.Abs(distance) > (bumboTypes.Count / 2)) distance -= (bumboTypes.Count * Math.Sign(distance));
+
+                    if (distance < 0) indicatorPosition = LeftNavigationPosition;
+                    else if (distance > 0) indicatorPosition = RightNavigationPosition;
+
+                    Tween localmoveTween = null;
+                    Tween localscaleTween = null;
+
+                    List<Tween> t = DOTween.TweensByTarget(characterSelectIndicatorObject.transform);
+                    if (t != null)
+                    {
+                        foreach (Tween tween in t)
+                        {
+                            if (tween.id is string && (string)tween.id == "scaleToZero") return;
+                            if (tween.id is string && (string)tween.id == "localScale") localscaleTween = tween;
+                            if (tween.id is string && (string)tween.id == "localMove") localmoveTween = tween;
+                        }
+                    }
+
+                    if (localscaleTween == null) characterSelectIndicatorObject.transform.DOScale(CharacterSelectIndicatorLocalScaleMax, 0.6f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutQuad).SetId("localScale");
+
+                    if (localmoveTween != null) localmoveTween.Kill();
+                    characterSelectIndicatorObject.transform.DOLocalMove(indicatorPosition, 0.5f).SetEase(Ease.OutQuad).SetId("localMove");
+                    return;
+                }
+            }
+
+            List<Tween> tweens = DOTween.TweensByTarget(characterSelectIndicatorObject.transform);
+            if (tweens != null) foreach (Tween tween in tweens) tween.Kill();
+            characterSelectIndicatorObject.SetActive(false);
+        }
     }
 
     [HarmonyPatch]
