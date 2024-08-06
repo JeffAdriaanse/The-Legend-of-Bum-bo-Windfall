@@ -365,7 +365,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Compost Bag: Win as Bum-bo the Wise with 45+ coins
-            if (!windfallPersistentData.unlocks[3] && windfallPersistentData.wiseMoneyWins > 1)
+            if (!windfallPersistentData.unlocks[3] && windfallPersistentData.wiseMoneyWins > 0)
             {
                 windfallPersistentData.unlocks[3] = true;
                 unlocks.Add(48);
