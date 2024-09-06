@@ -16,45 +16,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(SaveChanges));
         }
 
-        //Patch: Fixes copying old saves
-        [HarmonyPostfix, HarmonyPatch(typeof(SaveSystemPC), "update_save")]
-        static void SaveSystemPC_update_save(SaveSystemPC __instance, string Filename)
+        //Prevents old save states from being updated to the new save location. Out of an abundance of caution, progression files are ignored and are not prevented from being brought over
+        //This is done to prevent the save from always showing up after restarting the game while having no in progress save  
+        [HarmonyPrefix, HarmonyPatch(typeof(SaveSystemPC), "update_save")]
+        static bool SaveSystemPC_update_save(SaveSystemPC __instance, string Filename)
         {
-            //Only delete saved state, not progression
-            if (Filename != "state.sav" && Filename != "state.sav.xml")
-            {
-                return;
-            }
-
-            string newPath = __instance.GetSaveDirectory() + "/" + Filename;
-            string oldPath = Application.persistentDataPath + "/" + Filename;
-
-            if (File.Exists(newPath) && File.Exists(oldPath))
-            {
-                bool duplicateSave = false;
-
-                byte[] newPathBytes = File.ReadAllBytes(newPath);
-                byte[] oldPathBytes = File.ReadAllBytes(oldPath);
-
-                if (newPathBytes.Length == oldPathBytes.Length)
-                {
-                    duplicateSave = true;
-
-                    for (int i = 0; i < newPathBytes.Length; i++)
-                    {
-                        if (newPathBytes[i] != oldPathBytes[i])
-                        {
-                            duplicateSave = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (duplicateSave)
-                {
-                    File.Delete(oldPath);
-                }
-            }
+            if (Filename == "state.sav.xml" || Filename == "state.sav") return false;
+            return true;
         }
 
         //Patch: Load start
