@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static Block;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -57,7 +58,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Position randomPosition = validGroupPositions[UnityEngine.Random.Range(0, validGroupPositions.Count)];
 
                     //Place BlockGroup
-                    if (BlockGroupModel.PlaceBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2, animateBlocks, wiggleBlocks, false)) continue;
+                    if (BlockGroupModel.PlaceBlockGroup(randomPosition, blockGroup.Item1, blockGroup.Item2, animateBlocks, wiggleBlocks)) continue;
                 }
 
                 //If the BlockGroup could not be created, it is split up into individual Blocks
@@ -199,10 +200,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Returns a list containing all blocks on the puzzle board.
         /// </summary>
         /// <param name="includeRegularBlocks">Whether to include regular blocks (blocks that are not in a BlockGroup).</param>
-        /// <param name="includeBlockGroups">Whether to include BlockGroup blocks. Note that only the main block of each BlockGroup is included. Sub-blocks are not included.</param>
+        /// <param name="includeBlockGroups">Whether to include BlockGroup blocks. Note that only the main block of each BlockGroup is included by default.</param>
+        /// <param name="includeSubBlocks">Whether to include sub-blocks in BlockGroups.</param>
         /// <param name="blockTypes">The BlockTypes to include. If this is null or empty, all BlockTypes are included.</param>
         /// <returns>All blocks on the puzzle board.</returns>
-        public static List<Block> GetBlocks(bool includeRegularBlocks, bool includeBlockGroups, List<BlockType> blockTypes)
+        public static List<Block> GetBlocks(bool includeRegularBlocks, bool includeBlockGroups, bool includeSubBlocks, List<BlockType> blockTypes)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
@@ -222,8 +224,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
                     if (blockGroup != null)
                     {
-                        //Ignore sub-blocks
-                        if (includeBlockGroups && !BlockGroupModel.IsMainBlock(block)) blocks.Add(block);
+                        if (includeBlockGroups && (includeSubBlocks || BlockGroupModel.IsMainBlock(block))) blocks.Add(block);
                         continue;
                     }
 
@@ -285,10 +286,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="avoidMainBlocks">Whether to avoid overriding main Blocks in BlockGoups.</param>
         /// <param name="avoidSubBlocks">Whether to avoid overriding sub-Blocks in BlockGoups.</param>
         /// <param name="avoidAllBlocks">Whether to avoid overriding any Blocks.</param>
-        public static void RandomlyPlaceBlocks(Block.BlockType blockType, int blockCount, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
+        public static void RandomlyPlaceBlocks(Block.BlockType blockType, int blockCount, List<Position> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
         {
             //Find all valid placements
-            List<Position> positions = RandomPositions(blockCount, avoidPositions, avoidTypes, avoidMainBlocks, avoidSubBlocks, avoidAllBlocks);
+            List<Position> positions = RandomPositions(new Vector2Int(0, 0), blockCount, avoidPositions, avoidTypes, avoidMainBlocks, avoidSubBlocks, avoidAllBlocks);
 
             //Randomly place Blocks
             while (blockCount > 0 && positions.Count > 0)
@@ -306,6 +307,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Returns a list of random Positions on the puzzle board according to the given conditions.
         /// </summary>
+        /// <param name="dimensions">Finds unique rectangular areas of the given dimensions instead of singular Positions. In this case, all Positions contained in the area will satisfy given conditions, and the bottom left Position in the area is returned.</param>
         /// <param name="count">The number of Positions to select.</param>
         /// <param name="avoidPositions">Specific Positions to avoid.</param>
         /// <param name="avoidTypes">BlockTypes to avoid Positions of.</param>
@@ -313,87 +315,48 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="avoidSubBlocks">Whether to avoid Positions of sub-Blocks in BlockGoups.</param>
         /// <param name="avoidAllBlocks">Whether to avoid Positions any Blocks.</param>
         /// <returns>A list of random Positions on the puzzle board.</returns>
-        public static List<Position> RandomPositions(int count, List<Vector2Int> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
+        public static List<Position> RandomPositions(Vector2Int dimensions, int count, List<Position> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             List<Position> positions = new List<Position>();
 
             //Find all valid placements
-            for (int i = 0; i < puzzle.width; i++)
+            for (int puzzleWidth = 0; puzzleWidth < puzzle.width; puzzleWidth++)
             {
-                for (int j = 0; j < puzzle.height; j++)
+                for (int puzzleHeight = 0; puzzleHeight < puzzle.height; puzzleHeight++)
                 {
-                    //Get block
-                    Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
+                    Position position = new Position(puzzleWidth, puzzleHeight);
 
-                    //Add Position manually if space is empty
-                    if (block == null)
+                    //Cases when dimensions are greater than 1x1
+                    if (dimensions.x > 1 || dimensions.y > 1)
                     {
-                        positions.Add(new Position(i, j));
+                        bool validArea = true;
+
+                        for (int areaWidth = 0; areaWidth < dimensions.x; areaWidth++)
+                        {
+                            for (int areaHeight = 0; areaHeight < dimensions.y; areaHeight++)
+                            {
+                                Position areaPosition = new Position(position.x + areaWidth, position.y + areaHeight);
+
+                                //Add the Position
+                                if (!ValidPosition(areaPosition, avoidPositions, avoidTypes, avoidMainBlocks, avoidSubBlocks, avoidAllBlocks))
+                                {
+                                    validArea = false;
+                                    break;
+                                }
+                            }
+
+                            if (validArea == false) break;
+                        }
+
+                        //Add the Position
+                        if (validArea) positions.Add(position);
                         continue;
                     }
 
-                    if (avoidAllBlocks) continue;
-
-                    bool addPosition = true;
-
-                    //Avoid given BlockTypes
-                    if (avoidTypes != null)
-                    {
-                        foreach (Block.BlockType avoidType in avoidTypes)
-                        {
-                            if (block.block_type == avoidType)
-                            {
-                                addPosition = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!addPosition) continue;
-
-                    //Avoid given Positions
-                    if (avoidPositions != null)
-                    {
-                        foreach (Vector2Int position in avoidPositions)
-                        {
-                            if (position.x == i && position.y == j)
-                            {
-                                addPosition = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!addPosition) continue;
-
-                    //BlockGroup conditions
-                    BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
-                    if (blockGroup != null)
-                    {
-                        if (BlockGroupModel.IsMainBlock(block))
-                        {
-                            if (avoidMainBlocks)
-                            {
-                                //Block is a main Block
-                                addPosition = false;
-                            }
-                        }
-                        else
-                        {
-                            if (avoidSubBlocks)
-                            {
-                                //Block is a sub-Block
-                                addPosition = false;
-                            }
-                        }
-                    }
-
-                    if (!addPosition) continue;
-
-                    //Add the block
-                    positions.Add(block.position);
+                    //Add the Position
+                    if (ValidPosition(position, avoidPositions, avoidTypes, avoidMainBlocks, avoidSubBlocks, avoidAllBlocks)) positions.Add(position);
                 }
             }
 
@@ -414,6 +377,73 @@ namespace The_Legend_of_Bum_bo_Windfall
             return randomPositions;
         }
 
+        private static bool ValidPosition(Position position, List<Position> avoidPositions, List<Block.BlockType> avoidTypes, bool avoidMainBlocks, bool avoidSubBlocks, bool avoidAllBlocks)
+        {
+            Puzzle puzzle = WindfallHelper.app.view.puzzle;
+
+            if (!IsWithinPuzzleBounds(position)) return false;
+
+            //Get block
+            Block block = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();
+
+            //Add Position manually if space is empty
+            if (block == null)
+            {
+                return true;
+            }
+
+            if (avoidAllBlocks) return false;
+
+            //Avoid given BlockTypes
+            if (avoidTypes != null)
+            {
+                foreach (Block.BlockType avoidType in avoidTypes)
+                {
+                    if (block.block_type == avoidType)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            //Avoid given Positions
+            if (avoidPositions != null)
+            {
+                foreach (Position avoidPosition in avoidPositions)
+                {
+                    if (avoidPosition.x == position.x && avoidPosition.y == position.y)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            //BlockGroup conditions
+            BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+            if (blockGroup != null)
+            {
+                if (BlockGroupModel.IsMainBlock(block))
+                {
+                    if (avoidMainBlocks)
+                    {
+                        //Block is a main Block
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (avoidSubBlocks)
+                    {
+                        //Block is a sub-Block
+                        return false;
+                    }
+                }
+            }
+
+            //Add the Position
+            return true;
+        }
+
         /// <summary>
         /// Places a Block of the given BlockType at the given position. Intended to be triggered in BlockGroup logic or by spell effects.
         /// </summary>
@@ -428,7 +458,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             //Abort if outside puzzle board
-            if (!IsWithinGridBounds(position)) return null;
+            if (!IsWithinPuzzleBounds(position)) return null;
 
             Block block = puzzle.blocks[position.x, position.y]?.GetComponent<Block>();
             if (block != null)
@@ -445,7 +475,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Replace the BlockGroup
                     if (replaceBlockGroups)
                     {
-                        BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData, animateBlock, wiggleBlock, false);
+                        BlockGroup newBlockGroup = BlockGroupModel.PlaceBlockGroup(blockGroupPosition, blockType, blockGroupData, animateBlock, wiggleBlock);
                         return newBlockGroup?.MainBlock;
                     }
                 }
@@ -725,7 +755,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int i = selectedGroupPosition.x; i < selectedGroupPosition.x + puzzleDimensions.x; i++)
                 {
                     Position currentBlockPosition = horizontal ? new Position(i, j) : new Position(j, i);
-                    currentBlockPosition = MoveWithinGridBounds(currentBlockPosition, true);
+                    currentBlockPosition = MoveWithinPuzzleBounds(currentBlockPosition, true);
 
                     BlockGroup alignedBlockingGroup = AlignedWithBlockingGroup(currentBlockPosition, blockingGroups, horizontal);
                     if (alignedBlockingGroup != null)
@@ -763,7 +793,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                                 return;
                             }
 
-                            newPosition = MoveWithinGridBounds(newPosition, true);
+                            newPosition = MoveWithinPuzzleBounds(newPosition, true);
 
                             //Skip past tile aligned with blocking groups
                             BlockGroup blockingGroup = AlignedWithBlockingGroup(newPosition, blockingGroups, horizontal);
@@ -803,7 +833,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         blockMoveDistance--;
                     }
 
-                    newPosition = MoveWithinGridBounds(newPosition, true);
+                    newPosition = MoveWithinPuzzleBounds(newPosition, true);
 
                     //Get current Block and BlockGroup
                     Block currentBlock = puzzle.blocks[currentBlockPosition.x, currentBlockPosition.y]?.GetComponent<Block>();
@@ -820,7 +850,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             {
                                 Position nextBlockPosition = new Position(x, y);
                                 //Abort
-                                if (!IsWithinGridBounds(nextBlockPosition)) return;
+                                if (!IsWithinPuzzleBounds(nextBlockPosition)) return;
 
                                 Block nextBlock = puzzle.blocks[nextBlockPosition.x, nextBlockPosition.y]?.GetComponent<Block>();
 
@@ -1145,11 +1175,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Returns whether the given position is within grid bounds.
+        /// Returns whether the given Position is within puzzle bounds.
         /// </summary>
         /// <param name="position"></param>
         /// <returns></returns>
-        public static bool IsWithinGridBounds(Position position)
+        public static bool IsWithinPuzzleBounds(Position position)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
             return (position.x >= 0 && position.x < puzzle.width) && (position.y >= 0 && position.y < puzzle.height);
@@ -1194,18 +1224,18 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Returns a new position moved within the grid bounds.
+        /// Returns a new Position moved within the puzzle bounds.
         /// </summary>
         /// <param name="position"></param>
         /// <param name="wraparound"></param>
         /// <returns></returns>
-        public static Position MoveWithinGridBounds(Position position, bool wraparound)
+        public static Position MoveWithinPuzzleBounds(Position position, bool wraparound)
         {
             Puzzle puzzle = WindfallHelper.app.view.puzzle;
 
             Position newPosition = new Position(position.x, position.y);
 
-            if (IsWithinGridBounds(newPosition)) return newPosition;
+            if (IsWithinPuzzleBounds(newPosition)) return newPosition;
 
             if (wraparound)
             {

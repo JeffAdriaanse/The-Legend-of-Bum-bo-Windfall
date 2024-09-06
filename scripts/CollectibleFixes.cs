@@ -19,7 +19,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(PuzzleFlickSpell), nameof(PuzzleFlickSpell.AlterTile))]
         static void PuzzleFlickSpell_AlterTile_Prefix(PuzzleFlickSpell __instance, ref Block _block, out List<Block> __state)
         {
-            List<Block> blocksMatchingType = PuzzleHelper.GetBlocks(true, true, new List<BlockType> { _block.block_type });
+            List<Block> blocksMatchingType = PuzzleHelper.GetBlocks(true, true, false, new List<BlockType> { _block.block_type });
             __state = blocksMatchingType;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(PuzzleFlickSpell), nameof(PuzzleFlickSpell.AlterTile))]

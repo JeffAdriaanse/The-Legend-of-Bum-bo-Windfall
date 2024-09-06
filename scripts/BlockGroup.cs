@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static Block;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -104,7 +105,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             Position blockPosition = new Position(GetPosition().x + position.x, GetPosition().y + position.y);
 
             //Return null for positions beyond the puzzle board
-            if (!PuzzleHelper.IsWithinGridBounds(blockPosition)) return null;
+            if (!PuzzleHelper.IsWithinPuzzleBounds(blockPosition)) return null;
 
             //Return the block
             return puzzle.blocks[blockPosition.x, blockPosition.y];
@@ -281,7 +282,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             else if (dimensions.x == 3 && dimensions.y == 3) groupOffsets.AddRange(GroupOffsetsThreeByThree);
             else groupOffsets.AddRange(AttemptedPositions(dimensions));
 
-
             while (groupOffsets.Count > 0)
             {
                 //Choose a random position or the first position
@@ -317,7 +317,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Position blockPosition = new Position(i, j);
 
                     //Invalid: Out of bounds
-                    if (!PuzzleHelper.IsWithinGridBounds(blockPosition)) return false;
+                    if (!PuzzleHelper.IsWithinPuzzleBounds(blockPosition)) return false;
 
                     //Check for blockGroups
                     Block block = puzzle.blocks[i, j]?.GetComponent<Block>();
@@ -367,34 +367,29 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Attempts to place a BlockGroup at the given Position. Overrides nearby Blocks that are not in BlockGroups. Fails if there is insufficient space nearby to form the BlockGroup.
+        /// Places a BlockGroup at the given Position. Overrides nearby Blocks that are not in BlockGroups. Does not verify that the BlockGroup is being placed in a valid Position.
         /// </summary>
         /// <param name="position">The Position to place the BlockGroup.</param>
         /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
-        /// <param name="random">Whether to prioritize the offset of the BlockGroup randomly.</param>
-        /// <returns>The created BlockGroup, or null if no BlockGroup was created.</returns>
-        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, BlockGroupData blockGroupData, bool animateBlock, bool wiggleBlock, bool random)
+        /// <returns>The created BlockGroup.</returns>
+        public static BlockGroup PlaceBlockGroup(Position position, BlockType blockType, BlockGroupData blockGroupData, bool animateBlock, bool wiggleBlock)
         {
             BlockGroup placedBlockGroup = null;
-
-            //Make sure BlockGroup Position is valid
-            Position blockGroupPosition = FindValidGroupOffset(position, blockGroupData.dimensions, true, random);
-            if (blockGroupPosition == null) return null;
 
             Block mainBlock = null;
             List<Block> placedBlocks = new List<Block>();
 
             //Replace backend Blocks
-            for (int i = blockGroupPosition.x; i < blockGroupPosition.x + blockGroupData.dimensions.x; i++)
+            for (int i = position.x; i < position.x + blockGroupData.dimensions.x; i++)
             {
-                for (int j = blockGroupPosition.y; j < blockGroupPosition.y + blockGroupData.dimensions.y; j++)
+                for (int j = position.y; j < position.y + blockGroupData.dimensions.y; j++)
                 {
                     //Place Blocks *Note: BlockGroups are overridden to never animate bacause it causes them to align improperly
                     Block placedBlock = PuzzleHelper.PlaceBlock(new Position(i, j), blockType, /*animateBlock*/false, wiggleBlock, false);
                     placedBlocks.Add(placedBlock);
 
                     //The bottom left Block is the main Block
-                    if (i == blockGroupPosition.x && j == blockGroupPosition.y) mainBlock = placedBlock;
+                    if (i == position.x && j == position.y) mainBlock = placedBlock;
                 }
             }
 
@@ -418,10 +413,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <param name="block">The Block.</param>
         /// <param name="blockGroupData">The BlockGroupData of the BlockGroup.</param>
         /// <param name="random">Whether to prioritize the offset of the BlockGroup randomly.</param>
-        /// <returns>Whether the BlockGroup was successfully created.</returns>
-        public static bool PlaceBlockGroup(Block block, BlockGroupData blockGroupData, bool animateBlock, bool wiggleBlock, bool random)
+        /// <returns>The created BlockGroup, or null if no BlockGroup was created.</returns>
+        public static BlockGroup PlaceBlockGroup(Block block, BlockGroupData blockGroupData, bool animateBlock, bool wiggleBlock, bool random)
         {
-            return PlaceBlockGroup(block.position, block.block_type, blockGroupData, animateBlock, wiggleBlock, random);
+            //Make sure BlockGroup Position is valid
+            Position blockGroupPosition = FindValidGroupOffset(block.position, blockGroupData.dimensions, true, random);
+            if (blockGroupPosition == null) return null;
+
+            return PlaceBlockGroup(blockGroupPosition, block.block_type, blockGroupData, animateBlock, wiggleBlock);
         }
 
         /// <summary>
@@ -947,7 +946,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Get all positions along the given axis within the given dimensions
                     Position blockPosition = new Position(i + xPosition, j + yPosition);
 
-                    if (!PuzzleHelper.IsWithinGridBounds(blockPosition)) continue;
+                    if (!PuzzleHelper.IsWithinPuzzleBounds(blockPosition)) continue;
 
                     GameObject currentBlock = puzzle.blocks[blockPosition.x, blockPosition.y];
                     Block currentBlockComponent = currentBlock?.GetComponent<Block>();

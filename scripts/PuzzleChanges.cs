@@ -256,7 +256,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         else if (distanceMoved.y == -1) setCursorPosition.y -= 1; //Move cursor just beyond the bottom edge of the BlockGroup (should not be necessary)
 
                         //Move within grid bounds
-                        setCursorPosition = PuzzleHelper.MoveWithinGridBounds(setCursorPosition, true);
+                        setCursorPosition = PuzzleHelper.MoveWithinPuzzleBounds(setCursorPosition, true);
 
                         //Account for new position being inside another BlockGroup
                         BlockGroup blockGroupCollision = BlockGroupModel.FindGroupOfBlock(puzzle.blocks[setCursorPosition.x, setCursorPosition.y]?.GetComponent<Block>());
