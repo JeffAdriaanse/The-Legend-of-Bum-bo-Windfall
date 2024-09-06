@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using DG.Tweening;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -25,10 +27,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             app.model.spellModel.currentSpell = null;
             app.model.spellModel.spellQueued = false;
 
-            //Logic
-            BlockGroupData blockGroupData;
+            Sequence magnifyingGlassSequence = DOTween.Sequence();
 
-            List<Block> blocks = PuzzleHelper.GetBlocks(true, true, null);
+            //Logic
+            Block block = null;
+            Position blockGroupPosition = null;
+            BlockGroupData blockGroupData = new BlockGroupData(2);
+
+            List<Block> blocks = PuzzleHelper.GetBlocks(true, true, true, null);
             while (blocks.Count > 0)
             {
                 //Default BlockGroup size is 2
@@ -36,7 +42,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Choose a random tile
                 int randomIndex = UnityEngine.Random.Range(0, blocks.Count);
-                Block block = blocks[randomIndex];
+                block = blocks[randomIndex];
                 blocks.RemoveAt(randomIndex);
 
                 //If the tile is already in a BlockGroup, the BlockGroup is replaced by a bigger BlockGroup
@@ -45,10 +51,21 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     blockGroupData = new BlockGroupData(blockGroup.GetBlockGroupData());
                     blockGroupData.ChangeSize(1);
+                    block = blockGroup.MainBlock;
                 }
 
                 //Effect
-                if (BlockGroupModel.PlaceBlockGroup(block, blockGroupData, false, true, true)) break;
+                blockGroupPosition = BlockGroupModel.FindValidGroupOffset(block.position, blockGroupData.dimensions, true, true);
+                if (blockGroupPosition != null) break;
+            }
+
+            if (block != null && blockGroupPosition != null)
+            {
+                magnifyingGlassSequence.Append(ShortcutExtensions.DOShakePosition(block.transform, 0.25f, 0.05f, 20, 90f, false, true));
+                magnifyingGlassSequence.Join(ShortcutExtensions.DOShakeRotation(block.transform, 0.25f, 10f, 20, 90f, true));
+                magnifyingGlassSequence.AppendCallback(delegate { BlockGroupModel.PlaceBlockGroup(blockGroupPosition, block.block_type, blockGroupData, false, true); });
+                magnifyingGlassSequence.AppendCallback(delegate { app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f)); });
+                return true;
             }
 
             app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
