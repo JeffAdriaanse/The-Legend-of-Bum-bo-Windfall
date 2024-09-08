@@ -786,14 +786,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             switch (source)
             {
                 case "actionPointModifier":
-                    string displayValue = value;
-                    int minusIndex = displayValue.IndexOf("-");
-                    if (minusIndex >= 0)
+                    if (value.Contains("-"))
                     {
-                        displayValue = displayValue.Remove(minusIndex, 1);
+                        string displayValue = value;
+                        int minusIndex = displayValue.IndexOf("-");
+                        if (minusIndex >= 0) displayValue = displayValue.Remove(minusIndex, 1);
+
+                        description = "Lose " + displayValue + (displayValue == "1" ? " move" : " moves") + " next turn, but not below 1 move";
+                    }
+                    else
+                    {
+                        description = "Gain " + value + (value == "1" ? " move" : " moves") + " next turn";
                     }
 
-                    description = "Lose " + displayValue + (displayValue == "1" ? " move" : " moves") + " next turn, but not below 1 move";
                     break;
             }
 
@@ -877,7 +882,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.Standard;
                         canStack = true;
-                        iconObjectName = "MoveLoss";
+                        iconObjectName = "MoveChange";
                         break;
                 }
 

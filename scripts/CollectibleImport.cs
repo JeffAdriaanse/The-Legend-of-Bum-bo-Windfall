@@ -121,6 +121,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static readonly string VanillaSpellUse1InactiveMetallicPath = "Vanilla Spell Use 1 Inactive Metallic";
 
+        private static readonly string WindfallTrinketStatMod1BasecolorPath = "Windfall Trinket Stat Mod 1 Basecolor";
+
         private static readonly string WindfallTrinketPuzzleMod1BasecolorPath = "Windfall Trinket Puzzle Mod 1 Basecolor";
 
         private static readonly string[] defaultMaterialTextureMapIDs = new string[]
@@ -315,6 +317,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             TrinketCategory[] trinketCategories = new TrinketCategory[]
             {
+                TrinketCategory.Stat,
                 TrinketCategory.Puzzle,
             };
 
@@ -325,6 +328,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Assign hardcoded texture asset paths to each texture of the trinket material
                 switch (trinketCategory)
                 {
+                    case TrinketCategory.Stat:
+                        material = new Material(trinketModel.Icon(trinketCategory, 0));
+                        if (material != null)
+                        {
+                            material.SetTexture("_MainTex", (Texture)assets.LoadAsset(WindfallTrinketStatMod1BasecolorPath));
+                        }
+                        break;
                     case TrinketCategory.Puzzle:
                         material = new Material(trinketModel.Icon(trinketCategory, 0));
                         if (material != null)
@@ -549,6 +559,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         (TrinketName)1002,
                         "COMPOST_BAG_NAME"
                     },
+                    {
+                        (TrinketName)1003,
+                        "MILK_NAME"
+                    },
                 };
                 return trinketKA;
             }
@@ -569,6 +583,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     },
                     {
                         "1002",
+                        (TrinketName)1002
+                    },
+                    {
+                        "1003",
                         (TrinketName)1002
                     },
                 };
@@ -593,6 +611,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                         (TrinketName)1002,
                         new CompostBagTrinket()
                     },
+                    {
+                        (TrinketName)1003,
+                        new MilkTrinket()
+                    },
                 };
                 return trinkets;
             }
@@ -603,7 +625,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 List<TrinketName> validTrinkets = new List<TrinketName>()
                 {
-
+                    (TrinketName)1003
                 };
 
                 WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();

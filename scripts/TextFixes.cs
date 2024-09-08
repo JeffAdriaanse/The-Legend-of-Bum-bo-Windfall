@@ -269,6 +269,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Trinkets/COMPOST_BAG_DESCRIPTION", "Moved Tile Becomes Wild!"},
                     { "Trinkets/WISE_HIDDEN_NAME", "Wise's Ability"},
                     { "Trinkets/WISE_HIDDEN_DESCRIPTION", "Compost Bag"},
+                    { "Trinkets/MILK_NAME", "Milk"},
+                    { "Trinkets/MILK_DESCRIPTION", "Gain +1 Movement when Hurt!"},
 
                     //GUI Notifications
                     { "GUI Notifications/ENLARGE_TILE", "Pick Tile to Enlarge!"},

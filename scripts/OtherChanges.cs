@@ -509,5 +509,32 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
+
+        /// <summary>
+        /// Signifies that it's bumbo's turn
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(RoomStartEvent), nameof(RoomStartEvent.Execute))]
+        static void RoomStartEvent_Execute()
+        {
+            ObjectDataStorage.StoreData<bool>(WindfallHelper.app.model.gameObject, "bumboTurn", true);
+        }
+
+        /// <summary>
+        /// Signifies that it's bumbo's turn
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(NewRoundEvent), nameof(NewRoundEvent.Execute))]
+        static void NewRoundEvent_Execute()
+        {
+            ObjectDataStorage.StoreData<bool>(WindfallHelper.app.model.gameObject, "bumboTurn", true);
+        }
+
+        /// <summary>
+        /// Signifies that it's the monsters' turn
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(StartMonsterTurnEvent), nameof(StartMonsterTurnEvent.Execute))]
+        static void StartMonsterTurnEvent_Execute()
+        {
+            ObjectDataStorage.StoreData<bool>(WindfallHelper.app.model.gameObject, "bumboTurn", false);
+        }
     }
 }

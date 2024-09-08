@@ -14,12 +14,20 @@ namespace The_Legend_of_Bum_bo_Windfall
             Harmony.CreateAndPatchAll(typeof(CharacterImport));
         }
 
-        private static readonly int WISE_INSERT_POSITION = 6;
+        //Character select: two collectibles
+        private static readonly Vector3 Spell1ALocalPosition = new Vector3(-0.3408f, -0.3794f, -0.0503f); //Brave: -0.3626f, -0.3976f, -0.0706f
+        private static readonly Vector3 Spell1ALocalRotation = new Vector3(1.0155f, 4.081f, 4.838f); //Brave: 1.0155f, 7.7767f, 13.0342f
+        private static readonly Vector3 Spell1ALocalScale = new Vector3(1f, 1f, 1f);
+        private static readonly Vector3 Spell2ALocalPosition = new Vector3(0.2504f, -0.3493f, -0.1007f); //Brave: 0.183f, -0.342f, -0.148f
+        private static readonly Vector3 Spell2ALocalRotation = new Vector3(359.9419f, 358.0826f, 357.9784f); //Brave: 0f, 0f, 0f
+        private static readonly Vector3 Spell2ALocalScale = new Vector3(1f, 1f, 1f);
+
+        private static readonly int WiseInsertPosition = 6;
         [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), "Start")]
         static void SelectCharacterView_Start(SelectCharacterView __instance)
         {
             List<CharacterSheet.BumboType> bumboTypes = (List<CharacterSheet.BumboType>)AccessTools.Field(typeof(SelectCharacterView), "bumboTypes").GetValue(__instance);
-            if (bumboTypes != null && bumboTypes.Count >= WISE_INSERT_POSITION && !bumboTypes.Contains((CharacterSheet.BumboType)10)) bumboTypes.Insert(WISE_INSERT_POSITION, (CharacterSheet.BumboType)10);
+            if (bumboTypes != null && bumboTypes.Count >= WiseInsertPosition && !bumboTypes.Contains((CharacterSheet.BumboType)10)) bumboTypes.Insert(WiseInsertPosition, (CharacterSheet.BumboType)10);
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), nameof(SelectCharacterView.BumboWins))]
@@ -41,7 +49,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             hitPoints = 2f,
             itemDamage = 1,
             luck = 1,
-            puzzleDamage = 1,
+            puzzleDamage = 2,
             dexterity = 1,
             startingSpells = new StartingSpell[]
             {
@@ -54,26 +62,26 @@ namespace The_Legend_of_Bum_bo_Windfall
                 new StartingSpell()
                 {
                     spell = (SpellName)1001,
-                    toothCost = 3,
+                    peeCost = 3,
                 }
             },
-            startingTrinkets = new TrinketName[] { TrinketName.Hoof },
+            startingTrinkets = new TrinketName[] { (TrinketName)1003 },
             hiddenTrinket = (TrinketName)1001,
         };
 
-        private static readonly string WISE_SELECT_DESCRIPTION = "moved tile becomes wild!";
+        private static readonly string WiseSelectDescription = "moved tile becomes wild!";
 
-        private static readonly Vector3 WISE_NAME_LOCALPOSITION = new Vector3(-0.006f, 0.0002f, 0.004f);
-        private static readonly float WISE_SCALE = 1f;
-        private static readonly Vector3 WISE_LOCALSCALE = new Vector3(WISE_SCALE, WISE_SCALE, WISE_SCALE);
-        private static readonly Vector3 WISE_SELECT_LOCALPOSITION = new Vector3(-0.0001f, 0.0002f, 0.0044f);
-        private static readonly Vector3 WISE_SELECT_LOCALROTATION = new Vector3(90f, 0f, 0f);
-        private static readonly Vector3 WISE_DUCK_LOCALPOSITION = new Vector3(-0.0001f, -0.0002f, 0.0044f);
-        private static readonly Vector3 WISE_DUCK_LOCALROTATION = new Vector3(270f, 90f, 0f);
-        private static readonly Vector3 WISE_UPPERCUT_LOCALPOSITION = new Vector3(0.0001f, 0.0002f, 0.0044f);
-        private static readonly Vector3 WISE_UPPERCUT_LOCALROTATION = new Vector3(90f, 14f, 0f);
-        private static readonly Vector3 WISE_ANTICIPATE_LOCALPOSITION = new Vector3(0.0002f, -0.0002f, 0.0043f);
-        private static readonly Vector3 WISE_ANTICIPATE_LOCALROTATION = new Vector3(270f, 58f, 0f);
+        private static readonly Vector3 WiseNameLocalPosition = new Vector3(-0.006f, 0.0002f, 0.004f);
+        private static readonly float WiseScale = 1f;
+        private static readonly Vector3 WiseLocalscale = new Vector3(WiseScale, WiseScale, WiseScale);
+        private static readonly Vector3 WiseSelectLocalposition = new Vector3(-0.0001f, 0.0002f, 0.0044f);
+        private static readonly Vector3 WiseSelectLocalrotation = new Vector3(90f, 0f, 0f);
+        private static readonly Vector3 WiseDuckLocalposition = new Vector3(-0.0001f, -0.0002f, 0.0044f);
+        private static readonly Vector3 WiseDuckLocalrotation = new Vector3(270f, 90f, 0f);
+        private static readonly Vector3 WiseUppercutLocalposition = new Vector3(0.0001f, 0.0002f, 0.0044f);
+        private static readonly Vector3 WiseUppercutLocalrotation = new Vector3(90f, 14f, 0f);
+        private static readonly Vector3 WiseAnticipateLocalposition = new Vector3(0.0002f, -0.0002f, 0.0043f);
+        private static readonly Vector3 WiseAnticipateLocalrotation = new Vector3(270f, 58f, 0f);
 
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Awake")]
         static void TitleController_Awake(TitleController __instance)
@@ -97,27 +105,27 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Bumbo name
             GameObject wiseName = wiseSelectParent.transform.Find("bumbo_select_name").gameObject;
             WindfallHelper.Reskin(wiseName, null, null, null);
-            WindfallHelper.ReTransform(wiseName, WISE_NAME_LOCALPOSITION, Vector3.zero, Vector3.zero, "rotation scale");
+            WindfallHelper.ReTransform(wiseName, WiseNameLocalPosition, Vector3.zero, Vector3.zero, "rotation scale");
 
             //Bumbo select
             GameObject wiseSelect = wiseSelectParent.transform.Find("Bumbo Select").gameObject;
             WindfallHelper.Reskin(wiseSelect, Windfall.assetBundle.LoadAsset<Mesh>("Wise Select"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseSelect, WISE_SELECT_LOCALPOSITION, WISE_SELECT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseSelect, WiseSelectLocalposition, WiseSelectLocalrotation, WiseLocalscale, string.Empty);
 
             //Bumbo duck
             GameObject wiseDuck = wiseSelectParent.transform.Find("Bumbo Duck").gameObject;
             WindfallHelper.Reskin(wiseDuck, Windfall.assetBundle.LoadAsset<Mesh>("Wise Duck"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseDuck, WISE_DUCK_LOCALPOSITION, WISE_DUCK_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseDuck, WiseDuckLocalposition, WiseDuckLocalrotation, WiseLocalscale, string.Empty);
 
             //Bumbo uppercut
             GameObject wiseUppercut = wiseSelectParent.transform.Find("Bumbo Uppercut").gameObject;
             WindfallHelper.Reskin(wiseUppercut, Windfall.assetBundle.LoadAsset<Mesh>("Wise Uppercut"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseUppercut, WISE_UPPERCUT_LOCALPOSITION, WISE_UPPERCUT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseUppercut, WiseUppercutLocalposition, WiseUppercutLocalrotation, WiseLocalscale, string.Empty);
 
             //Bumbo anticipate
             GameObject wiseAnticipate = wiseSelectParent.transform.Find("Lost Anticipate").gameObject;
             WindfallHelper.Reskin(wiseAnticipate, Windfall.assetBundle.LoadAsset<Mesh>("Wise Anticipate"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseAnticipate, WISE_ANTICIPATE_LOCALPOSITION, WISE_ANTICIPATE_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseAnticipate, WiseAnticipateLocalposition, WiseAnticipateLocalrotation, WiseLocalscale, string.Empty);
 
             //Collectibles
             Transform wiseSpells = wiseSelectView.spells.transform.Find("bumbo_select_brave_spells")?.Find("Brave Spells");
@@ -125,10 +133,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Spell 1
             BumboSelectSpellView spell1 = wiseSpells?.Find("Spell 1")?.GetComponent<BumboSelectSpellView>();
             spell1.bumboType = (CharacterSheet.BumboType)10;
+            //WindfallHelper.ReTransform(spell1.gameObject, Spell1ALocalPosition, Spell1ALocalRotation, Spell1ALocalScale, string.Empty);
 
             //Spell 2
-            BumboSelectSpellView spell2 = wiseSpells?.Find("Spell 2 ")?.GetComponent<BumboSelectSpellView>();
+            BumboSelectSpellView spell2 = wiseSpells?.Find("Spell 2 ")?.GetComponent<BumboSelectSpellView>(); //Note that there is a whitespace in the GameObject name "Spell 2 "
             spell2.bumboType = (CharacterSheet.BumboType)10;
+            //WindfallHelper.ReTransform(spell2.gameObject, Spell2ALocalPosition, Spell2ALocalRotation, Spell2ALocalScale, string.Empty);
 
             //Trinket 1
             BumboSelectTrinketView trinket1 = wiseSelectView.spells.transform.Find("bumbo_select_brave_spells")?.Find("Brave Trinkets")?.Find("Trinket 1")?.GetComponent<BumboSelectTrinketView>();
@@ -149,7 +159,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (i == (int)(CharacterSheet.BumboType)10)
                 {
                     newText[i] = GameObject.Instantiate(newText[0], newText[0].transform.parent);
-                    newText[i].GetComponent<TextMeshPro>().text = WISE_SELECT_DESCRIPTION;
+                    newText[i].GetComponent<TextMeshPro>().text = WiseSelectDescription;
                     newText[i].SetActive(false);
                     continue;
                 }
@@ -199,22 +209,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Bumbo select
             GameObject wiseSelect = wiseBumboAnimation.bumboSelect;
             WindfallHelper.Reskin(wiseSelect, Windfall.assetBundle.LoadAsset<Mesh>("Wise Select"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseSelect, WISE_SELECT_LOCALPOSITION, WISE_SELECT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseSelect, WiseSelectLocalposition, WiseSelectLocalrotation, WiseLocalscale, string.Empty);
 
             //Bumbo duck
             GameObject wiseDuck = wiseBumboAnimation.bumboDuck;
             WindfallHelper.Reskin(wiseDuck, Windfall.assetBundle.LoadAsset<Mesh>("Wise Duck"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseDuck, WISE_DUCK_LOCALPOSITION, WISE_DUCK_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseDuck, WiseDuckLocalposition, WiseDuckLocalrotation, WiseLocalscale, string.Empty);
 
             //Bumbo uppercut
             GameObject wiseUppercut = wiseBumboAnimation.bumboUppercut;
             WindfallHelper.Reskin(wiseUppercut, Windfall.assetBundle.LoadAsset<Mesh>("Wise Uppercut"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseUppercut, WISE_UPPERCUT_LOCALPOSITION, WISE_UPPERCUT_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseUppercut, WiseUppercutLocalposition, WiseUppercutLocalrotation, WiseLocalscale, string.Empty);
 
             //Bumbo anticipate
             GameObject wiseAnticipate = wiseBumboAnimation.bumboBackside;
             WindfallHelper.Reskin(wiseAnticipate, Windfall.assetBundle.LoadAsset<Mesh>("Wise Anticipate"), wiseMaterial, null);
-            WindfallHelper.ReTransform(wiseAnticipate, WISE_ANTICIPATE_LOCALPOSITION, WISE_ANTICIPATE_LOCALROTATION, WISE_LOCALSCALE, string.Empty);
+            WindfallHelper.ReTransform(wiseAnticipate, WiseAnticipateLocalposition, WiseAnticipateLocalrotation, WiseLocalscale, string.Empty);
         }
 
         //Make The Wise appear in the carousel
@@ -406,51 +416,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             wise.name = "Wise";
             WindfallHelper.Reskin(wise, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Bumbo the Wise Dead"), false);
             wise.SetActive(_bumbo_type == (CharacterSheet.BumboType)10);
-        }
-
-        //Bum-bo the Wise stat wheel
-        [HarmonyPrefix, HarmonyPatch(typeof(GamblingController), nameof(GamblingController.InitWheel))]
-        static bool GamblingController_InitWheel(GamblingController __instance)
-        {
-            WheelView.WheelSlices[] array = new WheelView.WheelSlices[]
-            {
-                WheelView.WheelSlices.Coin20,
-                WheelView.WheelSlices.Dexterity,
-                WheelView.WheelSlices.PuzzleDamage,
-                WheelView.WheelSlices.Luck,
-                WheelView.WheelSlices.ItemDamage,
-                WheelView.WheelSlices.Health
-            };
-
-            switch (__instance.model.characterSheet.bumboType)
-            {
-                case (CharacterSheet.BumboType)10:
-                    array[1] = WheelView.WheelSlices.ItemDamage;
-                    break;
-                default:
-                    return true;
-            }
-
-            __instance.model.wheelSlices = array;
-            for (int i = 0; i < 6; i++)
-            {
-                if (array[i] > WheelView.WheelSlices.Coin20)
-                {
-                    Material material = __instance.view.wheelView.statSlices[i].GetComponent<MeshRenderer>().materials[0];
-                    __instance.view.wheelView.statSlices[i].SetActive(true);
-                    material.SetTextureOffset("_MainTex", new Vector2(0.2f * (float)array[i] - 4f, 0f));
-                    __instance.view.wheelView.statSlices[i].GetComponent<MeshRenderer>().materials[0] = material;
-                }
-                else
-                {
-                    Material material = __instance.view.wheelView.coinSlices[i].GetComponent<MeshRenderer>().materials[0];
-                    __instance.view.wheelView.coinSlices[i].SetActive(true);
-                    material.SetTextureOffset("_MainTex", new Vector2(0.2f * (float)array[i], 0f));
-                    __instance.view.wheelView.coinSlices[i].GetComponent<MeshRenderer>().materials[0] = material;
-                }
-            }
-
-            return false;
         }
     }
 }
