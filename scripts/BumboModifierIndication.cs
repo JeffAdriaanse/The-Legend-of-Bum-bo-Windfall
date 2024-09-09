@@ -426,7 +426,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         static readonly Dictionary<SpellName, string> textureAssignment = new Dictionary<SpellName, string>
         {
-            {SpellName.TheVirus, "ThornsPoison" }
+            {SpellName.TheVirus, "Thorns Poison" }
         };
 
         static void ChangeModifierDisplayIcon(BumboModifier bumboModifier, string iconObjectName)
