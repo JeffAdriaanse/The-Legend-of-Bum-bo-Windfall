@@ -72,6 +72,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly string WiseSelectDescription = "moved tile becomes wild!";
 
         private static readonly Vector3 WiseNameLocalPosition = new Vector3(-0.006f, 0.0002f, 0.004f);
+        private static readonly Vector3 WiseStatsLocalPosition = new Vector3(0.0032f, 0.0003f, 0.0029f);
         private static readonly float WiseScale = 1f;
         private static readonly Vector3 WiseLocalscale = new Vector3(WiseScale, WiseScale, WiseScale);
         private static readonly Vector3 WiseSelectLocalposition = new Vector3(-0.0001f, 0.0002f, 0.0044f);
@@ -104,8 +105,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Bumbo name
             GameObject wiseName = wiseSelectParent.transform.Find("bumbo_select_name").gameObject;
-            WindfallHelper.Reskin(wiseName, null, null, null);
+            WindfallHelper.Reskin(wiseName, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Wise Text"), false);
             WindfallHelper.ReTransform(wiseName, WiseNameLocalPosition, Vector3.zero, Vector3.zero, "rotation scale");
+
+            //Bumbo stats
+            GameObject wiseStats = wiseSelectParent.transform.Find("bumbo_select_stats").gameObject;
+            WindfallHelper.Reskin(wiseStats, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Wise Text"), false);
+            WindfallHelper.ReTransform(wiseStats, WiseStatsLocalPosition, Vector3.zero, Vector3.zero, "rotation scale");
 
             //Bumbo select
             GameObject wiseSelect = wiseSelectParent.transform.Find("Bumbo Select").gameObject;
