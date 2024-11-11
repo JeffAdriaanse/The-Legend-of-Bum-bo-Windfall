@@ -1822,13 +1822,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Bosses
                     { "Bygone", "Spawns a Fly and obscures two tiles when hurt" },
                     { "Bygone Ghost", "Places a curse tile when hurt" },
-                    { "Dusk", "Moves backwards and disables a spell after taking 4 damage in a single turn" },
+                    { "Dusk", "Receives knockback and disables a spell after taking 4 damage in a single turn" },
                     { "Gibs", "Spawns a Green Blib when hurt" },
                     { "Gizzarda", "Flips when hurt" },
-                    { "Loaf", "Spawns Dips when hurt" },
+                    { "Loaf", "Receives knockback and spawns 3 Dips when hurt" },
                     { "Pyre", "Extinguishes when a tile combo of its color is matched" },
                     { "Tainted Peeper", "Fires two projectiles when attacking\nSpawns a Blib after taking 3 damage" },
-                    { "Tainted Dusk", "Moves backwards after taking 4 damage in a single turn" },
+                    { "Tainted Dusk", "Receives knockback after taking 4 damage in a single turn" },
                 };
             }
         }
