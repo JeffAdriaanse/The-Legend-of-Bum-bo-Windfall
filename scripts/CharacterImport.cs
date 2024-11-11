@@ -22,6 +22,9 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly Vector3 Spell2ALocalRotation = new Vector3(359.9419f, 358.0826f, 357.9784f); //Brave: 0f, 0f, 0f
         private static readonly Vector3 Spell2ALocalScale = new Vector3(1f, 1f, 1f);
 
+        //Character select: collectible popsicle
+        private static readonly Vector3 CollectiblePopsicleLocalPosition = new Vector3(0f, 0.008f, -0.007f);
+
         private static readonly int WiseInsertPosition = 6;
         [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), "Start")]
         static void SelectCharacterView_Start(SelectCharacterView __instance)
