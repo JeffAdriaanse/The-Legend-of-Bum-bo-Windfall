@@ -5,6 +5,8 @@ VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "The_Legend_of_Bum_bo_Windfall", "The_Legend_of_Bum_bo_Windfall.csproj", "{D794F057-CBA0-415E-8539-D941C24DECAC}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Windfall_Installer", "..\Windfall_Installer\Windfall_Installer.vdproj", "{D633063F-C83E-468F-A23E-4705ED8753E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,8 @@ Global
 		{D794F057-CBA0-415E-8539-D941C24DECAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D794F057-CBA0-415E-8539-D941C24DECAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D794F057-CBA0-415E-8539-D941C24DECAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D633063F-C83E-468F-A23E-4705ED8753E3}.Debug|Any CPU.ActiveCfg = Debug
+		{D633063F-C83E-468F-A23E-4705ED8753E3}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
