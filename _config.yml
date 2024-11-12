@@ -22,6 +22,7 @@ title: "The Legend of Bum-bo: Windfall"
 email: jeff.adriaanse@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   "The Legend of Bum-bo: Windfall is a mod for The Legend of Bum-bo adds new features, adjusts game balance, and fixes various bugs."
+baseurl: ""
 url: "https://jeffadriaanse.github.io/The-Legend-of-Bum-bo-Windfall" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: JeffAdriaanse
 github_username:  JeffAdriaanse
