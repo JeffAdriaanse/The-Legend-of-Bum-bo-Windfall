@@ -258,7 +258,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (_type == (CharacterSheet.BumboType)10)
             {
-                __result = __instance.progression.unlocks[6];
+                __result = /*__instance.progression.unlocks[6];*/true;
                 return false;
             }
             return true;

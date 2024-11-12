@@ -1507,6 +1507,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly float CharacterSelectIndicatorLocalScaleMax = CharacterSelectIndicatorLocalScaleMin * 1.15f;
 
         private static readonly Vector3 LocalRotation = new Vector3(270f, 0f, 0f);
+        private static readonly Vector3 BravePosition = new Vector3(0.2151f, 0.5791f, -10.8167f);
         private static readonly Vector3 NimblePosition = new Vector3(0.2515f, 0.5791f, -10.8167f);
         private static readonly Vector3 StoutPosition = new Vector3(0.3417f, 0.5576f, -10.8167f);
         private static readonly Vector3 WeirdPosition = new Vector3(0.3235f, 0.554f, -10.8167f);
@@ -1567,6 +1568,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                 CharacterSheet.BumboType suggestedBumbo = CharacterSheet.BumboType.Random;
 
                 Vector3 indicatorPosition = Vector3.zero;
+
+                if (!selectCharacterView.progression.Unlocked(Unlocks.BumboTheNimble))
+                {
+                    //Suggest playing as Bum-bo the Nimble
+                    suggestedBumbo = CharacterSheet.BumboType.TheBrave;
+                    indicatorPosition = BravePosition;
+                }
 
                 if (selectCharacterView.progression.Unlocked(Unlocks.BumboTheNimble) && !selectCharacterView.progression.Unlocked(Unlocks.BumboTheStout))
                 {

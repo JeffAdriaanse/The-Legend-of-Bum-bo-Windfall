@@ -347,7 +347,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (!windfallPersistentData.unlocks[0] && __instance.progress.wins > 0)
             {
                 windfallPersistentData.unlocks[0] = true;
-                if (__instance.progress.wins == 1) unlocks.Add(45); //Do not show Bum-bo the Wise unlock unless this is the first win
+                //if (__instance.progress.wins == 1) unlocks.Add(45); //Do not show Bum-bo the Wise unlock unless this is the first win
             }
 
             //Plasma Ball: Win once as Bum-bo the Wise
