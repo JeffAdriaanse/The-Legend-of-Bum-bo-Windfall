@@ -2810,7 +2810,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             { SpellName.RockFriends, 5 },
             { SpellName.TheVirus, 3 },
             { SpellName.TimeWalker, 16 },
-            { SpellName.TwentyTwenty, 5 },
             { SpellName.WoodenSpoon, 13 },
         };
 
