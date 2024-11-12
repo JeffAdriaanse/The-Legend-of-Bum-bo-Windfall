@@ -8,10 +8,23 @@ layout: main-page
 <p style="text-align:center;">
 
 <img src="assets/Windfall Logo.png" alt="The Legend of Bum-bo: Windfall" width="833" height="415"><br />
-<img src="assets/Coins Render Corrected.png" alt="Coins" style="width:350px; height:auto; position:absolute; right:100px">
+
+<style>
+  body{
+    overflow-x:hidden; 
+  }
+
+  .offset-image {
+    position: absolute;
+    left: 50%;
+  }
+</style>
+
+<img src="assets/Coins Render Corrected.png" alt="Coins" class="offset-image" style="width:350px; height:auto; transform: translateX(500px); overflow:hidden">
+<img src="assets/Wise Render Corrected.png" alt="Bum-bo The Wise" class="offset-image" style="width:250px; height:auto; transform: translateX(-800px); overflow:hidden">
+
 <div style="text-align:center; margin: auto; background:rgba(255,255,255,0.5); padding:50px; border-radius:25px; max-width:800px">
 <b>A new Bum-bo enters the basement...</b><br><br>
-<img src="assets/Wise Render Corrected.png" alt="Bum-bo The Wise" style="width:250px; height:auto; position:absolute; left:100px">
 Return to the cardboard world of The Legend of Bum-bo, now enhanced and expanded! Windfall is the largest and most elaborate Bum-bo mod, receiving several major updates since its initial release three years ago. Experience refreshed gameplay with improvements and fixes spanning all parts of the game.<br><br>
 <b>Features:</b>
  <ul style="text-align:left">
