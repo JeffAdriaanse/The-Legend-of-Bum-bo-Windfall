@@ -6,7 +6,9 @@ To see mod updates and change lists, visit the [Releases](https://github.com/Shp
 The Legend of Bum-bo does not have official modding support. This mod requires BepInEx, a modding framework that allows for patching games made in the Unity engine.
 
 ## Features
-* A new spell, Plasma Ball
+* A new character, Bum-bo the Wise
+* 2 new spells
+* 2 new trinkets
 * An enhanced tooltip system that displays information of all enemies and collectibles
 * A status indicator system, which passively displays temporary effects that are currently influencing Bum-bo
 * A win streak counter
@@ -26,7 +28,7 @@ If you already have BepInEx 5.4 installed for The Legend of Bum-bo, skip steps 1
 1. Download `BepInEx_x64_5.4.21.0.zip` from the [BepInEx 5.4.21 release page](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.21).
 2. Extract the contents of `BepInEx_x64_5.4.21.0.zip` into The Legend of Bum-bo root folder. You can find the root folder by clicking `Manage > Browse local files` in the options menu on the game's page in your Steam library.
 3. Run the game once. This generates BepInEx configuration files.
-4. Download `The.Legend.of.Bum-bo_Windfall.zip` from the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page. The latest version of the mod is [v1.2.2.0](https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall/releases/tag/v1.2.2.0).
+4. Download `The.Legend.of.Bum-bo_Windfall.zip` from the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page. The latest version of the mod is [v1.3.0](https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall/releases/tag/v1.3.0).
 5. Extract the contents of `The.Legend.of.Bum-bo_Windfall.zip` into the `BepInEx/Plugins` directory in the game folder. Replace files if prompted.
 
 If you are having trouble installing BepInEx, consult the BepInEx [installation guide](https://docs.bepinex.dev/articles/user_guide/installation/index.html).
@@ -43,13 +45,13 @@ Text that is added or modified by The Legend of Bum-bo: Windfall is not translat
 
 Starting a new game without finishing your saved game will reset your win streak.
 
-The Legend of Bum-bo: Windfall adds a 'Cutscenes' menu with functionality for rewatching cutscenes. This feature is part of an inaccessible debug menu in the vanilla game and is not original content created for The Legend of Bum-bo: Windfall. The mod only moves the 'Cutscenes' menu to the main menu and slightly modifies the game logic associated with it.
+The ability to rewatch cutscenes exists in a debug menu in the vanilla game, Windfall just brings the feature to the main menu.
 
 Credit to Jasper Flick for anti-aliasing post processing code used in the mod (catlikecoding.com).
 
-Credit to Pixabay for sound effect assets used in the mod (pixabay.com).
+Credit to Pixabay for the Plasma Ball sound effect asset used in the mod (pixabay.com).
 
-Software used in mod development: BepInEx, HarmonyX, dnSpy, Visual Studio, Git, Unity, Gimp, Krita, Inkscape, Blender, Audacity.
+Software used in mod development: BepInEx, HarmonyX, dnSpy, Visual Studio, Git, Unity, Gimp, Krita, Inkscape, Blender, Audacity, DaVinci Resolve.
 
 ## Bug Reports
 If you encounter a bug, please report it by opening an issue on the [Issues](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/issues) page or by contacting me (see below).
