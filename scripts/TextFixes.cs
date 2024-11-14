@@ -60,9 +60,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             triggered = true;
 
             //Modify language
-            ModifyEnglish();
+            ModifyLanguage(0, EnglishTextModifications);
             //Add language
-            AddEnglish();
+            AddToLanguage(0, EnglishTextAdditions);
         }
 
         public static TMP_FontAsset edFont;
@@ -103,14 +103,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        private static void ModifyEnglish()
+        private static void ModifyLanguage(int lanugageIndex, Dictionary<string, string> textModifications)
         {
             if (LanguageSourceData == null)
             {
                 return;
             }
 
-            foreach (string term in EnglishTextModifications.Keys)
+            foreach (string term in textModifications.Keys)
             {
                 if (term == "Spells/ROCK_FRIENDS_DESCRIPTION" && !WindfallPersistentDataController.LoadData().implementBalanceChanges)
                 {
@@ -121,37 +121,36 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (termData != null)
                 {
                     string[] languages = termData.Languages;
-                    int englishIndex = 0;
                     for (int languageCounter = 0; languageCounter < languages.Length; languageCounter++)
                     {
                         if (languages[languageCounter].Equals("english", StringComparison.OrdinalIgnoreCase))
                         {
-                            englishIndex = languageCounter;
+                            lanugageIndex = languageCounter;
                         }
                     }
 
-                    if (EnglishTextModifications.TryGetValue(term, out string value))
+                    if (textModifications.TryGetValue(term, out string value))
                     {
-                        termData.SetTranslation(englishIndex, value);
+                        termData.SetTranslation(lanugageIndex, value);
                     }
                 }
             }
         }
 
-        public static void AddEnglish()
+        public static void AddToLanguage(int lanugageIndex, Dictionary<string, string> textAdditions)
         {
             if (LanguageSourceData == null)
             {
                 return;
             }
 
-            foreach (string term in EnglishTextAdditions.Keys)
+            foreach (string term in textAdditions.Keys)
             {
                 TermData termData = LanguageSourceData.AddTerm(term);
 
-                if (EnglishTextAdditions.TryGetValue(term, out string value))
+                if (textAdditions.TryGetValue(term, out string value))
                 {
-                    termData.SetTranslation(0, value);
+                    termData.SetTranslation(lanugageIndex, value);
                 }
             }
         }
