@@ -36,12 +36,12 @@ Return to the cardboard world of The Legend of Bum-bo, now enhanced and expanded
   <li>Rewatchable cutscenes</li>
   <li>Balance changes</li>
   <li>Saved state improvements</li>
-  <li>Enhanced Textures</li>
-  <li>Stronger Anti-Aliasing</li>
-  <li>New Win Streak Counter</li>
-  <li>Refined User Interface</li>
-  <li>Restored Achievements</li>
-  <li>And Lots of Bug Fixes!</li>
+  <li>Enhanced textures</li>
+  <li>Stronger anti-aliasing</li>
+  <li>New win streak counter</li>
+  <li>Refined user interface</li>
+  <li>Restored achievements</li>
+  <li>And lots of bug fixes!</li>
 </ul>
 Visit the mod <a href="https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall">GitHub page</a> for more information and installation instructions.
 </div>
