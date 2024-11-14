@@ -3,3 +3,10 @@ bin/
 obj/
 .vs/
 The Legend of Bum-bo_Windfall.sln
+
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor
+Gemfile.lock
