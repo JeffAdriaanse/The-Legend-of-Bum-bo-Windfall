@@ -536,5 +536,36 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             ObjectDataStorage.StoreData<bool>(WindfallHelper.app.model.gameObject, "bumboTurn", false);
         }
+
+        /// <summary>
+        /// Fixes enemies sometimes having all of their moves canceled when they have two boogers
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(EnemiesUnboogerEvent), nameof(EnemiesUnboogerEvent.Execute))]
+        static bool EnemiesUnboogerEvent_Execute(EnemiesUnboogerEvent __instance)
+        {
+            bool flag = false;
+            for (int i = 0; i < __instance.app.model.enemies.Count; i++)
+            {
+                if (__instance.app.model.enemies[i].boogerCounter > 0 && __instance.app.model.enemies[i].TurnsLeft())
+                {
+                    flag = true;
+                    __instance.app.model.enemies[i].Unbooger(true);
+                    __instance.app.model.enemies[i].turnsMade++;
+                }
+            }
+            if (flag)
+            {
+                //Consider the enemy turn used if any enemy unboogers
+                __instance.app.model.enemyTurnsGoneUnused = 0;
+                DOTween.Sequence().AppendInterval(0.1f).AppendCallback(delegate
+                {
+                    __instance.End();
+                });
+                return false;
+            }
+            __instance.End();
+
+            return false;
+        }
     }
 }
