@@ -2795,23 +2795,31 @@ namespace The_Legend_of_Bum_bo_Windfall
 
 		public static Dictionary<SpellName, int> rebalancedManaCosts = new Dictionary<SpellName, int>()
 		{
-            { (SpellName)1001, 3},
-            { SpellName.AttackFly, 5 },
-            { SpellName.BlenderBlade, 5 },
-            { SpellName.DeadDove, 4 },
-            { SpellName.HairBall, 5 },
+			{ (SpellName)1001, 3},
+			{ SpellName.Addy, 3 },
+			{ SpellName.AttackFly, 5 },
+			{ SpellName.BlenderBlade, 5 },
+			{ SpellName.BuzzDown, 2 },
+			{ SpellName.BuzzRight, 2 },
+			{ SpellName.BuzzUp, 2 },
+			{ SpellName.DeadDove, 4 },
+			{ SpellName.DogTooth, 9 },
+			{ SpellName.HairBall, 5 },
 			{ SpellName.Juiced, 5 },
 			{ SpellName.KrampusCross, 5 },
 			{ SpellName.Lemon, 5 },
 			{ SpellName.MagicMarker, 6 },
-            { SpellName.MamaFoot, 13 },
-            { SpellName.MissingPiece, 8 },
-            { SpellName.Pliers, 5 },
-            { SpellName.RockFriends, 5 },
-            { SpellName.TheVirus, 3 },
-            { SpellName.TimeWalker, 16 },
-            { SpellName.WoodenSpoon, 13 },
-        };
+			{ SpellName.MamaFoot, 13 },
+			{ SpellName.Melatonin, 6 },
+			{ SpellName.MissingPiece, 8 },
+			{ SpellName.Peace, 3 },
+			{ SpellName.Pliers, 5 },
+			{ SpellName.RockFriends, 5 },
+			{ SpellName.SnotRocket, 8 },
+			{ SpellName.TheVirus, 3 },
+			{ SpellName.TimeWalker, 14 },
+			{ SpellName.WoodenSpoon, 12 },
+		};
 
 		public static int MinimumManaCost(SpellElement spell)
 		{
