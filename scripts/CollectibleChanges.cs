@@ -611,7 +611,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 				if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.CurvedHorn)
 				{
 					//Chance: 1/3
-					effectValue += (float)1f / 3f;
+					effectValue += 1f/3f;
 				}
 				trinketCounter += 1;
 			}
@@ -666,7 +666,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
 				//Chance: 1/3
-				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Magnet ? (float)1f / 3f : 0f;
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Magnet ? 1f/3f : 0f;
 				trinketCounter += 1;
 			}
 			effectValue *= (float)__instance.trinketController.EffectMultiplier();
@@ -775,9 +775,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
 				//Chance: 1/3
-				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Pinky ? 1 / 3 : 0f;
+				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.Pinky ? 1f/3f : 0f;
 				trinketCounter += 1;
 			}
+
 			effectValue *= (float)__instance.EffectMultiplier();
 			//Incorporate Luck modifier
 			effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
@@ -1147,7 +1148,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 			short trinketCounter = 0;
 			while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
 			{
-				//Chance: 1/4
+				//Chance: 1/5
 				effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.WetDiaper ? 0.2f : 0f;
 				trinketCounter += 1;
 			}
