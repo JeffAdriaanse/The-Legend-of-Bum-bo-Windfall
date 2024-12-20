@@ -2780,6 +2780,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = true;
             return false;
         }
+
+        private static short MANA_TRINKETS_EFFECT_AMOUNT = 2;
+        /// <summary>
+        /// Changes the amount of mana granted by <see cref="ChickenBoneTrinket"/>, <see cref="FalseTeethTrinket"/>, <see cref="ToiletSeatTrinket"/>, <see cref="TurdyTrinket"/>, and <see cref="UsedTissueTrinket"/>.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(StatTrinket), nameof(StatTrinket.AddMana))]
+        static bool StatTrinket_AddMana(StatTrinket __instance, ref short _amount)
+        {
+			if (__instance is not ChickenBoneTrinket && __instance is not FalseTeethTrinket && __instance is not ToiletSeatTrinket && __instance is not TurdyTrinket && __instance is not UsedTissueTrinket) return true;
+            _amount *= MANA_TRINKETS_EFFECT_AMOUNT;
+            return true;
+        }
     }
 
     static class SpellManaCosts
