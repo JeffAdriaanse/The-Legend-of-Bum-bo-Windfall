@@ -1637,6 +1637,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (tweens != null) foreach (Tween tween in tweens) tween.Kill();
             characterSelectIndicatorObject.SetActive(false);
         }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(BowlingArrowView), "Update")]
+        static void BowlingArrowView_Update_ChooseColumnHotkeys(BowlingArrowView __instance)
+        {
+            if (__instance.app.model.paused) return;
+            BumboEvent bumboEvent = __instance.app.model.bumboEvent;
+            if (bumboEvent is not SelectColumnEvent && bumboEvent is not SelectSpellColumn) return;
+
+            int selectedColumn = -1;
+            if (Input.GetKeyDown(KeyCode.Alpha1)) selectedColumn = 1;
+            else if (Input.GetKeyDown(KeyCode.Alpha2)) selectedColumn = 2;
+            else if (Input.GetKeyDown(KeyCode.Alpha3)) selectedColumn = 3;
+
+            ClickableColumnView[] clickableColumnViews = __instance.app.view.clickableColumnViews;
+            if (selectedColumn >= 0 && selectedColumn < clickableColumnViews.Length && clickableColumnViews[selectedColumn].isActiveAndEnabled)
+            {
+                __instance.app.view.clickableColumnViews[selectedColumn].ForceClick();
+            }
+        }
     }
 
     [HarmonyPatch]
