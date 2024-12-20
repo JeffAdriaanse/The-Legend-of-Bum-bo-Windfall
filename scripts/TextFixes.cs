@@ -199,6 +199,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { "Spells/BARBED_WIRE_DESCRIPTION", "Damage Attackers In Room"},
                     { "Spells/BUMBO_SHAKE_DESCRIPTION", "Shuffles the Puzzle Board"},
                     { "Spells/D4_DESCRIPTION", "Shuffles the Puzzle Board"},
+                    { "Spells/DARK_LOTUS_DESCRIPTION", "Gain 6 Random Mana"},
                     { "Spells/DOG_TOOTH_DESCRIPTION", "Attack that Heals You"},
                     { "Spells/EUTHANASIA_DESCRIPTION", "Hurts an Attacking Enemy"},
                     { "Spells/PENTAGRAM_DESCRIPTION", "Gain +1 Spell Damage"},

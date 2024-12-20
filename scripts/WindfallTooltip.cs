@@ -1376,7 +1376,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     { SpellName.D4, "Shuffles the puzzle board" },
                     { SpellName.D6, "Rerolls the selected spell" },
                     { SpellName.D8, "Rerolls mana" },
-                    { SpellName.DarkLotus, "Grants 3 random mana" },
+                    { SpellName.DarkLotus, "Grants 6 random mana" },
                     { SpellName.DeadDove, "Destroys the selected tile and all tiles above it" },
                     { SpellName.DogTooth, "Attacks for [damage] spell damage, healing 1/2 heart if it hits an enemy" },
                     { SpellName.Ecoli, "Attacks in the selected lane, transforming the enemy into a Poop, Dip, or Squat" },

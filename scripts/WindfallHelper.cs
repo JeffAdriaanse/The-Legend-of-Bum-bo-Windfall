@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using PathologicalGames;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
@@ -448,6 +449,74 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             app.controller.UpdateMana(randomMana, false);
+        }
+
+        /// <summary>
+        /// Grants Bum-bo mana of random colors.
+        /// </summary>
+        /// <param name="amount">The amount of mana for Bum-bo to gain.</param>
+        /// <param name="spreadOutManaColors">Whether to attempt to spread out mana evenly across all five colors.</param>
+        /// <param name="avoidGoingOverMaximum">Whether to attempt to avoid giving Bum-bo mana over the maximum of 9 for each color.</param>
+        public static void AddRandomMana(int amount, bool spreadOutManaColors = false, bool avoidGoingOverMaximum = true)
+        {
+            short[] manaToAdd = new short[6];
+
+            List<ManaType> manaColors = new List<ManaType>
+            {
+                ManaType.Bone,
+                ManaType.Booger,
+                ManaType.Pee,
+                ManaType.Poop,
+                ManaType.Tooth
+            };
+
+            for (int manaGainCounter = 0; manaGainCounter < amount; manaGainCounter++)
+            {
+                //If mana colors are not being spread out, refresh the mana colors list
+                if (!spreadOutManaColors || manaColors.Count == 0)
+                {
+                    manaColors = new List<ManaType>
+                    {
+                        ManaType.Bone,
+                        ManaType.Booger,
+                        ManaType.Pee,
+                        ManaType.Poop,
+                        ManaType.Tooth
+                    };
+                }
+
+                short[] mana = app.model.mana;
+
+                if (avoidGoingOverMaximum)
+                {
+                    //Avoid mana types that Bum-bo already has 9 of
+                    for (int manaTypeCounter = 0; manaTypeCounter < mana.Length; manaTypeCounter++)
+                    {
+                        if (mana[manaTypeCounter] >= 9) manaColors.Remove((ManaType)manaTypeCounter);
+                    }
+                }
+
+                //Failsafe
+                if (manaColors.Count == 0)
+                {
+                    manaColors = new List<ManaType>
+                    {
+                        ManaType.Bone,
+                        ManaType.Booger,
+                        ManaType.Pee,
+                        ManaType.Poop,
+                        ManaType.Tooth
+                    };
+                }
+
+                //Choose a random mana to add
+                int manaIndex = UnityEngine.Random.Range(0, manaColors.Count);
+                manaColors.RemoveAt(manaIndex);
+                manaToAdd[manaIndex]++;
+            }
+
+            app.controller.UpdateMana(manaToAdd, false);
+            app.controller.ShowManaGain();
         }
 
         /// <summary>

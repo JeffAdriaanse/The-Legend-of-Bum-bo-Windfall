@@ -2688,7 +2688,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Replaces <see cref="BuzzDownSpell.AlterTile"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(BuzzDownSpell), nameof(BuzzDownSpell.AlterTile))]
-        static bool BuzzDownSpell_CastSpell(BuzzDownSpell __instance, Block _block)
+        static bool BuzzDownSpell_AlterTile(BuzzDownSpell __instance, Block _block)
         {
             __instance.app.controller.HideNotifications(true);
 
@@ -2710,7 +2710,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Replaces <see cref="BuzzRightSpell.AlterTile"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(BuzzRightSpell), nameof(BuzzRightSpell.AlterTile))]
-        static bool BuzzRightSpell_CastSpell(BuzzRightSpell __instance, Block _block)
+        static bool BuzzRightSpell_AlterTile(BuzzRightSpell __instance, Block _block)
         {
             __instance.app.controller.HideNotifications(true);
 
@@ -2732,7 +2732,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Replaces <see cref="BuzzUpSpell.AlterTile"/> implementation.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(BuzzUpSpell), nameof(BuzzUpSpell.AlterTile))]
-        static bool BuzzUpSpell_CastSpell(BuzzUpSpell __instance, Block _block)
+        static bool BuzzUpSpell_AlterTile(BuzzUpSpell __instance, Block _block)
         {
             __instance.app.controller.HideNotifications(true);
 
@@ -2747,6 +2747,37 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.model.spellModel.currentSpell = null;
             __instance.app.model.spellModel.spellQueued = false;
             __instance.app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f));
+            return false;
+        }
+
+		private static int DARK_LOTUS_MANA_GAIN = 6;
+        /// <summary>
+        /// Replaces <see cref="DarkLotusSpell.CastSpell"/> implementation.
+        /// </summary>
+        [HarmonyPrefix, HarmonyPatch(typeof(DarkLotusSpell), nameof(DarkLotusSpell.CastSpell))]
+        static bool DarkLotusSpell_CastSpell(DarkLotusSpell __instance, ref bool __result)
+        {
+            if (!CastSpellDummy_UseSpell(__instance))
+            {
+                __result = false;
+                return false;
+            }
+
+            //Logic
+            __instance.app.model.spellModel.currentSpell = __instance;
+			WindfallHelper.AddRandomMana(DARK_LOTUS_MANA_GAIN);
+
+            //Visuals
+            __instance.app.controller.GUINotification("RANDOM_MANA", GUINotificationView.NotifyType.Spell, __instance, true);
+
+            //Boilerplate
+            __instance.app.model.spellModel.currentSpell = null;
+            __instance.app.model.spellModel.spellQueued = false;
+
+            //Next event
+            __instance.app.controller.eventsController.SetEvent(new IdleEvent());
+
+            __result = true;
             return false;
         }
     }
