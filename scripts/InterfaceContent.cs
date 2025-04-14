@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
+using I2.Loc;
 using PathologicalGames;
 using System;
 using System.Collections.Generic;
@@ -1096,6 +1097,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             GameObject cutscenesButton = UnityEngine.Object.Instantiate(__instance.debugMenu.transform.Find("Cutscenes").gameObject, __instance.mainMenu.transform);
             cutscenesButton.GetComponent<RectTransform>().SetSiblingIndex(4);
 
+            WindfallHelper.LocalizeObject(cutscenesButton, "Menu/CUTSCENES");
+
             GamepadMenuOptionSelection cutscenesOptionSelection = cutscenesButton.AddComponent<GamepadMenuOptionSelection>();
             if (cutscenesOptionSelection != null)
             {
@@ -1119,6 +1122,29 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, null);
 
+            //Get references to cutscene menu buttons
+            Transform cutsceneMenuTransform = __instance.cutsceneMenu.transform;
+            GameObject miniCreditsRoll = cutsceneMenuTransform.Find("Mini Credits Roll").gameObject;
+            GameObject nimbleEnding = cutsceneMenuTransform.Find("Nimble Ending").gameObject;
+            GameObject stoutEnding = cutsceneMenuTransform.Find("Stout Ending").gameObject;
+            GameObject weirdEnding = cutsceneMenuTransform.Find("Weird Ending").gameObject;
+            GameObject basementEnding = cutsceneMenuTransform.Find("Ending Basement").gameObject;
+            GameObject momEnding = cutsceneMenuTransform.Find("Ending Mom").gameObject;
+            GameObject creditsRoll = cutsceneMenuTransform.Find("Credits Roll").gameObject;
+            GameObject finalEnding = cutsceneMenuTransform.Find("Ending Final").gameObject;
+            GameObject back = cutsceneMenuTransform.Find("Back").gameObject;
+
+            //Add localization to cutscene menu buttons
+            WindfallHelper.LocalizeObject(miniCreditsRoll, "Menu/MINI_CREDITS_ROLL");
+            WindfallHelper.LocalizeObject(nimbleEnding, "Menu/NIMBLE_ENDING");
+            WindfallHelper.LocalizeObject(stoutEnding, "Menu/STOUT_ENDING");
+            WindfallHelper.LocalizeObject(weirdEnding, "Menu/WEIRD_ENDING");
+            WindfallHelper.LocalizeObject(basementEnding, "Menu/BASEMENT_ENDING");
+            WindfallHelper.LocalizeObject(momEnding, "Menu/MOM_ENDING");
+            WindfallHelper.LocalizeObject(creditsRoll, "Menu/CREDITS_ROLL");
+            WindfallHelper.LocalizeObject(finalEnding, "Menu/FINAL_ENDING");
+            WindfallHelper.LocalizeObject(back, "Menu/GO_BACK");
+
             //Recenter main menu
             RectTransform mainMenuRectTransform = __instance.mainMenu.GetComponent<RectTransform>();
             if (mainMenuRectTransform != null)
@@ -1127,54 +1153,51 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Reorder endings
-            __instance.cutsceneMenu.transform.Find("Weird Ending").SetSiblingIndex(4);
-            __instance.cutsceneMenu.transform.Find("Credits Roll").SetSiblingIndex(6);
+            weirdEnding.transform.SetSiblingIndex(4);
+            creditsRoll.transform.SetSiblingIndex(6);
 
             //Disable endings based on game progress
             Progression progression = ProgressionController.LoadProgression();
             if (!progression.unlocks[0])
             {
                 //Disable Mini Credits
-                __instance.cutsceneMenu.transform.Find("Mini Credits Roll").GetComponent<Button>().interactable = false;
+                miniCreditsRoll.GetComponent<Button>().interactable = false;
 
                 //Disable Nimble ending
-                __instance.cutsceneMenu.transform.Find("Nimble Ending").GetComponent<Button>().interactable = false;
+                nimbleEnding.GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[1])
             {
                 //Disable Stout ending
-                __instance.cutsceneMenu.transform.Find("Stout Ending").GetComponent<Button>().interactable = false;
+                stoutEnding.GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[2])
             {
                 //Disable Weird ending
-                __instance.cutsceneMenu.transform.Find("Weird Ending").GetComponent<Button>().interactable = false;
+                weirdEnding.GetComponent<Button>().interactable = false;
             }
             if (!progression.unlocks[5])
             {
                 //Disable Basement ending
-                __instance.cutsceneMenu.transform.Find("Ending Basement").GetComponent<Button>().interactable = false;
+                basementEnding.GetComponent<Button>().interactable = false;
             }
             if (progression.wins < 1)
             {
                 //Disable Mom ending
-                __instance.cutsceneMenu.transform.Find("Ending Mom").GetComponent<Button>().interactable = false;
+                momEnding.GetComponent<Button>().interactable = false;
                 //Disable Credits Roll
-                __instance.cutsceneMenu.transform.Find("Credits Roll").GetComponent<Button>().interactable = false;
+                creditsRoll.GetComponent<Button>().interactable = false;
             }
 
             bool removeFinalEnding = false;
             for (int i = 0; i < 31; i++)
             {
-                if (!progression.unlocks[i])
-                {
-                    removeFinalEnding = true;
-                }
+                if (!progression.unlocks[i]) removeFinalEnding = true;
             }
             if (removeFinalEnding)
             {
                 //Disable Final ending
-                __instance.cutsceneMenu.transform.Find("Ending Final").GetComponent<Button>().interactable = false;
+                finalEnding.GetComponent<Button>().interactable = false;
             }
 
             //Fix cutscene menu gamepad controls and visuals
