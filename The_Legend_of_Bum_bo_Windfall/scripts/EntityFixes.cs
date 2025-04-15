@@ -1,6 +1,7 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -387,6 +388,25 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __result = true;
                 }
             }
+        }
+
+        //Fixes Longits not taking critical damage from Backtabber when primed
+        [HarmonyPrefix, HarmonyPatch(typeof(LongitEnemy), nameof(LongitEnemy.Hurt))]
+        static bool LongitEnemy_Hurt_Prefix(LongitEnemy __instance)
+        {
+            if (__instance.primed) ObjectDataStorage.StoreData<bool>(__instance, "primed", true);
+            else ObjectDataStorage.StoreData<bool>(__instance, "primed", false);
+            return true;
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(LongitEnemy), nameof(LongitEnemy.Hurt))]
+        static void LongitEnemy_Hurt_Postfix(LongitEnemy __instance)
+        {
+            ObjectDataStorage.StoreData<bool>(__instance, "primed", false);
+        }
+        [HarmonyPostfix, HarmonyPatch(typeof(BackstabberSpell), nameof(BackstabberSpell.ForceCritical))]
+        static void BackstabberSpell_ForceCritical(BackstabberSpell __instance, Enemy _enemy, ref bool __result)
+        {
+            if (ObjectDataStorage.GetData<bool>(_enemy, "primed")) __result = true;
         }
 
         public static Dictionary<EnemyName, int> EnemyBaseHealth
