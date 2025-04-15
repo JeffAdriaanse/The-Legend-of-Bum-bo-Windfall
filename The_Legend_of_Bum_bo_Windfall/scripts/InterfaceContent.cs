@@ -1571,7 +1571,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 if (!selectCharacterView.progression.Unlocked(Unlocks.BumboTheNimble))
                 {
-                    //Suggest playing as Bum-bo the Nimble
+                    //Suggest playing as Bum-bo the Brave
                     suggestedBumbo = CharacterSheet.BumboType.TheBrave;
                     indicatorPosition = BravePosition;
                 }
