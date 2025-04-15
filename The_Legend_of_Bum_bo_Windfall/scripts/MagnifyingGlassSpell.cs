@@ -1,12 +1,14 @@
 ﻿using DG.Tweening;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Text;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     public class MagnifyingGlassSpell : PuzzleSpell
     {
+        private static readonly float tileAnimationDuration = 0.25f;
         public MagnifyingGlassSpell()
         {
             Name = "MAGNIFYING_GLASS_DESCRIPTION";
@@ -61,8 +63,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (block != null && blockGroupPosition != null)
             {
-                magnifyingGlassSequence.Append(ShortcutExtensions.DOShakePosition(block.transform, 0.25f, 0.05f, 20, 90f, false, true));
-                magnifyingGlassSequence.Join(ShortcutExtensions.DOShakeRotation(block.transform, 0.25f, 10f, 20, 90f, true));
+                //Set BumboEvent to prevent player input before the spell effect has finished
+                app.controller.eventsController.SetEvent(new BumboEvent());
+
+                magnifyingGlassSequence.Append(ShortcutExtensions.DOShakePosition(block.transform, tileAnimationDuration, 0.05f, 20, 90f, false, true));
+                magnifyingGlassSequence.Join(ShortcutExtensions.DOShakeRotation(block.transform, tileAnimationDuration, 10f, 20, 90f, true));
                 magnifyingGlassSequence.AppendCallback(delegate { BlockGroupModel.PlaceBlockGroup(blockGroupPosition, block.block_type, blockGroupData, false, true); });
                 magnifyingGlassSequence.AppendCallback(delegate { app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f)); });
                 return true;
