@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using I2.Loc;
 using PathologicalGames;
 using System;
 using System.Collections.Generic;
@@ -138,16 +139,16 @@ namespace The_Legend_of_Bum_bo_Windfall
             return null;
         }
 
-        private readonly static string edmundmcmillen_font_path = "Edmundmcmillen-regular SDF";
-        private static TMP_FontAsset edmundmcmillen_regular;
+        private readonly static string edFontPath = "EdmundMcMillen-Regular SDF";
+        private static TMP_FontAsset edFont;
         public static TMP_FontAsset GetEdmundMcmillenFont()
         {
-            if (edmundmcmillen_regular == null && Windfall.assetBundle != null && Windfall.assetBundle.Contains(edmundmcmillen_font_path))
+            if (edFont == null && Windfall.assetBundle != null && Windfall.assetBundle.Contains(edFontPath))
             {
-                edmundmcmillen_regular = Windfall.assetBundle.LoadAsset<TMP_FontAsset>("Edmundmcmillen-regular SDF");
+                edFont = Windfall.assetBundle.LoadAsset<TMP_FontAsset>(edFontPath);
             }
 
-            return edmundmcmillen_regular;
+            return edFont;
         }
 
         public static int ChaptersUnlocked(Progression progression)
@@ -544,6 +545,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (omitTransform == null || !omitTransform.Contains("position")) gameObject.transform.localPosition = localPosition;
             if (omitTransform == null || !omitTransform.Contains("rotation")) gameObject.transform.localRotation = Quaternion.Euler(localRotation);
             if (omitTransform == null || !omitTransform.Contains("scale")) gameObject.transform.localScale = localScale;
+        }
+
+        /// <summary>
+        /// Adds localization objects to the given GameObject and applies the given localization term.
+        /// </summary>
+        /// <param name="gameObject">The GameObject to localize.</param>
+        /// <param name="term">The localization term.</param>
+        /// <param name="localizationFontOverrides">A list of localization font overrides to apply.</param>
+        public static void LocalizeObject(GameObject gameObject, string term, List<LocalizationFontOverrides.OverrideEntry> localizationFontOverrides = null)
+        {
+            Localize localize = gameObject.AddComponent<Localize>();
+            if (term != null && term != string.Empty) localize.Term = term;
+            localize.SecondaryTerm = "FONT_FACE_MAIN";
+
+            if (localizationFontOverrides != null && localizationFontOverrides.Count > 0)
+            {
+                LocalizationFontOverrides localizationFontOverridesComponent = gameObject.AddComponent<LocalizationFontOverrides>();
+                localizationFontOverridesComponent.m_Overrides = new List<LocalizationFontOverrides.OverrideEntry>(localizationFontOverrides);
+            }
         }
     }
 

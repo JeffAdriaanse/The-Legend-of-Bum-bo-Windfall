@@ -165,27 +165,26 @@ namespace The_Legend_of_Bum_bo_Windfall
             switch (type)
             {
                 case SpellViewIndicatorType.SpellDamageScaling:
-                    tooltipDescription = "Damage";
+                    tooltipDescription = "DAMAGE_SCALING_SPELL";
                     switch (spell.spellName)
                     {
                         case (SpellName)1000:
-                            tooltipDescription = "Chain distance";
+                            tooltipDescription = "PLASMA_BALL_SCALING_SPELL";
                             break;
                         case SpellName.BarbedWire:
                         case SpellName.OrangeBelt:
-                            tooltipDescription = "Maximum damage limit";
+                            tooltipDescription = "DAMAGE_LIMIT_SCALING_SPELL";
                             break;
                         case SpellName.RockFriends:
-                            tooltipDescription = "Number of rocks";
+                            tooltipDescription = "ROCK_FRIENDS_SCALING_SPELL";
                             break;
                     }
-                    tooltipDescription += " scales with Bum-bo's spell damage stat";
                     break;
                 default:
                     tooltipDescription = string.Empty;
                     break;
             }
-            return tooltipDescription;
+            return LocalizationModifier.GetLanguageText(tooltipDescription, "Indicators");
         }
     }
 }

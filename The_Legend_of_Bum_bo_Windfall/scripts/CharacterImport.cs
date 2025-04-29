@@ -72,8 +72,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             hiddenTrinket = (TrinketName)1001,
         };
 
-        private static readonly string WiseSelectDescription = "moved tile becomes wild!";
-
         private static readonly Vector3 WiseNameLocalPosition = new Vector3(-0.006f, 0.0002f, 0.004f);
         private static readonly Vector3 WiseStatsLocalPosition = new Vector3(0.0032f, 0.0003f, 0.0029f);
         private static readonly float WiseScale = 1f;
@@ -168,7 +166,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (i == (int)(CharacterSheet.BumboType)10)
                 {
                     newText[i] = GameObject.Instantiate(newText[0], newText[0].transform.parent);
-                    newText[i].GetComponent<TextMeshPro>().text = WiseSelectDescription;
+                    Localization.SetKey(newText[i].GetComponent<Localize>(), eI2Category.Characters, "WISE_DESCRIPTION");
+                    //newText[i].GetComponent<TextMeshPro>().text = WiseSelectDescription;
                     newText[i].SetActive(false);
                     continue;
                 }
@@ -179,6 +178,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                 newText[i] = textObject;
             }
             charDescView.text = newText;
+
+            //Localized name text
+            GameObject wiseSelectName = wiseSelectParent.transform.Find("Font Name").Find("Text (TMP)").gameObject;
+            Localization.SetKey(wiseSelectName.GetComponent<Localize>(), eI2Category.Characters, "WISE_NAME");
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "Start")]

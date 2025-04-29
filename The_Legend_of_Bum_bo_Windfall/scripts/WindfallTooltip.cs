@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
+using I2.Loc;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -94,7 +95,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     displayAnchor = Anchor.Right;
                 }
 
-                displayDescription = bumboModifierTemporary.description;
+                displayDescription = LocalizationModifier.GetLanguageText(bumboModifierTemporary.description, "Indicators");
                 return;
             }
 
@@ -150,7 +151,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = string.Empty;
                 if (WindfallHelper.app.model.spellModel.spellKA.TryGetValue(spell.spellName, out string spellKA))
                 {
-                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(spellKA, "Spells") + "</u>\n" + WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
+                    displayDescription = "<u>" + LocalizationModifier.GetLanguageText(spellKA, "Spells") + "</u>\n" + WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
                 }
                 return;
             }
@@ -200,7 +201,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = string.Empty;
                 if (WindfallHelper.app.model.spellModel.spellKA.TryGetValue(spell.spellName, out string spellKA))
                 {
-                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(spellKA, "Spells") + "</u>\n" + WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
+                    displayDescription = "<u>" + LocalizationModifier.GetLanguageText(spellKA, "Spells") + "</u>\n" + WindfallTooltipDescriptions.SpellDescriptionWithValues(spell);
                 }
 
                 return;
@@ -238,7 +239,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = string.Empty;
                 if (WindfallHelper.app.model.trinketModel.trinketKA.TryGetValue(trinket.trinketName, out string trinketKA))
                 {
-                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
+                    displayDescription = "<u>" + LocalizationModifier.GetLanguageText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
                 }
                 return;
             }
@@ -271,7 +272,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     displayDescription = string.Empty;
                     if (WindfallHelper.app.model.trinketModel.trinketKA.TryGetValue(trinket.trinketName, out string trinketKA))
                     {
-                        displayDescription = "<u>" + LocalizationModifier.GetEnglishText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
+                        displayDescription = "<u>" + LocalizationModifier.GetLanguageText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
                     }
                     return;
                 }
@@ -303,7 +304,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 displayDescription = string.Empty;
                 if (WindfallHelper.app.model.trinketModel.trinketKA.TryGetValue(trinket.trinketName, out string trinketKA))
                 {
-                    displayDescription = "<u>" + LocalizationModifier.GetEnglishText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
+                    displayDescription = "<u>" + LocalizationModifier.GetLanguageText(trinketKA, "Trinkets") + "</u>\n" + WindfallTooltipDescriptions.TrinketDescriptionWithValues(trinket);
                 }
 
                 return;
@@ -331,8 +332,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 string bumboDescription = string.Empty;
 
                 CharacterSheet.BumboType bumboType = WindfallHelper.app.model.characterSheet.bumboType;
-                if (WindfallTooltipDescriptions.BumboNames.TryGetValue(bumboType, out string name)) bumboName = name;
-                if (WindfallTooltipDescriptions.BumboDescriptions.TryGetValue(bumboType, out string description)) bumboDescription = description;
+                if (WindfallTooltipDescriptions.BumboNames.TryGetValue(bumboType, out string name)) bumboName = LocalizationModifier.GetLanguageText(name, "Characters");
+                if (WindfallTooltipDescriptions.BumboDescriptions.TryGetValue(bumboType, out string description)) bumboDescription = LocalizationModifier.GetLanguageText(description, "Characters");
 
                 displayDescription = "<u>" + bumboName + "</u>\n" + bumboDescription;
                 return;
@@ -393,7 +394,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Enemy names
-                string enemyNameText = WindfallTooltipDescriptions.EnemyDisplayName(enemy);
+                string localizationCategory = enemy is Boss ? "Bosses" : "Enemies";
+                string enemyNameText = LocalizationModifier.GetLanguageText(WindfallTooltipDescriptions.EnemyDisplayName(enemy), localizationCategory);
 
                 //Resistances
                 string resitanceText = string.Empty;
@@ -768,7 +770,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            ResizeTooltip(windfallTooltip);
+            ResizeTooltipAndSetLabelText(windfallTooltip);
 
             //Hud Camera
             Camera hudCamera = WindfallHelper.app.view.GUICamera.cam;
@@ -977,7 +979,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return pixelOffset;
         }
 
-        private static void ResizeTooltip(WindfallTooltip windfallTooltip)
+        private static void ResizeTooltipAndSetLabelText(WindfallTooltip windfallTooltip)
         {
             if (labels == null || labels.Count < 1)
             {
@@ -991,6 +993,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             int linecount = -1;
             if (windfallTooltip != null && windfallTooltip.displayDescription != null)
             {
+                //Remove underline unless the language is English
+                if (LocalizationManager.CurrentLanguage != "English") windfallTooltip.displayDescription = windfallTooltip.displayDescription.Replace("<u>", "").Replace("</u>", "");
+
                 hiddenLabel.SetText(windfallTooltip.displayDescription);
                 hiddenLabel.ForceMeshUpdate();
                 TMP_TextInfo textInfo = hiddenLabel.textInfo;
@@ -1102,16 +1107,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             hiddenLabel = anchor.Find("Hidden Label").GetComponent<TextMeshPro>();
             LocalizationModifier.ChangeFont(null, hiddenLabel, WindfallHelper.GetEdmundMcmillenFont());
+            WindfallHelper.LocalizeObject(hiddenLabel.gameObject, null);
 
             labels = tooltipTransform.GetComponentsInChildren<TextMeshPro>(true).ToList();
-            if (labels.Contains(hiddenLabel))
-            {
-                labels.Remove(hiddenLabel);
-            }
+            if (labels.Contains(hiddenLabel)) labels.Remove(hiddenLabel);
 
             foreach (TextMeshPro textMeshPro in labels)
             {
                 LocalizationModifier.ChangeFont(null, textMeshPro, WindfallHelper.GetEdmundMcmillenFont());
+                WindfallHelper.LocalizeObject(textMeshPro.gameObject, null);
             }
 
             ShowTooltip(false, false);
@@ -1225,32 +1229,32 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new Dictionary<CharacterSheet.BumboType, string>
                 {
-                    { CharacterSheet.BumboType.TheBrave, "Bum-bo the Brave" },
-                    { CharacterSheet.BumboType.TheNimble, "Bum-bo the Nimble" },
-                    { CharacterSheet.BumboType.TheStout, "Bum-bo the Stout" },
-                    { CharacterSheet.BumboType.TheWeird, "Bum-bo the Weird" },
-                    { CharacterSheet.BumboType.TheDead, "Bum-bo the Dead" },
-                    { CharacterSheet.BumboType.TheLost, "Bum-bo the Lost" },
-                    { CharacterSheet.BumboType.Eden, "Bum-bo the Empty" },
-                    { (CharacterSheet.BumboType) 10, "Bum-bo the Wise" },
+                    { CharacterSheet.BumboType.TheBrave, "BRAVE_NAME" },
+                    { CharacterSheet.BumboType.TheNimble, "NIMBLE_NAME" },
+                    { CharacterSheet.BumboType.TheStout, "STOUT_NAME" },
+                    { CharacterSheet.BumboType.TheWeird, "WEIRD_NAME" },
+                    { CharacterSheet.BumboType.TheDead, "DEAD_NAME" },
+                    { CharacterSheet.BumboType.TheLost, "LOST_NAME" },
+                    { CharacterSheet.BumboType.Eden, "EMPTY_NAME" },
+                    { (CharacterSheet.BumboType) 10, "WISE_NAME" },
                 };
             }
         }
 
-        public static readonly string WISE_DESCRIPTION = "Turns tiles wild after moving them";
+        public static readonly string WISE_DESCRIPTION = "WISE_TOOLTIP_DESCRIPTION";
         public static Dictionary<CharacterSheet.BumboType, string> BumboDescriptions
         {
             get
             {
                 return new Dictionary<CharacterSheet.BumboType, string>
                 {
-                    { CharacterSheet.BumboType.TheBrave, "Gains 1 spell damage and 1 puzzle damage while at or below 2 red health. Increases to 2 spell damage and 2 puzzle damage while at or below 1 red health" },
-                    { CharacterSheet.BumboType.TheNimble, "Gains 1 mana of each color upon hitting an enemy with a puzzle attack" },
-                    { CharacterSheet.BumboType.TheStout, "Gains extra mana from tile combos: 7 mana from 4-tile combos and 9 mana from bigger combos. Loses all mana at the start of each turn" },
-                    { CharacterSheet.BumboType.TheWeird, "Gains 1 movement upon killing an enemy" },
-                    { CharacterSheet.BumboType.TheDead, "Gains 2 mana of each color at the start of each room. Spells reroll their mana costs after being activated" },
-                    { CharacterSheet.BumboType.TheLost, "Cannot gain health past 1/2 heart. Ghost tiles appear on the puzzle board" },
-                    { CharacterSheet.BumboType.Eden, "Starts with random stats. Rerolls each spell into another spell of the same type at the start of each room" },
+                    { CharacterSheet.BumboType.TheBrave, "BRAVE_TOOLTIP_DESCRIPTION" },
+                    { CharacterSheet.BumboType.TheNimble, "NIMBLE_TOOLTIP_DESCRIPTION" },
+                    { CharacterSheet.BumboType.TheStout, "STOUT_TOOLTIP_DESCRIPTION" },
+                    { CharacterSheet.BumboType.TheWeird, "WEIRD_TOOLTIP_DESCRIPTION" },
+                    { CharacterSheet.BumboType.TheDead, "DEAD_TOOLTIP_DESCRIPTION" },
+                    { CharacterSheet.BumboType.TheLost, "LOST_TOOLTIP_DESCRIPTION" },
+                    { CharacterSheet.BumboType.Eden, "EMPTY_TOOLTIP_DESCRIPTION" },
                     { (CharacterSheet.BumboType) 10, WISE_DESCRIPTION },
                 };
             }
@@ -1258,7 +1262,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static string SpellDescriptionWithValues(SpellElement spell)
         {
-            if (SpellDescriptions.TryGetValue(spell.spellName, out string value))
+            string tooltipDescriptionTerm = spell.Name;
+            int lastUnderscoreIndex = tooltipDescriptionTerm.LastIndexOf("_");
+            tooltipDescriptionTerm = tooltipDescriptionTerm.Substring(0, lastUnderscoreIndex);
+            tooltipDescriptionTerm = tooltipDescriptionTerm + "_TOOLTIP_DESCRIPTION";
+
+            string value = LocalizationModifier.GetLanguageText(tooltipDescriptionTerm, "Spells");
+
+            if (value != string.Empty)
             {
                 CharacterSheet characterSheet = WindfallHelper.app?.model?.characterSheet;
                 switch (spell.spellName)
@@ -1276,23 +1287,23 @@ namespace The_Legend_of_Bum_bo_Windfall
                         }
                         break;
                     case SpellName.D10:
-                        string grounded = String.Empty;
-                        string flying = String.Empty;
+                        string grounded = string.Empty;
+                        string flying = string.Empty;
                         if (characterSheet != null)
                         {
                             switch (characterSheet.currentFloor)
                             {
                                 case 2:
-                                    grounded = "Masks";
-                                    flying = "Longits or Boom Flies";
+                                    grounded = LocalizationModifier.GetLanguageText("D10_TOOLTIP_GROUNDED_2", "Spells");
+                                    flying = LocalizationModifier.GetLanguageText("D10_TOOLTIP_FLYING_2", "Spells");
                                     break;
                                 case 3:
-                                    grounded = "Skully B.s or Cultists";
-                                    flying = "Whisps";
+                                    grounded = LocalizationModifier.GetLanguageText("D10_TOOLTIP_GROUNDED_3", "Spells");
+                                    flying = LocalizationModifier.GetLanguageText("D10_TOOLTIP_FLYING_3", "Spells");
                                     break;
                                 default:
-                                    grounded = "Dips or Tato Kids";
-                                    flying = "Flies";
+                                    grounded = LocalizationModifier.GetLanguageText("D10_TOOLTIP_GROUNDED_1", "Spells");
+                                    flying = LocalizationModifier.GetLanguageText("D10_TOOLTIP_FLYING_1", "Spells");
                                     break;
                             }
                         }
@@ -1303,19 +1314,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                         value = value.Replace("[damage]", "5");
                         break;
                     case SpellName.ExorcismKit:
-                        string healing = WindfallPersistentDataController.LoadData().implementBalanceChanges ? "1" : "2";
+                        string healing = "1";
                         value = value.Replace("[healing]", healing);
-                        break;
-                    case SpellName.LooseChange:
-                        string coins = WindfallPersistentDataController.LoadData().implementBalanceChanges ? "4 coins" : "1 coin";
-                        value = value.Replace("[coins]", coins);
                         break;
                     case SpellName.RockFriends:
                         if (characterSheet != null)
                         {
                             int itemDamage = characterSheet.getItemDamage() + 1;
                             value = value.Replace("[count]", itemDamage.ToString());
-                            value = value.Replace("[target]", itemDamage == 1 ? "rock on a random enemy," : "rocks on random enemies, each");
+
+                            //Handle English pluralization
+                            if (value == "1" && LocalizationManager.CurrentLanguage == "English") value = value.Replace("rocks on random enemies, each", "rock on a random enemy,");
                         }
                         break;
                 }
@@ -1327,260 +1336,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             return string.Empty;
         }
 
-        public static Dictionary<SpellName, string> SpellDescriptions
-        {
-            get
-            {
-                return new Dictionary<SpellName, string>
-                {
-                    { (SpellName)1000, "Attacks an enemy for [damage] spell damage, chaining to nearby enemies up to [spread] additional times" },
-                    { (SpellName)1001, "Enlarges a random tile, doubling its value in tile combos" },
-                    { (SpellName)1002, "Enlarges the selected tile, doubling its value in tile combos" },
-                    { SpellName.Addy, "Raises spell damage and puzzle damage by 1 this turn" },
-                    { SpellName.AttackFly, "Attacks for [damage] spell damage, repeating in the same lane for 1 damage each turn" },
-                    { SpellName.Backstabber, "Attacks for [damage] spell damage to the furthest enemy. Always crits primed enemies" },
-                    { SpellName.BarbedWire, "For the current room, enemies take +1 damage when they attack, up to [stacking]" },
-                    { SpellName.BeckoningFinger, "Pulls a random enemy to the front row and poisons it" },
-                    { SpellName.BeeButt, "Attacks for [damage] spell damage, poisoning the enemy" },
-                    { SpellName.BigRock, "Attacks for [damage] spell damage to the furthest enemy, plus 1 splash damage to adjacent spaces" },
-                    { SpellName.BigSlurp, "Grants 2 movement" },
-                    { SpellName.BlackCandle, "Destroys all curse tiles" },
-                    { SpellName.BlackD12, "Rerolls the selected column of tiles" },
-                    { SpellName.BlenderBlade, "Destroys the selected tile and the 4 tiles next to it" },
-                    { SpellName.BlindRage, "For the current room, raises spell damage and puzzle damage by 1, but doubles all damage received" },
-                    { SpellName.BloodRights, "Grants 1 mana of each color, but also randomly places <nobr>1-2</nobr> curse tiles" },
-                    { SpellName.BorfBucket, "Attacks for [damage] spell damage, plus 1 splash damage to adjacent spaces" },
-                    { SpellName.Box, "Grants 1 mana of each color" },
-                    { SpellName.Brimstone, "Attacks for [damage] spell damage to all enemies in the selected lane" },
-                    { SpellName.BrownBelt, "Blocks the next hit and counters for [damage] spell damage" },
-                    { SpellName.BumboShake, "Shuffles the puzzle board" },
-                    { SpellName.BumboSmash, "Attacks for [damage] spell damage" },
-                    { SpellName.ButterBean, "Knocks back all enemies" },
-                    { SpellName.BuzzDown, "Moves the selected tile column downward by one" },
-                    { SpellName.BuzzRight, "Moves the selected tile row rightward by one" },
-                    { SpellName.BuzzUp, "Moves the selected tile column upward by one" },
-                    { SpellName.CatHeart, "Randomly places a heart tile" },
-                    { SpellName.CatPaw, "Drains a red heart and converts it into a soul heart" },
-                    { SpellName.Chaos, "Randomly places a wild tile and a curse tile" },
-                    { SpellName.CoinRoll, "Grants 1 coin" },
-                    { SpellName.ConverterBrown, "Grants 2 brown mana" },
-                    { SpellName.ConverterGreen, "Grants 2 green mana" },
-                    { SpellName.ConverterGrey, "Grants 2 grey mana" },
-                    { SpellName.ConverterWhite, "Grants 2 white mana" },
-                    { SpellName.ConverterYellow, "Grants 2 yellow mana" },
-                    { SpellName.CraftPaper, "Transforms into a copy of the selected spell" },
-                    { SpellName.CrazyStraw, "Destroys the selected tile and grants 3 mana of its color" },
-                    { SpellName.CursedRainbow, "Randomly places 3 curse tiles, and 4 wild tiles in the 'next' row" },
-                    { SpellName.D10, "Rerolls all grounded enemies into [grounded]. Rerolls all flying enemies into [flying]. Enemy types change each floor." },
-                    { SpellName.D20, "Rerolls mana and the puzzle board, grants a coin and a soul heart, and unprimes all enemies" },
-                    { SpellName.D4, "Shuffles the puzzle board" },
-                    { SpellName.D6, "Rerolls the selected spell" },
-                    { SpellName.D8, "Rerolls mana" },
-                    { SpellName.DarkLotus, "Grants 6 random mana" },
-                    { SpellName.DeadDove, "Destroys the selected tile and all tiles above it" },
-                    { SpellName.DogTooth, "Attacks for [damage] spell damage, healing 1/2 heart if it hits an enemy" },
-                    { SpellName.Ecoli, "Attacks in the selected lane, transforming the enemy into a Poop, Dip, or Squat" },
-                    { SpellName.Eraser, "Destroys all tiles of the selected type" },
-                    { SpellName.Euthanasia, "Retaliates for [damage] spell damage to the next attacking enemy" },
-                    { SpellName.ExorcismKit, "Attacks a random enemy for [damage] spell damage and heals all other enemies for [healing] health" },
-                    { SpellName.FishHook, "Attacks for [damage] spell damage, granting 1 random mana if it hits an enemy" },
-                    { SpellName.FlashBulb, "Flashes all enemies, giving each a 50% chance of being blinded" },
-                    { SpellName.Flip, "Rerolls the selected tile" },
-                    { SpellName.Flush, "Attacks for [damage] spell damage to all enemies and removes all Poops" },
-                    { SpellName.GoldenTick, "Reduces mana costs by 40% for the current room and fully charges all other spells" },
-                    { SpellName.HairBall, "Attacks for [damage] spell damage, splashing enemies behind for 1 damage" },
-                    { SpellName.HatPin, "Attacks for [damage] spell damage to all enemies in the row" },
-                    { SpellName.Juiced, "Grants 1 movement" },
-                    { SpellName.KrampusCross, "Destroys the selected row and column of tiles" },
-                    { SpellName.Lard, "Heals 1 red heart, but reduces movement at the start of the next turn by 1" },
-                    { SpellName.LeakyBattery, "Attacks for [damage] spell damage to all enemies" },
-                    { SpellName.Lemon, "Attacks for [damage] spell damage, blinding the enemy" },
-                    { SpellName.Libra, "Averages current mana between all 5 colors" },
-                    { SpellName.LilRock, "Attacks for [damage] spell damage to the furthest enemy" },
-                    { SpellName.LithiumBattery, "Grants 2 movement" },
-                    { SpellName.LooseChange, "During the next enemy phase, grants [coins] upon taking damage" },
-                    { SpellName.LuckyFoot, "Raises luck by 1 for the room" },
-                    { SpellName.Magic8Ball, "Randomly places a wild tile in the 'next' row" },
-                    { SpellName.MagicMarker, "Randomly places <nobr>2-3</nobr> copies of the selected tile" },
-                    { SpellName.Mallot, "Destroys the selected tile and places 2 copies beside it" },
-                    { SpellName.MamaFoot, "Attacks for [damage] spell damage to all enemies, but hurts for 1/2 heart" },
-                    { SpellName.MamaShoe, "Attacks for [damage] spell damage to all grounded enemies" },
-                    { SpellName.MeatHook, "Attacks for [damage] spell damage to to the furthest enemy, pulling it to the front row" },
-                    { SpellName.MegaBattery, "Grants 3 movement and <nobr>2-3</nobr> random mana" },
-                    { SpellName.MegaBean, "Knocks back all enemies in the front row and poisons all flying enemies" },
-                    { SpellName.Melatonin, "Unprimes all enemies" },
-                    { SpellName.Metronome, "Grants the effect of a random spell" },
-                    { SpellName.MirrorMirror, "Horizontally inverts the selected row of tiles" },
-                    { SpellName.MissingPiece, "Raises puzzle damage by 1 for the current room" },
-                    { SpellName.MomsLipstick, "Turns the selected tile into a heart tile" },
-                    { SpellName.MomsPad, "Blinds an enemy" },
-                    { SpellName.MsBang, "Destroys the selected tile and all 8 surrounding tiles" },
-                    { SpellName.Mushroom, "Raises spell damage and puzzle damage by 1 for the current room and heals 1/2 heart" },
-                    { SpellName.NailBoard, "Attacks for [damage] spell damage to all enemies in the front row" },
-                    { SpellName.NavyBean, "Destroys the selected column of tiles" },
-                    { SpellName.Needle, "Attacks for [damage] spell damage, increasing its damage by 1 for the current room if it hits an enemy" },
-                    { SpellName.Number1, "Attacks for [damage] spell damage, granting 1 movement if it hits an enemy" },
-                    { SpellName.OldPillow, "Blocks the next attack" },
-                    { SpellName.OrangeBelt, "Enemies take +1 damage when they attack this turn, up to [stacking]" },
-                    { SpellName.PaperStraw, "Grants mana for each copy of the most common tile in its own color" },
-                    { SpellName.Pause, "Skips the next enemy phase" },
-                    { SpellName.Peace, "Randomly unprimes an enemy" },
-                    { SpellName.Pentagram, "Raises spell damage by 1 for the current room" },
-                    { SpellName.Pepper, "Boogers and knocks back an enemy" },
-                    { SpellName.PintoBean, "Knocks back all enemies in the front row" },
-                    { SpellName.Pliers, "Attacks for [damage] spell damage, granting 1 grey mana and randomly placing a tooth tile if it hits an enemy" },
-                    { SpellName.PotatoMasher, "Destroys the selected tile and randomly places a copy of it" },
-                    { SpellName.PrayerCard, "Grants 1/2 soul heart" },
-                    { SpellName.PriceTag, "Destroys the selected spell and grants <nobr>10-20</nobr> coins" },
-                    { SpellName.PuzzleFlick, "Destroys all tiles of the selected type, then attacks for spell damage equal to half the tiles destroyed" },
-                    { SpellName.Quake, "Attacks all grounded enemies that are not below a flying enemy for 1 spell damage. Destroys all obstacles and attacks all spaces for 1 damage per obstacle destroyed" },
-                    { SpellName.RainbowFinger, "Turns the selected tile into a wild tile" },
-                    { SpellName.RainbowFlag, "Randomly places 3 wild tiles" },
-                    { SpellName.RedD12, "Rerolls the selected row of tiles" },
-                    { SpellName.Refresh, "Adds 1 charge to a random spell" },
-                    { SpellName.Rock, "Attacks for [damage] spell damage to the furthest enemy" },
-                    { SpellName.RockFriends, "Drops [count] [target] dealing [damage] spell damage" },
-                    { SpellName.RoidRage, "Grants 100% crit chance for the next attack" },
-                    { SpellName.RottenMeat, "Heals 1/2 heart, but randomly obscures 4 tiles" },
-                    { SpellName.RubberBat, "Attacks for [damage] spell damage to all enemies in the front row and knocks them back" },
-                    { SpellName.SilverChip, "Increases coins gained from the clearing the current room by <nobr>1-3</nobr>" },
-                    { SpellName.Skewer, "Destroys the selected row of tiles" },
-                    { SpellName.SleightOfHand, "Reduces the mana cost of all other spells by 25% for the current room" },
-                    { SpellName.SmokeMachine, "Grants 50% dodge chance this turn" },
-                    { SpellName.Snack, "Heals 1/2 heart" },
-                    { SpellName.SnotRocket, "Boogers all enemies in the selected lane" },
-                    { SpellName.Stick, "Attacks for [damage] spell damage, knocking the enemy back" },
-                    { SpellName.StopWatch, "Prevents enemies from using more than 1 action this turn" },
-                    { SpellName.Teleport, "Skips the current room" },
-                    { SpellName.TheNegative, "Attacks for [damage] spell damage to all enemies in the selected lane" },
-                    { SpellName.ThePoop, "Places a poop barrier in the selected lane" },
-                    { SpellName.TheRelic, "Grants 1 soul heart" },
-                    { SpellName.TheVirus, "Enemies become poisoned when they attack this turn" },
-                    { SpellName.TimeWalker, "Grants 3 movement" },
-                    { SpellName.TinyDice, "Rerolls all tiles of the selected type" },
-                    { SpellName.Toothpick, "Destroys the selected tile and grants 1 mana of its color" },
-                    { SpellName.TracePaper, "Randomly grants the effect of another owned spell" },
-                    { SpellName.TrapDoor, "Skips the current chapter and grants 10 coins" },
-                    { SpellName.TrashLid, "Blocks the next 2 attacks" },
-                    { SpellName.TwentyLbsWeight, "Destroys all tiles in the top 3 rows" },
-                    { SpellName.TwentyTwenty, "Duplicates the next tile combo effect" },
-                    { SpellName.WatchBattery, "Grants 1 movement" },
-                    { SpellName.WhiteBelt, "This turn, negates enemy curses and mana drain, and reduces damage taken from each hit to 1/2 heart" },
-                    { SpellName.WoodenNickel, "Grants <nobr>1-2</nobr> coins" },
-                    { SpellName.WoodenSpoon, "Grants 1 movement immediately and at the start of each turn" },
-                    { SpellName.YellowBelt, "Raises dodge chance by 5% for the current room, up to [stacking]%" },
-                    { SpellName.YumHeart, "Heals 1 heart" },
-                };
-            }
-        }
-
         public static string TrinketDescriptionWithValues(TrinketElement trinket)
         {
-            if (TrinketDescriptions.TryGetValue(trinket.trinketName, out string value))
-            {
-                return value;
-            }
-            return string.Empty;
-        }
+            string tooltipDescriptionTerm = trinket.Name;
+            int lastUnderscoreIndex = tooltipDescriptionTerm.LastIndexOf("_");
+            tooltipDescriptionTerm = tooltipDescriptionTerm.Substring(0, lastUnderscoreIndex);
+            tooltipDescriptionTerm = tooltipDescriptionTerm + "_TOOLTIP_DESCRIPTION";
 
-        public static Dictionary<TrinketName, string> TrinketDescriptions
-        {
-            get
-            {
-                return new Dictionary<TrinketName, string>
-                {
-                    { (TrinketName)1002, "Tiles turn wild after being moved" },
-                    { (TrinketName)1003, "Grants a movement point upon taking damage from an enemy attack" },
-                    { TrinketName.ChargePrick, "Reduces the selected spell's recharge time by 1" },
-                    { TrinketName.DamagePrick, "Raises the selected spell's damage by 1" },
-                    { TrinketName.ManaPrick, "Reduces the selected spell's mana cost by 25%" },
-                    { TrinketName.RandomPrick, "Rerolls the selected spell" },
-                    { TrinketName.ShufflePrick, "Rerolls the selected spell's mana cost" },
-                    { TrinketName.AAABattery, "Grants a 10% chance to gain 1 movement at the start of each turn" },
-                    { TrinketName.AABattery, "Grants a 25% chance to gain 1 movement upon killing an enemy" },
-                    { TrinketName.Artery, "Grants a 10% chance to heal 1/2 heart upon killing an enemy" },
-                    { TrinketName.BagOJuice, "Grants 1 mana of each color upon taking damage from an enemy attack" },
-                    { TrinketName.BagOSucking, "Grants a 50% chance to gain 3 random mana upon dealing spell damage" },
-                    { TrinketName.BagOTrash, "Spells reroll their mana costs after being activated" },
-                    { TrinketName.BlackCandle, "Negates all damage recieved from curse tiles" },
-                    { TrinketName.BlackMagic, "Deals 3 puzzle damage to all enemies upon matching a curse tile combo" },
-                    { TrinketName.BloodBag, "Upon taking damage from an enemy attack, raises spell damage and puzzle damage by 1 for the current room" },
-                    { TrinketName.BloodyBattery, "Grants a 15% chance to gain 1 movement upon damaging an enemy" },
-                    { TrinketName.BoneSpur, "Raises the damage of bone attacks by 1" },
-                    { TrinketName.Boom, "Deals 6 damage to all enemies" },
-                    { TrinketName.Breakfast, "Heals 1/2 heart at the start of each room" },
-                    { TrinketName.BrownTick, "Reduces the selected spell's recharge time by 1" },
-                    { TrinketName.ButterBean, "Knocks back all enemies at the start of each room" },
-                    { TrinketName.CashGrab, "Increases coins gained from clearing each room by 1" },
-                    { TrinketName.ChickenBone, "Grants 2 white mana at the start of each turn" },
-                    { TrinketName.Clover, "Raises luck by 1" },
-                    { TrinketName.CoinPurse, "Increases coins gained from clearing each room by 1" },
-                    { TrinketName.ColostomyBag, "Places a poop pile in a random lane at the start of each room" },
-                    { TrinketName.Curio, "Multiplies the effects of some trinkets" },
-                    { TrinketName.CurvedHorn, "At the start of each turn, grants a 33% chance to raise spell damage by 1 for the current turn" },
-                    { TrinketName.Death, "Hurts all <nobr>non-boss</nobr> enemies for damage equal to their current health. Deals 3 damage to bosses" },
-                    { TrinketName.Dinner, "Heals all hearts" },
-                    { TrinketName.DrakulaTeeth, "Grants a 10% chance to heal 1/2 heart upon damaging an enemy" },
-                    { TrinketName.EggBeater, "Rerolls mana upon killing an enemy" },
-                    { TrinketName.Experimental, "Raises a random stat by 1 and randomly places a curse tile on the puzzle board" },
-                    { TrinketName.FalseTeeth, "Grants 2 grey mana at the start of each turn" },
-                    { TrinketName.Feather, "At the start of each turn or when taking damage from a <nobr>non-enemy</nobr> source, if only 1/2 red health remains, chooses a random unavailable spell and allows it to be used once for free" },
-                    { TrinketName.Fracture, "Randomly throws a bone at the start of each room" },
-                    { TrinketName.Glitch, "Transforms into a random trinket at the start of each room" },
-                    { TrinketName.Goober, "Randomly throws a booger at the start of each room" },
-                    { TrinketName.HeartLocket, "Randomly places <nobr>2-4 heart</nobr> tiles at the start of each room" },
-                    { TrinketName.HolyMantle, "Grants a shield that negates one hit of damage in each room" },
-                    { TrinketName.Hoof, "Grants 1 movement at the start of each room" },
-                    { TrinketName.IBS, "Increases the size of placed poop piles by 1, but not above 3" },
-                    { TrinketName.LotusPetal, "Grants 3 mana of each color" },
-                    { TrinketName.Magnet, "Grants a 33% chance to gain 2 extra coins upon clearing a room" },
-                    { TrinketName.ModelingClay, "Randomly chooses another owned trinket and becomes a copy of it" },
-                    { TrinketName.MomsPhoto, "Grants a 25% chance to apply blindness upon hitting an enemy" },
-                    { TrinketName.MysteriousBag, "Grants a 25% chance to splash 1 spell damage to all adjacent spaces upon damaging an enemy" },
-                    { TrinketName.MysticMarble, "Raises the damage of tooth attacks by 1" },
-                    { TrinketName.NineVolt, "Grants a 25% chance to charge a random spell by 1 upon using a spell" },
-                    { TrinketName.Norovirus, "Causes poop barriers to retaliate for 1 damage when attacked" },
-                    { TrinketName.NoseGoblin, "Randomly places <nobr>2-4</nobr> booger tiles at the start of each room" },
-                    { TrinketName.OldTooth, "Randomly places <nobr>2-4</nobr> tooth tiles at the start of each room" },
-                    { TrinketName.OneUp, "Grants an extra life upon taking fatal damage, restoring all starting health" },
-                    { TrinketName.PinkBow, "Grants a soul heart at the end of each chapter" },
-                    { TrinketName.PinkEye, "Grants a 25% chance to apply poison upon hitting an enemy" },
-                    { TrinketName.Pinky, "Grants a 33% chance to randomly place a wild tile upon killing an enemy" },
-                    { TrinketName.Plunger, "Randomly places <nobr>2-4</nobr> poop tiles at the start of each room" },
-                    { TrinketName.PuzzlePiece, "Upon matching a tile combo, grants 1 mana of each color for each wild tile used" },
-                    { TrinketName.RainbowBag, "Rerolls each spell into another spell of the same type at the start of each room" },
-                    { TrinketName.RainbowTick, "Reduces a spell's mana cost by 25%" },
-                    { TrinketName.RatHeart, "Grants a 25% chance to gain 1/2 soul heart at the start of each room" },
-                    { TrinketName.RatTail, "Raises dodge chance by 10%" },
-                    { TrinketName.Rib, "Randomly places <nobr>2-4</nobr> bone tiles at the start of each room" },
-                    { TrinketName.Sample, "Randomly places <nobr>2-4</nobr> pee tiles at the start of each room" },
-                    { TrinketName.SantaSangre, "Grants a 10% chance to gain 1/2 soul heart upon killing an enemy" },
-                    { TrinketName.SharpNail, "Grants a 10% chance to deal 1 spell damage to enemies when they move" },
-                    { TrinketName.SilverSkull, "Grants 1 random mana upon killing an enemy" },
-                    { TrinketName.SinusInfection, "Causes boogers to deal 1 puzzle damage upon hitting an enemy" },
-                    { TrinketName.SmallBox, "Grants 3 random mana at the start of each room" },
-                    { TrinketName.SoulBag, "Grants a 25% chance to gain 1 movement upon killing an enemy" },
-                    { TrinketName.SteamSale, "Reduces the price of needles, hearts, and trinkets in the Wooden Nickel by 2" },
-                    { TrinketName.StemCell, "Heals 1/2 heart upon clearing a room" },
-                    { TrinketName.StrayBarb, "Grants a 50% chance to retaliate for 1 spell damage against attacking enemies" },
-                    { TrinketName.SuperBall, "Grants a 25% chance to apply knockback upon hitting an enemy" },
-                    { TrinketName.SwallowedPenny, "Grants a 25% chance to gain 1 coin upon taking damage from an enemy attack" },
-                    { TrinketName.Target, "Raises crit chance by 15%" },
-                    { TrinketName.TheDevil, "Raises spell damage and puzzle damage by 1 for the current room" },
-                    { TrinketName.TheFool, "Restarts the current chapter. Drains soul health and red health, leaving 1 heart remaining" },
-                    { TrinketName.Hierophant, "Grants 2 soul hearts" },
-                    { TrinketName.TheStars, "Skips to the next treasure room or the Wooden Nickel, whichever is closer" },
-                    { TrinketName.Thermos, "Fully charges all spells and heals 1 heart" },
-                    { TrinketName.ThreeDollarBill, "Randomly places a wild tile at the start of each room" },
-                    { TrinketName.ToiletSeat, "Grants 2 yellow mana at the start of each turn" },
-                    { TrinketName.Turdy, "Grants 2 brown mana at the start of each turn" },
-                    { TrinketName.TurtleShell, "Limits total damage taken from enemy attacks each turn to 1 heart" },
-                    { TrinketName.Tweezers, "Grants a 50% chance to gain 1 random mana upon damaging an enemy" },
-                    { TrinketName.UsedTissue, "Grants 2 green mana at the start of each turn" },
-                    { TrinketName.WetDiaper, "Grants a 25% chance to gain 1 movement upon receiving movement from any other source" },
-                    { TrinketName.WhiteCandle, "Randomly destroys a curse tile at the start of each turn" },
-                };
-            }
+            string value = LocalizationModifier.GetLanguageText(tooltipDescriptionTerm, "Trinkets");
+
+            if (value != null) return value;
+            return string.Empty;
         }
 
         public static string EnemyDisplayName(Enemy enemy)
@@ -1589,46 +1355,31 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Get boss
             Boss boss = null;
-            if (enemy is Boss) { boss = enemy as Boss; }
+            if (enemy is Boss) boss = enemy as Boss;
 
             //Enemy names
             string enemyNameText = string.Empty;
             if (enemyNameText == string.Empty)
             {
                 //Enemy names from name
-                if (EnemyDisplayNamesByEnemyName.TryGetValue(enemy.enemyName, out string enemyNameFromName))
-                {
-                    enemyNameText = enemyNameFromName;
-                }
+                if (EnemyDisplayNamesByEnemyName.TryGetValue(enemy.enemyName, out string enemyNameFromName)) enemyNameText = enemyNameFromName;
             }
             if (enemyNameText == string.Empty)
             {
                 //Boss names from name
-                if (boss != null && BossDisplayNamesByBossName.TryGetValue((enemy as Boss).bossName, out string bossNameFromName))
-                {
-                    enemyNameText = bossNameFromName;
-                }
+                if (boss != null && BossDisplayNamesByBossName.TryGetValue((enemy as Boss).bossName, out string bossNameFromName)) enemyNameText = bossNameFromName;
             }
             if (enemyNameText == string.Empty)
             {
                 //Enemy and Boss names from type
-                if (EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType))
-                {
-                    enemyNameText = enemyNameFromType;
-                }
+                if (EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType)) enemyNameText = enemyNameFromType;
             }
 
             //Get Flipper
-            if (enemy is FlipperEnemy)
-            {
-                enemyNameText = enemy.attackImmunity == Enemy.AttackImmunity.ReducePuzzleDamage ? "Nib" : "Jib";
-            }
+            if (enemy is FlipperEnemy) enemyNameText = enemy.attackImmunity == Enemy.AttackImmunity.ReducePuzzleDamage ? "NIB_NAME" : "JIB_NAME";
 
             //Get Bygone Ghost
-            if (enemy.gameObject.name.Contains("Bygone Ghost"))
-            {
-                enemyNameText = "Bygone Ghost";
-            }
+            if (enemy.gameObject.name.Contains("Bygone Ghost")) enemyNameText = "BYGONE_GHOST_NAME";
 
             return enemyNameText;
         }
@@ -1638,55 +1389,55 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new Dictionary<EnemyName, string>
                 {
-                    { EnemyName.Arsemouth, "Tall Boy" },
-                    { EnemyName.BlackBlobby, "Black Blobby" },
-                    { EnemyName.Blib, "Blib" },
-                    { EnemyName.BlueBoney, "Skully B." },
-                    { EnemyName.BoomFly, "Boom Fly" },
-                    { EnemyName.Burfer, "Burfer" },
-                    { EnemyName.Butthead, "Squat" },
-                    { EnemyName.CornyDip, "Corn Dip" },
-                    { EnemyName.Curser, "Curser" },
-                    { EnemyName.DigDig, "Dig Dig" },
-                    { EnemyName.Dip, "Dip" },
-                    { EnemyName.Flipper, "Flipper" },
-                    { EnemyName.FloatingCultist, "Floater" },
-                    { EnemyName.Fly, "Fly" },
-                    { EnemyName.Greedling, "Greedling" },
-                    { EnemyName.GreenBlib, "Green Blib" },
-                    { EnemyName.GreenBlobby, "Green Blobby" },
-                    { EnemyName.Hanger, "Keeper" },
-                    { EnemyName.Hopper, "Leaper" },
-                    { EnemyName.Host, "Host" },
-                    //{ EnemyName.Imposter, "Imposter" },
-                    { EnemyName.Isaacs, "Isaac" },
-                    { EnemyName.Larry, "Larry" },
-                    { EnemyName.Leechling, "Suck" },
-                    { EnemyName.Longit, "Longits" },
-                    { EnemyName.ManaWisp, "Mana Wisp" },
-                    { EnemyName.MaskedImposter, "Mask" },
-                    { EnemyName.MeatGolem, "Meat Golum" },
-                    { EnemyName.MegaPoofer, "Mega Poofer" },
-                    { EnemyName.MirrorHauntLeft, "Mirror" },
-                    { EnemyName.MirrorHauntRight, "Mirror" },
-                    { EnemyName.PeepEye, "Peeper Eye" },
-                    { EnemyName.Poofer, "Poofer" },
-                    { EnemyName.Pooter, "Pooter" },
-                    { EnemyName.PurpleBoney, "Skully P." },
-                    { EnemyName.RedBlobby, "Red Blobby" },
-                    { EnemyName.RedCultist, "Red Floater" },
-                    { EnemyName.Screecher, "Screecher" },
-                    { EnemyName.Shit, "Poop" },
-                    { EnemyName.Spookie, "Spookie" },
-                    { EnemyName.Stone, "Rock" },
-                    { EnemyName.Stony, "Stony" },
-                    { EnemyName.Sucker, "Sucker" },
-                    { EnemyName.Tader, "Daddy Tato" },
-                    { EnemyName.Tado, "Tato Kid" },
-                    { EnemyName.TaintedPeepEye, "Tainted Peeper Eye" },
-                    { EnemyName.Tutorial, "Keeper" },
-                    { EnemyName.WalkingCultist, "Cultist" },
-                    { EnemyName.WillOWisp, "Whisp" },
+                    { EnemyName.Arsemouth, "TALL_BOY_NAME" },
+                    { EnemyName.BlackBlobby, "BLACK_BLOBBY_NAME" },
+                    { EnemyName.Blib, "BLIB_NAME" },
+                    { EnemyName.BlueBoney, "SKULLY_B_NAME" },
+                    { EnemyName.BoomFly, "BOOM_FLY_NAME" },
+                    { EnemyName.Burfer, "BURFER_NAME" },
+                    { EnemyName.Butthead, "SQUAT_NAME" },
+                    { EnemyName.CornyDip, "CORN_DIP_NAME" },
+                    { EnemyName.Curser, "CURSER_NAME" },
+                    { EnemyName.DigDig, "DIG_DIG_NAME" },
+                    { EnemyName.Dip, "DIP_NAME" },
+                    { EnemyName.Flipper, "FLIPPER_NAME" },//Missing
+                    { EnemyName.FloatingCultist, "FLOATER_NAME" },
+                    { EnemyName.Fly, "FLY_NAME" },
+                    { EnemyName.Greedling, "GREEDLING_NAME" },
+                    { EnemyName.GreenBlib, "GREEN_BLIB_NAME" },
+                    { EnemyName.GreenBlobby, "GREEN_BLOBBY_NAME" },
+                    { EnemyName.Hanger, "KEEPER_NAME" },
+                    { EnemyName.Hopper, "LEAPER_NAME" },
+                    { EnemyName.Host, "HOST_NAME" },
+                    //{ EnemyName.Imposter, "IMPOSTER_NAME" },
+                    { EnemyName.Isaacs, "ISAAC_NAME" },
+                    { EnemyName.Larry, "LARRY_NAME" },
+                    { EnemyName.Leechling, "SUCK_NAME" },
+                    { EnemyName.Longit, "LONGITS_NAME" },
+                    { EnemyName.ManaWisp, "MANA_WISP_NAME" },
+                    { EnemyName.MaskedImposter, "MASK_NAME" },
+                    { EnemyName.MeatGolem, "MEAT_GOLUM_NAME" },
+                    { EnemyName.MegaPoofer, "MEGA_POOFER_NAME" },
+                    { EnemyName.MirrorHauntLeft, "MIRROR_NAME" },
+                    { EnemyName.MirrorHauntRight, "MIRROR_NAME" },
+                    { EnemyName.PeepEye, "PEEPER_EYE_NAME" },
+                    { EnemyName.Poofer, "POOFER_NAME" },
+                    { EnemyName.Pooter, "POOTER_NAME" },
+                    { EnemyName.PurpleBoney, "SKULLY_P_NAME" },
+                    { EnemyName.RedBlobby, "RED_BLOBBY_NAME" },
+                    { EnemyName.RedCultist, "RED_FLOATER_NAME" },
+                    { EnemyName.Screecher, "SCREECHER_NAME" },
+                    { EnemyName.Shit, "POOP_NAME" },
+                    { EnemyName.Spookie, "SPOOKIE_NAME" },
+                    { EnemyName.Stone, "ROCK_NAME" },
+                    { EnemyName.Stony, "STONY_NAME" },
+                    { EnemyName.Sucker, "SUCKER_NAME" },
+                    { EnemyName.Tader, "DADDY_TATO_NAME" },
+                    { EnemyName.Tado, "TATO_KID_NAME" },
+                    { EnemyName.TaintedPeepEye, "TAINTED_PEEPER_EYE_NAME" },
+                    { EnemyName.Tutorial, "KEEPER_NAME" },
+                    { EnemyName.WalkingCultist, "CULTIST_NAME" },
+                    { EnemyName.WillOWisp, "WHISP_NAME" },
                 };
             }
         }
@@ -1696,19 +1447,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new Dictionary<BossName, string>
                 {
-                    { BossName.Bygone, "Bygone" },
-                    { BossName.Duke, "The Duke" },
-                    { BossName.Dusk, "Dusk" },
-                    { BossName.Gibs, "Gibs" },
-                    { BossName.Gizzarda, "Gizzarda" },
-                    { BossName.Loaf, "Loaf" },
-                    { BossName.Peeper, "Peeper" },
-                    { BossName.Pyre, "Pyre" },
-                    { BossName.Sangre, "Sangre" },
-                    { BossName.ShyGal, "Shy Gal" },
-                    { BossName.TaintedDusk, "Tainted Dusk" },
-                    { BossName.TaintedPeeper, "Tainted Peeper" },
-                    { BossName.TaintedShyGal, "Tainted Shy Gal" },
+                    { BossName.Bygone, "BYGONE_BODY_NAME" },
+                    { BossName.Duke, "DUKE_NAME" },
+                    { BossName.Dusk, "DUSK_NAME" },
+                    { BossName.Gibs, "GIBS_NAME" },
+                    { BossName.Gizzarda, "GIZZARDA_NAME" },
+                    { BossName.Loaf, "LOAF_NAME" },
+                    { BossName.Peeper, "PEEPER_NAME" },
+                    { BossName.Pyre, "PYRE_NAME" },
+                    { BossName.Sangre, "SANGRE_NAME" },
+                    { BossName.ShyGal, "SHY_GALS_NAME" },
+                    { BossName.TaintedDusk, "TAINTED_DUSK_NAME" },
+                    { BossName.TaintedPeeper, "TAINTED_PEEPER_NAME" },
+                    { BossName.TaintedShyGal, "TAINTED_SHY_GALS_NAME" },
                 };
             }
         }
@@ -1719,68 +1470,68 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return new Dictionary<Type, string>
                 {
                     //Enemies
-                    { typeof(ArsemouthEnemy), "Tall Boy" },
-                    { typeof(BlackBlobbyEnemy), "Black Blobby" },
-                    { typeof(BlibEnemy), "Blib" },
-                    { typeof(BlueBoneyEnemy), "Skully B." },
-                    { typeof(BoomFlyEnemy), "BoomFly" },
-                    { typeof(BurferEnemy), "Burfer" },
-                    { typeof(ButtheadEnemy), "Squat" },
+                    { typeof(ArsemouthEnemy), "TALL_BOY_NAME" },
+                    { typeof(BlackBlobbyEnemy), "BLACK_BLOBBY_NAME" },
+                    { typeof(BlibEnemy), "BLIB_NAME" },
+                    { typeof(BlueBoneyEnemy), "SKULLY_B_NAME" },
+                    { typeof(BoomFlyEnemy), "BOOM_FLY_NAME" },
+                    { typeof(BurferEnemy), "BURFER_NAME" },
+                    { typeof(ButtheadEnemy), "SQUAT_NAME" },
                     //CornyDip
-                    { typeof(CurserEnemy), "Curser" },
-                    { typeof(DigDigEnemy), "Dig Dig" },
-                    { typeof(DipEnemy), "Dip" },
+                    { typeof(CurserEnemy), "CURSER_NAME" },
+                    { typeof(DigDigEnemy), "DIG_DIG_NAME" },
+                    { typeof(DipEnemy), "DIP_NAME" },
                     { typeof(FlipperEnemy), "Flipper" },
-                    { typeof(FloatingCultistEnemy), "Floater" },
-                    { typeof(FlyEnemy), "Fly" },
-                    { typeof(GreedlingEnemy), "Greedling" },
+                    { typeof(FloatingCultistEnemy), "FLOATER_NAME" },
+                    { typeof(FlyEnemy), "FLY_NAME" },
+                    { typeof(GreedlingEnemy), "GREEDLING_NAME" },
                     //GreenBlib
-                    { typeof(GreenBlobbyEnemy), "Green Blobby" },
-                    { typeof(HangerEnemy), "Keeper" },
-                    { typeof(HopperEnemy), "Leaper" },
-                    { typeof(HostEnemy), "Host" },
-                    { typeof(ImposterEnemy), "Imposter" },
-                    { typeof(IsaacsEnemy), "Isaac" },
-                    { typeof(LarryEnemy), "Larry" },
-                    { typeof(LeecherEnemy), "Suck" },
-                    { typeof(LongitEnemy), "Longits" },
-                    { typeof(ManaWispEnemy), "Mana Wisp" },
-                    { typeof(MaskedImposterEnemy), "Mask" },
-                    { typeof(MeatGolemEnemy), "Meat Golum" },
-                    { typeof(MegaPooferEnemy), "Mega Poofer" },
-                    { typeof(MirrorHauntEnemy), "Mirror" },
-                    { typeof(PeepEyeEnemy), "Peeper Eye" },
-                    { typeof(PooferEnemy), "Poofer" },
-                    { typeof(PooterEnemy), "Pooter" },
-                    { typeof(PurpleBoneyEnemy), "Skully P." },
-                    { typeof(RedBlobbyEnemy), "Red Blobby" },
-                    { typeof(RedCultistEnemy), "Red Floater" },
-                    { typeof(ScreecherEnemy), "Screecher" },
-                    { typeof(ShitEnemy), "Poop" },
-                    { typeof(SpookieEnemy), "Spookie" },
-                    { typeof(StoneEnemy), "Rock" },
-                    { typeof(StonyEnemy), "Stony" },
-                    { typeof(SuckerEnemy), "Sucker" },
-                    { typeof(TaderEnemy), "Daddy Tato" },
-                    { typeof(TadoEnemy), "Tato Kid" },
+                    { typeof(GreenBlobbyEnemy), "GREEN_BLOBBY_NAME" },
+                    { typeof(HangerEnemy), "KEEPER_NAME" },
+                    { typeof(HopperEnemy), "LEAPER_NAME" },
+                    { typeof(HostEnemy), "HOST_NAME" },
+                    { typeof(ImposterEnemy), "IMPOSTER_NAME" },
+                    { typeof(IsaacsEnemy), "ISAAC_NAME" },
+                    { typeof(LarryEnemy), "LARRY_NAME" },
+                    { typeof(LeecherEnemy), "SUCK_NAME" },
+                    { typeof(LongitEnemy), "LONGITS_NAME" },
+                    { typeof(ManaWispEnemy), "MANA_WISP_NAME" },
+                    { typeof(MaskedImposterEnemy), "MASK_NAME" },
+                    { typeof(MeatGolemEnemy), "MEAT_GOLUM_NAME" },
+                    { typeof(MegaPooferEnemy), "MEGA_POOFER_NAME" },
+                    { typeof(MirrorHauntEnemy), "MIRROR_NAME" },
+                    { typeof(PeepEyeEnemy), "PEEPER_EYE_NAME" },
+                    { typeof(PooferEnemy), "POOFER_NAME" },
+                    { typeof(PooterEnemy), "POOTER_NAME" },
+                    { typeof(PurpleBoneyEnemy), "SKULLY_P_NAME" },
+                    { typeof(RedBlobbyEnemy), "RED_BLOBBY_NAME" },
+                    { typeof(RedCultistEnemy), "RED_FLOATER_NAME" },
+                    { typeof(ScreecherEnemy), "SCREECHER_NAME" },
+                    { typeof(ShitEnemy), "POOP_NAME" },
+                    { typeof(SpookieEnemy), "SPOOKIE_NAME" },
+                    { typeof(StoneEnemy), "ROCK_NAME" },
+                    { typeof(StonyEnemy), "STONY_NAME" },
+                    { typeof(SuckerEnemy), "SUCKER_NAME" },
+                    { typeof(TaderEnemy), "DADDY_TATO_NAME" },
+                    { typeof(TadoEnemy), "TATO_KID_NAME" },
                     //TaintedPeepEye
-                    { typeof(TutorialEnemy), "Keeper" },
-                    { typeof(WalkingCultistEnemy), "Cultist" },
-                    { typeof(WilloWispEnemy), "Whisp" },
+                    { typeof(TutorialEnemy), "KEEPER_NAME" },
+                    { typeof(WalkingCultistEnemy), "CULTIST_NAME" },
+                    { typeof(WilloWispEnemy), "WHISP_NAME" },
 
                     //Bosses
-                    { typeof(BygoneBoss), "Bygone" },
-                    { typeof(BygoneGhostBoss), "Bygone" },
-                    { typeof(DukeBoss), "The Duke" },
-                    { typeof(DuskBoss), "Dusk" },
-                    { typeof(GibsBoss), "Gibs" },
-                    { typeof(GizzardaBoss), "Gizzarda" },
-                    { typeof(LoafBoss), "Loaf" },
-                    { typeof(PeepsBoss), "Peeper" },
-                    { typeof(PyreBoss), "Pyre" },
-                    { typeof(CaddyBoss), "Sangre" },
-                    { typeof(ShyGalBoss), "Shy Gal" },
-                    { typeof(TaintedDuskBoss), "Tainted Dusk" },
+                    { typeof(BygoneBoss), "BYGONE_BODY_NAME" },
+                    { typeof(BygoneGhostBoss), "BYGONE_GHOST_NAME" },
+                    { typeof(DukeBoss), "DUKE_NAME" },
+                    { typeof(DuskBoss), "DUSK_NAME" },
+                    { typeof(GibsBoss), "GIBS_NAME" },
+                    { typeof(GizzardaBoss), "GIZZARDA_NAME" },
+                    { typeof(LoafBoss), "LOAF_NAME" },
+                    { typeof(PeepsBoss), "PEEPER_NAME" },
+                    { typeof(PyreBoss), "PYRE_NAME" },
+                    { typeof(CaddyBoss), "SANGRE_NAME" },
+                    { typeof(ShyGalBoss), "SHY_GALS_NAME" },
+                    { typeof(TaintedDuskBoss), "TAINTED_DUSK_NAME" },
                     //TaintedPeeper
                     //TaintedShyGal
                 };
@@ -1789,7 +1540,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static string EnemyDisplayDescription(Enemy enemy)
         {
-            if (EnemyDescriptions.TryGetValue(EnemyDisplayName(enemy), out string value)) { return "\n" + value; }
+            string localizationCategory = enemy is Boss ? "Bosses" : "Enemies";
+            if (EnemyDescriptions.TryGetValue(EnemyDisplayName(enemy), out string value)) { return "\n" + LocalizationModifier.GetLanguageText(value, localizationCategory); }
             return string.Empty;
         }
         private static Dictionary<string, string> EnemyDescriptions
@@ -1799,81 +1551,75 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return new Dictionary<string, string>
                 {
                     //Enemies
-                    { "Black Blobby", "Drains mana when hurt" },
-                    { "Boom Fly", "Explodes on death" },
-                    { "Cultist", "Places a curse tile on hit" },
-                    { "Daddy Tato", "Shuffles the puzzle board on hit" },
-                    { "Dig Dig", "Dies when all Dig Digs are hiding" },
-                    { "Greedling", "Steals a coin on hit" },
-                    { "Isaac", "Saps movement on death" },
-                    { "Jib", "Flips into a Nib when hurt" },
-                    { "Larry", "Creates a gas cloud when hurt" },
-                    { "Longits", "Curls when hit or boogered" },
-                    { "Mana Wisp", "Extinguishes when a tile combo of its color is matched" },
-                    { "Meat Golum", "Saps movement on hit" },
-                    { "Mega Poofer", "Explodes on death, healing nearby enemies by 2" },
-                    { "Nib", "Flips into a Jib when hurt" },
-                    { "Poofer", "Explodes on death, healing nearby enemies by 2" },
-                    { "Red Floater", "Fires two projectiles when attacking" },
-                    { "Spookie", "Places a curse tile when hurt" },
-                    { "Sucker", "Reduces mana gain by 1" },
-                    { "Tato Kid", "Spawns a Leaper on death" },
+                    { "BLACK_BLOBBY_NAME", "BLACK_BLOBBY_ABILITY" },
+                    { "BOOM_FLY_NAME", "BOOM_FLY_ABILITY" },
+                    { "CULTIST_NAME", "CULTIST_ABILITY" },
+                    { "DADDY_TATO_NAME", "DADDY_TATO_ABILITY" },
+                    { "DIG_DIG_NAME", "DIG_DIG_ABILITY" },
+                    { "GREEDLING_NAME", "GREEDLING_ABILITY" },
+                    { "ISAAC_NAME", "ISAAC_ABILITY" },
+                    { "JIB_NAME", "JIB_ABILITY" },
+                    { "LARRY_NAME", "LARRY_ABILITY" },
+                    { "LONGITS_NAME", "LONGITS_ABILITY" },
+                    { "MANA_WISP_NAME", "MANA_WISP_ABILITY" },
+                    { "MEAT_GOLUM_NAME", "MEAT_GOLUM_ABILITY" },
+                    { "MEGA_POOFER_NAME", "MEGA_POOFER_ABILITY" },
+                    { "NIB_NAME", "NIB_ABILITY" },
+                    { "POOFER_NAME", "POOFER_ABILITY" },
+                    { "RED_FLOATER_NAME", "RED_FLOATER_ABILITY" },
+                    { "SPOOKIE_NAME", "SPOOKIE_ABILITY" },
+                    { "SUCKER_NAME", "SUCKER_ABILITY" },
+                    { "TATO_KID_NAME", "TATO_KID_ABILITY" },
 
                     //Bosses
-                    { "Bygone", "Spawns a Fly and obscures two tiles when hurt" },
-                    { "Bygone Ghost", "Places a curse tile when hurt" },
-                    { "Dusk", "Receives knockback and disables a spell after taking 4 damage in a single turn" },
-                    { "Gibs", "Spawns a Green Blib when hurt" },
-                    { "Gizzarda", "Flips when hurt" },
-                    { "Loaf", "Receives knockback and spawns 3 Dips when hurt" },
-                    { "Pyre", "Extinguishes when a tile combo of its color is matched" },
-                    { "Tainted Peeper", "Fires two projectiles when attacking\nSpawns a Blib after taking 3 damage" },
-                    { "Tainted Dusk", "Receives knockback after taking 4 damage in a single turn" },
+                    { "BYGONE_BODY_NAME", "BYGONE_BODY_ABILITY" },
+                    { "BYGONE_GHOST_NAME", "BYGONE_GHOST_ABILITY" },
+                    { "DUSK_NAME", "DUSK_ABILITY" },
+                    { "GIBS_NAME", "GIBS_ABILITY" },
+                    { "GIZZARDA_NAME", "GIZZARDA_ABILITY" },
+                    { "LOAF_NAME", "LOAF_ABILITY" },
+                    { "PYRE_NAME", "PYRE_ABILITY" },
+                    { "TAINTED_PEEPER_NAME", "TAINTED_PEEPER_ABILITY" },
+                    { "TAINTED_DUSK_NAME", "TAINTED_DUSK_ABILITY" },
                 };
             }
         }
 
         public static string EnemyDamageReductionWithValues(Enemy enemy)
         {
-            if (EnemyDamageReductionByType.TryGetValue(enemy.GetType(), out string value))
+            if (DamageReductionEnemies.Contains(enemy.GetType()))
             {
+                int damageReduction = 1;
+
                 if (enemy is DukeBoss)
                 {
                     DukeBoss dukeBoss = enemy as DukeBoss;
                     DukeBoss.DukeSize dukeSize = (DukeBoss.DukeSize)AccessTools.Field(typeof(DukeBoss), "dukeSize").GetValue(dukeBoss);
 
-                    int damageReduction;
-                    if (dukeSize == DukeBoss.DukeSize.Large)
-                    {
-                        damageReduction = 1;
-                    }
-                    else if (dukeSize == DukeBoss.DukeSize.Medium)
-                    {
-                        damageReduction = 2;
-                    }
-                    else
-                    {
-                        return string.Empty;
-                    }
-
-                    value = value.Replace("[damage]", damageReduction.ToString());
+                    if (dukeSize == DukeBoss.DukeSize.Large) damageReduction = 1;
+                    else if (dukeSize == DukeBoss.DukeSize.Medium) damageReduction = 2;
+                    else return string.Empty;
                 }
-                return value;
+
+                string damageReductionWithValue = LocalizationModifier.GetLanguageText("DAMAGE_REDUCTION_ABILITY", "Enemies");
+                damageReductionWithValue = damageReductionWithValue.Replace("[damage]", damageReduction.ToString());
+                return "\n" + damageReductionWithValue;
             }
             return string.Empty;
         }
-        public static Dictionary<Type, string> EnemyDamageReductionByType
+
+        public static List<Type> DamageReductionEnemies
         {
             get
             {
-                return new Dictionary<Type, string>
+                return new List<Type>
                 {
                     //Enemies
-                    { typeof(SpookieEnemy), "\nLimits incoming damage to 1" },
+                    typeof(SpookieEnemy),
 
                     //Bosses
-                    { typeof(BygoneGhostBoss), "\nLimits incoming damage to 1" },
-                    { typeof(DukeBoss), "\nLimits incoming damage to [damage]" },
+                    typeof(BygoneGhostBoss),
+                    typeof(DukeBoss),
                 };
             }
         }
@@ -1966,12 +1712,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 return new List<string>
                 {
-                    "Mana Wisp",
-                    "Host",
-                    "Peeper Eye",
-                    "Sangre",
-                    "Stony",
-                    "Tainted Peeper Eye",
+                    "MANA_WISP_NAME",
+                    "HOST_NAME",
+                    "PEEPER_EYE_NAME",
+                    "SANGRE_NAME",
+                    "STONY_NAME",
+                    "TAINTED_PEEPER_EYE_NAME",
                 };
             }
         }
