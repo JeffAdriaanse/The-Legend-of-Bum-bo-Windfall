@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using I2.Loc;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -765,21 +766,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             switch (modifierCategory)
             {
                 case ModifierCategory.Block:
-                    if (value == "1")
+                    description = LocalizationModifier.GetLanguageText("BLOCK_STATUS", "Indicators");
+                    description = description.Replace("[value]", value);
+                    //Handle English pluralization
+                    if (value == "1" && LocalizationManager.CurrentLanguage == "English")
                     {
-                        description = "Blocks an attack";
-                    }
-                    else
-                    {
-                        description = "Blocks " + value + " attacks";
+                        description = description.Replace("attacks", "attack");
+                        description = description.Replace("1", "an");
                     }
                     break;
                 case ModifierCategory.Dodge:
-                    description = "Increases dodge chance by " + value;
+                    description = LocalizationModifier.GetLanguageText("DODGE_STATUS", "Indicators");
+                    description = description.Replace("[value]", value);
                     break;
                 case ModifierCategory.Retaliate:
-                    description = "Inflicts " + value + " damage to attacking enemies";
-                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges && spellSource == SpellName.BarbedWire) { description = "Inflicts " + value + " damage to enemies that hit you"; }
+                    description = LocalizationModifier.GetLanguageText("RETALIATE_STATUS", "Indicators");
+                    description = description.Replace("[value]", value);
                     break;
             }
 
@@ -792,53 +794,65 @@ namespace The_Legend_of_Bum_bo_Windfall
                         int minusIndex = displayValue.IndexOf("-");
                         if (minusIndex >= 0) displayValue = displayValue.Remove(minusIndex, 1);
 
-                        description = "Lose " + displayValue + (displayValue == "1" ? " move" : " moves") + " next turn, but not below 1 move";
+                        description = LocalizationModifier.GetLanguageText("ACTION_POINT_LOSS_STATUS", "Indicators");
+                        description = description.Replace("[value]", value);
+
+                        if (value == "1" && LocalizationManager.CurrentLanguage == "English") description = description.Replace("moves", "move");
                     }
                     else
                     {
-                        description = "Gain " + value + (value == "1" ? " move" : " moves") + " next turn";
+                        description = LocalizationModifier.GetLanguageText("ACTION_POINT_GAIN_STATUS", "Indicators");
+                        description = description.Replace("[value]", value);
+
+                        if (value == "1" && LocalizationManager.CurrentLanguage == "English") description = description.Replace("moves", "move");
                     }
 
                     break;
             }
 
-            switch (spellSource)
+            if (description == string.Empty)
             {
-                case SpellName.BrownBelt:
-                    description = "Blocks an attack and counters for " + value + " damage";
-                    break;
-                case SpellName.BlindRage:
-                    description = "Multiplies damage taken by " + value.Remove(0, 1);
-                    break;
-                case SpellName.Euthanasia:
-                    description = "Inflicts " + value + " damage to the next attacking enemy";
-                    break;
-                case SpellName.LooseChange:
-                    description = "Grants " + value + " coins when hurt";
-                    break;
-                case SpellName.Pause:
-                    description = "Skips the enemy phase";
-                    break;
-                case SpellName.RoidRage:
-                    description = "Next attack will crit";
-                    break;
-                case SpellName.StopWatch:
-                    description = "Each enemy can only act once during the enemy phase";
-                    break;
-                case SpellName.TheVirus:
-                    description = "Poisons attacking enemies";
-                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) { description = "Poisons enemies that hit you"; }
-                    break;
-                case SpellName.TwentyTwenty:
-                    description = "Duplicates the next tile combo effect";
-                    break;
-                case SpellName.WhiteBelt:
-                    description = "Negates enemy curses and mana drain, and limits their damage to 1/2 heart";
-                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) { description = "Negates enemy curses and mana drain, and limits their damage to 1 heart"; }
-                    break;
-                case SpellName.WoodenSpoon:
-                    description = "Grants " + value + " movement each turn";
-                    break;
+                string displayValue = value;
+                switch (spellSource)
+                {
+                    case SpellName.BrownBelt:
+                        description = "BROWN_BELT_STATUS";
+                        break;
+                    case SpellName.BlindRage:
+                        description = "BLIND_RAGE_STATUS";
+                        displayValue = displayValue.Remove(0, 1);
+                        break;
+                    case SpellName.Euthanasia:
+                        description = "EUTHANASIA_STATUS";
+                        break;
+                    case SpellName.LooseChange:
+                        description = "LOOSE_CHANGE_STATUS";
+                        break;
+                    case SpellName.Pause:
+                        description = "PAUSE_STATUS";
+                        break;
+                    case SpellName.RoidRage:
+                        description = "ROID_RAGE_STATUS";
+                        break;
+                    case SpellName.StopWatch:
+                        description = "STOP_WATCH_STATUS";
+                        break;
+                    case SpellName.TheVirus:
+                        description = "THE_VIRUS_STATUS";
+                        break;
+                    case SpellName.TwentyTwenty:
+                        description = "TWENTY_TWENTY_STATUS";
+                        break;
+                    case SpellName.WhiteBelt:
+                        description = "WHITE_BELT_STATUS";
+                        break;
+                    case SpellName.WoodenSpoon:
+                        description = "WOODEN_SPOON_STATUS";
+                        break;
+                }
+
+                description = LocalizationModifier.GetLanguageText(description, "Indicators");
+                description = description.Replace("[value]", displayValue);
             }
 
             return description;
@@ -851,24 +865,25 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return string.Empty;
             }
 
-            string stacking = "Effect can be stacked";
-            string stackingCap = CollectibleChanges.PercentSpellEffectStackingCap(spellSource).ToString();
+            string stacking = "STACKING_STATUS";
 
             switch (spellSource)
             {
                 case SpellName.BarbedWire:
-                    stacking += " up to " + stackingCap + " damage";
+                    stacking = "STACKING_DAMAGE_STATUS";
                     break;
                 case SpellName.OrangeBelt:
-                    stacking += " up to " + stackingCap + " damage";
+                    stacking = "STACKING_DAMAGE_STATUS";
                     break;
                 case SpellName.YellowBelt:
-                    stacking += " up to " + stackingCap + "% dodge";
+                    stacking = "STACKING_DODGE_STATUS";
                     break;
             }
 
+            stacking = LocalizationModifier.GetLanguageText(stacking, "Indicators");
+            string stackingCap = CollectibleChanges.PercentSpellEffectStackingCap(spellSource).ToString();
+            stacking = stacking.Replace("[value]", stackingCap);
             return stacking;
-
         }
 
         public void Init(string _source, SpellName _spellSource, TrinketName _trinketSource, string _value, int _index)
@@ -1027,7 +1042,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     class BumboModifierTemporary : MonoBehaviour
     {
         public BumboModifier bumboModifier;
-        public readonly string description = "Effect wears off next turn";
+        public readonly string description = "TEMPORARY_STATUS";
 
         public Vector3 TooltipPosition()
         {

@@ -1,8 +1,13 @@
 ﻿using HarmonyLib;
 using I2.Loc;
+using Mono.Cecil;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Xml.Linq;
 using TMPro;
+using UnityEngine;
+using static PlayerPrefsSaveData;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -37,7 +42,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     static class LocalizationModifier
     {
-        static bool triggered = false;
         public static LanguageSourceData LanguageSourceData
         {
             get
@@ -49,20 +53,53 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return null;
             }
         }
-
+        static bool triggered = false;
         public static void ModifyLanguageSourceData()
         {
-            if (triggered)
-            {
-                return;
-            }
-
+            if (triggered) return;
             triggered = true;
 
-            //Modify language
-            ModifyEnglish();
-            //Add language
-            AddEnglish();
+            ReplaceEdFont();
+            AddFallbackChineseFont();
+
+            //Modify English
+            string englishName = "English";
+            ModifyLanguage(LanguageSourceData.GetLanguageIndex(englishName), GetLanguageTextModification(englishName));
+
+            //Modify Chinese
+            string chineseName = "Chinese";
+            ModifyLanguage(LanguageSourceData.GetLanguageIndex(chineseName), GetLanguageTextModification(chineseName));
+        }
+
+        private static Dictionary<string, string> GetLanguageTextModification(string languageName)
+        {
+            TextAsset languageText = Windfall.assetBundle.LoadAsset<TextAsset>("localization" + languageName);
+            if (languageText == null) return null;
+
+            // Read and parse the XML file into a dictionary
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+            try
+            {
+                XDocument doc = XDocument.Parse(languageText.text);
+
+                foreach (var setting in doc.Descendants("Term"))
+                {
+                    var key = setting.Attribute("Key")?.Value;
+                    var value = setting.Attribute("Value")?.Value;
+
+                    if (key != null && value != null)
+                    {
+                        dictionary[key] = value;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error parsing XML: {ex.Message}");
+            }
+
+            if (dictionary == null) return null;
+            return dictionary;
         }
 
         public static TMP_FontAsset edFont;
@@ -88,6 +125,31 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        private static void ReplaceEdFont()
+        {
+            TMP_FontAsset edFont = WindfallHelper.GetEdmundMcmillenFont();
+            Material edFontOutline = Windfall.assetBundle.LoadAsset<Material>("Edmundmcmillen-Regular SDF - Outline");
+            //Add font to assets
+            LanguageSourceData.Assets.Add(edFont);
+            LanguageSourceData.Assets.Add(edFontOutline);
+            LanguageSourceData.UpdateAssetDictionary();
+            //Assign as English font
+            if (LanguageSourceData.mDictionary.TryGetValue("FONT_FACE_MAIN", out TermData termDataMain)) termDataMain.SetTranslation(LanguageSourceData.GetLanguageIndex("English"), edFont.name);
+            if (LanguageSourceData.mDictionary.TryGetValue("FONT_FACE_OUTLINE", out TermData termDataOutline)) termDataOutline.SetTranslation(LanguageSourceData.GetLanguageIndex("English"), edFontOutline.name);
+        }
+
+        private static void AddFallbackChineseFont()
+        {
+            if (LanguageSourceData.mAssetDictionary.TryGetValue("SmartFinger(zh) SDF", out UnityEngine.Object smartFinger))
+            {
+                if (smartFinger is TMP_FontAsset)
+                {
+                    TMP_FontAsset smartFingerFont = smartFinger as TMP_FontAsset;
+                    smartFingerFont.fallbackFontAssetTable.Add(Windfall.assetBundle.LoadAsset<TMP_FontAsset>("SmartFinger-Regular SDF"));
+                }
+            }
+        }
+
         public static void ChangeFont(TextMeshProUGUI textMeshProUGUI, TextMeshPro textMeshPro, TMP_FontAsset font)
         {
             if (font != null)
@@ -103,84 +165,74 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        private static void ModifyEnglish()
+        private static void ModifyLanguage(int lanugageIndex, Dictionary<string, string> textModifications)
         {
             if (LanguageSourceData == null)
             {
                 return;
             }
 
-            foreach (string term in EnglishTextModifications.Keys)
+            foreach (string term in textModifications.Keys)
             {
-                if (term == "Spells/ROCK_FRIENDS_DESCRIPTION" && !WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                {
-                    continue;
-                }
+                TermData termData = null;
+                if (!LanguageSourceData.ContainsTerm(term)) termData = LanguageSourceData.AddTerm(term);
+                else termData = LanguageSourceData.GetTermData(term);
 
-                TermData termData = LanguageSourceData.GetTermData(term);
                 if (termData != null)
                 {
-                    string[] languages = termData.Languages;
-                    int englishIndex = 0;
-                    for (int languageCounter = 0; languageCounter < languages.Length; languageCounter++)
-                    {
-                        if (languages[languageCounter].Equals("english", StringComparison.OrdinalIgnoreCase))
-                        {
-                            englishIndex = languageCounter;
-                        }
-                    }
-
-                    if (EnglishTextModifications.TryGetValue(term, out string value))
-                    {
-                        termData.SetTranslation(englishIndex, value);
-                    }
+                    if (textModifications.TryGetValue(term, out string value)) termData.SetTranslation(lanugageIndex, value);
                 }
             }
         }
 
-        public static void AddEnglish()
+        public static void AddToLanguage(int lanugageIndex, Dictionary<string, string> textAdditions)
         {
             if (LanguageSourceData == null)
             {
                 return;
             }
 
-            foreach (string term in EnglishTextAdditions.Keys)
+            foreach (string term in textAdditions.Keys)
             {
                 TermData termData = LanguageSourceData.AddTerm(term);
 
-                if (EnglishTextAdditions.TryGetValue(term, out string value))
+                if (textAdditions.TryGetValue(term, out string value))
                 {
-                    termData.SetTranslation(0, value);
+                    termData.SetTranslation(lanugageIndex, value);
                 }
             }
         }
 
-        public static string GetEnglishText(string term, string category)
+        public static string GetLanguageText(string term, string category)
         {
             TermData termData = null;
 
-            if (term == null)
-            {
-                return string.Empty;
-            }
+            if (term == null) return string.Empty;
 
-            if (category != null)
-            {
-                termData = LanguageSourceData.GetTermData(category + "/" + term, false);
-            }
+            if (category != null) termData = LanguageSourceData.GetTermData(category + "/" + term, false);
 
-            if (termData == null)
-            {
-                termData = LanguageSourceData.GetTermData(term, true);
-            }
+            if (termData == null) termData = LanguageSourceData.GetTermData(term, true);
 
-            if (termData == null)
-            {
-                return string.Empty;
-            }
+            if (termData == null) return string.Empty;
 
-            return termData.GetTranslation(0);
+            string translation = termData.GetTranslation(LanguageSourceData.GetLanguageIndex(LocalizationManager.CurrentLanguage));
+            return translation != null ? translation : string.Empty;
+        }
+
+        public static string GetLanguageText(int lanugageIndex, string term, string category)
+        {
+            TermData termData = null;
+
+            if (term == null) return string.Empty;
+
+            if (category != null) termData = LanguageSourceData.GetTermData(category + "/" + term, false);
+
+            if (termData == null) termData = LanguageSourceData.GetTermData(term, true);
+
+            if (termData == null) return string.Empty;
+
+            string translation = termData.GetTranslation(lanugageIndex);
+            return translation != null ? translation : string.Empty;
         }
 
         public static Dictionary<string, string> EnglishTextModifications
@@ -289,6 +341,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     //Menu
                     { "Menu/WINDFALL_OPTIONS", "Windfall Options"},
+                    { "Menu/MINI_CREDITS_ROLL", "Mini Credits Roll"},
                 };
                 return additions;
             }
