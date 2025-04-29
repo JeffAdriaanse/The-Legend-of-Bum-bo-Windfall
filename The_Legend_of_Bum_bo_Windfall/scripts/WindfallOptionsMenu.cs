@@ -1,6 +1,7 @@
 ﻿using I2.Loc;
 using System.Collections.Generic;
 using System.Linq;
+using The_Legend_of_Bum_bo_Windfall.scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -192,6 +193,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             GamepadMenuController gamepadMenuController = windfallOptionsMenu.AddComponent<GamepadMenuController>();
 
             WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, windfallOptionsMenu.transform.Find("Cancel")?.gameObject);
+
+            HotkeysMenu.CreateHotkeysMenu(menuView);
         }
 
         private static void InitializeButton(GameObject buttonObject, UnityAction unityAction, TMP_FontAsset font, GamepadMenuOptionSelection.eInjectDots eInjectDots)

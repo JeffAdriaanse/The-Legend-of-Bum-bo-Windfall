@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -29,6 +31,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Unlock 1: Plasma Ball
             //Unlock 2: Magnifying Glass
             //Unlock 3: Compost Bag
+
+            hotkeys = new Dictionary<string, KeyCode>();
         }
 
         /// <summary>
@@ -37,6 +41,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         public void Verify()
         {
             if (unlocks == null) unlocks = new bool[4];
+            if (hotkeys == null) hotkeys = new Dictionary<string, KeyCode>();
         }
 
         public int winCount;
@@ -57,6 +62,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         public int wiseMoneyWins;
 
         public bool[] unlocks;
+
+        public Dictionary<string, KeyCode> hotkeys;
     }
 
     public static class WindfallPersistentDataController
