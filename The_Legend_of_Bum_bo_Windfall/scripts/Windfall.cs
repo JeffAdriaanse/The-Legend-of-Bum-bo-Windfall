@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using HarmonyLib;
 using System.Collections.Generic;
+using The_Legend_of_Bum_bo_Windfall.scripts;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -36,6 +37,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             CollectibleFixes.Awake();
             CollectibleChanges.Awake();
             CollectibleImport.Awake();
+            InputChanges.Awake();
             InterfaceFixes.Awake();
             PuzzleChanges.Awake();
             SoundsModification.Awake();
