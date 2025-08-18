@@ -8,95 +8,242 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.UI;
 using UnityStandardAssets.ImageEffects;
 using Rewired;
 using HarmonyLib;
 using System.Reflection.Emit;
 using System.Collections;
+using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 namespace The_Legend_of_Bum_bo_Windfall.scripts
 {
-    static class HotkeysMenu
+    class HotkeysMenu : MonoBehaviour
     {
-        private static GameObject menuViewReference;
-        private static GameObject hotkeysMenu;
+        private Dictionary<string, KeyCode> hotkeys;
+        private Dictionary<string, TextMeshProUGUI> keysText = new Dictionary<string, TextMeshProUGUI>();
 
-        private static Dictionary<string, KeyCode> hotkeys;
-        private static List<TextMeshProUGUI> keysText;
+        private string currentBindingKey;
 
-        public static void CreateHotkeysMenu(GameObject menuView)
+        private readonly Color ValidHotKeyColor = new Color(0.15f, 0.4f, 0.15f, 1f); //Dark grey
+        private readonly Color InvalidHotKeyColor = new Color(0.6f, 0.2f, 0.2f, 1f); //Dark red
+        private readonly Color BindingHotKeyColor = new Color(0.2f, 0.2f, 0.6f, 1f); //Dark blue
+
+
+        public static readonly Dictionary<string, KeyCode> defaultHotkeys = new Dictionary<string, KeyCode>()
         {
-            InputChanges.EditRewiredKeyBindings();
+            { "SPELL_1", KeyCode.Alpha1 },
+            { "SPELL_2", KeyCode.Alpha2 },
+            { "SPELL_3", KeyCode.Alpha3 },
+            { "SPELL_4", KeyCode.Alpha4 },
+            { "SPELL_5", KeyCode.Alpha5 },
+            { "SPELL_6", KeyCode.Alpha6 },
+            { "TRINKET_1", KeyCode.Alpha7 },
+            { "TRINKET_2", KeyCode.Alpha8 },
+            { "TRINKET_3", KeyCode.Alpha9 },
+            { "TRINKET_4", KeyCode.Alpha0 },
+            { "LEFT_LANE", KeyCode.Z },
+            { "CENTER_LANE", KeyCode.X },
+            { "RIGHT_LANE", KeyCode.C },
+            { "SHOW_HIDE_INDICATORS", KeyCode.Tab },
+        };
 
-            //Create hotkeys menu
-            hotkeysMenu = UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Windfall Menu"), menuView.transform);
-            hotkeysMenu.SetActive(false);
-            RectTransform hotkeysMenuRect;
+        /*Some KeyCodes correspond to keys that are used for existing actions in the Rewired Input Manager system.
+        These KeyCodes are banned from Windfall's input system to ensure that two different actions cannot be assigned to the same key.*/
+        private readonly List<KeyCode> bannedKeyCodes = new List<KeyCode>()
+        {
+            KeyCode.W,
+            KeyCode.A,
+            KeyCode.S,
+            KeyCode.D,
+            KeyCode.UpArrow,
+            KeyCode.DownArrow,
+            KeyCode.LeftArrow,
+            KeyCode.RightArrow,
+            KeyCode.Return,
+            KeyCode.Space,
+            KeyCode.Escape,
+            KeyCode.E,
+            KeyCode.LeftControl,
+            KeyCode.LeftShift,
+            KeyCode.R,
 
-            if (hotkeysMenu != null)
+            KeyCode.Mouse0,
+        };
+
+        public void SetUpHotkeysMenu(GameObject menuView)
+        {
+            gameObject.SetActive(false);
+            transform.SetSiblingIndex(Mathf.Max(0, transform.parent.childCount - 2));
+
+            TMP_FontAsset edmundmcmillen_regular = WindfallHelper.GetEdmundMcmillenFont();
+
+            GameObject header = transform.Find("Header").gameObject;
+            GameObject save = transform.Find("Save").gameObject;
+            GameObject cancel = transform.Find("Cancel").gameObject;
+
+            //Localize header
+            WindfallHelper.LocalizeObject(header, "Menu/HOTKEYS");
+
+            //Initialize buttons
+            WindfallHelper.InitializeButton(save, SaveHotkeys, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(cancel, CloseHotkeysMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+
+            //Localize buttons
+            WindfallHelper.LocalizeObject(save, "Menu/OPTIONS_SAVE");
+            WindfallHelper.LocalizeObject(cancel, "Menu/OPTIONS_CANCEL");
+
+            //Action buttons
+            foreach (TextMeshProUGUI child in transform.GetComponentsInChildren<TextMeshProUGUI>())
             {
-                hotkeysMenuRect = hotkeysMenu.GetComponent<RectTransform>();
+                if (child.gameObject.name == "Key")
+                {
+                    Transform parent = child.transform.parent;
+                    if (parent == null) continue;
 
-                foreach (TextMeshProUGUI child in hotkeysMenu.transform.GetComponentsInChildren<TextMeshProUGUI>()) {
-                    if (child.text == "Key") {
-                        keysText.Add(child);
+                    string parentName = parent.name;
+
+                    //Fill keysText Dictionary with the key names and corresponding TextMeshProUGUI components
+                    keysText.Add(parentName, child);
+
+                    //Initialize buttons
+                    UnityAction unityAction = () => { SetActiveHotkey(parent.name); };
+                    WindfallHelper.InitializeButton(parent.gameObject, unityAction, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Left);
+
+                    //Localize buttons
+                    if (parent.TryGetComponent(out TextMeshProUGUI parentTextMeshProUGUI))
+                    {
+                        if (parentTextMeshProUGUI.TryGetComponent(out Localize parentLocalize)) Localization.SetKey(parentLocalize, eI2Category.Menu, parentName);
+                        else WindfallHelper.LocalizeObject(parent.gameObject, "Menu/" + parentName);
                     }
                 }
-
             }
+
+            //Keyboard/gamepad control functionality
+            GamepadMenuController gamepadMenuController = gameObject.AddComponent<GamepadMenuController>();
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, transform.Find("Cancel")?.gameObject);
         }
 
-        private static void UpdateKeys()
+        private void SetActiveHotkey(string keyName)
+        {
+            if (currentBindingKey != null) return;
+            currentBindingKey = keyName;
+            SetKeyText(keyName, "---", BindingHotKeyColor);
+        }
+
+        private void Update()
+        {
+            if (currentBindingKey != null) {
+                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
+                {
+                    if (Input.GetKeyDown(keyCode) && !bannedKeyCodes.Contains(keyCode))
+                    {
+                        AssignKey(currentBindingKey, keyCode);
+                        currentBindingKey = null;
+                        break;
+                    }
+                }
+            }
+            return;
+        }
+
+        private void AssignKey(string keyName, KeyCode keyCode)
+        {
+            hotkeys[keyName] = keyCode;
+            UpdateKeys();
+        }
+
+        //Update text for all keys
+        private void UpdateKeys()
         {
             foreach (var keyValuePair in hotkeys) {
-                
+                string keyName = keyValuePair.Key;
+                UpdateKey(keyName);
             }
         }
-        private static void UpdateKey(GameObject keyObject, KeyCode keyCode)
+        //Update text for a particular key
+        private void UpdateKey(string keyName)
         {
-            if (keyObject != null)
-            {
-                Localize keyLocalize = keyObject.GetComponent<Localize>();
-                if (keyLocalize != null) Localization.SetKey(keyLocalize, eI2Category.Menu, keyCode.ToString());
+            if (hotkeys.TryGetValue(keyName, out var keyCode) && keysText.TryGetValue(keyName, out var textMeshProUGUI)) {
+                //Choose color
+                Color color;
+                if (VerifyHotkey(keyName)) color = ValidHotKeyColor; //Valid key color
+                else color = InvalidHotKeyColor; //Invalid key color
+
+                //Set key text
+                SetKeyText(keyName, keyCode.ToString(), color);
+                textMeshProUGUI.text = keyCode.ToString();
             }
         }
 
-        public static void OpenHotkeysMenu()
+        //Sets the text and text color of a key
+        private void SetKeyText(string keyName, string text, Color color)
         {
-            if (menuViewReference == null)
+            if (keysText.TryGetValue(keyName, out var textMeshProUGUI))
             {
-                return;
+                textMeshProUGUI.text = text;
+                textMeshProUGUI.color = color;
+            }
+        }
+
+        //Returns whether all hotkeys are valid
+        private bool VerifyHotkeys()
+        {
+            foreach (var keyValuePair in hotkeys)
+            {
+                string keyName = keyValuePair.Key;
+                if (!VerifyHotkey(keyName)) return false;
             }
 
-            menuViewReference.transform.Find("Windfall Menu")?.gameObject.SetActive(false);
-            hotkeysMenu.SetActive(true);
+            return true;
+        }
+        //Returns whether they KeyCode associated with the given hotkey is not in bannedKeyCodes and is not assigned to multiple hotkeys
+        private bool VerifyHotkey(string keyName)
+        {
+            return (!bannedKeyCodes.Contains(hotkeys[keyName]) && hotkeys.Values.Count(keyCode => keyCode == hotkeys[keyName]) < 2);
+        }
+
+        public void OpenHotkeysMenu()
+        {
+            Transform menuViewTransform = transform.parent;
+
+            menuViewTransform.Find("Windfall Menu(Clone)")?.gameObject.SetActive(false);
+            gameObject.SetActive(true);
+            currentBindingKey = null;
 
             LoadHotkeys();
         }
-        public static void CloseHotkeysMenu()
+        public void CloseHotkeysMenu()
         {
-            if (menuViewReference == null)
-            {
-                return;
-            }
+            Transform menuViewTransform = transform.parent;
 
-            hotkeysMenu.SetActive(false);
-            menuViewReference.transform.Find("Windfall Menu")?.gameObject.SetActive(true);
+            currentBindingKey = null;
+            gameObject.SetActive(false);
+            menuViewTransform.Find("Windfall Menu(Clone)")?.gameObject.SetActive(true);
         }
 
-        static void SaveHotkeys()
+        private void SaveHotkeys()
         {
+            if (!VerifyHotkeys()) return;
+
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
-            windfallPersistentData.hotkeys = hotkeys;
+            windfallPersistentData.hotkeys = new Dictionary<string, KeyCode>(hotkeys);
             WindfallPersistentDataController.SaveData(windfallPersistentData);
 
             CloseHotkeysMenu();
         }
 
-        private static void LoadHotkeys()
+        private void LoadHotkeys()
         {
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
-            hotkeys = windfallPersistentData.hotkeys;
+            hotkeys = new Dictionary<string, KeyCode>(windfallPersistentData.hotkeys);
+
+            //Ensure all hotkeys are present
+            foreach (var keyValuePair in defaultHotkeys)
+            {
+                if (!hotkeys.ContainsKey(keyValuePair.Key)) hotkeys.Add(keyValuePair.Key, keyValuePair.Value);
+            }
 
             UpdateKeys();
         }
@@ -109,86 +256,52 @@ namespace The_Legend_of_Bum_bo_Windfall.scripts
             Harmony.CreateAndPatchAll(typeof(InputChanges));
         }
 
-        private static readonly Dictionary<string, KeyCode> defaultHotkeys = new Dictionary<string, KeyCode>()
-        {
-            { "SPELL_1", KeyCode.Alpha1 },
-            { "SPELL_2", KeyCode.Alpha2 },
-            { "SPELL_3", KeyCode.Alpha3 },
-            { "SPELL_4", KeyCode.Alpha4 },
-            { "SPELL_5", KeyCode.Alpha5 },
-            { "SPELL_6", KeyCode.Alpha6 },
-            { "TRINKET_1", KeyCode.Alpha1 },
-            { "TRINKET_2", KeyCode.Alpha2 },
-            { "TRINKET_3", KeyCode.Alpha3 },
-            { "TRINKET_4", KeyCode.Alpha4 },
-        };
-
-        public static void EditRewiredKeyBindings()
-        {
-            InputDevice masterDevice = (InputDevice)typeof(InputManager).GetField("m_MasterDevice", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(InputManager.Instance);
-
-            if (masterDevice is not InputDeviceRewired) return;
-            InputDeviceRewired masterDeviceRewired = (InputDeviceRewired)masterDevice;
-
-            Player player = (Player)typeof(InputDeviceRewired).GetField("m_Player", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(masterDeviceRewired);
-            Controller keyboard = ReInput.controllers.Keyboard;
-            ControllerMap keyBoardMap = player.controllers.maps.GetMap(ControllerType.Keyboard, keyboard.id, 0, 0);
-
-            PropertyInfo keyboardMapSetProperty = typeof(Player.ControllerHelper).GetProperty("keyboardMapSet", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            //Add new buttons
-            IEnumerable<ControllerMap> keyBoardMapSet = (IEnumerable<ControllerMap>)keyboardMapSetProperty.GetValue(player.controllers);
-
-            List<ControllerMap> keyBoardMapSetList = keyBoardMapSet.ToList();
-            keyBoardMap.CreateElementMap(100, Pole.Positive, KeyCode.Alpha1, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(101, Pole.Positive, KeyCode.Alpha2, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(102, Pole.Positive, KeyCode.Alpha3, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(103, Pole.Positive, KeyCode.Alpha4, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(104, Pole.Positive, KeyCode.Alpha5, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(105, Pole.Positive, KeyCode.Alpha6, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(106, Pole.Positive, KeyCode.Alpha7, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(107, Pole.Positive, KeyCode.Alpha8, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(108, Pole.Positive, KeyCode.Alpha9, ModifierKeyFlags.None);
-            keyBoardMap.CreateElementMap(109, Pole.Positive, KeyCode.Alpha0, ModifierKeyFlags.None);
-
-            //It seems that adding new actions to Rewired Input Manager is not possible at runtime
-            //Consequently, this attempt to integrate new key bindings into the Rewired system will have to be abandoned
-            var action = ReInput.mapping.GetAction(100);
-            if (action == null) Debug.LogWarning("Action ID 100 not defined in Rewired Input Manager.");
-
-            foreach (var inputAction in ReInput.mapping.Actions)
-            {
-                Console.WriteLine($"Action: {inputAction.name} (ID: {inputAction.id})");
-            }
-        }
-
         //Add spell/trinket hotkey functionality
         [HarmonyPostfix, HarmonyPatch(typeof(GamepadSpellSelector), "Update")]
         static void GamepadSpellSelector_Update(GamepadSpellSelector __instance)
         {
-            if (!InputManager.Instance.IsUsingGamepadInput()) return;
-            if (!__instance.IsActive || __instance.app.controller.debugController.IsDebugMenuOpen()) return;
+            if (__instance.app.controller.debugController.IsDebugMenuOpen()) return;
+            if (__instance.app.model.bumboEvent.GetType() != typeof(IdleEvent) && __instance.app.model.bumboEvent.GetType() != typeof(ChanceToCastSpellEvent)) return;
+
+            Dictionary<string, KeyCode> hotkeys = WindfallPersistentDataController.LoadData().hotkeys;
 
             //Selecting spells
             int selectedSpellIndex = -1;
-            if (InputManager.Instance.GetButtonDown((eInput)14)) selectedSpellIndex = 0;
-            else if (InputManager.Instance.GetButtonDown((eInput)15)) selectedSpellIndex = 1;
-            else if (InputManager.Instance.GetButtonDown((eInput)16)) selectedSpellIndex = 2;
-            else if (InputManager.Instance.GetButtonDown((eInput)17)) selectedSpellIndex = 3;
-            else if (InputManager.Instance.GetButtonDown((eInput)18)) selectedSpellIndex = 4;
-            else if (InputManager.Instance.GetButtonDown((eInput)19)) selectedSpellIndex = 5;
+            if (hotkeys.TryGetValue("SPELL_1", out KeyCode spell1) && Input.GetKeyDown(spell1)) selectedSpellIndex = 0;
+            else if (hotkeys.TryGetValue("SPELL_2", out KeyCode spell2) && Input.GetKeyDown(spell2)) selectedSpellIndex = 1;
+            else if (hotkeys.TryGetValue("SPELL_3", out KeyCode spell3) && Input.GetKeyDown(spell3)) selectedSpellIndex = 2;
+            else if (hotkeys.TryGetValue("SPELL_4", out KeyCode spell4) && Input.GetKeyDown(spell4)) selectedSpellIndex = 3;
+            else if (hotkeys.TryGetValue("SPELL_5", out KeyCode spell5) && Input.GetKeyDown(spell5)) selectedSpellIndex = 4;
+            else if (hotkeys.TryGetValue("SPELL_6", out KeyCode spell6) && Input.GetKeyDown(spell6)) selectedSpellIndex = 5;
 
             //Selecting trinkets
             int selectedTrinketIndex = -1;
             if (selectedSpellIndex < 0)
             {
-                if (InputManager.Instance.GetButtonDown((eInput)20)) selectedTrinketIndex = 0;
-                else if (InputManager.Instance.GetButtonDown((eInput)21)) selectedTrinketIndex = 1;
-                else if (InputManager.Instance.GetButtonDown((eInput)22)) selectedTrinketIndex = 2;
-                else if (InputManager.Instance.GetButtonDown((eInput)23)) selectedTrinketIndex = 3;
+                if (hotkeys.TryGetValue("TRINKET_1", out KeyCode trinket1) && Input.GetKeyDown(trinket1)) selectedTrinketIndex = 0;
+                else if (hotkeys.TryGetValue("TRINKET_2", out KeyCode trinket2) && Input.GetKeyDown(trinket2)) selectedTrinketIndex = 1;
+                else if (hotkeys.TryGetValue("TRINKET_3", out KeyCode trinket3) && Input.GetKeyDown(trinket3)) selectedTrinketIndex = 2;
+                else if (hotkeys.TryGetValue("TRINKET_4", out KeyCode trinket4) && Input.GetKeyDown(trinket4)) selectedTrinketIndex = 3;
             }
 
             if (selectedSpellIndex < 0 && selectedTrinketIndex < 0) return;
+
+            if (!__instance.IsActive)
+            {
+                //Initialize the GamepadSpellSelector
+                GamepadPuzzleController gamepadPuzzleController = __instance.app.view.puzzle.GetComponent<GamepadPuzzleController>();
+                var methodInfo = AccessTools.Method(typeof(GamepadPuzzleController), "spell_menu_closed");
+                var closeEventDelegate = AccessTools.MethodDelegate<GamepadSpellSelector.CloseEvent>(methodInfo, gamepadPuzzleController);
+                if (__instance.Initialize(GamepadSpellSelector.eMode.UseSpellOrTrinket, true, closeEventDelegate))
+                {
+                    Type enumType = AccessTools.Inner(typeof(GamepadPuzzleController), "eState");
+                    object spellValue = Enum.Parse(enumType, "Spell");
+                    AccessTools.Field(typeof(GamepadPuzzleController), "m_State").SetValue(gamepadPuzzleController, spellValue);
+
+                    GameObject m_HoverBlock = (GameObject)AccessTools.Field(typeof(GamepadPuzzleController), "m_HoverBlock").GetValue(gamepadPuzzleController);
+                    if (m_HoverBlock != null) m_HoverBlock.SetActive(false);
+                }
+            }
 
             //Get GamePadSpellSelector Selectable class type and fields/properties
             Type selectableType = typeof(GamepadSpellSelector).GetNestedType("Selectable", BindingFlags.NonPublic);
@@ -257,63 +370,16 @@ namespace The_Legend_of_Bum_bo_Windfall.scripts
             if (__instance.app.model.paused) return;
             BumboEvent bumboEvent = __instance.app.model.bumboEvent;
             if (bumboEvent is not SelectColumnEvent && bumboEvent is not SelectSpellColumn) return;
-            if (!InputManager.Instance.IsUsingGamepadInput()) return;
 
             int selectedColumn = -1;
-            if (InputManager.Instance.GetButtonDown((eInput)14)) selectedColumn = 1;
-            else if (InputManager.Instance.GetButtonDown((eInput)15)) selectedColumn = 2;
-            else if (InputManager.Instance.GetButtonDown((eInput)16)) selectedColumn = 3;
+
+            Dictionary<string, KeyCode> hotkeys = WindfallPersistentDataController.LoadData().hotkeys;
+            if (hotkeys.TryGetValue("LEFT_LANE", out KeyCode leftLane) && Input.GetKeyDown(leftLane)) selectedColumn = 1;
+            else if (hotkeys.TryGetValue("CENTER_LANE", out KeyCode centerLane) && Input.GetKeyDown(centerLane)) selectedColumn = 2;
+            else if (hotkeys.TryGetValue("RIGHT_LANE", out KeyCode rightLane) && Input.GetKeyDown(rightLane)) selectedColumn = 3;
 
             ClickableColumnView[] clickableColumnViews = __instance.app.view.clickableColumnViews;
             if (selectedColumn >= 0 && selectedColumn < clickableColumnViews.Length && clickableColumnViews[selectedColumn].isActiveAndEnabled) __instance.app.view.clickableColumnViews[selectedColumn].ForceClick();
-        }
-
-        //****************************************************************
-        //***Patches to add room for additional buttons in InputDevices***
-        //****************************************************************
-
-        //InputDevice Transpiler
-        [HarmonyPatch(typeof(InputDevice), "poll_for_input")]
-        static IEnumerable<CodeInstruction> InputDevice_poll_for_input_Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var code = new List<CodeInstruction>(instructions);
-
-            for (int i = 0; i < code.Count - 1; i++)
-            {
-                //Checking for the specific IL code
-                if (code[i].opcode == OpCodes.Ldc_I4_S && (sbyte)code[i].operand == 14)
-                {
-                    //Change operand
-                    code[i].operand = 28;
-                }
-            }
-            return code;
-        }
-
-        //InputDeviceRewired Transpiler
-        [HarmonyPatch(typeof(InputDeviceRewired), "poll_for_input")]
-        static IEnumerable<CodeInstruction> InputDeviceRewired_poll_for_input_Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var code = new List<CodeInstruction>(instructions);
-
-            for (int i = 0; i < code.Count - 1; i++)
-            {
-                //Checking for the specific IL code
-                if (code[i].opcode == OpCodes.Ldc_I4_S && (sbyte)code[i].operand == 14)
-                {
-                    //Change operand
-                    code[i].operand = 28;
-                }
-            }
-            return code;
-        }
-
-        [HarmonyPostfix, HarmonyPatch(typeof(InputManagerRewired), nameof(InputManagerRewired.GetRewiredActionId))]
-        static void InputManagerRewired_GetRewiredActionId(InputManagerRewired __instance, eInput Input, ref int __result)
-        {
-            int inputInteger = (int)Input;
-            if (inputInteger >= 14) __result = inputInteger + (100 - 14);
-            return;
         }
     }
 }

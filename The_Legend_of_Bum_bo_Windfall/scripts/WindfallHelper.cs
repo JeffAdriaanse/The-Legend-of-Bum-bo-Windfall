@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Events;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -564,6 +566,30 @@ namespace The_Legend_of_Bum_bo_Windfall
                 LocalizationFontOverrides localizationFontOverridesComponent = gameObject.AddComponent<LocalizationFontOverrides>();
                 localizationFontOverridesComponent.m_Overrides = new List<LocalizationFontOverrides.OverrideEntry>(localizationFontOverrides);
             }
+        }
+
+        /// <summary>
+        /// Initializes button functionality of the given GameObject.
+        /// </summary>
+        /// <param name="gameObject">The GameObject to localize.</param>
+        /// <param name="term">The localization term.</param>
+        /// <param name="localizationFontOverrides">A list of localization font overrides to apply.</param>
+        public static void InitializeButton(GameObject buttonObject, UnityAction unityAction, TMP_FontAsset font, GamepadMenuOptionSelection.eInjectDots eInjectDots)
+        {
+            ButtonHoverAnimation buttonHoverAnimation = buttonObject.AddComponent<ButtonHoverAnimation>();
+            buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.Menu_ItemHover;
+            buttonHoverAnimation.clickSoundFx = SoundsView.eSound.Menu_ItemSelect;
+
+            Button buttonComponent = buttonObject.GetComponent<Button>();
+            if (buttonComponent == null) buttonComponent = buttonObject.AddComponent<Button>();
+            buttonComponent.onClick.AddListener(unityAction);
+
+            GamepadMenuOptionSelection gamepadMenuOptionSelection = buttonObject.AddComponent<GamepadMenuOptionSelection>();
+            gamepadMenuOptionSelection.m_InjectDots = eInjectDots;
+            gamepadMenuOptionSelection.m_SelectionObjects = new GameObject[0];
+
+            TextMeshProUGUI textMeshProUGUI = buttonObject.GetComponent<TextMeshProUGUI>();
+            LocalizationModifier.ChangeFont(textMeshProUGUI, null, font);
         }
     }
 

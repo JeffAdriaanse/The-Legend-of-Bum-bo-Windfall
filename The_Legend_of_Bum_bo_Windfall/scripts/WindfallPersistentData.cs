@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using The_Legend_of_Bum_bo_Windfall.scripts;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -41,7 +43,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         public void Verify()
         {
             if (unlocks == null) unlocks = new bool[4];
-            if (hotkeys == null) hotkeys = new Dictionary<string, KeyCode>();
+
+            if (hotkeys == null) hotkeys = new Dictionary<string, KeyCode>(HotkeysMenu.defaultHotkeys);
+            foreach (KeyValuePair<string, KeyCode> keyValuePair in HotkeysMenu.defaultHotkeys) {
+                if (!hotkeys.ContainsKey(keyValuePair.Key)) hotkeys[keyValuePair.Key] = keyValuePair.Value;
+            }
         }
 
         public int winCount;

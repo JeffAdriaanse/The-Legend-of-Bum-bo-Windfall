@@ -502,13 +502,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             transform.localEulerAngles = TargetRotation();
         }
 
-        //Keyboard/gamepad controls: Tab key triggers the toggle
+        //Trigger toggle using Keyboard/gamepad controls
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Tab))
-            {
-                OnMouseDown();
-            }
+            Dictionary<string, KeyCode> hotkeys = WindfallPersistentDataController.LoadData().hotkeys;
+            if (hotkeys.TryGetValue("SHOW_HIDE_INDICATORS", out KeyCode keyCode) && Input.GetKeyDown(keyCode)) OnMouseDown();
         }
 
         void OnMouseDown()

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.UI;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -1089,9 +1090,10 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         //Patch: Add cutscene menu button to main menu
         //Also disables cutscenes that haven't been unlocked
-        //Also adds coins to title box
+        //Also adds coins and logo to title box
         //Also adds win streak counter to main menu
         //Also applies graphics settings to title camera and character select camera
+        //Also adds Windfall options menu to title
         [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
         static void TitleController_Start(TitleController __instance)
         {
@@ -1271,25 +1273,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             GraphicsModifier.ApplyGraphicsToCamera(__instance.titleCamera.GetComponent<Camera>());
             GraphicsModifier.ApplyGraphicsToCamera(__instance.chooseCamera.GetComponent<Camera>());
 
-            //Set up windfall options
-            WindfallOptionsMenu.SetUpWindfallOptionsMenu(__instance.menuObject, false);
-            //GraphicsOptions.SetUpGraphicsOptions(__instance.menuObject, false);
-
-            //Create windfall options menu
-            WindfallOptionsMenu.CreateWindfallOptionsMenu(__instance.menuObject);
+            //Set up Windfall options menu
+            GameObject windfallOptionsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Windfall Menu"), __instance.menuObject.transform);
+            WindfallOptionsMenu windfallOptionsMenuComponent = windfallOptionsMenu.AddComponent<WindfallOptionsMenu>();
+            windfallOptionsMenuComponent.SetUpWindfallOptionsMenu(false);
         }
 
-        //Patch: Set up graphics menu
+        //Patch: Adds Windfall options menu to pause screen
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
         static void BumboController_Init_Graphics(BumboController __instance)
         {
-            //Set up windfall options
-            WindfallOptionsMenu.SetUpWindfallOptionsMenu(__instance.app.view.menuView, true);
-            //GraphicsOptions.SetUpGraphicsOptions(__instance.app.view.menuView, true);
+            AssetBundle assets = Windfall.assetBundle;
 
-            //Create windfall options menu
-            WindfallOptionsMenu.CreateWindfallOptionsMenu(__instance.app.view.menuView);
-            //GraphicsOptions.CreateGraphicsMenu(__instance.app.view.menuView);
+            //Set up windfall options
+            GameObject windfallOptionsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Windfall Menu"), __instance.app.view.menuView.transform);
+            WindfallOptionsMenu windfallOptionsMenuComponent = windfallOptionsMenu.AddComponent<WindfallOptionsMenu>();
+            windfallOptionsMenuComponent.SetUpWindfallOptionsMenu(true);
         }
 
         //Patch: Hide coins and logo from title box on input

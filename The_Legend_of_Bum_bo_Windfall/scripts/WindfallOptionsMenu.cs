@@ -10,32 +10,87 @@ using UnityStandardAssets.ImageEffects;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    static class WindfallOptionsMenu
+    class WindfallOptionsMenu : MonoBehaviour
     {
-        private static GameObject menuViewReference;
-        private static GameObject windfallOptionsMenu;
+        private GameObject menuViewReference;
 
-        private static bool balanceChanges;
-        private static bool antiAliasing;
-        private static bool motionBlur;
+        private bool balanceChanges;
+        private bool antiAliasing;
+        private bool motionBlur;
 
-        private static int tooltipSize = 1;
+        private int tooltipSize = 1;
 
-        private static Sprite toggleActive;
-        private static Sprite toggleInactive;
+        private Sprite toggleActive;
+        private Sprite toggleInactive;
 
-        public static void SetUpWindfallOptionsMenu(GameObject menuView, bool pauseMenu)
+        public void SetUpWindfallOptionsMenu(bool pauseMenu)
         {
+            GameObject menuView = transform.parent.gameObject;
             AssetBundle assets = Windfall.assetBundle;
 
-            //Add sprites
+            //Get sprite assets
             toggleActive = assets.LoadAsset<Sprite>("UI Toggle Active Thick");
             toggleInactive = assets.LoadAsset<Sprite>("UI Toggle Inactive Thick");
 
             ReorganizeVanillaOptionsMenu(menuView);
+
+            //Set up Windfall menu
+            gameObject.SetActive(false);
+            transform.SetSiblingIndex(Mathf.Max(0, transform.parent.childCount - 2));
+
+            //Set up hotkeys menu
+            GameObject hotkeysMenu = UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Hotkeys Menu"), menuView.transform);
+            HotkeysMenu hotkeysMenuComponent = hotkeysMenu.AddComponent<HotkeysMenu>();
+            hotkeysMenuComponent.SetUpHotkeysMenu(menuView);
+
+            //Get font asset
+            TMP_FontAsset edmundmcmillen_regular = WindfallHelper.GetEdmundMcmillenFont();
+
+            RectTransform windfallMenuRect;
+            windfallMenuRect = GetComponent<RectTransform>();
+            //windfallMenuRect.anchoredPosition = new Vector2(-3.6, 55.4);
+            //windfallMenuRect.localRotation = Quaternion.Euler(graphicsMenuRect.localRotation.eulerAngles.x, graphicsMenuRect.localRotation.eulerAngles.y, 351);
+
+            GameObject header = transform.Find("Header").gameObject;
+            GameObject antialiasing = transform.Find("Antialiasing").gameObject;
+            GameObject motionBlur = transform.Find("Motion Blur").gameObject;
+            GameObject tooltips = transform.Find("Tooltips").gameObject;
+            GameObject tooltipsSize = tooltips.transform.Find("Size").gameObject;
+            GameObject hotkeys = transform.Find("Hotkeys").gameObject;
+            GameObject syncAchievements = transform.Find("Sync Achievements").gameObject;
+            GameObject save = transform.Find("Save").gameObject;
+            GameObject cancel = transform.Find("Cancel").gameObject;
+
+            //Localize header
+            WindfallHelper.LocalizeObject(header, "Menu/WINDFALL_OPTIONS");
+
+            //Localize tooltips
+            WindfallHelper.LocalizeObject(tooltips, "Menu/TOOLTIPS");
+
+            //Initialize buttons
+            WindfallHelper.InitializeButton(antialiasing, ToggleAntiAliasing, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(motionBlur, ToggleMotionBlur, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(tooltipsSize, CycleTooltipSize, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(hotkeys, hotkeysMenuComponent.OpenHotkeysMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(syncAchievements, SyncAchievements, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(save, SaveWindfallOptions, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(cancel, CloseWindfallOptionsMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+
+            //Localize buttons
+            WindfallHelper.LocalizeObject(antialiasing, "Menu/ANTI_ALIASING");
+            WindfallHelper.LocalizeObject(motionBlur, "Menu/MOTION_BLUR");
+            WindfallHelper.LocalizeObject(tooltipsSize, null);
+            WindfallHelper.LocalizeObject(hotkeys, "Menu/HOTKEYS");
+            WindfallHelper.LocalizeObject(syncAchievements, "Menu/SYNC_ACHIEVEMENTS");
+            WindfallHelper.LocalizeObject(save, "Menu/OPTIONS_SAVE");
+            WindfallHelper.LocalizeObject(cancel, "Menu/OPTIONS_CANCEL");
+
+            //Keyboard/gamepad control functionality
+            GamepadMenuController gamepadMenuController = gameObject.AddComponent<GamepadMenuController>();
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, transform.Find("Cancel")?.gameObject);
         }
 
-        public static void ReorganizeVanillaOptionsMenu(GameObject menuView)
+        public void ReorganizeVanillaOptionsMenu(GameObject menuView)
         {
             menuViewReference = menuView;
 
@@ -141,105 +196,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        public static void CreateWindfallOptionsMenu(GameObject menuView)
-        {
-            AssetBundle assets = Windfall.assetBundle;
-
-            //Get font asset
-            TMP_FontAsset edmundmcmillen_regular = WindfallHelper.GetEdmundMcmillenFont();
-
-            //Create windfall menu
-            windfallOptionsMenu = UnityEngine.Object.Instantiate(assets.LoadAsset<GameObject>("Windfall Menu"), menuView.transform);
-            windfallOptionsMenu.SetActive(false);
-            if (windfallOptionsMenu.transform.parent.childCount > 0)
-            {
-                windfallOptionsMenu.transform.SetSiblingIndex(windfallOptionsMenu.transform.parent.childCount - 2);
-            }
-
-            RectTransform windfallMenuRect;
-            if (windfallOptionsMenu != null)
-            {
-                windfallMenuRect = windfallOptionsMenu.GetComponent<RectTransform>();
-                //windfallMenuRect.anchoredPosition = new Vector2(-3.6, 55.4);
-                //windfallMenuRect.localRotation = Quaternion.Euler(graphicsMenuRect.localRotation.eulerAngles.x, graphicsMenuRect.localRotation.eulerAngles.y, 351);
-
-                GameObject header = windfallOptionsMenu.transform.Find("Header").gameObject;
-                GameObject balanceChanges = windfallOptionsMenu.transform.Find("Balance Changes").gameObject;
-                GameObject antialiasing = windfallOptionsMenu.transform.Find("Antialiasing").gameObject;
-                GameObject motionBlur = windfallOptionsMenu.transform.Find("Motion Blur").gameObject;
-                GameObject tooltips = windfallOptionsMenu.transform.Find("Tooltips").gameObject;
-                GameObject tooltipsSize = tooltips.transform.Find("Size").gameObject;
-                GameObject syncAchievements = windfallOptionsMenu.transform.Find("Sync Achievements").gameObject;
-                GameObject save = windfallOptionsMenu.transform.Find("Save").gameObject;
-                GameObject cancel = windfallOptionsMenu.transform.Find("Cancel").gameObject;
-
-                //Localize header
-                WindfallHelper.LocalizeObject(header, "Menu/WINDFALL_OPTIONS");
-
-                //Localize tooltips
-                WindfallHelper.LocalizeObject(tooltips, "Menu/TOOLTIPS");
-
-                //Initialize buttons
-                InitializeButton(balanceChanges, ToggleBalanceChanges, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-                InitializeButton(antialiasing, ToggleAntiAliasing, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-                InitializeButton(motionBlur, ToggleMotionBlur, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-                InitializeButton(tooltipsSize, CycleTooltipSize, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-                InitializeButton(syncAchievements, SyncAchievements, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-                InitializeButton(save, SaveWindfallOptions, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-                InitializeButton(cancel, CloseWindfallOptionsMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-
-                //Localize buttons
-                WindfallHelper.LocalizeObject(balanceChanges, "Menu/BALANCE_CHANGES");
-                WindfallHelper.LocalizeObject(antialiasing, "Menu/ANTI_ALIASING");
-                WindfallHelper.LocalizeObject(motionBlur, "Menu/MOTION_BLUR");
-                WindfallHelper.LocalizeObject(tooltipsSize, null);
-                WindfallHelper.LocalizeObject(syncAchievements, "Menu/SYNC_ACHIEVEMENTS");
-                WindfallHelper.LocalizeObject(save, "Menu/OPTIONS_SAVE");
-                WindfallHelper.LocalizeObject(cancel, "Menu/OPTIONS_CANCEL");
-            }
-            GamepadMenuController gamepadMenuController = windfallOptionsMenu.AddComponent<GamepadMenuController>();
-
-            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, windfallOptionsMenu.transform.Find("Cancel")?.gameObject);
-
-            HotkeysMenu.CreateHotkeysMenu(menuView);
-        }
-
-        private static void InitializeButton(GameObject buttonObject, UnityAction unityAction, TMP_FontAsset font, GamepadMenuOptionSelection.eInjectDots eInjectDots)
-        {
-            ButtonHoverAnimation buttonHoverAnimation = buttonObject.AddComponent<ButtonHoverAnimation>();
-            buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.Menu_ItemHover;
-            buttonHoverAnimation.clickSoundFx = SoundsView.eSound.Menu_ItemSelect;
-
-            Button buttonComponent = buttonObject.GetComponent<Button>();
-            if (buttonComponent != null && unityAction != null)
-            {
-                buttonComponent.onClick.AddListener(unityAction);
-            }
-
-            GamepadMenuOptionSelection gamepadMenuOptionSelection = buttonObject.AddComponent<GamepadMenuOptionSelection>();
-            gamepadMenuOptionSelection.m_InjectDots = eInjectDots;
-            gamepadMenuOptionSelection.m_SelectionObjects = new GameObject[0];
-
-            TextMeshProUGUI textMeshProUGUI = buttonObject.GetComponent<TextMeshProUGUI>();
-            LocalizationModifier.ChangeFont(textMeshProUGUI, null, font);
-        }
-
-        private static void ToggleBalanceChanges()
+        private void ToggleBalanceChanges()
         {
             balanceChanges = !balanceChanges;
             UpdateButtons();
         }
-        private static void ToggleAntiAliasing()
+        private void ToggleAntiAliasing()
         {
             antiAliasing = !antiAliasing;
             UpdateButtons();
         }
-        private static void ToggleMotionBlur()
+        private void ToggleMotionBlur()
         {
             motionBlur = !motionBlur;
             UpdateButtons();
         }
-        private static void CycleTooltipSize()
+        private void CycleTooltipSize()
         {
             tooltipSize++;
             if (tooltipSize > 1)
@@ -248,13 +220,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             UpdateButtons();
         }
-        private static void UpdateButtons()
+        private void UpdateButtons()
         {
-            UpdateToggle(windfallOptionsMenu?.transform.Find("Balance Changes")?.Find("Toggle")?.gameObject, balanceChanges);
-            UpdateToggle(windfallOptionsMenu?.transform.Find("Antialiasing")?.Find("Toggle")?.gameObject, antiAliasing);
-            UpdateToggle(windfallOptionsMenu?.transform.Find("Motion Blur")?.Find("Toggle")?.gameObject, motionBlur);
+            UpdateToggle(transform.Find("Balance Changes")?.Find("Toggle")?.gameObject, balanceChanges);
+            UpdateToggle(transform.Find("Antialiasing")?.Find("Toggle")?.gameObject, antiAliasing);
+            UpdateToggle(transform.Find("Motion Blur")?.Find("Toggle")?.gameObject, motionBlur);
 
-            Localize tooltipSizeLocalize = windfallOptionsMenu?.transform.Find("Tooltips")?.Find("Size")?.GetComponent<Localize>();
+            Localize tooltipSizeLocalize = transform.Find("Tooltips")?.Find("Size")?.GetComponent<Localize>();
             if (tooltipSizeLocalize != null)
             {
                 switch (tooltipSize)
@@ -274,7 +246,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
             }
         }
-        private static void UpdateToggle(GameObject toggleObject, bool active)
+        private void UpdateToggle(GameObject toggleObject, bool active)
         {
             if (toggleObject != null)
             {
@@ -283,7 +255,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        private static void SyncAchievements()
+        private void SyncAchievements()
         {
             Progression progression = ProgressionController.LoadProgression();
 
@@ -296,7 +268,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        public static void OpenWindfallOptionsMenu()
+        public void OpenWindfallOptionsMenu()
         {
             if (menuViewReference == null)
             {
@@ -304,22 +276,22 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             menuViewReference.transform.Find("Options Menu PC")?.gameObject.SetActive(false);
-            windfallOptionsMenu.SetActive(true);
+            gameObject.SetActive(true);
 
             LoadWindfallOptions();
         }
-        public static void CloseWindfallOptionsMenu()
+        public void CloseWindfallOptionsMenu()
         {
             if (menuViewReference == null)
             {
                 return;
             }
 
-            windfallOptionsMenu.SetActive(false);
+            gameObject.SetActive(false);
             menuViewReference.transform.Find("Options Menu PC")?.gameObject.SetActive(true);
         }
 
-        static void SaveWindfallOptions()
+        private void SaveWindfallOptions()
         {
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
             windfallPersistentData.implementBalanceChanges = balanceChanges;
@@ -333,7 +305,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             CloseWindfallOptionsMenu();
         }
 
-        private static void LoadWindfallOptions()
+        private void LoadWindfallOptions()
         {
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
             balanceChanges = windfallPersistentData.implementBalanceChanges;
