@@ -4,22 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
-using static Block;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     class CollectibleFixes
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(CollectibleFixes));
-        }
-
         //Patch: Fixes Puzzle Flick not despawning tiles because of mod changes to despawning logic
         [HarmonyPrefix, HarmonyPatch(typeof(PuzzleFlickSpell), nameof(PuzzleFlickSpell.AlterTile))]
         static void PuzzleFlickSpell_AlterTile_Prefix(PuzzleFlickSpell __instance, ref Block _block, out List<Block> __state)
         {
-            List<Block> blocksMatchingType = PuzzleHelper.GetBlocks(true, true, false, new List<BlockType> { _block.block_type });
+            List<Block> blocksMatchingType = PuzzleHelper.GetBlocks(true, true, false, new List<Block.BlockType> { _block.block_type });
             __state = blocksMatchingType;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(PuzzleFlickSpell), nameof(PuzzleFlickSpell.AlterTile))]
@@ -541,7 +535,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 TrinketName[] bannedTrinkets = new TrinketName[]
                 {
                 //Old
-				TrinketName.PinkBow,
+                TrinketName.PinkBow,
                 TrinketName.Hierophant,
                 TrinketName.RatHeart,
                 TrinketName.SantaSangre,

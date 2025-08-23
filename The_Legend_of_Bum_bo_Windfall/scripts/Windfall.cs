@@ -1,7 +1,6 @@
 ﻿using BepInEx;
 using HarmonyLib;
 using System.Collections.Generic;
-using The_Legend_of_Bum_bo_Windfall.scripts;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -12,7 +11,7 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         private const string modGUID = "org.bepinex.plugins.thelegendofbumbowindfall";
         private const string modName = "The Legend of Bum-bo: Windfall";
-        private const string modVersion = "1.3.0.0";
+        public const string modVersion = "1.3.0.0";
         public static readonly Harmony harmony = new Harmony("org.bepinex.plugins.thelegendofbumbowindfall");
 
         private void Awake()
@@ -30,23 +29,26 @@ namespace The_Legend_of_Bum_bo_Windfall
             GetAchievementsUnlockMethodExistence();
 
             //Patching with harmony
-            harmony.PatchAll();
-            EntityFixes.Awake();
-            EntityChanges.Awake();
-            CharacterImport.Awake();
-            CollectibleFixes.Awake();
-            CollectibleChanges.Awake();
-            CollectibleImport.Awake();
-            InputChanges.Awake();
-            InterfaceFixes.Awake();
-            PuzzleChanges.Awake();
-            SoundsModification.Awake();
-            InterfaceContent.Awake();
-            TextFixes.Awake();
-            SaveChanges.Awake();
-            SpellViewIndication.Awake();
-            OccultSpirits.Awake();
-            OtherChanges.Awake();
+            harmony.PatchAll(typeof(BumboModifierIndicationPatches));
+            harmony.PatchAll(typeof(SpellViewIndicationControllerPatches));
+            harmony.PatchAll(typeof(WindfallTooltipPatches));
+            harmony.PatchAll(typeof(EntityFixes));
+            harmony.PatchAll(typeof(EntityChanges));
+            harmony.PatchAll(typeof(CharacterImport));
+            harmony.PatchAll(typeof(CollectibleFixes));
+            harmony.PatchAll(typeof(CollectibleChanges));
+            harmony.PatchAll(typeof(CollectibleImport));
+            harmony.PatchAll(typeof(InputChanges));
+            harmony.PatchAll(typeof(InterfaceFixes));
+            harmony.PatchAll(typeof(PuzzleChanges));
+            harmony.PatchAll(typeof(SoundsModification));
+            harmony.PatchAll(typeof(InterfaceContent));
+            harmony.PatchAll(typeof(TextFixes));
+            harmony.PatchAll(typeof(SaveChanges));
+            harmony.PatchAll(typeof(SpellViewIndicationController));
+            //harmony.PatchAll(typeof(OccultSpirits));
+            harmony.PatchAll(typeof(OtherChanges));
+            OtherChanges.PatchAchievementsUnlock();
 
             Logger.LogInfo($"Loaded {modGUID}");
         }

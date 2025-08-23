@@ -10,11 +10,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     class PuzzleChanges
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(PuzzleChanges));
-        }
-
         /// <summary>
         /// Fixes an odd texure offset issue
         /// </summary>
@@ -66,7 +61,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
-        /// Modifies created shapes for compatibility with BlockGroups such that they follow BlockGroup matching logic. Triggers <see cref="BlockGroupModel.ModifyPuzzleShapes"/> in <see cref="Puzzle.ClearMatches"/>.
+        /// Modifies created shapes for compatibility with BlockGroups such that they follow BlockGroup matching logic. Triggers <see cref="BlockGroupHelper.ModifyPuzzleShapes"/> in <see cref="Puzzle.ClearMatches"/>.
         /// </summary>
         /// <param name="instructions">The method instructions.</param>
         /// <returns>Transpiled instructions.</returns>
@@ -74,7 +69,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var code = new List<CodeInstruction>(instructions);
-
+            
             int insertionIndex = -1;
             for (int i = 0; i < code.Count - 1; i++)
             {
@@ -91,7 +86,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 var instructionsToInsert = new List<CodeInstruction>
                 {
                     new CodeInstruction(OpCodes.Ldloc_1),
-                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BlockGroupModel), nameof(BlockGroupModel.ModifyPuzzleShapes))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BlockGroupHelper), nameof(BlockGroupHelper.ModifyPuzzleShapes))),
                 };
 
                 code.InsertRange(insertionIndex, instructionsToInsert);
@@ -106,7 +101,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.initializePuzzle))]
         static void Puzzle_initializePuzzle()
         {
-            BlockGroupModel.RemoveBlockGroups();
+            WindfallHelper.BlockGroupController.RemoveBlockGroups();
         }
 
         /// <summary>
@@ -177,7 +172,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.Despawn))]
         static void Puzzle_Despawn()
         {
-            BlockGroupModel.RemoveBlockGroups();
+            WindfallHelper.BlockGroupController.RemoveBlockGroups();
         }
 
         /// <summary>
@@ -191,17 +186,12 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (!(WindfallHelper.app.model.bumboEvent.ToString() == "ClearShapeEvent"))
             {
-                if (!spawnPaper)
-                {
-                    return false;
-                }
-
+                if (!spawnPaper) return false;
                 spawnPaper = false;
             }
 
             BlockGroup blockGroup = __instance.GetComponent<BlockGroup>();
-            if (blockGroup != null) BlockGroupModel.RemoveBlockGroup(blockGroup);
-
+            if (blockGroup != null) WindfallHelper.BlockGroupController.RemoveBlockGroup(blockGroup);
             return true;
         }
 
@@ -230,19 +220,19 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (newHoverBlock == null) return false;
 
             //Handle BlockGroup collisions
-            BlockGroup newBlockGroup = BlockGroupModel.FindGroupOfBlock(newHoverBlock);
+            BlockGroup newBlockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(newHoverBlock);
             if (newBlockGroup != null)
             {
 
                 //Always allow movement into the main Block
-                if (BlockGroupModel.IsMainBlock(newHoverBlock)) return true;
+                if (WindfallHelper.BlockGroupController.IsMainBlock(newHoverBlock)) return true;
 
                 //By default, move the cursor to the main Block of the BlockGroup
                 Position setCursorPosition = newBlockGroup.GetPosition();
 
                 if (previousHoverBlock != null)
                 {
-                    BlockGroup previousBlockGroup = BlockGroupModel.FindGroupOfBlock(previousHoverBlock);
+                    BlockGroup previousBlockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(previousHoverBlock);
 
                     //The cursor is attempting to move around inside the BlockGroup; it must be moved further to the edge of the BlockGroup instead
                     if (previousBlockGroup != null && newBlockGroup == previousBlockGroup)
@@ -259,7 +249,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         setCursorPosition = PuzzleHelper.MoveWithinPuzzleBounds(setCursorPosition, true);
 
                         //Account for new position being inside another BlockGroup
-                        BlockGroup blockGroupCollision = BlockGroupModel.FindGroupOfBlock(puzzle.blocks[setCursorPosition.x, setCursorPosition.y]?.GetComponent<Block>());
+                        BlockGroup blockGroupCollision = WindfallHelper.BlockGroupController.FindGroupOfBlock(puzzle.blocks[setCursorPosition.x, setCursorPosition.y]?.GetComponent<Block>());
                         if (blockGroupCollision != null) setCursorPosition = blockGroupCollision.GetPosition();
                     }
                 }
@@ -277,7 +267,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Replaces vanilla <see cref="Puzzle.setBlock"/> implementation.
         /// A hacky solution is used to access the vanilla PlaceBlock method (otherwise an infinite loop would occur)
         /// Ideally this would be accomplished with a Harmony Reverse Patch to copy the vanilla method, but the Reverse Patch doesn't seem to work for this method
-        /// The vanilla method be accessed by adding 1000 to the _x argument before calling the method.
+        /// The vanilla method can be accessed by adding 1000 to the _x argument before calling the method.
         /// </summary>
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), nameof(Puzzle.setBlock))]
         static bool Puzzle_setBlock(Block.BlockType _block_type, ref short _x, short _y, bool _animate, bool _wiggle)
@@ -317,7 +307,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Block block = tile.GetComponent<Block>();
                 if (block == null) continue;
 
-                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                BlockGroup blockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(block);
                 if (blockGroup != null && !blockGroups.Contains(blockGroup)) blockGroups.Add(blockGroup);
             }
 
@@ -382,7 +372,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (puzzle.selected_block != null)
             {
                 //If a BlockGroup is being dragged, scale the placement object according to the BlockGroup dimensions
-                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(puzzle.selected_block);
+                BlockGroup blockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(puzzle.selected_block);
                 if (blockGroup != null)
                 {
                     //Scale dimensions
@@ -408,19 +398,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (selectedBlock != null)
             {
-                BlockGroup selectedBlockGroup = BlockGroupModel.FindGroupOfBlock(selectedBlock);
+                BlockGroup selectedBlockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(selectedBlock);
                 Position position = selectedBlock.position;
 
                 Vector2Int dimensions = selectedBlockGroup != null ? selectedBlockGroup.GetDimensions() : new Vector2Int(1, 1);
 
                 List<BlockGroup> blockingGroups = new List<BlockGroup>();
-                blockingGroups.AddRange(BlockGroupModel.BlockingGroupsAlongAxis(position, dimensions, true));
-                blockingGroups.AddRange(BlockGroupModel.BlockingGroupsAlongAxis(position, dimensions, false));
+                blockingGroups.AddRange(BlockGroupHelper.BlockingGroupsAlongAxis(position, dimensions, true));
+                blockingGroups.AddRange(BlockGroupHelper.BlockingGroupsAlongAxis(position, dimensions, false));
 
                 if (selectedBlockGroup != null)
                 {
-                    BlockGroupModel.RemoveAlignedGroups(selectedBlockGroup, blockingGroups, true);
-                    BlockGroupModel.RemoveAlignedGroups(selectedBlockGroup, blockingGroups, false);
+                    BlockGroupHelper.RemoveAlignedGroups(selectedBlockGroup, blockingGroups, true);
+                    BlockGroupHelper.RemoveAlignedGroups(selectedBlockGroup, blockingGroups, false);
                 }
 
                 for (int i = 0; i < __instance.width; i++)
@@ -430,7 +420,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         Block block = __instance.blocks[i, j].GetComponent<Block>();
                         if (block == null || block == selectedBlock) continue;
 
-                        BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                        BlockGroup blockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(block);
 
                         bool outsideRangeX = i < position.x || i > position.x + (dimensions.x - 1);
                         bool outsideRangeY = j < position.y || j > position.y + (dimensions.y - 1);
@@ -439,14 +429,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                         bool darken = (outsideRangeX && outsideRangeY) || insideBlockingGroup;
 
-                        if (darken)
-                        {
-                            __instance.blocks[i, j].SendMessage("DarkenColor");
-                        }
-                        else
-                        {
-                            __instance.blocks[i, j].SendMessage("LightenColor");
-                        }
+                        if (darken) __instance.blocks[i, j].SendMessage("DarkenColor");
+                        else __instance.blocks[i, j].SendMessage("LightenColor");
                     }
                 }
             }

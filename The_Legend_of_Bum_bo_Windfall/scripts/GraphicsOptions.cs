@@ -40,19 +40,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Load graphics options
             Button optionsMenuButton;
-            if (!pauseMenu)
-            {
-                optionsMenuButton = menuView?.transform.Find("Options Menu PC")?.Find("Graphics Options")?.GetComponent<Button>();
-            }
-            else
-            {
-                optionsMenuButton = menuView?.transform.Find("Options Menu PC")?.Find("Graphics Options")?.GetComponent<Button>();
-            }
 
-            if (optionsMenuButton != null)
-            {
-                optionsMenuButton.onClick.AddListener(LoadGraphicsOptions);
-            }
+            if (!pauseMenu) optionsMenuButton = menuView?.transform.Find("Options Menu PC")?.Find("Graphics Options")?.GetComponent<Button>();
+            else optionsMenuButton = menuView?.transform.Find("Options Menu PC")?.Find("Graphics Options")?.GetComponent<Button>();
+
+            if (optionsMenuButton != null) optionsMenuButton.onClick.AddListener(LoadGraphicsOptions);
         }
 
         public static void CreateGraphicsMenu(GameObject menuView)
@@ -213,10 +205,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void UpdateDropdown(GameObject dropdown, List<Dropdown.OptionData> options)
         {
             Dropdown dropdownComponent = dropdown.GetComponent<Dropdown>();
-            if (dropdownComponent != null)
-            {
-                dropdownComponent.options = options;
-            }
+            if (dropdownComponent != null) dropdownComponent.options = options;
         }
 
         private static void ChangeResolution()
@@ -236,10 +225,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 Resolution resolution = Screen.resolutions[resolutionCounter];
                 Vector2 resolutionDimensions = new Vector2(resolution.width, resolution.height);
-                if (!screenResolutions.Contains(resolutionDimensions))
-                {
-                    screenResolutions.Add(resolutionDimensions);
-                }
+                if (!screenResolutions.Contains(resolutionDimensions)) screenResolutions.Add(resolutionDimensions);
             }
             return screenResolutions;
         }
@@ -303,18 +289,10 @@ namespace The_Legend_of_Bum_bo_Windfall
     static class GraphicsModifier
     {
         private static List<Camera> cameras;
-        public static void TrackCamera(Camera camera)
+        private static void TrackCamera(Camera camera)
         {
-            if (cameras == null)
-            {
-                cameras = new List<Camera>();
-            }
-
-            if (camera != null)
-            {
-                cameras.Add(camera);
-            }
-
+            if (cameras == null) cameras = new List<Camera>();
+            if (camera != null) cameras.Add(camera);
             cameras.RemoveAll(delegate (Camera cameraComponent) { return cameraComponent == null; });
         }
 
@@ -334,10 +312,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void ApplyGraphicsToCamera(Camera camera, bool trackCamera = true)
         {
-            if (camera == null)
-            {
-                return;
-            }
+            if (camera == null) return;
 
             //Load graphics settings
             WindfallPersistentData windfallPersistentData = WindfallPersistentDataController.LoadData();
@@ -371,15 +346,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                     DepthOfFieldEffect newDepthOfFieldEffect = camera.gameObject.AddComponent<DepthOfFieldEffect>();
                     newDepthOfFieldEffect.dofShader = assets.LoadAsset<Shader>("DepthOfFieldShader");
                 }
-                else
-                {
-                    depthOfFieldEffect.enabled = true;
-                }
+                else depthOfFieldEffect.enabled = true;
             }
-            else if (depthOfFieldEffect != null)
-            {
-                depthOfFieldEffect.enabled = false;
-            }
+            else if (depthOfFieldEffect != null) depthOfFieldEffect.enabled = false;
 
             //Antialiasing effect
             FXAAEffect fxaaEffect = camera.gameObject.GetComponent<FXAAEffect>();
@@ -392,32 +361,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                     newFxaaEffect.fxaaShader = assets.LoadAsset<Shader>("FXAA");
                     newFxaaEffect.luminanceSource = FXAAEffect.LuminanceMode.Calculate;
                 }
-                else
-                {
-                    fxaaEffect.enabled = true;
-                }
+                else fxaaEffect.enabled = true;
             }
-            else if (fxaaEffect != null)
-            {
-                fxaaEffect.enabled = false;
-            }
+            else if (fxaaEffect != null) fxaaEffect.enabled = false;
 
             //Motion blur effect
             AmplifyMotionEffect amplifyMotionEffect = camera.gameObject.GetComponent<AmplifyMotionEffect>();
 
             if (windfallPersistentData.motionBlur)
             {
-                if (amplifyMotionEffect != null)
-                {
-                    amplifyMotionEffect.enabled = true;
-                }
+                if (amplifyMotionEffect != null) amplifyMotionEffect.enabled = true;
             }
-            else if (amplifyMotionEffect != null)
-            {
-                amplifyMotionEffect.enabled = false;
-            }
+            else if (amplifyMotionEffect != null) amplifyMotionEffect.enabled = false;
 
-            if (trackCamera) GraphicsModifier.TrackCamera(camera);
+            if (trackCamera) TrackCamera(camera);
         }
     }
 }

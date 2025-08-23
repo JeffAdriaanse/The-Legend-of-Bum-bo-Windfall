@@ -1,197 +1,22 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
-using I2.Loc;
 using PathologicalGames;
-using Rewired;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.UI;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     class InterfaceContent
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(InterfaceContent));
-        }
-
         //Patch: Get app
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
         static void BumboController_Init_GetApp(BumboController __instance)
         {
             WindfallHelper.GetApp(__instance.app);
-        }
-
-        //Patch: Initialize battlefield grid
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Init")]
-        static void BumboController_Init_InitializeGrid(BumboController __instance)
-        {
-            BattlefieldGridView.InitializeGrid();
-        }
-
-        //Patch: Update Windfall Tooltip
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "Update")]
-        static void BumboController_Update(BumboController __instance)
-        {
-            WindfallTooltipController.UpdateTooltips();
-        }
-
-        //Patch: Display bumbo modifiers on RoomStartEvent
-        [HarmonyPostfix, HarmonyPatch(typeof(RoomStartEvent), "Execute")]
-        static void RoomStartEvent_Execute_ModifierDisplay(RoomStartEvent __instance)
-        {
-            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-        }
-        //Patch: Display bumbo modifiers on NewRoundEvent
-        [HarmonyPostfix, HarmonyPatch(typeof(NewRoundEvent), "Execute")]
-        static void NewRoundEvent_Execute_ModifierDisplay(NewRoundEvent __instance)
-        {
-            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-        }
-        //Patch: Display bumbo modifiers on CastSpell
-        [HarmonyPostfix, HarmonyPatch(typeof(SpellElement), "CastSpell")]
-        static void SpellElement_CastSpell_ModifierDisplay(SpellElement __instance, bool __result)
-        {
-            if (__result)
-            {
-                __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-            }
-        }
-        //Patch: Display bumbo modifiers on Discharge
-        [HarmonyPostfix, HarmonyPatch(typeof(SpellElement), "Discharge")]
-        static void SpellElement_Discharge_ModifierDisplay(SpellElement __instance, bool __result)
-        {
-            if (__result)
-            {
-                __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-            }
-        }
-        //Patch: Display bumbo modifiers on UseTrinket Use
-        [HarmonyPostfix, HarmonyPatch(typeof(UseTrinket), "Use")]
-        static void UseTrinket_Use_ModifierDisplay(UseTrinket __instance)
-        {
-            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-        }
-        //Patch: Display bumbo modifiers on TakeDamage
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "TakeDamage")]
-        static void BumboController_TakeDamage_ModifierDisplay(BumboController __instance)
-        {
-            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-        }
-        //Patch: Display bumbo modifiers on Enemy Hurt
-        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), "Hurt")]
-        static void Enemy_Hurt_ModifierDisplay(Enemy __instance)
-        {
-            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-        }
-        //Patch: Display bumbo modifiers on NextComboEvent
-        [HarmonyPostfix, HarmonyPatch(typeof(NextComboEvent), "NextEvent")]
-        static void NextComboEvent_NextEvent_ModifierDisplay(NextComboEvent __instance)
-        {
-            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-        }
-        //Patch: Display bumbo modifiers on Enemy Act
-        [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.Act))]
-        static void Enemy_Act_ModifierDisplay(Enemy __instance)
-        {
-            __instance.app.StartCoroutine(BumboModifierIndication.UpdateModifiersDelayed());
-        }
-
-        //Patch: Adds tooltips to spells
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]
-        static void BumboController_SetSpell(BumboController __instance, int _spell_index)
-        {
-            SpellView spellView = __instance.app.view.spells[_spell_index];
-            WindfallTooltip windfallTooltip = spellView.GetComponent<WindfallTooltip>();
-
-            if (windfallTooltip == null)
-            {
-                spellView.gameObject.AddComponent<WindfallTooltip>();
-            }
-        }
-
-        //Patch: Adds tooltips to spell pickups
-        //Also adjusts spell pickup colliders
-        [HarmonyPostfix, HarmonyPatch(typeof(SpellPickup), "Start")]
-        static void SpellPickup_Start(SpellPickup __instance)
-        {
-            WindfallTooltip windfallTooltip = __instance.GetComponent<WindfallTooltip>();
-
-            if (windfallTooltip == null)
-            {
-                __instance.gameObject.AddComponent<WindfallTooltip>();
-            }
-
-            //Adjust collider
-            BoxCollider boxCollider = __instance.GetComponent<BoxCollider>();
-            if (boxCollider != null)
-            {
-                boxCollider.size = new Vector3(boxCollider.size.x * 1.32f, boxCollider.size.y, boxCollider.size.z);
-            }
-        }
-
-        //Patch: Adds tooltips to trinkets
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.UpdateTrinkets))]
-        static void BumboController_UpdateTrinkets_Tooltips(BumboController __instance)
-        {
-            foreach (GameObject trinket in __instance.app.view.GUICamera.GetComponent<GUISide>().trinkets)
-            {
-                WindfallTooltip windfallTooltip = trinket.GetComponent<WindfallTooltip>();
-
-                if (windfallTooltip == null)
-                {
-                    trinket.gameObject.AddComponent<WindfallTooltip>();
-                }
-            }
-        }
-
-        //Patch: Adds tooltips to trinket pickups
-        [HarmonyPostfix, HarmonyPatch(typeof(TrinketPickupView), "Start")]
-        static void TrinketPickupView_Start(TrinketPickupView __instance)
-        {
-            WindfallTooltip windfallTooltip = __instance.GetComponent<WindfallTooltip>();
-
-            if (windfallTooltip == null)
-            {
-                __instance.gameObject.AddComponent<WindfallTooltip>();
-            }
-
-            //Adjust collider
-            BoxCollider boxCollider = __instance.GetComponent<BoxCollider>();
-            if (boxCollider != null)
-            {
-                boxCollider.size = new Vector3(boxCollider.size.x * 1.1f, boxCollider.size.y * 1.11f, boxCollider.size.z);
-                boxCollider.center = new Vector3(boxCollider.center.x, 0.235f, boxCollider.center.z);
-            }
-        }
-
-        //Patch: Adds tooltips to bum-bo faces
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboFacesController), "Start")]
-        static void BumboFacesController_Start(BumboFacesController __instance)
-        {
-            WindfallTooltip windfallTooltip = __instance.GetComponent<WindfallTooltip>();
-
-            if (windfallTooltip == null)
-            {
-                __instance.gameObject.AddComponent<WindfallTooltip>();
-            }
-        }
-
-        //Patch: Disables vanilla tooltips
-        [HarmonyPrefix, HarmonyPatch(typeof(ToolTip), nameof(ToolTip.Show))]
-        static bool ToolTip_Show()
-        {
-            if (WindfallPersistentDataController.LoadData().tooltipSize != -2)
-            {
-                return false;
-            }
-
-            return true;
         }
 
         //Patch: Add trinket glitches on GUISide Awake
@@ -812,7 +637,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     CollectibleChanges.currentTrinket = null;
 
                     //Reset spell enabled states
-                    EnabledSpellsManager.ResetState();
+                    WindfallHelper.EnabledSpellsController?.ResetState();
                 }
 
                 //Null check for spellViewUsed
@@ -1123,7 +948,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             GamepadMenuController gamepadMenuController = cutscenesButton.transform.parent.GetComponent<GamepadMenuController>();
 
-            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, null);
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, null, 2);
 
             //Get references to cutscene menu buttons
             Transform cutsceneMenuTransform = __instance.cutsceneMenu.transform;

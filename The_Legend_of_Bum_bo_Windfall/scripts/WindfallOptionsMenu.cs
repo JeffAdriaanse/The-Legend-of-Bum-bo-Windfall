@@ -1,12 +1,9 @@
 ﻿using I2.Loc;
 using System.Collections.Generic;
 using System.Linq;
-using The_Legend_of_Bum_bo_Windfall.scripts;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
-using UnityStandardAssets.ImageEffects;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -87,7 +84,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Keyboard/gamepad control functionality
             GamepadMenuController gamepadMenuController = gameObject.AddComponent<GamepadMenuController>();
-            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, transform.Find("Cancel")?.gameObject);
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, transform.Find("Cancel")?.gameObject, 2);
         }
 
         public void ReorganizeVanillaOptionsMenu(GameObject menuView)
@@ -104,14 +101,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     RectTransform rectTransform = optionsMenuPcTransform.GetChild(childCounter)?.GetComponent<RectTransform>();
 
                     float yOffset;
-                    if (optionsMenuPcTransform.childCount - childCounter < 3) //Move save/cancel down instead of up
-                    {
-                        yOffset = -10;
-                    }
-                    else
-                    {
-                        yOffset = 20;
-                    }
+                    if (optionsMenuPcTransform.childCount - childCounter < 3) yOffset = -10; //Move save/cancel down instead of up
+                    else yOffset = 20;
                     rectTransform.anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, rectTransform.anchoredPosition.y + yOffset);
                 }
             }
@@ -166,7 +157,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             if (optionsMenuPcGamepadMenuController != null)
             {
-                WindfallHelper.UpdateGamepadMenuButtons(optionsMenuPcGamepadMenuController, null);
+                WindfallHelper.UpdateGamepadMenuButtons(optionsMenuPcGamepadMenuController, null, 2);
             }
 
             //Fix Music/SFX labels acting as buttons
@@ -261,19 +252,13 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             for (int unlockCounter = 0; unlockCounter < progression.unlocks.Length; unlockCounter++)
             {
-                if (progression.unlocks[unlockCounter])
-                {
-                    Achievements.Instance.Unlock((Achievements.eAchievement)unlockCounter);
-                }
+                if (progression.unlocks[unlockCounter]) Achievements.Instance.Unlock((Achievements.eAchievement)unlockCounter);
             }
         }
 
         public void OpenWindfallOptionsMenu()
         {
-            if (menuViewReference == null)
-            {
-                return;
-            }
+            if (menuViewReference == null) return;
 
             menuViewReference.transform.Find("Options Menu PC")?.gameObject.SetActive(false);
             gameObject.SetActive(true);
@@ -282,10 +267,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
         public void CloseWindfallOptionsMenu()
         {
-            if (menuViewReference == null)
-            {
-                return;
-            }
+            if (menuViewReference == null) return;
 
             gameObject.SetActive(false);
             menuViewReference.transform.Find("Options Menu PC")?.gameObject.SetActive(true);

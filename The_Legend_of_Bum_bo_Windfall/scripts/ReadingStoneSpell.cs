@@ -16,10 +16,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public override bool CastSpell()
         {
-            if (!base.CastSpell())
-            {
-                return false;
-            }
+            if (!base.CastSpell()) return false;
             app.model.spellModel.currentSpell = this;
             app.controller.eventsController.SetEvent(new PuzzleSpellEvent());
             app.controller.GUINotification("ENLARGE_TILE", GUINotificationView.NotifyType.Puzzle, this, false);
@@ -36,9 +33,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Logic
             //Default BlockGroup size is 2
             BlockGroupData blockGroupData = new BlockGroupData(2);
-
+            
             //If the tile is already in a BlockGroup, the BlockGroup is replaced by a bigger BlockGroup
-            BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(_block);
+            BlockGroup blockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(_block);
             if (blockGroup != null)
             {
                 blockGroupData = new BlockGroupData(blockGroup.GetBlockGroupData());
@@ -46,7 +43,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Effect
-            if (!BlockGroupModel.PlaceBlockGroup(_block, blockGroupData, false, true, true)) return;
+            if (!WindfallHelper.BlockGroupController.PlaceBlockGroup(_block, blockGroupData, false, true, true)) return;
 
             //Sound
             app.view.soundsView.PlaySound(SoundsView.eSound.TileDestroyed, _block.transform.position, SoundsView.eAudioSlot.Default, false);

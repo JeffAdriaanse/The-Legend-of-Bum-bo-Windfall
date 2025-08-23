@@ -1,81 +1,60 @@
 ﻿using HarmonyLib;
 using I2.Loc;
 using PathologicalGames;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class WindfallHelper
     {
+        //Vanilla static references
+
+        //Static reference to vanilla BumboApplication
         private static BumboApplication bumboApplication;
         public static BumboApplication app
         {
             get
             {
-                if (bumboApplication == null)
-                {
-                    bumboApplication = GameObject.FindObjectOfType<BumboApplication>();
-                }
-
+                if (bumboApplication == null) bumboApplication = GameObject.FindObjectOfType<BumboApplication>();
                 return bumboApplication;
             }
-            set
-            {
-                bumboApplication = value;
-            }
+            set { bumboApplication = value; }
         }
         public static void GetApp(BumboApplication _app)
         {
-            if (_app != null)
-            {
-                app = _app;
-            }
+            if (_app != null) app = _app;
         }
 
+        //Static reference to vanilla GamepadSpellSelector
         private static GamepadSpellSelector gamepadSpellSelector;
         public static GamepadSpellSelector GamepadSpellSelector
         {
             get
             {
-                if (gamepadSpellSelector == null)
-                {
-                    gamepadSpellSelector = WindfallHelper.app?.view?.GUICamera?.GetComponent<GamepadSpellSelector>();
-                }
-
-                if (gamepadSpellSelector == null)
-                {
-                    gamepadSpellSelector = GameObject.FindObjectOfType<GamepadSpellSelector>();
-                }
-
+                if (gamepadSpellSelector == null) gamepadSpellSelector = WindfallHelper.app?.view?.GUICamera?.GetComponent<GamepadSpellSelector>();
+                if (gamepadSpellSelector == null) gamepadSpellSelector = GameObject.FindObjectOfType<GamepadSpellSelector>();
                 return gamepadSpellSelector;
             }
         }
 
+        //Static reference to vanilla GamepadTreasureRoomController
         private static GamepadTreasureRoomController gamepadTreasureRoomController;
         public static GamepadTreasureRoomController GamepadTreasureRoomController
         {
             get
             {
-                if (gamepadTreasureRoomController == null)
-                {
-                    gamepadTreasureRoomController = PoolManager.Pools["Spells"]?.GetComponent<GamepadTreasureRoomController>();
-                }
-
-                if (gamepadTreasureRoomController == null)
-                {
-                    gamepadTreasureRoomController = GameObject.FindObjectOfType<GamepadTreasureRoomController>();
-                }
-
+                if (gamepadTreasureRoomController == null) gamepadTreasureRoomController = PoolManager.Pools["Spells"]?.GetComponent<GamepadTreasureRoomController>();
+                if (gamepadTreasureRoomController == null) gamepadTreasureRoomController = GameObject.FindObjectOfType<GamepadTreasureRoomController>();
                 return gamepadTreasureRoomController;
             }
         }
 
+        //Static reference to vanilla GamepadBossRoomController
         private static GamepadTreasureRoomController gamepadBossRoomController;
         public static GamepadTreasureRoomController GamepadBossRoomController
         {
@@ -84,42 +63,133 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (gamepadBossRoomController == null)
                 {
                     GameObject[] bossRewardParents = WindfallHelper.app?.view?.bossRewardParents;
-                    if (bossRewardParents != null && bossRewardParents[0] != null)
-                    {
-                        gamepadBossRoomController = bossRewardParents[0]?.transform.parent?.GetComponent<GamepadTreasureRoomController>();
-                    }
+                    if (bossRewardParents != null && bossRewardParents[0] != null) gamepadBossRoomController = bossRewardParents[0]?.transform.parent?.GetComponent<GamepadTreasureRoomController>();
                 }
 
-                if (gamepadBossRoomController == null)
-                {
-                    gamepadBossRoomController = GameObject.FindObjectOfType<GamepadTreasureRoomController>();
-                }
-
+                if (gamepadBossRoomController == null) gamepadBossRoomController = GameObject.FindObjectOfType<GamepadTreasureRoomController>();
                 return gamepadBossRoomController;
             }
         }
 
+        //Static reference to vanilla GamepadGamblingController
         private static GamepadGamblingController gamepadGamblingController;
         public static GamepadGamblingController GamepadGamblingController
         {
             get
             {
-                if (gamepadGamblingController == null)
-                {
-                    gamepadGamblingController = GameObject.FindObjectOfType<GamepadGamblingController>();
-                }
-
+                if (gamepadGamblingController == null) gamepadGamblingController = GameObject.FindObjectOfType<GamepadGamblingController>();
                 return gamepadGamblingController;
             }
         }
 
+        //Windfall static references
+
+        //Static reference to Windfall BattlefieldGridViewController
+        private static BattlefieldGridViewController battlefieldGridViewController;
+        public static BattlefieldGridViewController BattlefieldGridViewController
+        {
+            get
+            {
+                if (battlefieldGridViewController == null) battlefieldGridViewController = GameObject.FindObjectOfType<BattlefieldGridViewController>();
+                if (battlefieldGridViewController == null)
+                {
+                    battlefieldGridViewController = CreateWindfallController<BattlefieldGridViewController>();
+                    battlefieldGridViewController.InitializeGrid();
+                }
+                return battlefieldGridViewController;
+            }
+            set { battlefieldGridViewController = value; }
+        }
+
+        //Static reference to Windfall EnabledSpellsController
+        private static EnabledSpellsController enabledSpellsController;
+        public static EnabledSpellsController EnabledSpellsController
+        {
+            get
+            {
+                if (enabledSpellsController == null) enabledSpellsController = GameObject.FindObjectOfType<EnabledSpellsController>();
+                if (enabledSpellsController == null) enabledSpellsController = CreateWindfallController<EnabledSpellsController>();
+                return enabledSpellsController;
+            }
+            set { enabledSpellsController = value; }
+        }
+
+        //Static reference to Windfall BlockGroupController
+        private static BlockGroupController blockGroupController;
+        public static BlockGroupController BlockGroupController
+        {
+            get
+            {
+                if (blockGroupController == null) blockGroupController = GameObject.FindObjectOfType<BlockGroupController>();
+                if (blockGroupController == null) blockGroupController = CreateWindfallController<BlockGroupController>();
+                return blockGroupController;
+            }
+            set { blockGroupController = value; }
+        }
+
+        //Static reference to Windfall BumboModifierIndicationController
+        private static BumboModifierIndicationController bumboModifierIndicationController;
+        public static BumboModifierIndicationController BumboModifierIndicationController
+        {
+            get
+            {
+                if (bumboModifierIndicationController == null) bumboModifierIndicationController = GameObject.FindObjectOfType<BumboModifierIndicationController>();
+                if (bumboModifierIndicationController == null) bumboModifierIndicationController = CreateWindfallController<BumboModifierIndicationController>();
+                return bumboModifierIndicationController;
+            }
+            set { bumboModifierIndicationController = value; }
+        }
+
+        //Static reference to Windfall WindfallTooltipController
+        private static WindfallTooltipController windfallTooltipController;
+        public static WindfallTooltipController WindfallTooltipController
+        {
+            get
+            {
+                if (windfallTooltipController == null) windfallTooltipController = GameObject.FindObjectOfType<WindfallTooltipController>();
+                if (windfallTooltipController == null) windfallTooltipController = CreateWindfallController<WindfallTooltipController>();
+                return windfallTooltipController;
+            }
+            set { windfallTooltipController = value; }
+        }
+
+        //Static reference to Windfall SpellViewIndicationController
+        private static SpellViewIndicationController spellViewIndicationController;
+        public static SpellViewIndicationController SpellViewIndicationController
+        {
+            get
+            {
+                if (spellViewIndicationController == null) spellViewIndicationController = GameObject.FindObjectOfType<SpellViewIndicationController>();
+                if (spellViewIndicationController == null) spellViewIndicationController = CreateWindfallController<SpellViewIndicationController>();
+                return spellViewIndicationController;
+            }
+            set { spellViewIndicationController = value; }
+        }
+
+        /// <summary>
+        ///Creates a GameObject child of BumboController with the given MonoBehaviour component type attached as a new instance. Returns the created MonoBehaviour component.
+        /// </summary>
+        private static T CreateWindfallController<T>() where T : MonoBehaviour
+        {
+            BumboController bumboController = app.controller;
+            if (bumboController == null) return null;
+
+            GameObject gameObject = GameObject.Instantiate(new GameObject(), bumboController.transform);
+            T controller = gameObject.AddComponent<T>();
+            gameObject.name = controller.GetType().ToString();
+            return controller;
+        }
+
+        /// <summary>
+        ///Given a battlefield position, returns the default enemy worldspace position of that battlefield position
+        /// </summary>
         public static Vector3 BattlefieldDefaultEnemyPosition(Position battlefieldPosition)
         {
             return new Vector3(battlefieldPosition.x - 1.25f, 0f, -(battlefieldPosition.y * 0.975f + 0.6f));
         }
 
         /// <summary>
-        /// Estimates enemy position.
+        /// Returns the approximate worldspace position of the given enemy.
         /// </summary>
         public static Vector3 EnemyTransformPosition(Enemy enemy)
         {
@@ -145,11 +215,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static TMP_FontAsset edFont;
         public static TMP_FontAsset GetEdmundMcmillenFont()
         {
-            if (edFont == null && Windfall.assetBundle != null && Windfall.assetBundle.Contains(edFontPath))
-            {
-                edFont = Windfall.assetBundle.LoadAsset<TMP_FontAsset>(edFontPath);
-            }
-
+            if (edFont == null && Windfall.assetBundle != null && Windfall.assetBundle.Contains(edFontPath)) edFont = Windfall.assetBundle.LoadAsset<TMP_FontAsset>(edFontPath);
             return edFont;
         }
 
@@ -163,48 +229,36 @@ namespace The_Legend_of_Bum_bo_Windfall
             return numberOfChapters;
         }
 
-        //Method goes two children deep when searching for buttons
-        public static void UpdateGamepadMenuButtons(GamepadMenuController gamepadMenuController, GameObject cancelButton)
+        /// <summary>
+        /// Updates the GamepadMenuController to have references to relevant menu buttons. Recursively searches for buttons in children Transforms down to the given depth value.
+        /// </summary>
+        public static void UpdateGamepadMenuButtons(GamepadMenuController gamepadMenuController, GameObject cancelButton, int childOptionButtonDepth)
         {
-            if (gamepadMenuController == null)
-            {
-                return;
-            }
-
-            List<GameObject> newOptions = new List<GameObject>();
+            if (gamepadMenuController == null) return;
 
             //Search for children with GamepadMenuOptionSelection
-            for (int childCounter = 0; childCounter < gamepadMenuController.transform.childCount; childCounter++)
-            {
-                Transform childTransform = gamepadMenuController.transform.GetChild(childCounter);
-
-                if (childTransform.gameObject.activeSelf && childTransform.GetComponent<GamepadMenuOptionSelection>() != null)
-                {
-                    newOptions.Add(childTransform.gameObject);
-                }
-
-                //Search for sub-children with GamepadMenuOptionSelection
-                for (int subChildCounter = 0; subChildCounter < childTransform.childCount; subChildCounter++)
-                {
-                    Transform subChildTransform = childTransform.GetChild(subChildCounter);
-
-                    if (subChildTransform.gameObject.activeSelf && subChildTransform.GetComponent<GamepadMenuOptionSelection>() != null)
-                    {
-                        newOptions.Add(subChildTransform.gameObject);
-                    }
-                }
-            }
-
-            if (newOptions.Count > 0)
-            {
-                gamepadMenuController.m_Buttons = newOptions.ToArray();
-            }
+            List<GameObject> newOptions = ChildrenWithComponent<GamepadMenuOptionSelection>(gamepadMenuController.transform, childOptionButtonDepth);
+            if (newOptions.Count > 0) gamepadMenuController.m_Buttons = newOptions.ToArray();
 
             //Add cancel button
-            if (cancelButton != null)
+            if (cancelButton != null) gamepadMenuController.m_CancelButton = cancelButton;
+        }
+
+        /// <summary>
+        /// Recursively searches for all children of the given Transform that have given component, up to the given maximum depth. Returns a list containing the child GameObjects.
+        /// </summary>
+        private static List<GameObject> ChildrenWithComponent<T>(Transform parent, int maximumDepth, int currentDepth = 0)
+        {
+            List<GameObject> childrenWithComponent = new List<GameObject>();
+            if (currentDepth >= maximumDepth) return childrenWithComponent;
+
+            for (int childCounter = 0; childCounter < parent.childCount; childCounter++)
             {
-                gamepadMenuController.m_CancelButton = cancelButton;
+                Transform child = parent.transform.GetChild(childCounter);
+                if (child.gameObject.activeSelf && child.GetComponent<T>() != null) childrenWithComponent.Add(child.gameObject);
+                childrenWithComponent.AddRange(ChildrenWithComponent<T>(child, maximumDepth, currentDepth + 1));
             }
+            return childrenWithComponent;
         }
 
         static Shader defaultShader;
@@ -218,24 +272,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
         public static Transform ResetShader(Transform transform)
         {
-            if (transform == null)
-            {
-                return null;
-            }
+            if (transform == null) return null;
 
             foreach (MeshRenderer meshRenderer in transform.GetComponentsInChildren<MeshRenderer>())
             {
                 if (meshRenderer != null && !meshRenderer.GetComponent<TextMeshPro>())
                 {
-                    if (meshRenderer?.material?.shader != null && DefaultShader != null)
-                    {
-                        meshRenderer.material.shader = DefaultShader;
-                    }
-
+                    if (meshRenderer?.material?.shader != null && DefaultShader != null) meshRenderer.material.shader = DefaultShader;
                     meshRenderer.material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
                 }
             }
-
             return transform;
         }
 
@@ -244,10 +290,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             List<BattlefieldPosition> battlefieldPositions = new List<BattlefieldPosition>();
 
-            if (aiModel == null || battlefieldPosition == null)
-            {
-                return battlefieldPositions;
-            }
+            if (aiModel == null || battlefieldPosition == null) return battlefieldPositions;
 
             //Search all potential positions around the battlefield position
             for (int xIterator = battlefieldPosition.x - 1; xIterator < battlefieldPosition.x + 2; xIterator++)
@@ -255,48 +298,30 @@ namespace The_Legend_of_Bum_bo_Windfall
                 for (int yIterator = battlefieldPosition.y - 1; yIterator < battlefieldPosition.y + 2; yIterator++)
                 {
                     //Exclude the provided position
-                    if (xIterator == battlefieldPosition.x && yIterator == battlefieldPosition.y)
-                    {
-                        continue;
-                    }
+                    if (xIterator == battlefieldPosition.x && yIterator == battlefieldPosition.y) continue;
 
                     //Exclude positions horizontally outside of battlefield 
-                    if (xIterator < 0 || xIterator > 2)
-                    {
-                        continue;
-                    }
+                    if (xIterator < 0 || xIterator > 2) continue;
 
                     //Exclude positions vertically outside of battlefield 
-                    if (yIterator < 0 || yIterator > 2)
-                    {
-                        continue;
-                    }
+                    if (yIterator < 0 || yIterator > 2) continue;
 
-                    //When diagonals are not included, exclude poisitions that are not in the same row or lane
+                    //When diagonals are not included, exclude positions that are not in the same row or lane
                     if (!includeDiagonal)
                     {
-                        if (xIterator != battlefieldPosition.x && yIterator != battlefieldPosition.y)
-                        {
-                            continue;
-                        }
+                        if (xIterator != battlefieldPosition.x && yIterator != battlefieldPosition.y) continue;
                     }
 
-                    //When horizontals are not included, exclude poisitions that are in the same row
+                    //When horizontals are not included, exclude positions that are in the same row
                     if (!includeHorizontal)
                     {
-                        if (yIterator == battlefieldPosition.y)
-                        {
-                            continue;
-                        }
+                        if (yIterator == battlefieldPosition.y) continue;
                     }
 
-                    //When verticals are not included, exclude poisitions that are in the same lane
+                    //When verticals are not included, exclude positions that are in the same lane
                     if (!includeVertical)
                     {
-                        if (xIterator == battlefieldPosition.x)
-                        {
-                            continue;
-                        }
+                        if (xIterator == battlefieldPosition.x) continue;
                     }
 
                     //Add battlefield positions
@@ -312,32 +337,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             GameObject adjacentEnemyObject;
 
-            if (ground)
-            {
-                adjacentEnemyObject = battlefieldPosition.owner_ground;
-            }
-            else
-            {
-                adjacentEnemyObject = battlefieldPosition.owner_air;
-            }
+            if (ground) adjacentEnemyObject = battlefieldPosition.owner_ground;
+            else adjacentEnemyObject = battlefieldPosition.owner_air;
 
-            if (adjacentEnemyObject == null)
-            {
-                return null;
-            }
+            if (adjacentEnemyObject == null) return null;
 
             Enemy localAdjacentEnemy = adjacentEnemyObject.GetComponent<Enemy>();
-            if (localAdjacentEnemy == null)
-            {
-                return null;
-            }
-
+            if (localAdjacentEnemy == null) return null;
             if (living)
             {
-                if (!localAdjacentEnemy.alive && localAdjacentEnemy.enemyName != EnemyName.Shit)
-                {
-                    return null;
-                }
+                if (!localAdjacentEnemy.alive && localAdjacentEnemy.enemyName != EnemyName.Shit) return null;
             }
 
             return localAdjacentEnemy;
@@ -379,10 +388,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             for (int enemyIterator = 0; enemyIterator < app.model.enemies.Count; enemyIterator++)
             {
                 Enemy enemy = app.model.enemies[enemyIterator];
-                if (enemy.primed)
-                {
-                    primedEnemies.Add(enemy);
-                }
+                if (enemy.primed) primedEnemies.Add(enemy);
             }
 
             //Unprime all Enemies?
@@ -406,14 +412,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Unprime the Enemy
                 primedEnemy.Unprime(true);
-                if (primedEnemy.boogerCounter == 0)
-                {
-                    primedEnemy.AnimateIdle();
-                }
-                else
-                {
-                    primedEnemy.AnimateBoogered();
-                }
+                if (primedEnemy.boogerCounter == 0) primedEnemy.AnimateIdle();
+                else primedEnemy.AnimateBoogered();
             }
         }
 

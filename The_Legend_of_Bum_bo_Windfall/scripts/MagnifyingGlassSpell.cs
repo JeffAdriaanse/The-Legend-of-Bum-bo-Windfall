@@ -1,7 +1,5 @@
 ﻿using DG.Tweening;
-using System;
 using System.Collections.Generic;
-using System.Drawing.Text;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -22,10 +20,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         public override bool CastSpell()
         {
             //Boilerplate
-            if (!base.CastSpell())
-            {
-                return false;
-            }
+            if (!base.CastSpell()) return false;
+
             app.model.spellModel.currentSpell = null;
             app.model.spellModel.spellQueued = false;
 
@@ -48,7 +44,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 blocks.RemoveAt(randomIndex);
 
                 //If the tile is already in a BlockGroup, the BlockGroup is replaced by a bigger BlockGroup
-                BlockGroup blockGroup = BlockGroupModel.FindGroupOfBlock(block);
+                BlockGroup blockGroup = WindfallHelper.BlockGroupController.FindGroupOfBlock(block);
                 if (blockGroup != null)
                 {
                     blockGroupData = new BlockGroupData(blockGroup.GetBlockGroupData());
@@ -57,7 +53,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Effect
-                blockGroupPosition = BlockGroupModel.FindValidGroupOffset(block.position, blockGroupData.dimensions, true, true);
+                blockGroupPosition = BlockGroupHelper.FindValidGroupOffset(block.position, blockGroupData.dimensions, true, true);
                 if (blockGroupPosition != null) break;
             }
 
@@ -68,7 +64,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 magnifyingGlassSequence.Append(ShortcutExtensions.DOShakePosition(block.transform, tileAnimationDuration, 0.05f, 20, 90f, false, true));
                 magnifyingGlassSequence.Join(ShortcutExtensions.DOShakeRotation(block.transform, tileAnimationDuration, 10f, 20, 90f, true));
-                magnifyingGlassSequence.AppendCallback(delegate { BlockGroupModel.PlaceBlockGroup(blockGroupPosition, block.block_type, blockGroupData, false, true); });
+                magnifyingGlassSequence.AppendCallback(delegate { WindfallHelper.BlockGroupController.PlaceBlockGroup(blockGroupPosition, block.block_type, blockGroupData, false, true); });
                 magnifyingGlassSequence.AppendCallback(delegate { app.controller.eventsController.SetEvent(new MovePuzzleEvent(0f)); });
                 return true;
             }

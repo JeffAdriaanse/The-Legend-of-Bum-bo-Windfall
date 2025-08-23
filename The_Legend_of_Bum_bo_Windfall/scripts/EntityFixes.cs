@@ -1,7 +1,6 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -10,11 +9,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     class EntityFixes
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(EntityFixes));
-        }
-
         //Patch: Fixes Bygone Body booger counter being hidden behind its sprite
         [HarmonyPostfix, HarmonyPatch(typeof(Enemy), nameof(Enemy.Booger))]
         static void Enemy_Booger(Enemy __instance)

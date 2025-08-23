@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using MonoMod.Utils;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,11 +10,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class CollectibleImport
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(CollectibleImport));
-        }
-
         //Modify SpellModel data
         [HarmonyPostfix, HarmonyPatch(typeof(SpellModel), "spellKA", MethodType.Getter)]
         static void SpellModel_spellKA(SpellModel __instance, ref Dictionary<SpellName, string> __result)

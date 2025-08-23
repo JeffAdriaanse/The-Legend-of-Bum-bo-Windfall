@@ -1,7 +1,4 @@
-﻿using DG.Tweening;
-using System;
-using System.Collections.Generic;
-using System.Net;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -24,9 +21,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (turnWildOnDragTrinkets.Contains(trinketElement.trinketName)) turnWildOnDrag = true;
             }
             if (turnWildOnDragTrinkets.Contains(WindfallHelper.app.model.characterSheet.hiddenTrinket.trinketName)) turnWildOnDrag = true;
-
             if (turnWildOnDrag && selected_block != null) PuzzleHelper.PlaceBlock(selected_block.position, Block.BlockType.Wild, false, true);
-
             End();
         }
 

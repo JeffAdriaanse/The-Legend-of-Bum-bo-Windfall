@@ -1,23 +1,15 @@
-﻿using I2.Loc;
+﻿using HarmonyLib;
+using I2.Loc;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.UI;
-using UnityStandardAssets.ImageEffects;
-using Rewired;
-using HarmonyLib;
-using System.Reflection.Emit;
-using System.Collections;
 using UnityEngine.Events;
-using UnityEngine.UIElements;
 
-namespace The_Legend_of_Bum_bo_Windfall.scripts
+namespace The_Legend_of_Bum_bo_Windfall
 {
     class HotkeysMenu : MonoBehaviour
     {
@@ -122,7 +114,7 @@ namespace The_Legend_of_Bum_bo_Windfall.scripts
 
             //Keyboard/gamepad control functionality
             GamepadMenuController gamepadMenuController = gameObject.AddComponent<GamepadMenuController>();
-            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, transform.Find("Cancel")?.gameObject);
+            WindfallHelper.UpdateGamepadMenuButtons(gamepadMenuController, transform.Find("Cancel")?.gameObject, 2);
         }
 
         private void SetActiveHotkey(string keyName)
@@ -251,11 +243,6 @@ namespace The_Legend_of_Bum_bo_Windfall.scripts
 
     class InputChanges()
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(InputChanges));
-        }
-
         //Add spell/trinket hotkey functionality
         [HarmonyPostfix, HarmonyPatch(typeof(GamepadSpellSelector), "Update")]
         static void GamepadSpellSelector_Update(GamepadSpellSelector __instance)

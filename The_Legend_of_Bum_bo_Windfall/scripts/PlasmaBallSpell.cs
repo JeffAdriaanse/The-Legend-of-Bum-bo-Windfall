@@ -188,7 +188,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private void ShockEnemy(List<Enemy> enemyChain)
         {
-            if (enemyChain == null) { return; }
+            if (enemyChain == null) return;
 
             Enemy enemy = enemyChain[enemyChain.Count - 1];
             if (enemy == null) return;

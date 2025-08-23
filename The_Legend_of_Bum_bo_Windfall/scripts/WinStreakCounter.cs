@@ -1,5 +1,4 @@
-﻿using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -71,10 +70,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (WindfallPersistentDataController.LoadData().winCount > 0) UpdateWinCount(0);
             }
-            else
-            {
-                UpdateWinCount(0);
-            }
+            else UpdateWinCount(0);
         }
     }
 }

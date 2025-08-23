@@ -1,32 +1,13 @@
 ﻿using HarmonyLib;
-using System;
 using System.Collections.Generic;
-using System.Web;
+using The_Legend_of_Bum_bo_Windfall;
 using UnityEngine;
 using static The_Legend_of_Bum_bo_Windfall.SpellViewIndicator;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    public static class SpellViewIndication
+    public class SpellViewIndicationController : MonoBehaviour
     {
-        //Up to four indicators active at once
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(SpellViewIndication));
-        }
-
-        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]
-        static void BumboController_SetSpell(BumboController __instance, int _spell_index, SpellElement _spell)
-        {
-            SpellView spellView = __instance.app.view.spells[_spell_index];
-
-            //Adjust collider size
-            BoxCollider boxCollider = spellView.GetComponent<BoxCollider>();
-            if (boxCollider != null && boxCollider.size.z > 0.02f) boxCollider.size = new Vector3(boxCollider.size.x, boxCollider.size.y, 0.01f);
-
-            UpdateSpellViewIndicators(spellView);
-        }
-
         private static readonly float SPELL_VIEW_INDICATOR_SCALE = 0.045f;
         private static readonly Vector3 SPELL_VIEW_INDICATOR_BASE_LOCALPOSITION = new Vector3(0.185f, 0.015f, -0.003f);
         private static readonly float SPELL_VIEW_INDICATOR_SPACING_Y = 0.01f;
@@ -34,7 +15,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly Vector3 SPELL_VIEW_INDICATOR_LOCALROTATION = new Vector3(270f, 0f, 0f);
         private static readonly Vector3 SPELL_VIEW_INDICATOR_LOCALSCALE = new Vector3(SPELL_VIEW_INDICATOR_SCALE, SPELL_VIEW_INDICATOR_SCALE, SPELL_VIEW_INDICATOR_SCALE);
 
-        private static void UpdateSpellViewIndicators(SpellView spellView)
+        public void UpdateSpellViewIndicators(SpellView spellView)
         {
             List<SpellViewIndicator> spellViewIndicators = new List<SpellViewIndicator>();
 
@@ -84,7 +65,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
-        private static GameObject CreateSpellViewIndicator(SpellView spellView, SpellViewIndicatorType type)
+        private GameObject CreateSpellViewIndicator(SpellView spellView, SpellViewIndicatorType type)
         {
             GameObject spellViewIndicatorObject = GameObject.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Spell View Indicator"), spellView.transform);
             SpellViewIndicator spellViewIndicator = spellViewIndicatorObject.AddComponent<SpellViewIndicator>();
@@ -92,17 +73,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             spellViewIndicator.spell = spellView.SpellObject;
             spellViewIndicatorObject.AddComponent<WindfallTooltip>();
 
-            if (SpellViewIndicatorTypeNames.TryGetValue(type, out string value)) WindfallHelper.Reskin(spellViewIndicatorObject, Windfall.assetBundle.LoadAsset<Mesh>(value), null, Windfall.assetBundle.LoadAsset<Texture2D>(value));
+            if (spellViewIndicatorTypeNames.TryGetValue(type, out string value)) WindfallHelper.Reskin(spellViewIndicatorObject, Windfall.assetBundle.LoadAsset<Mesh>(value), null, Windfall.assetBundle.LoadAsset<Texture2D>(value));
 
             return spellViewIndicatorObject;
         }
 
-        static Dictionary<SpellViewIndicatorType, string> SpellViewIndicatorTypeNames = new Dictionary<SpellViewIndicatorType, string>()
+        private readonly Dictionary<SpellViewIndicatorType, string> spellViewIndicatorTypeNames = new Dictionary<SpellViewIndicatorType, string>()
         {
             { SpellViewIndicatorType.SpellDamageScaling, "Spell Damage Scaling" },
         };
         
-        public static List<SpellName> SpellsThatScaleWithSpellDamageStat
+        private List<SpellName> SpellsThatScaleWithSpellDamageStat
         {
             get
             {
@@ -142,6 +123,42 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 return spells;
             }
+        }
+
+        private List<ModifySpellHoverPreview> previews;
+
+        private ModifySpellHoverPreview hoveredPreview;
+        public ModifySpellHoverPreview HoveredPreview
+        {
+            get
+            {
+                return hoveredPreview;
+            }
+            set
+            {
+                hoveredPreview = value;
+                UpdatePreviews();
+            }
+        }
+
+        private void UpdatePreviews()
+        {
+            return;
+        }
+    }
+
+    public class SpellViewIndicationControllerPatches()
+    {
+        [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]
+        static void BumboController_SetSpell(BumboController __instance, int _spell_index, SpellElement _spell)
+        {
+            SpellView spellView = __instance.app.view.spells[_spell_index];
+
+            //Adjust collider size
+            BoxCollider boxCollider = spellView.GetComponent<BoxCollider>();
+            if (boxCollider != null && boxCollider.size.z > 0.02f) boxCollider.size = new Vector3(boxCollider.size.x, boxCollider.size.y, 0.01f);
+
+            WindfallHelper.SpellViewIndicationController.UpdateSpellViewIndicators(spellView);
         }
     }
 
@@ -185,6 +202,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
             }
             return LocalizationModifier.GetLanguageText(tooltipDescription, "Indicators");
+        }
+    }
+
+    public class ModifySpellHoverPreview : MonoBehaviour
+    {
+        private void OnMouseOver()
+        {
+            WindfallHelper.SpellViewIndicationController.HoveredPreview = this;
         }
     }
 }

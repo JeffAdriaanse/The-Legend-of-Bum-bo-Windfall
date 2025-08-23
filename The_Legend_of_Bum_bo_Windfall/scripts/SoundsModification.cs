@@ -7,11 +7,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     static class SoundsModification
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(SoundsModification));
-        }
-
         //Patch: Modify SoundsView soundMap data
         [HarmonyPostfix, HarmonyPatch(typeof(SoundsView), "Awake")]
         static void SoundsView_Awake(SoundsView __instance)

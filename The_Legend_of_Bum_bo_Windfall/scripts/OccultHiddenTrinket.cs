@@ -1,6 +1,5 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,11 +39,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     public class OccultSpirits
     {
-        public static void Awake()
-        {
-            //Harmony.CreateAndPatchAll(typeof(OccultSpirits));
-        }
-
         public List<OccultSpirit> occultSpirits;
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -8,32 +9,29 @@ namespace The_Legend_of_Bum_bo_Windfall
     /// <summary>
     /// Displays a visible grid indicator on the floor of the enemy battlefield.
     /// </summary>
-    public static class BattlefieldGridView
+    public class BattlefieldGridViewController : MonoBehaviour
     {
-        public static readonly float GRID_VIEW_VERTICAL_OFFSET = 0.01f;
+        public readonly float GRID_VIEW_VERTICAL_OFFSET = 0.01f;
         /// <summary>
         /// The cells of the battlefield grid. Indices follow normal reading order (left-to-right, top-to-bottom) regarding the positions the cells, with position (0, 0) at the top left.
         /// </summary>
-        private static BattlefieldGridCellView[] gridCells = new BattlefieldGridCellView[9];
+        private BattlefieldGridCellView[] gridCells = new BattlefieldGridCellView[9];
         /// <summary>
         /// The lines of the battlefield grid. Indices follow normal reading order (left-to-right, top-to-bottom) regarding the positions the lines.
         /// </summary>
-        private static BattlefieldGridLineView[] gridLines = new BattlefieldGridLineView[8];
+        private BattlefieldGridLineView[] gridLines = new BattlefieldGridLineView[8];
 
         /// <summary>
         /// Initializes the enemy grid. Creates grid cells and lines.
         /// </summary>
-        public static void InitializeGrid()
+        public void InitializeGrid()
         {
             int cellIndex = 0;
             for (int gridCellIteratorY = 0; gridCellIteratorY < 3; gridCellIteratorY++)
             {
                 for (int gridCellIteratorX = 0; gridCellIteratorX < 3; gridCellIteratorX++)
                 {
-                    if (cellIndex >= gridCells.Length)
-                    {
-                        break;
-                    }
+                    if (cellIndex >= gridCells.Length) break;
                     gridCells[cellIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridCellView")).AddComponent<BattlefieldGridCellView>();
                     gridCells[cellIndex].Init(new Vector2Int(gridCellIteratorX, gridCellIteratorY));
                     gridCells[cellIndex].gameObject.SetActive(false);
@@ -48,10 +46,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 bool vertical = axisIterator != 0;
                 for (int lineIterator = 0; lineIterator < 4; lineIterator++)
                 {
-                    if (lineIndex >= gridLines.Length)
-                    {
-                        break;
-                    }
+                    if (lineIndex >= gridLines.Length) break;
 
                     gridLines[lineIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridLineView")).AddComponent<BattlefieldGridLineView>();
                     gridLines[lineIndex].Init(vertical, lineIterator);
@@ -66,7 +61,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// Shows the given grid cells and their adjacent grid lines. Hides all other grid cells and lines.
         /// </summary>
         /// <param name="battlefieldPositions">The list of enemy positions for which grid cells and lines will be shown. If the list is null, all cells and lines in the grid will be hidden.</param>
-        public static void ShowGrid(List<Vector2Int> battlefieldPositions)
+        public void ShowGrid(List<Vector2Int> battlefieldPositions)
         {
             List<BattlefieldGridCellView> enemyGridCells = new List<BattlefieldGridCellView>();
             List<BattlefieldGridLineView> enemyGridLines = new List<BattlefieldGridLineView>();
@@ -80,18 +75,14 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //Find all grid lines around the enemy grid cells
                 foreach (BattlefieldGridCellView gridCellView in enemyGridCells)
                 {
-                    if (gridCellView == null) { continue; }
+                    if (gridCellView == null) continue;
 
                     List<BattlefieldGridLineView> cellGridLines = AdjacentGridLines(gridCellView);
-
                     foreach (BattlefieldGridLineView cellGridLine in cellGridLines)
                     {
-                        if (cellGridLine == null) { continue; }
+                        if (cellGridLine == null) continue;
 
-                        if (!enemyGridLines.Contains(cellGridLine))
-                        {
-                            enemyGridLines.Add(cellGridLine);
-                        }
+                        if (!enemyGridLines.Contains(cellGridLine)) enemyGridLines.Add(cellGridLine);
                     }
                 }
             }
@@ -99,14 +90,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Toggle grid cells
             foreach (BattlefieldGridCellView gridCellView in gridCells)
             {
-                if (gridCellView == null) { continue; }
+                if (gridCellView == null) continue;
                 gridCellView.DisplayElement(enemyGridCells.Contains(gridCellView));
             }
 
             //Toggle grid lines
             foreach (BattlefieldGridLineView gridLineView in gridLines)
             {
-                if (gridLineView == null) { continue; }
+                if (gridLineView == null) continue;
                 gridLineView.DisplayElement(enemyGridLines.Contains(gridLineView));
             }
         }
@@ -116,7 +107,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="battlefieldPositions">The battlefield positions to find the grid cells for.</param>
         /// <returns>The grid cells located at each of the battlefield positions.</returns>
-        private static List<BattlefieldGridCellView> GetGridCells(List<Vector2Int> battlefieldPositions)
+        private List<BattlefieldGridCellView> GetGridCells(List<Vector2Int> battlefieldPositions)
         {
             List<BattlefieldGridCellView> cells = new List<BattlefieldGridCellView>();
             for (int battlefieldPositionIterator = 0; battlefieldPositionIterator < battlefieldPositions.Count; battlefieldPositionIterator++)
@@ -139,7 +130,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// </summary>
         /// <param name="battlefieldGridCellView">The grid cell to find adjacent grid lines for.</param>
         /// <returns>The grid lines adjacent to the grid cell.</returns>
-        private static List<BattlefieldGridLineView> AdjacentGridLines(BattlefieldGridCellView battlefieldGridCellView)
+        private List<BattlefieldGridLineView> AdjacentGridLines(BattlefieldGridCellView battlefieldGridCellView)
         {
             List<BattlefieldGridLineView> lines = new List<BattlefieldGridLineView>();
 
@@ -148,10 +139,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 BattlefieldGridLineView gridLine = gridLines[gridLineIterator];
 
                 int battlefieldPositionOnAxis = gridLine.vertical ? battlefieldGridCellView.battlefieldPosition.x : battlefieldGridCellView.battlefieldPosition.y;
-                if (gridLine.index == battlefieldPositionOnAxis || gridLine.index == battlefieldPositionOnAxis + 1)
-                {
-                    lines.Add(gridLine);
-                }
+                if (gridLine.index == battlefieldPositionOnAxis || gridLine.index == battlefieldPositionOnAxis + 1) lines.Add(gridLine);
             }
 
             return lines;
@@ -168,20 +156,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public void DisplayElement(bool show)
         {
-            if (show == showing)
-            {
-                return;
-            }
+            if (show == showing) return;
             showing = show;
 
-            if (show)
-            {
-                ShowElement();
-            }
-            else
-            {
-                HideElement();
-            }
+            if (show) ShowElement();
+            else HideElement();
         }
 
         protected void ShowElement()
@@ -199,10 +178,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         protected void TriggerDisplaySequence(Vector3 scale)
         {
-            if (displaySequence != null && displaySequence.IsPlaying())
-            {
-                displaySequence.Kill(false);
-            }
+            if (displaySequence != null && displaySequence.IsPlaying()) displaySequence.Kill(false);
 
             displaySequence = DOTween.Sequence();
             displaySequence.Append(transform.DOScale(scale, TWEEN_DURATION).SetEase(Ease.InOutQuad));

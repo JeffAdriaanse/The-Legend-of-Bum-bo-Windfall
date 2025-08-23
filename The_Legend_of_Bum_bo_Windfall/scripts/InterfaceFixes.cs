@@ -14,11 +14,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     class InterfaceFixes
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(InterfaceFixes));
-        }
-
         //Patch: Fixes 'damage up' notification appearing incorrectly
         //GUISide manaDrainView incorrectly contained the ManaDrainView of the child of the intended GameObject
         [HarmonyPostfix, HarmonyPatch(typeof(GUISide), "Awake")]

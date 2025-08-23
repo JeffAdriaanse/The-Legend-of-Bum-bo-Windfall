@@ -1,23 +1,15 @@
 ﻿using HarmonyLib;
 using I2.Loc;
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Xml.Linq;
 using TMPro;
 using UnityEngine;
-using static PlayerPrefsSaveData;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     class TextFixes
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(TextFixes));
-        }
-
         //Patch: Modify source data
         [HarmonyPostfix, HarmonyPatch(typeof(BumboIntroController), "Start")]
         static void BumboIntroController_Start()
@@ -87,10 +79,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     var key = setting.Attribute("Key")?.Value;
                     var value = setting.Attribute("Value")?.Value;
 
-                    if (key != null && value != null)
-                    {
-                        dictionary[key] = value;
-                    }
+                    if (key != null && value != null) dictionary[key] = value;
                 }
             }
             catch (Exception ex)
@@ -154,23 +143,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (font != null)
             {
-                if (textMeshProUGUI != null)
-                {
-                    textMeshProUGUI.font = font;
-                }
-                else if (textMeshPro != null)
-                {
-                    textMeshPro.font = font;
-                }
+                if (textMeshProUGUI != null) textMeshProUGUI.font = font;
+                else if (textMeshPro != null) textMeshPro.font = font;
             }
         }
 
         private static void ModifyLanguage(int lanugageIndex, Dictionary<string, string> textModifications)
         {
-            if (LanguageSourceData == null)
-            {
-                return;
-            }
+            if (LanguageSourceData == null) return;
 
             foreach (string term in textModifications.Keys)
             {
@@ -187,36 +167,18 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static void AddToLanguage(int lanugageIndex, Dictionary<string, string> textAdditions)
         {
-            if (LanguageSourceData == null)
-            {
-                return;
-            }
+            if (LanguageSourceData == null) return;
 
             foreach (string term in textAdditions.Keys)
             {
                 TermData termData = LanguageSourceData.AddTerm(term);
-
-                if (textAdditions.TryGetValue(term, out string value))
-                {
-                    termData.SetTranslation(lanugageIndex, value);
-                }
+                if (textAdditions.TryGetValue(term, out string value)) termData.SetTranslation(lanugageIndex, value);
             }
         }
 
         public static string GetLanguageText(string term, string category)
         {
-            TermData termData = null;
-
-            if (term == null) return string.Empty;
-
-            if (category != null) termData = LanguageSourceData.GetTermData(category + "/" + term, false);
-
-            if (termData == null) termData = LanguageSourceData.GetTermData(term, true);
-
-            if (termData == null) return string.Empty;
-
-            string translation = termData.GetTranslation(LanguageSourceData.GetLanguageIndex(LocalizationManager.CurrentLanguage));
-            return translation != null ? translation : string.Empty;
+            return GetLanguageText(LanguageSourceData.GetLanguageIndex(LocalizationManager.CurrentLanguage), term, category);
         }
 
         public static string GetLanguageText(int lanugageIndex, string term, string category)
@@ -224,11 +186,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             TermData termData = null;
 
             if (term == null) return string.Empty;
-
             if (category != null) termData = LanguageSourceData.GetTermData(category + "/" + term, false);
-
             if (termData == null) termData = LanguageSourceData.GetTermData(term, true);
-
             if (termData == null) return string.Empty;
 
             string translation = termData.GetTranslation(lanugageIndex);

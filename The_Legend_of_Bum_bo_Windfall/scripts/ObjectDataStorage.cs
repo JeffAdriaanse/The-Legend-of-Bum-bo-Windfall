@@ -4,7 +4,7 @@ using System.Linq;
 namespace The_Legend_of_Bum_bo_Windfall
 {
     /// <summary>
-    /// Stores data on objects. Useful for keeping track of custom data specific to an object and that should be lost when the object no longer exists.
+    /// Stores data on objects. Useful for keeping track of custom data specific to an object that should be lost when the object no longer exists.
     /// </summary>
     public class ObjectDataStorage
     {
@@ -20,7 +20,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static void ClearUnusedContainers()
         {
             //Note: Storage objects must be cast to UnityEngine.Object and checked against null a second time. This is because Unity uses wrapper objects that sometimes persist after the object has been destroyed.
-            //When the object is cast to UnityEngine.Object before the null check, the comparison operator properly check against null.
+            //When the object is cast to UnityEngine.Object before the null check, the comparison operator properly checks against null.
             //See https://blog.unity.com/technology/custom-operator-should-we-keep-it
             Containers.RemoveAll(container => (container == null || container.storageObject == null || (container.storageObject is UnityEngine.Object && (container.storageObject as UnityEngine.Object) == null)));
         }

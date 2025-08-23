@@ -1,7 +1,7 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
 
@@ -9,11 +9,16 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     class OtherChanges
     {
-        public static void Awake()
+        private static List<string> substringsInNamesOfGameObjectsThatShouldNotBeDeleted = new List<string>()
         {
-            Harmony.CreateAndPatchAll(typeof(OtherChanges));
-            PatchAchievementsUnlock();
-        }
+            "[DOTween]",
+            "SteamManager",
+            "PlatformManagerSteam",
+            "PlatformManagerGOG",
+            "PlatformManagerEGS",
+            "BepInEx_Manager",
+            "BepInEx_ThreadingHelper",
+        };
 
         //Patch: Fixes exiting to menu incorrectly deleting certain gameObjects
         //Also rebalances Loose Change coin gain
@@ -37,13 +42,12 @@ namespace The_Legend_of_Bum_bo_Windfall
                 GameObject[] array = UnityEngine.Object.FindObjectsOfType<GameObject>();
                 for (int i = array.Length - 1; i >= 0; i--)
                 {
-                    if (array[i].name != "Timer" && array[i].name != "[DOTween]" && array[i] != PlatformManagerTemplate<PlatformManagerSteam>.Instance.gameObject && array[i] != InputManager.Instance.gameObject && array[i].name != "SteamManager" && array[i].name != "BepInEx_Manager" && array[i].name != "BepInEx_ThreadingHelper" && list.IndexOf(array[i]) == -1)
+                    if (array[i].name != "Timer" && array[i] != InputManager.Instance.gameObject && !substringsInNamesOfGameObjectsThatShouldNotBeDeleted.Any(substring => array[i].name.Contains(substring)) && list.IndexOf(array[i]) == -1)
                     {
                         UnityEngine.Object.Destroy(array[i].gameObject);
                     }
                 }
                 loadingController2.loadScene("titlescreen2", true);
-
                 return false;
             }
 
@@ -54,7 +58,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 __instance.ModifyCoins(coins);
                 return false;
             }
-
             return true;
         }
 
@@ -62,31 +65,19 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "nextBlock")]
         static bool Puzzle_nextBlock(Puzzle __instance, ref int ___heartCounter)
         {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return true;
-            }
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) return true;
 
-            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
-            {
-                ___heartCounter = -1;
-            }
+            if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost) ___heartCounter = -1;
             return true;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "StartingBlocks")]
         static void TrinketController_StartingBlocks(TrinketController __instance, ref int[] __result)
         {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return;
-            }
+            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) return;
 
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
-                if (__result[1] > 0)
-                {
-                    __result[1]--;
-                }
+                if (__result[1] > 0) __result[1]--;
             }
         }
 
@@ -96,10 +87,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             float amount = Mathf.Clamp(_amount, 0f, 6f - __instance.bumboBaseInfo.hitPoints - __instance.soulHearts);
             __instance.soulHearts += amount;
-            if (__instance.soulHearts > 6f)
-            {
-                __instance.soulHearts = 6f;
-            }
+            if (__instance.soulHearts > 6f) __instance.soulHearts = 6f;
             return false;
         }
 
@@ -107,10 +95,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "addHitPoints")]
         static void CharacterSheet_addHitPoints(CharacterSheet __instance)
         {
-            while (__instance.bumboBaseInfo.hitPoints + __instance.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f)
-            {
-                __instance.soulHearts -= 0.5f;
-            }
+            while (__instance.bumboBaseInfo.hitPoints + __instance.soulHearts > 6f && __instance.app.model.characterSheet.soulHearts > 0f) __instance.soulHearts -= 0.5f;
         }
 
         //Patch: Fixes a bug in the Mega Boner tile combo logic; it no longer incorrectly breaks out of the for statements that look for enemies
@@ -172,10 +157,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             short num = 0;
             while (num < list.Count)
             {
-                if (list[num] != null && list[num].alive)
-                {
-                    list[num].Booger(2);
-                }
+                if (list[num] != null && list[num].alive) list[num].Booger(2);
                 num += 1;
             }
             return false;
@@ -212,14 +194,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Don't go back to previous room
                     if (roomCounter > 0)
                     {
-                        if (roomDirections[roomCounter - 1] == MapRoom.Direction.E)
-                        {
-                            possibleDirections.Remove(MapRoom.Direction.W);
-                        }
-                        else if (roomDirections[roomCounter - 1] == MapRoom.Direction.W)
-                        {
-                            possibleDirections.Remove(MapRoom.Direction.E);
-                        }
+                        if (roomDirections[roomCounter - 1] == MapRoom.Direction.E) possibleDirections.Remove(MapRoom.Direction.W);
+                        else if (roomDirections[roomCounter - 1] == MapRoom.Direction.W) possibleDirections.Remove(MapRoom.Direction.E);
                     }
 
                     //Add random direction
@@ -251,16 +227,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     currentRoom.cleared = false;
 
                     //Set start room
-                    if (roomCounter == 0)
-                    {
-                        __instance.app.model.mapModel.currentRoom = currentRoom;
-                    }
+                    if (roomCounter == 0) __instance.app.model.mapModel.currentRoom = currentRoom;
 
                     //Add room difficulty
-                    if (currentRoom.roomType == MapRoom.RoomType.Start || currentRoom.roomType == MapRoom.RoomType.EnemyEncounter)
-                    {
-                        currentRoom.difficulty = roomCounter == 0 ? 1 : 2;
-                    }
+                    if (currentRoom.roomType == MapRoom.RoomType.Start || currentRoom.roomType == MapRoom.RoomType.EnemyEncounter) currentRoom.difficulty = roomCounter == 0 ? 1 : 2;
 
                     //Set treasure room number and type
                     if (currentRoom.roomType == MapRoom.RoomType.Treasure)
@@ -268,32 +238,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                         treasureRoomCount++;
                         currentRoom.treasureNo = treasureRoomCount;
 
-                        if (__instance.app.model.characterSheet.currentFloor == 1)
-                        {
-                            currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Spell;
-                        }
-                        else if (__instance.app.model.characterSheet.currentFloor == 2)
-                        {
-                            currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Trinket;
-                        }
-                        else
-                        {
-                            currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Default;
-                        }
+                        if (__instance.app.model.characterSheet.currentFloor == 1) currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Spell;
+                        else if (__instance.app.model.characterSheet.currentFloor == 2) currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Trinket;
+                        else currentRoom.treasureRoomType = MapRoom.TreasureRoomType.Default;
                     }
 
                     //Add entrance door
                     if (roomCounter > 0 && roomDirections.Count > 0)
                     {
                         MapRoom.Direction previousRoomDirection = roomDirections[roomCounter - 1];
-                        if (previousRoomDirection == MapRoom.Direction.E)
-                        {
-                            currentRoom.AddDoor(MapRoom.Direction.W);
-                        }
-                        else if (previousRoomDirection == MapRoom.Direction.W)
-                        {
-                            currentRoom.AddDoor(MapRoom.Direction.E);
-                        }
+                        if (previousRoomDirection == MapRoom.Direction.E) currentRoom.AddDoor(MapRoom.Direction.W);
+                        else if (previousRoomDirection == MapRoom.Direction.W) currentRoom.AddDoor(MapRoom.Direction.E);
                     }
 
                     if (currentRoom.roomType != MapRoom.RoomType.Boss)
@@ -305,14 +260,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                         currentRoom.exitDirection = roomDirections[roomCounter];
 
                         //Update current position
-                        if (roomDirections[roomCounter] == MapRoom.Direction.N)
-                        {
-                            currentPosition.y++;
-                        }
-                        else
-                        {
-                            currentPosition.x += roomDirections[roomCounter] == MapRoom.Direction.E ? 1 : -1;
-                        }
+                        if (roomDirections[roomCounter] == MapRoom.Direction.N) currentPosition.y++;
+                        else currentPosition.x += roomDirections[roomCounter] == MapRoom.Direction.E ? 1 : -1;
                     }
                 }
             }
@@ -435,7 +384,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Fixes jackpot achievements according to the current platform
         /// </summary>
-        private static void PatchAchievementsUnlock()
+        public static void PatchAchievementsUnlock()
         {
             if (Windfall.achievementsSteam)
             {
@@ -475,10 +424,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
             if (bumboUnlockController != null)
             {
-                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
-                {
-                    Achievement -= 21;
-                }
+                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD) Achievement -= 21;
             }
         }
 
@@ -489,10 +435,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
             if (bumboUnlockController != null)
             {
-                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
-                {
-                    Achievement -= 21;
-                }
+                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD) Achievement -= 21;
             }
         }
 
@@ -503,10 +446,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             BumboUnlockController bumboUnlockController = GameObject.FindObjectOfType<BumboUnlockController>();
             if (bumboUnlockController != null)
             {
-                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD)
-                {
-                    Achievement -= 21;
-                }
+                if ((int)Achievement >= (int)Achievements.eAchievement.GOLDEN_GOD) Achievement -= 21;
             }
         }
 
@@ -564,7 +504,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return false;
             }
             __instance.End();
-
             return false;
         }
     }

@@ -2,18 +2,12 @@
 using I2.Loc;
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
     public static class CharacterImport
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(CharacterImport));
-        }
-
         //Character select: two collectibles
         private static readonly Vector3 Spell1ALocalPosition = new Vector3(-0.3408f, -0.3794f, -0.0503f); //Brave: -0.3626f, -0.3976f, -0.0706f
         private static readonly Vector3 Spell1ALocalRotation = new Vector3(1.0155f, 4.081f, 4.838f); //Brave: 1.0155f, 7.7767f, 13.0342f

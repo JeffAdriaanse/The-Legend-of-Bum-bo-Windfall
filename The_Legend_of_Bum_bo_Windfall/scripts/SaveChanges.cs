@@ -2,7 +2,6 @@
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -11,11 +10,6 @@ namespace The_Legend_of_Bum_bo_Windfall
     //[HarmonyPriority(Priority.First)]
     class SaveChanges
     {
-        public static void Awake()
-        {
-            Harmony.CreateAndPatchAll(typeof(SaveChanges));
-        }
-
         //Prevents old save states from being updated to the new save location. Out of an abundance of caution, progression files are ignored and are not prevented from being brought over
         //This is done to prevent the save from always showing up after restarting the game while having no in progress save  
         [HarmonyPrefix, HarmonyPatch(typeof(SaveSystemPC), "update_save")]
@@ -81,10 +75,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (levelMusicView != null)
                 {
                     AudioSource audioSource = levelMusicView.gameObject.GetComponent<AudioSource>();
-                    if (audioSource != null)
-                    {
-                        audioSource.Pause();
-                    }
+                    if (audioSource != null) audioSource.Pause();
                 }
 
                 __instance.app.controller.savedStateController.LoadEnd();
@@ -113,10 +104,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(WheelSpin), "MakeWheelClickable")]
         static void WheelSpin_MakeWheelClickable(WheelSpin __instance)
         {
-            if (__instance.app.controller.gamblingController != null)
-            {
-                WindfallSavedState.SaveShop(__instance.app.controller.gamblingController.shop);
-            }
+            if (__instance.app.controller.gamblingController != null) WindfallSavedState.SaveShop(__instance.app.controller.gamblingController.shop);
         }
 
         //Patch: Saves coins when spending money at the Wooden Nickel
