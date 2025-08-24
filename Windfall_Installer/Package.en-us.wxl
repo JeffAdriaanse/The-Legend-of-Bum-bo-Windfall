@@ -1,0 +1,10 @@
+﻿<!--
+This file contains the declaration of all the localizable strings.
+-->
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-US">
+
+    <String Id="InstallDirLabel" Value="Windfall is a mod for The Legend of Bum-bo. It must be installed to The Legend of Bum-bo root folder." />
+    <String Id="FoundInstallLabel" Value="The root folder was found automatically and has been filled in for you." />
+    <String Id="MIssingInstallLabel" Value="The root folder could not be found automatically. Please find the install location of the base game on your computer and navigate to it using the interface below." />
+
+</WixLocalization>
