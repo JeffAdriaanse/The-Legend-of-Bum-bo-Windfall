@@ -327,8 +327,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 string bumboDescription = string.Empty;
 
                 CharacterSheet.BumboType bumboType = WindfallHelper.app.model.characterSheet.bumboType;
-                if (WindfallTooltipDescriptions.BumboNames.TryGetValue(bumboType, out string name)) bumboName = LocalizationModifier.GetLanguageText(name, "Characters");
-                if (WindfallTooltipDescriptions.BumboDescriptions.TryGetValue(bumboType, out string description)) bumboDescription = LocalizationModifier.GetLanguageText(description, "Characters");
+                if (WindfallTooltipDescriptions.bumboNames.TryGetValue(bumboType, out string name)) bumboName = LocalizationModifier.GetLanguageText(name, "Characters");
+                if (WindfallTooltipDescriptions.bumboDescriptions.TryGetValue(bumboType, out string description)) bumboDescription = LocalizationModifier.GetLanguageText(description, "Characters");
 
                 displayDescription = "<u>" + bumboName + "</u>\n" + bumboDescription;
                 return;
@@ -425,7 +425,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         damageText = string.Empty;
                     }
                 }
-                if (WindfallTooltipDescriptions.NonAttackingEnemies.Contains(enemy.enemyName) || enemy.gameObject.name.Contains("Tainted Shy Gal Mimic 2"))
+                if (WindfallTooltipDescriptions.nonAttackingEnemies.Contains(enemy.enemyName) || enemy.gameObject.name.Contains("Tainted Shy Gal Mimic 2"))
                 {
                     damageText = string.Empty;
                 }
@@ -450,42 +450,30 @@ namespace The_Legend_of_Bum_bo_Windfall
     public static class WindfallTooltipDescriptions
     {
 
-        public static Dictionary<CharacterSheet.BumboType, string> BumboNames
+        public static readonly Dictionary<CharacterSheet.BumboType, string> bumboNames = new Dictionary<CharacterSheet.BumboType, string>
         {
-            get
-            {
-                return new Dictionary<CharacterSheet.BumboType, string>
-                {
-                    { CharacterSheet.BumboType.TheBrave, "BRAVE_NAME" },
-                    { CharacterSheet.BumboType.TheNimble, "NIMBLE_NAME" },
-                    { CharacterSheet.BumboType.TheStout, "STOUT_NAME" },
-                    { CharacterSheet.BumboType.TheWeird, "WEIRD_NAME" },
-                    { CharacterSheet.BumboType.TheDead, "DEAD_NAME" },
-                    { CharacterSheet.BumboType.TheLost, "LOST_NAME" },
-                    { CharacterSheet.BumboType.Eden, "EMPTY_NAME" },
-                    { (CharacterSheet.BumboType) 10, "WISE_NAME" },
-                };
-            }
-        }
+            { CharacterSheet.BumboType.TheBrave, "BRAVE_NAME" },
+            { CharacterSheet.BumboType.TheNimble, "NIMBLE_NAME" },
+            { CharacterSheet.BumboType.TheStout, "STOUT_NAME" },
+            { CharacterSheet.BumboType.TheWeird, "WEIRD_NAME" },
+            { CharacterSheet.BumboType.TheDead, "DEAD_NAME" },
+            { CharacterSheet.BumboType.TheLost, "LOST_NAME" },
+            { CharacterSheet.BumboType.Eden, "EMPTY_NAME" },
+            { (CharacterSheet.BumboType) 10, "WISE_NAME" },
+        };
 
         public static readonly string WISE_DESCRIPTION = "WISE_TOOLTIP_DESCRIPTION";
-        public static Dictionary<CharacterSheet.BumboType, string> BumboDescriptions
+        public static Dictionary<CharacterSheet.BumboType, string> bumboDescriptions = new Dictionary<CharacterSheet.BumboType, string>
         {
-            get
-            {
-                return new Dictionary<CharacterSheet.BumboType, string>
-                {
-                    { CharacterSheet.BumboType.TheBrave, "BRAVE_TOOLTIP_DESCRIPTION" },
-                    { CharacterSheet.BumboType.TheNimble, "NIMBLE_TOOLTIP_DESCRIPTION" },
-                    { CharacterSheet.BumboType.TheStout, "STOUT_TOOLTIP_DESCRIPTION" },
-                    { CharacterSheet.BumboType.TheWeird, "WEIRD_TOOLTIP_DESCRIPTION" },
-                    { CharacterSheet.BumboType.TheDead, "DEAD_TOOLTIP_DESCRIPTION" },
-                    { CharacterSheet.BumboType.TheLost, "LOST_TOOLTIP_DESCRIPTION" },
-                    { CharacterSheet.BumboType.Eden, "EMPTY_TOOLTIP_DESCRIPTION" },
-                    { (CharacterSheet.BumboType) 10, WISE_DESCRIPTION },
-                };
-            }
-        }
+            { CharacterSheet.BumboType.TheBrave, "BRAVE_TOOLTIP_DESCRIPTION" },
+            { CharacterSheet.BumboType.TheNimble, "NIMBLE_TOOLTIP_DESCRIPTION" },
+            { CharacterSheet.BumboType.TheStout, "STOUT_TOOLTIP_DESCRIPTION" },
+            { CharacterSheet.BumboType.TheWeird, "WEIRD_TOOLTIP_DESCRIPTION" },
+            { CharacterSheet.BumboType.TheDead, "DEAD_TOOLTIP_DESCRIPTION" },
+            { CharacterSheet.BumboType.TheLost, "LOST_TOOLTIP_DESCRIPTION" },
+            { CharacterSheet.BumboType.Eden, "EMPTY_TOOLTIP_DESCRIPTION" },
+            { (CharacterSheet.BumboType) 10, WISE_DESCRIPTION },
+        };
 
         public static string SpellDescriptionWithValues(SpellElement spell)
         {
@@ -589,17 +577,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (enemyNameText == string.Empty)
             {
                 //Enemy names from name
-                if (EnemyDisplayNamesByEnemyName.TryGetValue(enemy.enemyName, out string enemyNameFromName)) enemyNameText = enemyNameFromName;
+                if (enemyDisplayNamesByEnemyName.TryGetValue(enemy.enemyName, out string enemyNameFromName)) enemyNameText = enemyNameFromName;
             }
             if (enemyNameText == string.Empty)
             {
                 //Boss names from name
-                if (boss != null && BossDisplayNamesByBossName.TryGetValue((enemy as Boss).bossName, out string bossNameFromName)) enemyNameText = bossNameFromName;
+                if (boss != null && bossDisplayNamesByBossName.TryGetValue((enemy as Boss).bossName, out string bossNameFromName)) enemyNameText = bossNameFromName;
             }
             if (enemyNameText == string.Empty)
             {
                 //Enemy and Boss names from type
-                if (EnemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType)) enemyNameText = enemyNameFromType;
+                if (enemyDisplayNamesByType.TryGetValue(enemy.GetType(), out string enemyNameFromType)) enemyNameText = enemyNameFromType;
             }
 
             //Get Flipper
@@ -610,211 +598,196 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return enemyNameText;
         }
-        private static Dictionary<EnemyName, string> EnemyDisplayNamesByEnemyName
-        {
-            get
-            {
-                return new Dictionary<EnemyName, string>
-                {
-                    { EnemyName.Arsemouth, "TALL_BOY_NAME" },
-                    { EnemyName.BlackBlobby, "BLACK_BLOBBY_NAME" },
-                    { EnemyName.Blib, "BLIB_NAME" },
-                    { EnemyName.BlueBoney, "SKULLY_B_NAME" },
-                    { EnemyName.BoomFly, "BOOM_FLY_NAME" },
-                    { EnemyName.Burfer, "BURFER_NAME" },
-                    { EnemyName.Butthead, "SQUAT_NAME" },
-                    { EnemyName.CornyDip, "CORN_DIP_NAME" },
-                    { EnemyName.Curser, "CURSER_NAME" },
-                    { EnemyName.DigDig, "DIG_DIG_NAME" },
-                    { EnemyName.Dip, "DIP_NAME" },
-                    { EnemyName.Flipper, "FLIPPER_NAME" },//Missing
-                    { EnemyName.FloatingCultist, "FLOATER_NAME" },
-                    { EnemyName.Fly, "FLY_NAME" },
-                    { EnemyName.Greedling, "GREEDLING_NAME" },
-                    { EnemyName.GreenBlib, "GREEN_BLIB_NAME" },
-                    { EnemyName.GreenBlobby, "GREEN_BLOBBY_NAME" },
-                    { EnemyName.Hanger, "KEEPER_NAME" },
-                    { EnemyName.Hopper, "LEAPER_NAME" },
-                    { EnemyName.Host, "HOST_NAME" },
-                    //{ EnemyName.Imposter, "IMPOSTER_NAME" },
-                    { EnemyName.Isaacs, "ISAAC_NAME" },
-                    { EnemyName.Larry, "LARRY_NAME" },
-                    { EnemyName.Leechling, "SUCK_NAME" },
-                    { EnemyName.Longit, "LONGITS_NAME" },
-                    { EnemyName.ManaWisp, "MANA_WISP_NAME" },
-                    { EnemyName.MaskedImposter, "MASK_NAME" },
-                    { EnemyName.MeatGolem, "MEAT_GOLUM_NAME" },
-                    { EnemyName.MegaPoofer, "MEGA_POOFER_NAME" },
-                    { EnemyName.MirrorHauntLeft, "MIRROR_NAME" },
-                    { EnemyName.MirrorHauntRight, "MIRROR_NAME" },
-                    { EnemyName.PeepEye, "PEEPER_EYE_NAME" },
-                    { EnemyName.Poofer, "POOFER_NAME" },
-                    { EnemyName.Pooter, "POOTER_NAME" },
-                    { EnemyName.PurpleBoney, "SKULLY_P_NAME" },
-                    { EnemyName.RedBlobby, "RED_BLOBBY_NAME" },
-                    { EnemyName.RedCultist, "RED_FLOATER_NAME" },
-                    { EnemyName.Screecher, "SCREECHER_NAME" },
-                    { EnemyName.Shit, "POOP_NAME" },
-                    { EnemyName.Spookie, "SPOOKIE_NAME" },
-                    { EnemyName.Stone, "ROCK_NAME" },
-                    { EnemyName.Stony, "STONY_NAME" },
-                    { EnemyName.Sucker, "SUCKER_NAME" },
-                    { EnemyName.Tader, "DADDY_TATO_NAME" },
-                    { EnemyName.Tado, "TATO_KID_NAME" },
-                    { EnemyName.TaintedPeepEye, "TAINTED_PEEPER_EYE_NAME" },
-                    { EnemyName.Tutorial, "KEEPER_NAME" },
-                    { EnemyName.WalkingCultist, "CULTIST_NAME" },
-                    { EnemyName.WillOWisp, "WHISP_NAME" },
-                };
-            }
-        }
-        private static Dictionary<BossName, string> BossDisplayNamesByBossName
-        {
-            get
-            {
-                return new Dictionary<BossName, string>
-                {
-                    { BossName.Bygone, "BYGONE_BODY_NAME" },
-                    { BossName.Duke, "DUKE_NAME" },
-                    { BossName.Dusk, "DUSK_NAME" },
-                    { BossName.Gibs, "GIBS_NAME" },
-                    { BossName.Gizzarda, "GIZZARDA_NAME" },
-                    { BossName.Loaf, "LOAF_NAME" },
-                    { BossName.Peeper, "PEEPER_NAME" },
-                    { BossName.Pyre, "PYRE_NAME" },
-                    { BossName.Sangre, "SANGRE_NAME" },
-                    { BossName.ShyGal, "SHY_GALS_NAME" },
-                    { BossName.TaintedDusk, "TAINTED_DUSK_NAME" },
-                    { BossName.TaintedPeeper, "TAINTED_PEEPER_NAME" },
-                    { BossName.TaintedShyGal, "TAINTED_SHY_GALS_NAME" },
-                };
-            }
-        }
-        private static Dictionary<Type, string> EnemyDisplayNamesByType
-        {
-            get
-            {
-                return new Dictionary<Type, string>
-                {
-                    //Enemies
-                    { typeof(ArsemouthEnemy), "TALL_BOY_NAME" },
-                    { typeof(BlackBlobbyEnemy), "BLACK_BLOBBY_NAME" },
-                    { typeof(BlibEnemy), "BLIB_NAME" },
-                    { typeof(BlueBoneyEnemy), "SKULLY_B_NAME" },
-                    { typeof(BoomFlyEnemy), "BOOM_FLY_NAME" },
-                    { typeof(BurferEnemy), "BURFER_NAME" },
-                    { typeof(ButtheadEnemy), "SQUAT_NAME" },
-                    //CornyDip
-                    { typeof(CurserEnemy), "CURSER_NAME" },
-                    { typeof(DigDigEnemy), "DIG_DIG_NAME" },
-                    { typeof(DipEnemy), "DIP_NAME" },
-                    { typeof(FlipperEnemy), "Flipper" },
-                    { typeof(FloatingCultistEnemy), "FLOATER_NAME" },
-                    { typeof(FlyEnemy), "FLY_NAME" },
-                    { typeof(GreedlingEnemy), "GREEDLING_NAME" },
-                    //GreenBlib
-                    { typeof(GreenBlobbyEnemy), "GREEN_BLOBBY_NAME" },
-                    { typeof(HangerEnemy), "KEEPER_NAME" },
-                    { typeof(HopperEnemy), "LEAPER_NAME" },
-                    { typeof(HostEnemy), "HOST_NAME" },
-                    { typeof(ImposterEnemy), "IMPOSTER_NAME" },
-                    { typeof(IsaacsEnemy), "ISAAC_NAME" },
-                    { typeof(LarryEnemy), "LARRY_NAME" },
-                    { typeof(LeecherEnemy), "SUCK_NAME" },
-                    { typeof(LongitEnemy), "LONGITS_NAME" },
-                    { typeof(ManaWispEnemy), "MANA_WISP_NAME" },
-                    { typeof(MaskedImposterEnemy), "MASK_NAME" },
-                    { typeof(MeatGolemEnemy), "MEAT_GOLUM_NAME" },
-                    { typeof(MegaPooferEnemy), "MEGA_POOFER_NAME" },
-                    { typeof(MirrorHauntEnemy), "MIRROR_NAME" },
-                    { typeof(PeepEyeEnemy), "PEEPER_EYE_NAME" },
-                    { typeof(PooferEnemy), "POOFER_NAME" },
-                    { typeof(PooterEnemy), "POOTER_NAME" },
-                    { typeof(PurpleBoneyEnemy), "SKULLY_P_NAME" },
-                    { typeof(RedBlobbyEnemy), "RED_BLOBBY_NAME" },
-                    { typeof(RedCultistEnemy), "RED_FLOATER_NAME" },
-                    { typeof(ScreecherEnemy), "SCREECHER_NAME" },
-                    { typeof(ShitEnemy), "POOP_NAME" },
-                    { typeof(SpookieEnemy), "SPOOKIE_NAME" },
-                    { typeof(StoneEnemy), "ROCK_NAME" },
-                    { typeof(StonyEnemy), "STONY_NAME" },
-                    { typeof(SuckerEnemy), "SUCKER_NAME" },
-                    { typeof(TaderEnemy), "DADDY_TATO_NAME" },
-                    { typeof(TadoEnemy), "TATO_KID_NAME" },
-                    //TaintedPeepEye
-                    { typeof(TutorialEnemy), "KEEPER_NAME" },
-                    { typeof(WalkingCultistEnemy), "CULTIST_NAME" },
-                    { typeof(WilloWispEnemy), "WHISP_NAME" },
 
-                    //Bosses
-                    { typeof(BygoneBoss), "BYGONE_BODY_NAME" },
-                    { typeof(BygoneGhostBoss), "BYGONE_GHOST_NAME" },
-                    { typeof(DukeBoss), "DUKE_NAME" },
-                    { typeof(DuskBoss), "DUSK_NAME" },
-                    { typeof(GibsBoss), "GIBS_NAME" },
-                    { typeof(GizzardaBoss), "GIZZARDA_NAME" },
-                    { typeof(LoafBoss), "LOAF_NAME" },
-                    { typeof(PeepsBoss), "PEEPER_NAME" },
-                    { typeof(PyreBoss), "PYRE_NAME" },
-                    { typeof(CaddyBoss), "SANGRE_NAME" },
-                    { typeof(ShyGalBoss), "SHY_GALS_NAME" },
-                    { typeof(TaintedDuskBoss), "TAINTED_DUSK_NAME" },
-                    //TaintedPeeper
-                    //TaintedShyGal
-                };
-            }
-        }
+        private static readonly Dictionary<EnemyName, string> enemyDisplayNamesByEnemyName = new Dictionary<EnemyName, string>
+        {
+            { EnemyName.Arsemouth, "TALL_BOY_NAME" },
+            { EnemyName.BlackBlobby, "BLACK_BLOBBY_NAME" },
+            { EnemyName.Blib, "BLIB_NAME" },
+            { EnemyName.BlueBoney, "SKULLY_B_NAME" },
+            { EnemyName.BoomFly, "BOOM_FLY_NAME" },
+            { EnemyName.Burfer, "BURFER_NAME" },
+            { EnemyName.Butthead, "SQUAT_NAME" },
+            { EnemyName.CornyDip, "CORN_DIP_NAME" },
+            { EnemyName.Curser, "CURSER_NAME" },
+            { EnemyName.DigDig, "DIG_DIG_NAME" },
+            { EnemyName.Dip, "DIP_NAME" },
+            { EnemyName.Flipper, "FLIPPER_NAME" },//Missing
+            { EnemyName.FloatingCultist, "FLOATER_NAME" },
+            { EnemyName.Fly, "FLY_NAME" },
+            { EnemyName.Greedling, "GREEDLING_NAME" },
+            { EnemyName.GreenBlib, "GREEN_BLIB_NAME" },
+            { EnemyName.GreenBlobby, "GREEN_BLOBBY_NAME" },
+            { EnemyName.Hanger, "KEEPER_NAME" },
+            { EnemyName.Hopper, "LEAPER_NAME" },
+            { EnemyName.Host, "HOST_NAME" },
+            //{ EnemyName.Imposter, "IMPOSTER_NAME" },
+            { EnemyName.Isaacs, "ISAAC_NAME" },
+            { EnemyName.Larry, "LARRY_NAME" },
+            { EnemyName.Leechling, "SUCK_NAME" },
+            { EnemyName.Longit, "LONGITS_NAME" },
+            { EnemyName.ManaWisp, "MANA_WISP_NAME" },
+            { EnemyName.MaskedImposter, "MASK_NAME" },
+            { EnemyName.MeatGolem, "MEAT_GOLUM_NAME" },
+            { EnemyName.MegaPoofer, "MEGA_POOFER_NAME" },
+            { EnemyName.MirrorHauntLeft, "MIRROR_NAME" },
+            { EnemyName.MirrorHauntRight, "MIRROR_NAME" },
+            { EnemyName.PeepEye, "PEEPER_EYE_NAME" },
+            { EnemyName.Poofer, "POOFER_NAME" },
+            { EnemyName.Pooter, "POOTER_NAME" },
+            { EnemyName.PurpleBoney, "SKULLY_P_NAME" },
+            { EnemyName.RedBlobby, "RED_BLOBBY_NAME" },
+            { EnemyName.RedCultist, "RED_FLOATER_NAME" },
+            { EnemyName.Screecher, "SCREECHER_NAME" },
+            { EnemyName.Shit, "POOP_NAME" },
+            { EnemyName.Spookie, "SPOOKIE_NAME" },
+            { EnemyName.Stone, "ROCK_NAME" },
+            { EnemyName.Stony, "STONY_NAME" },
+            { EnemyName.Sucker, "SUCKER_NAME" },
+            { EnemyName.Tader, "DADDY_TATO_NAME" },
+            { EnemyName.Tado, "TATO_KID_NAME" },
+            { EnemyName.TaintedPeepEye, "TAINTED_PEEPER_EYE_NAME" },
+            { EnemyName.Tutorial, "KEEPER_NAME" },
+            { EnemyName.WalkingCultist, "CULTIST_NAME" },
+            { EnemyName.WillOWisp, "WHISP_NAME" },
+        };
+
+        private static readonly Dictionary<BossName, string> bossDisplayNamesByBossName = new Dictionary<BossName, string>
+        {
+            { BossName.Bygone, "BYGONE_BODY_NAME" },
+            { BossName.Duke, "DUKE_NAME" },
+            { BossName.Dusk, "DUSK_NAME" },
+            { BossName.Gibs, "GIBS_NAME" },
+            { BossName.Gizzarda, "GIZZARDA_NAME" },
+            { BossName.Loaf, "LOAF_NAME" },
+            { BossName.Peeper, "PEEPER_NAME" },
+            { BossName.Pyre, "PYRE_NAME" },
+            { BossName.Sangre, "SANGRE_NAME" },
+            { BossName.ShyGal, "SHY_GALS_NAME" },
+            { BossName.TaintedDusk, "TAINTED_DUSK_NAME" },
+            { BossName.TaintedPeeper, "TAINTED_PEEPER_NAME" },
+            { BossName.TaintedShyGal, "TAINTED_SHY_GALS_NAME" },
+        };
+
+        private static readonly Dictionary<Type, string> enemyDisplayNamesByType = new Dictionary<Type, string>
+        {
+            //Enemies
+            { typeof(ArsemouthEnemy), "TALL_BOY_NAME" },
+            { typeof(BlackBlobbyEnemy), "BLACK_BLOBBY_NAME" },
+            { typeof(BlibEnemy), "BLIB_NAME" },
+            { typeof(BlueBoneyEnemy), "SKULLY_B_NAME" },
+            { typeof(BoomFlyEnemy), "BOOM_FLY_NAME" },
+            { typeof(BurferEnemy), "BURFER_NAME" },
+            { typeof(ButtheadEnemy), "SQUAT_NAME" },
+            //CornyDip
+            { typeof(CurserEnemy), "CURSER_NAME" },
+            { typeof(DigDigEnemy), "DIG_DIG_NAME" },
+            { typeof(DipEnemy), "DIP_NAME" },
+            { typeof(FlipperEnemy), "Flipper" },
+            { typeof(FloatingCultistEnemy), "FLOATER_NAME" },
+            { typeof(FlyEnemy), "FLY_NAME" },
+            { typeof(GreedlingEnemy), "GREEDLING_NAME" },
+            //GreenBlib
+            { typeof(GreenBlobbyEnemy), "GREEN_BLOBBY_NAME" },
+            { typeof(HangerEnemy), "KEEPER_NAME" },
+            { typeof(HopperEnemy), "LEAPER_NAME" },
+            { typeof(HostEnemy), "HOST_NAME" },
+            { typeof(ImposterEnemy), "IMPOSTER_NAME" },
+            { typeof(IsaacsEnemy), "ISAAC_NAME" },
+            { typeof(LarryEnemy), "LARRY_NAME" },
+            { typeof(LeecherEnemy), "SUCK_NAME" },
+            { typeof(LongitEnemy), "LONGITS_NAME" },
+            { typeof(ManaWispEnemy), "MANA_WISP_NAME" },
+            { typeof(MaskedImposterEnemy), "MASK_NAME" },
+            { typeof(MeatGolemEnemy), "MEAT_GOLUM_NAME" },
+            { typeof(MegaPooferEnemy), "MEGA_POOFER_NAME" },
+            { typeof(MirrorHauntEnemy), "MIRROR_NAME" },
+            { typeof(PeepEyeEnemy), "PEEPER_EYE_NAME" },
+            { typeof(PooferEnemy), "POOFER_NAME" },
+            { typeof(PooterEnemy), "POOTER_NAME" },
+            { typeof(PurpleBoneyEnemy), "SKULLY_P_NAME" },
+            { typeof(RedBlobbyEnemy), "RED_BLOBBY_NAME" },
+            { typeof(RedCultistEnemy), "RED_FLOATER_NAME" },
+            { typeof(ScreecherEnemy), "SCREECHER_NAME" },
+            { typeof(ShitEnemy), "POOP_NAME" },
+            { typeof(SpookieEnemy), "SPOOKIE_NAME" },
+            { typeof(StoneEnemy), "ROCK_NAME" },
+            { typeof(StonyEnemy), "STONY_NAME" },
+            { typeof(SuckerEnemy), "SUCKER_NAME" },
+            { typeof(TaderEnemy), "DADDY_TATO_NAME" },
+            { typeof(TadoEnemy), "TATO_KID_NAME" },
+            //TaintedPeepEye
+            { typeof(TutorialEnemy), "KEEPER_NAME" },
+            { typeof(WalkingCultistEnemy), "CULTIST_NAME" },
+            { typeof(WilloWispEnemy), "WHISP_NAME" },
+
+            //Bosses
+            { typeof(BygoneBoss), "BYGONE_BODY_NAME" },
+            { typeof(BygoneGhostBoss), "BYGONE_GHOST_NAME" },
+            { typeof(DukeBoss), "DUKE_NAME" },
+            { typeof(DuskBoss), "DUSK_NAME" },
+            { typeof(GibsBoss), "GIBS_NAME" },
+            { typeof(GizzardaBoss), "GIZZARDA_NAME" },
+            { typeof(LoafBoss), "LOAF_NAME" },
+            { typeof(PeepsBoss), "PEEPER_NAME" },
+            { typeof(PyreBoss), "PYRE_NAME" },
+            { typeof(CaddyBoss), "SANGRE_NAME" },
+            { typeof(ShyGalBoss), "SHY_GALS_NAME" },
+            { typeof(TaintedDuskBoss), "TAINTED_DUSK_NAME" },
+            //TaintedPeeper
+            //TaintedShyGal
+        };
 
         public static string EnemyDisplayDescription(Enemy enemy)
         {
             string localizationCategory = enemy is Boss ? "Bosses" : "Enemies";
-            if (EnemyDescriptions.TryGetValue(EnemyDisplayName(enemy), out string value)) { return "\n" + LocalizationModifier.GetLanguageText(value, localizationCategory); }
+            if (enemyDescriptions.TryGetValue(EnemyDisplayName(enemy), out List<string> value))
+            {
+                string fullDescription = string.Empty;
+                foreach (string description in value) fullDescription += "\n" + LocalizationModifier.GetLanguageText(description, localizationCategory);
+                return fullDescription;
+            }
             return string.Empty;
         }
-        private static Dictionary<string, string> EnemyDescriptions
-        {
-            get
-            {
-                return new Dictionary<string, string>
-                {
-                    //Enemies
-                    { "BLACK_BLOBBY_NAME", "BLACK_BLOBBY_ABILITY" },
-                    { "BOOM_FLY_NAME", "BOOM_FLY_ABILITY" },
-                    { "CULTIST_NAME", "CULTIST_ABILITY" },
-                    { "DADDY_TATO_NAME", "DADDY_TATO_ABILITY" },
-                    { "DIG_DIG_NAME", "DIG_DIG_ABILITY" },
-                    { "GREEDLING_NAME", "GREEDLING_ABILITY" },
-                    { "ISAAC_NAME", "ISAAC_ABILITY" },
-                    { "JIB_NAME", "JIB_ABILITY" },
-                    { "LARRY_NAME", "LARRY_ABILITY" },
-                    { "LONGITS_NAME", "LONGITS_ABILITY" },
-                    { "MANA_WISP_NAME", "MANA_WISP_ABILITY" },
-                    { "MEAT_GOLUM_NAME", "MEAT_GOLUM_ABILITY" },
-                    { "MEGA_POOFER_NAME", "MEGA_POOFER_ABILITY" },
-                    { "NIB_NAME", "NIB_ABILITY" },
-                    { "POOFER_NAME", "POOFER_ABILITY" },
-                    { "RED_FLOATER_NAME", "RED_FLOATER_ABILITY" },
-                    { "SPOOKIE_NAME", "SPOOKIE_ABILITY" },
-                    { "SUCKER_NAME", "SUCKER_ABILITY" },
-                    { "TATO_KID_NAME", "TATO_KID_ABILITY" },
 
-                    //Bosses
-                    { "BYGONE_BODY_NAME", "BYGONE_BODY_ABILITY" },
-                    { "BYGONE_GHOST_NAME", "BYGONE_GHOST_ABILITY" },
-                    { "DUSK_NAME", "DUSK_ABILITY" },
-                    { "GIBS_NAME", "GIBS_ABILITY" },
-                    { "GIZZARDA_NAME", "GIZZARDA_ABILITY" },
-                    { "LOAF_NAME", "LOAF_ABILITY" },
-                    { "PYRE_NAME", "PYRE_ABILITY" },
-                    { "TAINTED_PEEPER_NAME", "TAINTED_PEEPER_ABILITY" },
-                    { "TAINTED_DUSK_NAME", "TAINTED_DUSK_ABILITY" },
-                };
-            }
-        }
+        private static readonly Dictionary<string, List<string>> enemyDescriptions = new Dictionary<string, List<string>>
+        {
+            //Enemies
+            { "BLACK_BLOBBY_NAME", new List<string> { "BLACK_BLOBBY_ABILITY" } },
+            { "BOOM_FLY_NAME", new List<string> { "BOOM_FLY_ABILITY" } },
+            { "CULTIST_NAME", new List<string> { "CULTIST_ABILITY" } },
+            { "DADDY_TATO_NAME", new List<string> { "DADDY_TATO_ABILITY", "DADDY_TATO_ABILITY_2" } },
+            { "DIG_DIG_NAME", new List<string> { "DIG_DIG_ABILITY" } },
+            { "GREEDLING_NAME", new List<string> { "GREEDLING_ABILITY" } },
+            { "ISAAC_NAME", new List<string> { "ISAAC_ABILITY" } },
+            { "JIB_NAME", new List<string> { "JIB_ABILITY" } },
+            { "LARRY_NAME", new List<string> { "LARRY_ABILITY" } },
+            { "LONGITS_NAME", new List<string> { "LONGITS_ABILITY" } },
+            { "MANA_WISP_NAME", new List<string> { "MANA_WISP_ABILITY" } },
+            { "MEAT_GOLUM_NAME", new List<string> { "MEAT_GOLUM_ABILITY", "MEAT_GOLUM_ABILITY_2" } },
+            { "MEGA_POOFER_NAME", new List<string> { "MEGA_POOFER_ABILITY" } },
+            { "NIB_NAME", new List<string> { "NIB_ABILITY" } },
+            { "POOFER_NAME", new List<string> { "POOFER_ABILITY" } },
+            { "RED_FLOATER_NAME", new List<string> { "RED_FLOATER_ABILITY" } },
+            { "SPOOKIE_NAME", new List<string> { "SPOOKIE_ABILITY" } },
+            { "SUCKER_NAME", new List<string> { "SUCKER_ABILITY" } },
+            { "TATO_KID_NAME", new List<string> { "TATO_KID_ABILITY" } },
+
+            //Bosses
+            { "BYGONE_BODY_NAME", new List<string> { "BYGONE_BODY_ABILITY" } },
+            { "BYGONE_GHOST_NAME", new List<string> { "BYGONE_GHOST_ABILITY" } },
+            { "DUSK_NAME", new List<string> { "DUSK_ABILITY" } },
+            { "GIBS_NAME", new List<string> { "GIBS_ABILITY" } },
+            { "GIZZARDA_NAME", new List<string> { "GIZZARDA_ABILITY" } },
+            { "LOAF_NAME", new List<string> { "LOAF_ABILITY" } },
+            { "PYRE_NAME", new List<string> { "PYRE_ABILITY" } },
+            { "TAINTED_PEEPER_NAME", new List<string> { "TAINTED_PEEPER_ABILITY" } },
+            { "TAINTED_DUSK_NAME", new List<string> { "TAINTED_DUSK_ABILITY" } },
+        };
 
         public static string EnemyDamageReductionWithValues(Enemy enemy)
         {
-            if (DamageReductionEnemies.Contains(enemy.GetType()))
+            if (damageReductionEnemies.Contains(enemy.GetType()))
             {
                 int damageReduction = 1;
 
@@ -835,37 +808,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             return string.Empty;
         }
 
-        public static List<Type> DamageReductionEnemies
+        private static readonly List<Type> damageReductionEnemies = new List<Type>
         {
-            get
-            {
-                return new List<Type>
-                {
-                    //Enemies
-                    typeof(SpookieEnemy),
+            //Enemies
+            typeof(SpookieEnemy),
 
-                    //Bosses
-                    typeof(BygoneGhostBoss),
-                    typeof(DukeBoss),
-                };
-            }
-        }
+            //Bosses
+            typeof(BygoneGhostBoss),
+            typeof(DukeBoss),
+        };
 
-        public static List<EnemyName> NonAttackingEnemies
+        public static readonly List<EnemyName> nonAttackingEnemies = new List<EnemyName>
         {
-            get
-            {
-                return new List<EnemyName>
-                {
-                    EnemyName.Arsemouth,
-                    EnemyName.Curser,
-                    EnemyName.FloatingCultist,
-                    EnemyName.TaintedPeepEye,
-                    EnemyName.Screecher,
-                    EnemyName.Sucker,
-                };
-            }
-        }
+            EnemyName.Arsemouth,
+            EnemyName.Curser,
+            EnemyName.FloatingCultist,
+            EnemyName.TaintedPeepEye,
+            EnemyName.Screecher,
+            EnemyName.Sucker,
+        };
 
         public static bool EnemyIsBlocking(Enemy enemy)
         {
@@ -912,7 +873,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             bool invincible = false;
-            if (PotentiallyInvincibleEnemies.Contains(EnemyDisplayName(enemy)))
+            if (potentiallyInvincibleEnemies.Contains(EnemyDisplayName(enemy)))
             {
                 invincible = true;
 
@@ -933,20 +894,15 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             return invincible;
         }
-        private static List<string> PotentiallyInvincibleEnemies
+
+        private static readonly List<string> potentiallyInvincibleEnemies = new List<string>
         {
-            get
-            {
-                return new List<string>
-                {
-                    "MANA_WISP_NAME",
-                    "HOST_NAME",
-                    "PEEPER_EYE_NAME",
-                    "SANGRE_NAME",
-                    "STONY_NAME",
-                    "TAINTED_PEEPER_EYE_NAME",
-                };
-            }
-        }
+            "MANA_WISP_NAME",
+            "HOST_NAME",
+            "PEEPER_EYE_NAME",
+            "SANGRE_NAME",
+            "STONY_NAME",
+            "TAINTED_PEEPER_EYE_NAME",
+        };
     }
 }

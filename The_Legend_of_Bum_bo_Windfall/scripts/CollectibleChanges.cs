@@ -2795,7 +2795,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return totalSpellCost;
         }
 
-        public static Dictionary<SpellName, int> rebalancedSpellBaseManaCosts = new Dictionary<SpellName, int>()
+        public static readonly Dictionary<SpellName, int> rebalancedSpellBaseManaCosts = new Dictionary<SpellName, int>()
         {
             { (SpellName)1001, 3},
             { SpellName.Addy, 3 },
