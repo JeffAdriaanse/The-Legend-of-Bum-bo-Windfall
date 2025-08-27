@@ -31,6 +31,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Patching with harmony
             harmony.PatchAll(typeof(BumboModifierIndicationPatches));
             harmony.PatchAll(typeof(SpellViewIndicationControllerPatches));
+            harmony.PatchAll(typeof(ModifySpellHoverPreviewPatches));
             harmony.PatchAll(typeof(WindfallTooltipPatches));
             harmony.PatchAll(typeof(EntityFixes));
             harmony.PatchAll(typeof(EntityChanges));

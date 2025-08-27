@@ -3,6 +3,7 @@ bin/
 obj/
 .vs/
 The Legend of Bum-bo_Windfall.sln
+windfall
 
 _site
 .sass-cache

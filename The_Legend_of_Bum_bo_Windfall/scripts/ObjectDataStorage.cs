@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using MonoMod.Utils;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -110,6 +112,33 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Produces a copy of all data stored for fromObject and assigns it to toObject.
+        /// </summary>
+        /// <param name="fromObject">The object to copy data from.</param>
+        /// <param name="toObject">The object to copy data to.</param>
+        public static void CopyData(object fromObject, object toObject)
+        {
+            ObjectDataStorage fromContainer = FindContainer(fromObject);
+            ObjectDataStorage toContainer = FindContainer(toObject);
+
+            if (fromContainer != null)
+            {
+                if (toContainer == null)
+                {
+                    toContainer = new ObjectDataStorage();
+                    toContainer.storageObject = toObject;
+                    Containers.Add(toContainer);
+                }
+
+                //Copy data over
+                foreach (var keyValuePair in fromContainer.data)
+                {
+                    toContainer.data[keyValuePair.Key] = keyValuePair.Value;
+                }
+            }
         }
     }
 }

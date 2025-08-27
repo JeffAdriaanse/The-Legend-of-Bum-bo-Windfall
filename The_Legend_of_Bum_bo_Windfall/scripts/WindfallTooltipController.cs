@@ -677,17 +677,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.WindfallTooltipController.UpdateTooltips();
         }
 
-        //Patch: Adds tooltips to spells
+        //Patch: Adds tooltips to spellViews
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]
         static void BumboController_SetSpell(BumboController __instance, int _spell_index)
         {
             SpellView spellView = __instance.app.view.spells[_spell_index];
             WindfallTooltip windfallTooltip = spellView.GetComponent<WindfallTooltip>();
-
-            if (windfallTooltip == null)
-            {
-                spellView.gameObject.AddComponent<WindfallTooltip>();
-            }
+            if (windfallTooltip == null) spellView.gameObject.AddComponent<WindfallTooltip>();
         }
 
         //Patch: Adds tooltips to spell pickups

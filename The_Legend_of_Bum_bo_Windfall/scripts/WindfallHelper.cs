@@ -3,6 +3,7 @@ using I2.Loc;
 using PathologicalGames;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -165,6 +166,20 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             set { spellViewIndicationController = value; }
         }
+
+        //Static reference to Windfall ModifySpellHoverPreviewController
+        private static ModifySpellHoverPreviewController modifySpellHoverPreviewController;
+        public static ModifySpellHoverPreviewController ModifySpellHoverPreviewController
+        {
+            get
+            {
+                if (modifySpellHoverPreviewController == null) modifySpellHoverPreviewController = GameObject.FindObjectOfType<ModifySpellHoverPreviewController>();
+                if (modifySpellHoverPreviewController == null) modifySpellHoverPreviewController = CreateWindfallController<ModifySpellHoverPreviewController>();
+                return modifySpellHoverPreviewController;
+            }
+            set { modifySpellHoverPreviewController = value; }
+        }
+
 
         /// <summary>
         ///Creates a GameObject child of BumboController with the given MonoBehaviour component type attached as a new instance. Returns the created MonoBehaviour component.
@@ -590,6 +605,113 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             TextMeshProUGUI textMeshProUGUI = buttonObject.GetComponent<TextMeshProUGUI>();
             LocalizationModifier.ChangeFont(textMeshProUGUI, null, font);
+        }
+
+        /// <summary>
+        /// Creates a duplicate of the given SpellElement. Note that data stored with <see cref="ObjectDataStorage"/> will also be copied over.
+        /// </summary>
+        /// <param name="spell">The SpellElement to copy.</param>
+        /// <returns>The duplicate SpellElement.</returns>
+        public static SpellElement CopySpell(SpellElement spell)
+        {
+            if (spell == null) return null;
+
+            SpellName spellName = spell.spellName;
+            SpellElement duplicateSpell = WindfallHelper.app.model.spellModel.spells[spellName];
+            if (spell.Cost != null) duplicateSpell.Cost = (short[])spell.Cost.Clone();
+            if (spell.CostModifier != null) duplicateSpell.CostModifier = (short[])spell.CostModifier.Clone();
+            duplicateSpell.CostOverride = spell.CostOverride;
+            duplicateSpell.charge = spell.charge;
+            duplicateSpell.requiredCharge = spell.requiredCharge;
+            duplicateSpell.chargeEveryRound = spell.chargeEveryRound;
+            duplicateSpell.usedInRound = spell.usedInRound;
+            duplicateSpell.baseDamage = spell.baseDamage;
+            duplicateSpell.UsedInRoom = spell.UsedInRoom;
+            duplicateSpell.setCost = spell.setCost;
+
+            ObjectDataStorage.CopyData(spell, duplicateSpell);
+
+            return duplicateSpell;
+        }
+
+        /// <summary>
+        /// Determines whether the first SpellElement is the same as the second SpellElement. Note that data stored with <see cref="ObjectDataStorage"/> will not be copied over.
+        /// </summary>
+        /// <param name="firstSpell">The SpellElement to copy.</param>
+        /// <param name="secondSpell">The SpellElement to copy.</param>
+        /// <param name="lenient">Whether to allow some of the most variable pieces of data to differ without the SpellElements being considered unequal.</param>
+        /// <returns>Whether the first SpellElement is the same as the second SpellElement, or false if either SpellElement is null or either SpellElement Cost is null.</returns>
+        public static bool CompareSpells(SpellElement firstSpell, SpellElement secondSpell, bool lenient = false)
+        {
+            if (firstSpell == null || secondSpell == null) return false;
+
+            bool equal = false;
+
+            bool lenientEqual = firstSpell.GetType().Equals(secondSpell.GetType())
+                && firstSpell.spellName.Equals(secondSpell.spellName)
+
+                && firstSpell.Cost != null
+                && secondSpell.Cost != null
+                && firstSpell.Cost.SequenceEqual(secondSpell.Cost)
+
+                && firstSpell.CostOverride == secondSpell.CostOverride
+                && firstSpell.requiredCharge == secondSpell.requiredCharge
+                && firstSpell.chargeEveryRound == secondSpell.chargeEveryRound
+                && firstSpell.baseDamage == secondSpell.baseDamage;
+
+            bool strictEqual = firstSpell.charge == secondSpell.charge
+                && firstSpell.usedInRound == secondSpell.usedInRound
+                && firstSpell.UsedInRoom == secondSpell.UsedInRoom
+                && firstSpell.setCost == secondSpell.setCost;
+
+            if (lenient) equal = lenientEqual;
+            else equal = lenientEqual && strictEqual;
+
+            return equal;
+        }
+
+        /// <summary>
+        /// Updates the spell active visuals of the given SpellView according to the ready state of the given SpellElement.
+        /// </summary>
+        /// <param name="spellView">The SpellView to update the visuals of.</param>
+        /// <param name="spellElement">The SpellElement to check the ready state of.</param>
+        public static void UpdateSpellViewActiveVisuals(SpellView spellView, SpellElement spellElement)
+        {
+            bool ready = spellElement.IsReady();
+
+            //Spell icon
+            spellView.SetActive(ready);
+
+            //Spell container
+            if (ready) spellView.spellContainer.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0f, -0.5f));
+            else spellView.spellContainer.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0f, -0.25f));
+
+            //Spell category
+            GameObject spellCategoryObject = null;
+            switch (spellElement.Category)
+            {
+                case SpellElement.SpellCategory.Defense:
+                    spellCategoryObject = spellView.spellTypeDefense;
+                    break;
+                case SpellElement.SpellCategory.Puzzle:
+                    spellCategoryObject = spellView.spellTypePuzzle;
+                    break;
+                case SpellElement.SpellCategory.Use:
+                    spellCategoryObject = spellView.spellTypeItem;
+                    break;
+                case SpellElement.SpellCategory.Other:
+                    spellCategoryObject = spellView.spellTypeSpecial;
+                    break;
+                case SpellElement.SpellCategory.Attack:
+                    spellCategoryObject = spellView.spellTypeAttack;
+                    break;
+            }
+
+            if (spellCategoryObject != null)
+            {
+                if (ready) spellCategoryObject.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0f, 0f));
+                else spellCategoryObject.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0.5f, 0f));
+            }
         }
     }
 

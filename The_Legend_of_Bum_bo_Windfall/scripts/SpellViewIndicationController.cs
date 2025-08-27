@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using System.Collections.Generic;
-using The_Legend_of_Bum_bo_Windfall;
 using UnityEngine;
 using static The_Legend_of_Bum_bo_Windfall.SpellViewIndicator;
 
@@ -53,7 +52,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 int indexInRow = i;
                 if (numberOfRows > 1 && !firstRow) indexInRow -= firstRowCutoff;
 
-                float xOffset = ((rowSize/2) - indexInRow) * -SPELL_VIEW_INDICATOR_SPACING_X;
+                float xOffset = ((rowSize / 2) - indexInRow) * -SPELL_VIEW_INDICATOR_SPACING_X;
 
                 //Y offset
                 float yOffset = 0f;
@@ -82,7 +81,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             { SpellViewIndicatorType.SpellDamageScaling, "Spell Damage Scaling" },
         };
-        
+
         private List<SpellName> SpellsThatScaleWithSpellDamageStat
         {
             get
@@ -123,27 +122,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 return spells;
             }
-        }
-
-        private List<ModifySpellHoverPreview> previews;
-
-        private ModifySpellHoverPreview hoveredPreview;
-        public ModifySpellHoverPreview HoveredPreview
-        {
-            get
-            {
-                return hoveredPreview;
-            }
-            set
-            {
-                hoveredPreview = value;
-                UpdatePreviews();
-            }
-        }
-
-        private void UpdatePreviews()
-        {
-            return;
         }
     }
 
@@ -202,14 +180,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     break;
             }
             return LocalizationModifier.GetLanguageText(tooltipDescription, "Indicators");
-        }
-    }
-
-    public class ModifySpellHoverPreview : MonoBehaviour
-    {
-        private void OnMouseOver()
-        {
-            WindfallHelper.SpellViewIndicationController.HoveredPreview = this;
         }
     }
 }

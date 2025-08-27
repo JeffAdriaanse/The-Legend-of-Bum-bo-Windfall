@@ -1267,6 +1267,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.EnabledSpellsController?.ChangeTemporaryState(spellsToDisable);
         }
 
+        //TODO: Select another way to track the current trinket. It ideally should not be a static field.
         public static UseTrinket currentTrinket;
         static int currentTrinketIndex;
         /// <summary>
@@ -1288,42 +1289,14 @@ namespace The_Legend_of_Bum_bo_Windfall
             bool anyActiveSpells = false;
             foreach (SpellView spellView in WindfallHelper.app.view.spells)
             {
-                if (spellView.SpellObject == null)
-                {
-                    continue;
-                }
+                if (spellView.SpellObject == null) continue;
 
                 bool enableSpell = false;
-
-                //Mana cost reduction is calculated differently when balance changes are enabled
-                if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                {
-                    enableSpell = CollectibleStatistics.CalculateManaCostReduction(spellView.SpellObject, CollectibleStatistics.TrinketManaCostReductionPercentage(TrinketName.RainbowTick), false) > 0;
-                }
-                else
-                {
-                    if (!spellView.SpellObject.IsChargeable)
-                    {
-                        for (int costCounter = 0; costCounter < 6; costCounter++)
-                        {
-                            if (spellView.SpellObject.Cost[costCounter] > 2)
-                            {
-                                enableSpell = true;
-                                break;
-                            }
-                        }
-                    }
-                }
+                if (ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(__instance.GetType(), out SpellUpgrade spellUpgrade)) enableSpell = spellUpgrade.ValidateSpell(spellView.SpellObject);
 
                 //Track which spells should be disabled
-                if (!enableSpell)
-                {
-                    spellsToDisable.Add(spellView.SpellObject);
-                }
-                else
-                {
-                    anyActiveSpells = true;
-                }
+                if (!enableSpell) spellsToDisable.Add(spellView.SpellObject);
+                else anyActiveSpells = true;
             }
 
             //If there are no viable spells, the trinket can't be used
@@ -1374,20 +1347,14 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             foreach (SpellView spellView in WindfallHelper.app.view.spells)
             {
-                if (spellView.SpellObject == null)
-                {
-                    continue;
-                }
+                if (spellView.SpellObject == null) continue;
 
-                if (!spellView.SpellObject.IsChargeable || spellView.SpellObject.requiredCharge <= minimumCharge)
-                {
-                    //Track which spells should be disabled
-                    spellsToDisable.Add(spellView.SpellObject);
-                }
-                else
-                {
-                    anyActiveSpells = true;
-                }
+                bool enableSpell = false;
+                if (ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(__instance.GetType(), out SpellUpgrade spellUpgrade)) enableSpell = spellUpgrade.ValidateSpell(spellView.SpellObject);
+
+                //Track which spells should be disabled
+                if (!enableSpell) spellsToDisable.Add(spellView.SpellObject);
+                else anyActiveSpells = true;
             }
 
             //If there are no viable spells, the trinket can't be used
@@ -1452,90 +1419,24 @@ namespace The_Legend_of_Bum_bo_Windfall
                     CollectibleFixes.UseTrinket_Use_Base_Method(currentTrinket, currentTrinketIndex);
                     CollectibleFixes.UseTrinket_Use_Postfix(currentTrinket);
 
+                    SpellView spellView = __instance;
+
                     switch (currentTrinket.trinketName)
                     {
                         case TrinketName.RainbowTick:
 
-                            SpellElement spellElement = ___spell;
-
-                            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                            //Apply Rainbow Tick upgrade effect
+                            if (spellView != null && ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(typeof(RainbowTickTrinket), out SpellUpgrade rainbowTickspellUpgrade))
                             {
-                                if (!spellElement.IsChargeable)
-                                {
-                                    List<int> availableManaTypeIndices = new List<int>();
-
-                                    for (int costCounter = 0; costCounter < 6; costCounter++)
-                                    {
-                                        if (spellElement.Cost[costCounter] > 2)
-                                        {
-                                            availableManaTypeIndices.Add(costCounter);
-                                        }
-                                    }
-
-                                    if (availableManaTypeIndices.Count > 0)
-                                    {
-                                        int index = UnityEngine.Random.Range(0, availableManaTypeIndices.Count);
-                                        spellElement.Cost[index] -= 1;
-                                    }
-                                }
-                                break;
-                            }
-
-                            int costReduction = CollectibleStatistics.CalculateManaCostReduction(__instance.SpellObject, CollectibleStatistics.TrinketManaCostReductionPercentage(TrinketName.RainbowTick), false);
-
-                            for (int j = costReduction; j > 0; j--)
-                            {
-                                //Find colors with cost above 0
-                                List<int> availableColors = new List<int>();
-                                for (int k = 0; k < 6; k++)
-                                {
-                                    if (spellElement.Cost[k] != 0)
-                                    {
-                                        availableColors.Add(k);
-                                    }
-                                }
-                                //Choose random color to reduce
-                                int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
-                                short[] cost = __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost;
-                                cost[randomColor] -= 1;
-
-                                int totalCombinedCost = 0;
-                                //Increase the reduced color's cost modifier if the spell's total cost (including modifier) would be reduced below minimum OR if the reduced color's cost (including modifier) would be reduced below zero
-                                for (int costCounter = 0; costCounter < 6; costCounter++)
-                                {
-                                    totalCombinedCost += (short)(__instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[costCounter] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[costCounter]);
-                                }
-                                if (totalCombinedCost < CollectibleStatistics.SpellMinimumManaCost(__instance.app.model.characterSheet.spells[__instance.spellIndex]) || __instance.app.model.characterSheet.spells[__instance.spellIndex].Cost[randomColor] + __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] < 0)
-                                {
-                                    __instance.app.model.characterSheet.spells[__instance.spellIndex].CostModifier[randomColor] += 1;
-                                }
+                                WindfallHelper.ModifySpellHoverPreviewController.ApplyUpgrade(spellView, rainbowTickspellUpgrade);
                             }
                             break;
                         case TrinketName.BrownTick:
 
-                            int minimumCharge;
-                            if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                            //Apply Brown Tick upgrade effect
+                            if (spellView != null && ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(typeof(BrownTickTrinket), out SpellUpgrade brownTickspellUpgrade))
                             {
-                                minimumCharge = 0;
-                            }
-                            else
-                            {
-                                minimumCharge = 1;
-                            }
-
-                            //Reduce recharge time
-                            if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge > minimumCharge)
-                            {
-                                __instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge -= CollectibleStatistics.TrinketRechargeTimeReduction(TrinketName.BrownTick);
-                            }
-                            if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge < __instance.app.model.characterSheet.spells[__instance.spellIndex].charge)
-                            {
-                                __instance.app.model.characterSheet.spells[__instance.spellIndex].charge = __instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge;
-                            }
-                            if (__instance.app.model.characterSheet.spells[__instance.spellIndex].requiredCharge == 0)
-                            {
-                                __instance.app.model.characterSheet.spells[__instance.spellIndex].chargeEveryRound = true;
-                                __instance.app.model.characterSheet.spells[__instance.spellIndex].usedInRound = false;
+                                WindfallHelper.ModifySpellHoverPreviewController.ApplyUpgrade(spellView, brownTickspellUpgrade);
                             }
                             break;
                     }
@@ -1769,120 +1670,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Damage needles can no longer be used on spells that will not be upgraded by the needle
-        [HarmonyPostfix, HarmonyPatch(typeof(DamagePrickTrinket), "QualifySpell")]
-        static void DamagePrickTrinket_QualifySpell(DamagePrickTrinket __instance, int _spell_index)
-        {
-            SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
-            if (spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean)
-            {
-                __instance.app.view.spells[_spell_index].DisableSpell();
-            }
-        }
-        [HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddDamagePrick")]
-        static bool Shop_AddDamagePrick(Shop __instance, ref List<TrinketName> ___needles)
-        {
-            short num = 0;
-            while ((int)num < __instance.app.model.characterSheet.spells.Count)
-            {
-                SpellElement spellElement = __instance.app.model.characterSheet.spells[(int)num];
-                if (spellElement.Category == SpellElement.SpellCategory.Attack && !(spellElement.spellName == SpellName.Ecoli || spellElement.spellName == SpellName.ExorcismKit || spellElement.spellName == SpellName.MegaBean))
-                {
-                    ___needles.Add(TrinketName.DamagePrick);
-                    return false;
-                }
-                num += 1;
-            }
-            return false;
-        }
-
-        //Patch: Charge needles can no longer be used on spells that will not be upgraded by the needle
-        [HarmonyPostfix, HarmonyPatch(typeof(ChargePrickTrinket), "QualifySpell")]
-        static void ChargePrickTrinket_QualifySpell(ChargePrickTrinket __instance, int _spell_index)
-        {
-            if (__instance.app.model.characterSheet.spells[_spell_index].requiredCharge == 0)
-            {
-                __instance.app.view.spells[_spell_index].DisableSpell();
-            }
-        }
-
-        //Patch: Mana needle rework
-        [HarmonyPostfix, HarmonyPatch(typeof(ManaPrickTrinket), "QualifySpell")]
-        static void ManaPrickTrinket_QualifySpell(ManaPrickTrinket __instance, int _spell_index)
-        {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return;
-            }
-
-            int costReduction = CollectibleStatistics.CalculateManaCostReduction(__instance.app.model.characterSheet.spells[_spell_index], 0.25f, false);
-
-            //Enable spell if cost reduction is above zero
-            if (costReduction > 0)
-            {
-                __instance.app.view.spells[_spell_index].EnableSpell();
-            }
-            else
-            {
-                __instance.app.view.spells[_spell_index].DisableSpell();
-            }
-        }
-        [HarmonyPrefix, HarmonyPatch(typeof(ManaPrickTrinket), "UpdateSpell")]
-        static bool ManaPrickTrinket_UpdateSpell(ManaPrickTrinket __instance, int _spell_index)
-        {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return true;
-            }
-
-            SpellElement spellElement = __instance.app.model.characterSheet.spells[_spell_index];
-
-            int costReduction = CollectibleStatistics.CalculateManaCostReduction(spellElement, CollectibleStatistics.TrinketManaCostReductionPercentage(TrinketName.ManaPrick), false);
-
-            for (int j = costReduction; j > 0; j--)
-            {
-                //Find colors with cost above 0
-                List<int> availableColors = new List<int>();
-                for (int k = 0; k < 6; k++)
-                {
-                    if (spellElement.Cost[k] != 0)
-                    {
-                        availableColors.Add(k);
-                    }
-                }
-                //Choose random color to reduce
-                int randomColor = availableColors[UnityEngine.Random.Range(0, availableColors.Count)];
-                short[] cost = __instance.app.model.characterSheet.spells[_spell_index].Cost;
-                cost[randomColor] -= 1;
-            }
-            __instance.app.controller.UpdateSpellManaText();
-            __instance.app.view.soundsView.PlaySound(SoundsView.eSound.ItemUpgraded, SoundsView.eAudioSlot.Default, false);
-            __instance.app.view.spells[_spell_index].spellParticles.Play();
-
-            return false;
-        }
-        [HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddManaPrick")]
-        static bool Shop_AddManaPrick(Shop __instance, ref List<TrinketName> ___needles)
-        {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return true;
-            }
-
-            short num = 0;
-            while ((int)num < __instance.app.model.characterSheet.spells.Count)
-            {
-                int costReduction = CollectibleStatistics.CalculateManaCostReduction(__instance.app.model.characterSheet.spells[num], CollectibleStatistics.TrinketManaCostReductionPercentage(TrinketName.ManaPrick), false);
-                if (costReduction > 0)
-                {
-                    ___needles.Add(TrinketName.ManaPrick);
-                    return false;
-                }
-                num += 1;
-            }
-            return false;
-        }
-
         //Patch: Bum-bo the Dead will now not encounter Shuffle Needles instead of Mana Needles
         //Since spell mana cost reduction is now preserved when the cost is rerolled, mana needles are useful to Bum-bo the Dead
         //Shuffle needles on the other hand are pretty pointless
@@ -1909,15 +1696,16 @@ namespace The_Legend_of_Bum_bo_Windfall
                     //Shuffle Needle
                     AccessTools.Method(typeof(Shop), "AddShufflePrick").Invoke(__instance, null);
                 }
+
                 AccessTools.Method(typeof(Shop), "AddDamagePrick").Invoke(__instance, null);
                 AccessTools.Method(typeof(Shop), "AddChargePrick").Invoke(__instance, null);
                 AccessTools.Method(typeof(Shop), "AddRandomPrick").Invoke(__instance, null);
+
                 //Mana Needle
                 if (WindfallPersistentDataController.LoadData().implementBalanceChanges || __instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.TheDead)
                 {
                     AccessTools.Method(typeof(Shop), "AddManaPrick").Invoke(__instance, null);
                 }
-
                 if (___needles.Count > 0)
                 {
                     ___item1Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddNeedle").Invoke(__instance, new object[] { __instance.item1, __instance.item1Price });
@@ -1938,6 +1726,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 ___item2Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddTrinket").Invoke(__instance, new object[] { __instance.item2, __instance.item2Price });
                 ___item3Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddTrinket").Invoke(__instance, new object[] { __instance.item3, __instance.item3Price });
             }
+
             if (__instance.app.model.characterSheet.bumboType != CharacterSheet.BumboType.TheLost)
             {
                 ___item4Pickup = (GameObject)AccessTools.Method(typeof(Shop), "AddHeart").Invoke(__instance, new object[] { __instance.item4, __instance.item4Price });
@@ -1958,6 +1747,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Save shop
             WindfallSavedState.SaveShop(__instance);
+
             return false;
         }
 
@@ -2029,43 +1819,19 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Preserve mana cost reduction
                 int currentSpellCost = 0;
-                for (int i = 0; i < _spell.Cost.Length; i++)
-                {
-                    currentSpellCost += _spell.Cost[i];
-                }
-                if (totalSpellCost > currentSpellCost && currentSpellCost > 0)
-                {
-                    totalSpellCost = currentSpellCost;
-                }
+                for (int i = 0; i < _spell.Cost.Length; i++) currentSpellCost += _spell.Cost[i];
+                if (totalSpellCost > currentSpellCost && currentSpellCost > 0) totalSpellCost = currentSpellCost;
 
                 //Choose number of colors of mana
                 int maximumColorCount;
-                if (totalSpellCost < 4)
-                {
-                    maximumColorCount = 1;
-                }
-                else if (totalSpellCost < 6)
-                {
-                    maximumColorCount = 2;
-                }
-                else
-                {
-                    maximumColorCount = 3;
-                }
+                if (totalSpellCost < 4) maximumColorCount = 1;
+                else if (totalSpellCost < 6) maximumColorCount = 2;
+                else maximumColorCount = 3;
 
                 int minimumColorCount;
-                if (totalSpellCost > 16)
-                {
-                    minimumColorCount = 3;
-                }
-                else if (totalSpellCost > 7)
-                {
-                    minimumColorCount = 2;
-                }
-                else
-                {
-                    minimumColorCount = 1;
-                }
+                if (totalSpellCost > 16) minimumColorCount = 3;
+                else if (totalSpellCost > 7) minimumColorCount = 2;
+                else minimumColorCount = 1;
 
                 int colorCount;
                 if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheStout)
@@ -2102,10 +1868,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 List<short> spellCost = new List<short>();
 
-                for (int j = colorCount; j > 0; j--)
-                {
-                    spellCost.Add(0);
-                }
+                for (int j = colorCount; j > 0; j--) spellCost.Add(0);
 
                 //Generate spell cost
                 int cheapestColorIndex = 0;
@@ -2153,6 +1916,19 @@ namespace The_Legend_of_Bum_bo_Windfall
                 _spell.Cost = new short[6];
                 for (int num10 = 0; num10 < spellCost.Count; num10++)
                 {
+                    //If no colors are allowed, allow all colors not already in the generated mana cost and not in the spell's previous mana cost to be available again
+                    if (allowedColors.Count == 0)
+                    {
+                        for (int num11 = 0; num11 < 6; num11++)
+                        {
+                            if (num11 != 1 && !_ignore_mana[num11] && list6.IndexOf((ManaType)num11) < 0)
+                            {
+                                allowedColors.Add((ManaType)num11);
+                            }
+                        }
+                    }
+
+                    //If still no colors are allowed, allow all colors not already in the generated mana cost to be available again
                     if (allowedColors.Count == 0)
                     {
                         for (int num11 = 0; num11 < 6; num11++)
@@ -2163,6 +1939,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                             }
                         }
                     }
+
                     int index2 = UnityEngine.Random.Range(0, allowedColors.Count);
                     _spell.Cost[(int)allowedColors[index2]] = spellCost[num10];
                     list6.Add(allowedColors[index2]);
@@ -2825,28 +2602,30 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public static int SpellMinimumManaCost(SpellElement spell)
         {
-            if (spellMinimumManaCosts.TryGetValue(spell.spellName, out int value))
-            {
-                return value;
-            }
+            if (spellMinimumManaCosts.TryGetValue(spell.spellName, out int value)) return value;
 
             float minimumManaCostFloat = (float)GetSpellBaseManaCost(spell) / 2f;
             int minimumManaCost;
-            if (minimumManaCostFloat - Mathf.Floor(minimumManaCostFloat) <= 0.5f)
-            {
-                minimumManaCost = Mathf.FloorToInt(minimumManaCostFloat);
-            }
-            else
-            {
-                minimumManaCost = Mathf.CeilToInt(minimumManaCostFloat);
-            }
-
+            if (minimumManaCostFloat - Mathf.Floor(minimumManaCostFloat) <= 0.5f) minimumManaCost = Mathf.FloorToInt(minimumManaCostFloat);
+            else minimumManaCost = Mathf.CeilToInt(minimumManaCostFloat);
             return Mathf.Max(2, minimumManaCost);
         }
 
         public static Dictionary<SpellName, int> spellMinimumManaCosts = new Dictionary<SpellName, int>()
         {
             { SpellName.MagicMarker, 5 }
+        };
+
+        public static int SpellMinimumRechargeTime(SpellElement spell)
+        {
+            if (spellMinimumRechargeTimes.TryGetValue(spell.spellName, out int value)) return value;
+            return 0;
+        }
+
+        public static Dictionary<SpellName, int> spellMinimumRechargeTimes = new Dictionary<SpellName, int>()
+        {
+            { SpellName.Pause, 1 },
+            { SpellName.Teleport, 2 },
         };
 
         public static float SpellManaCostReductionPercentage(SpellName spellName)
