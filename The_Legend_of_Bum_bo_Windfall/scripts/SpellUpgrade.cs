@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 
@@ -66,9 +67,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 short[] cost = spell.Cost;
                 cost[randomColor] -= 1;
 
-                int totalCombinedCost = 0;
                 //Increase the reduced color's cost modifier if the spell's total cost (including modifier) would be reduced below minimum OR if the reduced color's cost (including modifier) would be reduced below zero
-                for (int costCounter = 0; costCounter < 6; costCounter++) totalCombinedCost += (short)(spell.Cost[costCounter] + spell.CostModifier[costCounter]);
+                int totalCombinedCost = WindfallHelper.SpellTotalManaCost(spell, true);
                 if (totalCombinedCost < CollectibleStatistics.SpellMinimumManaCost(spell) || spell.Cost[randomColor] + spell.CostModifier[randomColor] < 0) spell.CostModifier[randomColor] += 1;
             }
         }
@@ -129,7 +129,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public override void ApplyUpgrade(ref SpellElement spell)
         {
-            int index = Random.Range(1, WindfallHelper.app.model.spellModel.validSpells.Count);
+            int index = UnityEngine.Random.Range(1, WindfallHelper.app.model.spellModel.validSpells.Count);
             SpellElement spellElement = WindfallHelper.app.model.spellModel.spells[WindfallHelper.app.model.spellModel.validSpells[index]];
             WindfallHelper.app.controller.SetSpellCost(spellElement);
             spell = spellElement;

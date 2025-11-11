@@ -248,7 +248,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void GamepadSpellSelector_Update(GamepadSpellSelector __instance)
         {
             if (__instance.app.controller.debugController.IsDebugMenuOpen()) return;
-            if (__instance.app.model.bumboEvent.GetType() != typeof(IdleEvent) && __instance.app.model.bumboEvent.GetType() != typeof(ChanceToCastSpellEvent)) return;
 
             Dictionary<string, KeyCode> hotkeys = WindfallPersistentDataController.LoadData().hotkeys;
 

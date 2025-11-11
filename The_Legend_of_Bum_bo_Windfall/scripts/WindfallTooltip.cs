@@ -328,6 +328,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 CharacterSheet.BumboType bumboType = WindfallHelper.app.model.characterSheet.bumboType;
                 if (WindfallTooltipDescriptions.bumboNames.TryGetValue(bumboType, out string name)) bumboName = LocalizationModifier.GetLanguageText(name, "Characters");
+                //Vanilla Bum-bo names have a newline character instead of one of the spaces. This is not desirable for tooltips, so the newline is replaced with a space.
+                bumboName = bumboName.Replace("\n", " ");
                 if (WindfallTooltipDescriptions.bumboDescriptions.TryGetValue(bumboType, out string description)) bumboDescription = LocalizationModifier.GetLanguageText(description, "Characters");
 
                 displayDescription = "<u>" + bumboName + "</u>\n" + bumboDescription;

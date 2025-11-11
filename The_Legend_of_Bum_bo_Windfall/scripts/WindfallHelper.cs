@@ -671,6 +671,23 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         /// <summary>
+        /// Returns the total mana cost of the given spell.
+        /// </summary>
+        /// <param name="spellElement">The SpellElement to find the total mana cost of.</param>
+        /// <param name="includeCostModifier">Whether to include the spell's cost modifier.</param>
+        /// <returns>The total mana cost of the given spell.</returns>
+        public static int SpellTotalManaCost(SpellElement spellElement, bool includeCostModifier)
+        {
+            int spellTotalManaCost = 0;
+            for (int i = 0; i < spellElement.Cost.Length; i++) spellTotalManaCost += spellElement.Cost[i];
+            if (includeCostModifier)
+            {
+                for (int i = 0; i < spellElement.CostModifier.Length; i++) spellTotalManaCost += spellElement.Cost[i];
+            }
+            return spellTotalManaCost;
+        }
+
+        /// <summary>
         /// Updates the spell active visuals of the given SpellView according to the ready state of the given SpellElement.
         /// </summary>
         /// <param name="spellView">The SpellView to update the visuals of.</param>

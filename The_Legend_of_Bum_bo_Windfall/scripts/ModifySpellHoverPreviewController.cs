@@ -264,7 +264,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void DamagePrickTrinket_QualifySpell(DamagePrickTrinket __instance, int _spell_index)
         {
             SpellView spellView = WindfallHelper.app.view.spells[_spell_index];
-            if (ValidateNeedleEffect(__instance, _spell_index)) spellView.EnableSpell();
+            if (ValidateNeedleEffect(__instance.GetType(), _spell_index)) spellView.EnableSpell();
             else spellView.DisableSpell();
         }
         //Patch: Adapts Damage Needle to apply the previewed upgrade 
@@ -281,7 +281,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void ManaPrickTrinket_QualifySpell(ManaPrickTrinket __instance, int _spell_index)
         {
             SpellView spellView = WindfallHelper.app.view.spells[_spell_index];
-            if (ValidateNeedleEffect(__instance, _spell_index)) spellView.EnableSpell();
+            if (ValidateNeedleEffect(__instance.GetType(), _spell_index)) spellView.EnableSpell();
             else spellView.DisableSpell();
         }
         //Patch: Adapts Mana Needle to apply the previewed upgrade
@@ -306,7 +306,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void ChargePrickTrinket_QualifySpell(ChargePrickTrinket __instance, int _spell_index)
         {
             SpellView spellView = WindfallHelper.app.view.spells[_spell_index];
-            if (ValidateNeedleEffect(__instance, _spell_index)) spellView.EnableSpell();
+            if (ValidateNeedleEffect(__instance.GetType(), _spell_index)) spellView.EnableSpell();
             else spellView.DisableSpell();
         }
         //Patch: Adapts Charge Needle to apply the previewed upgrade 
@@ -340,13 +340,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         }
 
         //Validates a Needle upgrade effect
-        private static bool ValidateNeedleEffect(PrickTrinket needle, int _spell_index)
+        private static bool ValidateNeedleEffect(Type needleType, int _spell_index)
         {
-            SpellView spellView = WindfallHelper.app.view.spells[_spell_index];
+            SpellElement spellElement = WindfallHelper.app.model.characterSheet.spells[_spell_index];
+            if (spellElement == null) return false;
 
-            if (ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(needle.GetType(), out SpellUpgrade spellUpgrade))
+            if (ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(needleType, out SpellUpgrade spellUpgrade))
             {
-                return (spellUpgrade.ValidateSpell(spellView.SpellObject));
+                return spellUpgrade.ValidateSpell(spellElement);
             }
             return false;
         }
@@ -358,15 +359,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             int spellIterator = 0;
             while (spellIterator < __instance.app.model.characterSheet.spells.Count)
             {
-                SpellElement spell = __instance.app.model.characterSheet.spells[spellIterator];
-
-                if (ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(typeof(ManaPrickTrinket), out SpellUpgrade spellUpgrade))
+                if (ValidateNeedleEffect(typeof(ManaPrickTrinket), spellIterator))
                 {
-                    if (spellUpgrade.ValidateSpell(spell))
-                    {
-                        ___needles.Add(TrinketName.ManaPrick);
-                        return false;
-                    }
+                    ___needles.Add(TrinketName.ManaPrick);
+                    return false;
                 }
                 spellIterator++;
             }
@@ -377,18 +373,16 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddDamagePrick")]
         static bool Shop_AddDamagePrick(Shop __instance, ref List<TrinketName> ___needles)
         {
+            Console.WriteLine("0");
+
             int spellIterator = 0;
             while (spellIterator < __instance.app.model.characterSheet.spells.Count)
             {
-                SpellElement spell = __instance.app.model.characterSheet.spells[spellIterator];
-
-                if (ModifySpellHoverPreview.collectibleUpgradeEffects.TryGetValue(typeof(DamagePrickTrinket), out SpellUpgrade spellUpgrade))
+                if (ValidateNeedleEffect(typeof(DamagePrickTrinket), spellIterator))
                 {
-                    if (spellUpgrade.ValidateSpell(spell))
-                    {
-                        ___needles.Add(TrinketName.DamagePrick);
-                        return false;
-                    }
+                    Console.WriteLine("1");
+                    ___needles.Add(TrinketName.DamagePrick);
+                    return false;
                 }
                 spellIterator++;
             }

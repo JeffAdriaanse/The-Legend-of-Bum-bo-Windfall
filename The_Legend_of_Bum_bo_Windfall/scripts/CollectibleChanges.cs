@@ -1756,14 +1756,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         //The number of mana colors is now determined in a flexible way
         //Permanent and temporary mana cost reduction is now preserved when rerolling spell costs
         //Converter special mana cost generation is preserved when its mana cost is rerolled
+        //Also assigns recharge times for charge based spells
         [HarmonyPrefix, HarmonyPatch(typeof(BumboController), "SetSpellCost", new Type[] { typeof(SpellElement), typeof(bool[]) })]
         static bool BumboController_SetSpellCost(BumboController __instance, SpellElement _spell, bool[] _ignore_mana, ref SpellElement __result)
         {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return true;
-            }
-
             if (_spell.spellName.ToString().Contains("Converter"))
             {
                 Block.BlockType blockType = Block.BlockType.Bone;
@@ -1815,11 +1811,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (!_spell.IsChargeable && _spell.setCost)
             {
                 //Get total mana cost
-                int totalSpellCost = CollectibleStatistics.GetSpellBaseManaCost(_spell);
+                int totalSpellCost = CollectibleStatistics.SpellBaseManaCost(_spell);
 
                 //Preserve mana cost reduction
-                int currentSpellCost = 0;
-                for (int i = 0; i < _spell.Cost.Length; i++) currentSpellCost += _spell.Cost[i];
+                int currentSpellCost = WindfallHelper.SpellTotalManaCost(_spell, false);
                 if (totalSpellCost > currentSpellCost && currentSpellCost > 0) totalSpellCost = currentSpellCost;
 
                 //Choose number of colors of mana
@@ -1969,6 +1964,20 @@ namespace The_Legend_of_Bum_bo_Windfall
                         short[] costModifier = _spell.CostModifier;
                         int num17 = num16;
                         costModifier[num17] -= 1;
+                    }
+                }
+            }
+            if (_spell.IsChargeable)
+            {
+                int rechargeTime = CollectibleStatistics.SpellBaseRechargeTime(_spell);
+                if (rechargeTime >= 0)
+                {
+                    _spell.requiredCharge = rechargeTime;
+                    _spell.charge = rechargeTime;
+                    if (rechargeTime == 0)
+                    {
+                        _spell.chargeEveryRound = true;
+                        _spell.usedInRound = false;
                     }
                 }
             }
@@ -2526,170 +2535,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (__instance is not ChickenBoneTrinket && __instance is not FalseTeethTrinket && __instance is not ToiletSeatTrinket && __instance is not TurdyTrinket && __instance is not UsedTissueTrinket) return true;
             _amount *= MANA_TRINKETS_EFFECT_AMOUNT;
             return true;
-        }
-    }
-
-    static class CollectibleStatistics
-    {
-        public static int GetSpellBaseManaCost(SpellElement spell)
-        {
-            //New mana costs
-            int totalSpellCost = -1;
-
-            if (rebalancedSpellBaseManaCosts.TryGetValue(spell.spellName, out int value) && WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                totalSpellCost = value;
-            }
-
-            //Old mana costs
-            if (totalSpellCost == -1)
-            {
-                switch (spell.manaSize)
-                {
-                    case SpellElement.ManaSize.S:
-                        totalSpellCost = 2;
-                        break;
-                    case SpellElement.ManaSize.M:
-                        totalSpellCost = 4;
-                        break;
-                    case SpellElement.ManaSize.L:
-                        totalSpellCost = 6;
-                        break;
-                    case SpellElement.ManaSize.XL:
-                        totalSpellCost = 10;
-                        break;
-                    case SpellElement.ManaSize.XXL:
-                        totalSpellCost = 16;
-                        break;
-                    case SpellElement.ManaSize.XXXL:
-                        totalSpellCost = 20;
-                        break;
-                    default:
-                        totalSpellCost = 1;
-                        break;
-                }
-            }
-            return totalSpellCost;
-        }
-
-        public static readonly Dictionary<SpellName, int> rebalancedSpellBaseManaCosts = new Dictionary<SpellName, int>()
-        {
-            { (SpellName)1001, 3},
-            { SpellName.Addy, 3 },
-            { SpellName.AttackFly, 5 },
-            { SpellName.BlenderBlade, 5 },
-            { SpellName.BuzzDown, 2 },
-            { SpellName.BuzzRight, 2 },
-            { SpellName.BuzzUp, 2 },
-            { SpellName.DeadDove, 4 },
-            { SpellName.DogTooth, 9 },
-            { SpellName.HairBall, 5 },
-            { SpellName.Juiced, 5 },
-            { SpellName.KrampusCross, 5 },
-            { SpellName.Lemon, 5 },
-            { SpellName.MagicMarker, 6 },
-            { SpellName.MamaFoot, 13 },
-            { SpellName.Melatonin, 6 },
-            { SpellName.MissingPiece, 8 },
-            { SpellName.Peace, 3 },
-            { SpellName.Pliers, 5 },
-            { SpellName.RockFriends, 5 },
-            { SpellName.SnotRocket, 8 },
-            { SpellName.TheVirus, 3 },
-            { SpellName.TimeWalker, 14 },
-            { SpellName.WoodenSpoon, 12 },
-        };
-
-        public static int SpellMinimumManaCost(SpellElement spell)
-        {
-            if (spellMinimumManaCosts.TryGetValue(spell.spellName, out int value)) return value;
-
-            float minimumManaCostFloat = (float)GetSpellBaseManaCost(spell) / 2f;
-            int minimumManaCost;
-            if (minimumManaCostFloat - Mathf.Floor(minimumManaCostFloat) <= 0.5f) minimumManaCost = Mathf.FloorToInt(minimumManaCostFloat);
-            else minimumManaCost = Mathf.CeilToInt(minimumManaCostFloat);
-            return Mathf.Max(2, minimumManaCost);
-        }
-
-        public static Dictionary<SpellName, int> spellMinimumManaCosts = new Dictionary<SpellName, int>()
-        {
-            { SpellName.MagicMarker, 5 }
-        };
-
-        public static int SpellMinimumRechargeTime(SpellElement spell)
-        {
-            if (spellMinimumRechargeTimes.TryGetValue(spell.spellName, out int value)) return value;
-            return 0;
-        }
-
-        public static Dictionary<SpellName, int> spellMinimumRechargeTimes = new Dictionary<SpellName, int>()
-        {
-            { SpellName.Pause, 1 },
-            { SpellName.Teleport, 2 },
-        };
-
-        public static float SpellManaCostReductionPercentage(SpellName spellName)
-        {
-            switch (spellName)
-            {
-                case SpellName.GoldenTick:
-                    return 0.4f;
-                case SpellName.SleightOfHand:
-                    return 0.25f;
-            }
-            return 0f;
-        }
-
-        public static float TrinketManaCostReductionPercentage(TrinketName trinketName)
-        {
-            switch (trinketName)
-            {
-                case TrinketName.RainbowTick:
-                    return 0.15f;
-                case TrinketName.ManaPrick:
-                    return 0.25f;
-            }
-            return 0f;
-        }
-
-        public static int SpellRechargeTimeReduction(SpellName spellName)
-        {
-            return 0;
-        }
-
-        public static int TrinketRechargeTimeReduction(TrinketName trinketName)
-        {
-            switch (trinketName)
-            {
-                case TrinketName.BrownTick:
-                    return 1;
-                case TrinketName.ChargePrick:
-                    return 1;
-            }
-            return 0;
-        }
-
-        public static int CalculateManaCostReduction(SpellElement spell, float reductionPercentage, bool includeTemporaryCost)
-        {
-            //Calculate cost reduction
-            int totalManaCost = 0;
-            for (int i = 0; i < 6; i++)
-            {
-                totalManaCost += (int)spell.Cost[i];
-                if (includeTemporaryCost) totalManaCost += (int)spell.CostModifier[i];
-            }
-
-            //Round up cost reduction
-            float costReductionFloat = (float)totalManaCost * reductionPercentage;
-            int costReduction = Mathf.CeilToInt(costReductionFloat);
-
-            //Do not reduce total cost below minimum
-            while (totalManaCost - costReduction < SpellMinimumManaCost(spell))
-            {
-                costReduction--;
-                if (costReduction <= 0) break;
-            }
-            return costReduction;
         }
     }
 }
