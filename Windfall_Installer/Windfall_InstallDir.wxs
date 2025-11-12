@@ -33,6 +33,10 @@ Patch dialog sequence:
     <?endforeach?>
 
     <Fragment>
+        <!-- Bitmap Replacements -->
+        <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\Files\WixUIBannerBmp.bmp" />
+        <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\Files\WixUIDialogBmp.bmp" />
+
         <UI Id="file Windfall_InstallDir">
             <!-- Copy of the default InstallDir dialog, but with the EULA section removed and replaced InstallDirDlg -->
             <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
@@ -58,12 +62,15 @@ Patch dialog sequence:
             <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="Windfall_InstallDirDlg" Condition="NOT Installed" />
             <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="Installed AND PATCH" />
 
+            <!-- Custom InstallDirDlg  -->
             <Publish Dialog="Windfall_InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" />
             <Publish Dialog="Windfall_InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1" />
             <Publish Dialog="Windfall_InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3" Condition="NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID&lt;&gt;&quot;1&quot;" />
             <Publish Dialog="Windfall_InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4" Condition="WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID=&quot;1&quot;" />
             <Publish Dialog="Windfall_InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1" />
             <Publish Dialog="Windfall_InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2" />
+
+            <!-- VerifyReadyDlg  -->
             <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="Windfall_InstallDirDlg" Order="1" Condition="NOT Installed" />
             <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2" Condition="Installed AND NOT PATCH" />
             <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="Installed AND PATCH" />
@@ -95,7 +102,7 @@ Patch dialog sequence:
                 <Control Id="InstallDirLabel" Type="Text" X="20" Y="60" Width="290" Height="30" Text="!(loc.InstallDirLabel)" /> 
                 <!-- Conditional labels based on whether the vanilla game installation was found automatically -->
                 <Control Id="FoundInstallLabel" Transparent="yes" Type="Text" X="20" Y="90" Width="290" Height="30" Text="!(loc.FoundInstallLabel)" HideCondition="INSTALLDIRFLAG &lt;&gt; &quot;true&quot;" />
-                <Control Id="MIssingInstallLabel" Transparent="yes" Type="Text" X="20" Y="90" Width="290" Height="30" Text="!(loc.MIssingInstallLabel)" HideCondition="INSTALLDIRFLAG = &quot;true&quot;"/>
+                <Control Id="MissingInstallLabel" Transparent="yes" Type="Text" X="20" Y="90" Width="290" Height="30" Text="!(loc.MissingInstallLabel)" HideCondition="INSTALLDIRFLAG = &quot;true&quot;"/>
 
                 <Control Id="FolderLabel" Type="Text" X="20" Y="120" Width="290" Height="30" NoPrefix="yes" Text="!(loc.InstallDirDlgFolderLabel)" />
                 <Control Id="Folder" Type="PathEdit" X="20" Y="160" Width="320" Height="18" Property="WIXUI_INSTALLDIR" Indirect="yes" />

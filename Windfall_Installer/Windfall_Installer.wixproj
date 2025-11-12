@@ -6,7 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="..\The_Legend_of_Bum_bo_Windfall\The_Legend_of_Bum_bo_Windfall.csproj" />
   </ItemGroup>
-
+    <!-- 
     <ItemGroup>
         <HarvestDirectory Include="C:\Users\jeffa\Desktop\Bum-bo\Modding\Windfall\BepInEx Versions\BepInEx_win_x64_5.4.23.2">
             <OutputFile>GeneratedBepInExFiles.wxs</OutputFile>
@@ -19,4 +19,5 @@
         </HarvestDirectory>
         <BindPath Include="C:\Users\jeffa\Desktop\Bum-bo\Modding\Windfall\BepInEx Versions\BepInEx_win_x64_5.4.23.2" />
     </ItemGroup>
+    -->
 </Project>

@@ -1,8 +1,8 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
-    <Package Name="The Legend of Bum-bo: Windfall" Manufacturer="Jeffrey Adriaanse" Version="1.3.0.0" UpgradeCode="69e2801b-39fa-4c50-bbbd-c051fa382938">
+    <Package Name="Windfall" Manufacturer="Jeffrey Adriaanse" Version="1.4.0.0" UpgradeCode="69e2801b-39fa-4c50-bbbd-c051fa382938">
         <MajorUpgrade AllowDowngrades="yes" />
 
-        <!-- Registry search for default target directory -->
+        <!-- Registry search for default target directory TODO: Epic Games platform support -->
         <Property Id="STEAM_BUMBO_PATH">
             <RegistrySearch Id="FindSteamBumboPath"
                             Root="HKLM"
@@ -24,27 +24,20 @@
 
         <SetProperty Action="SetInstallDirFoundFlag" Id="INSTALLDIRFLAG" Value="true" After="AppSearch" Condition="STEAM_BUMBO_PATH &lt;&gt; &quot;&quot; OR GOG_BUMBO_PATH &lt;&gt; &quot;&quot;" />
 
-        <!-- Directory Structure -->
-        <StandardDirectory Id="TARGETDIR">
-            <Directory Id="INSTALLDIR" Name="The_Legend_of_Bum-bo_Windfall" ComponentGuidGenerationSeed="847561A8-7DB8-4489-ACE2-30A9E87281F0">
-                <Directory Id="BepInExDirectory" Name="BepInEx">
-                    <Directory Id="PluginsDirectory" Name="plugins">
-                        <Directory Id="WindfallDirectory" Name="The Legend of Bum-bo_Windfall">
-                        </Directory>
-                    </Directory>
-                </Directory>
-            </Directory>
-        </StandardDirectory>
-
         <!-- User interface to select installation path -->
         <ui:WixUI
             Id="Windfall_InstallDir"
             InstallDirectory="INSTALLDIR"
         />
+        
+        <MediaTemplate EmbedCab="yes" />
 
-        <Feature Id="Main">
+        <Feature Id="BepInEx" Title="BepInEx" Level="1">
             <ComponentGroupRef Id="BepInExComponents" />
-            <ComponentGroupRef Id="WindfallComponents" />
+            <Feature Id="Windfall" Title="Windfall" Level="1">
+                <ComponentGroupRef Id="WindfallComponents"/>
+            </Feature>
         </Feature>
+
     </Package>
 </Wix>
