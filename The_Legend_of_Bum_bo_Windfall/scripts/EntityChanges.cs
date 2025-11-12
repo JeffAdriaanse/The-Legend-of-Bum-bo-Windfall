@@ -293,7 +293,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __instance.PuzzleResisted();
 
                     //Change damage dealt
-                    damage = Mathf.Floor(damage / 4);
+                    damage = Mathf.Min(damage, 1f);
 
                     if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
                     {
@@ -305,7 +305,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     __instance.SpellResisted();
 
                     //Change damage dealt
-                    damage = Mathf.Floor(damage / 4);
+                    damage = Mathf.Min(damage, 1f);
 
                     if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
                     {
