@@ -53,12 +53,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             { SpellName.BuzzRight, 2 },
             { SpellName.BuzzUp, 2 },
             { SpellName.DeadDove, 4 },
-            { SpellName.DogTooth, 9 },
+            { SpellName.DogTooth, 8 },
             { SpellName.HairBall, 5 },
             { SpellName.Juiced, 5 },
             { SpellName.KrampusCross, 5 },
             { SpellName.Lemon, 5 },
-            { SpellName.MagicMarker, 6 },
+            { SpellName.MagicMarker, 4 },
             { SpellName.MamaFoot, 13 },
             { SpellName.Melatonin, 6 },
             { SpellName.MissingPiece, 8 },
@@ -84,7 +84,11 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         private static readonly Dictionary<SpellName, int> spellMinimumManaCosts = new Dictionary<SpellName, int>()
         {
-            { SpellName.MagicMarker, 5 }
+            { SpellName.BuzzDown, 1 },
+            { SpellName.BuzzRight, 1 },
+            { SpellName.BuzzUp, 1 },
+            { SpellName.MagicMarker, 4 },
+            { SpellName.Box, 3 },
         };
 
         public static int SpellBaseRechargeTime(SpellElement spell)

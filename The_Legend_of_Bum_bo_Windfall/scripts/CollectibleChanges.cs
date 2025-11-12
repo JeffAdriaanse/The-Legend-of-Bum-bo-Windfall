@@ -696,7 +696,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = UnityEngine.Random.Range(0f, 1f) < effectValue;
         }
 
-        //Patch: Allows Nine Volt effect to stack past 100% and incorporate Luck stat
+        //Patch: Allows Nine Volt effect to stack past 100% and incorporate Luck stat. Also changes Nine Volt trigger chance to 20%
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "RechargeOnSpell")]
         static bool TrinketController_RechargeOnSpell(TrinketController __instance)
         {
@@ -704,8 +704,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             short trinketCounter = 0;
             while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
             {
-                //Chance: 1/4
-                effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).RechargeOnSpell();
+                //Chance: 1/5
+                if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.NineVolt) effectValue += 0.2f;
+                //effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).RechargeOnSpell();
                 trinketCounter += 1;
             }
             effectValue *= (float)__instance.EffectMultiplier();
@@ -985,7 +986,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Causes Silver Skull to stack non-independently and incorporate Curio multiplier
+        //Patch: Causes Silver Skull to stack non-independently and incorporate Curio multiplier. Also increases mana gained to 2
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "RewardKill")]
         static bool TrinketController_RewardKill(TrinketController __instance)
         {
@@ -993,7 +994,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             short trinketCounter = 0;
             while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
             {
-                effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SilverSkull ? 1 : 0;
+                effectValue += __instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.SilverSkull ? 2 : 0;
                 trinketCounter += 1;
             }
             effectValue *= __instance.EffectMultiplier();
@@ -1170,7 +1171,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        //Patch: Reduces Death damage dealt to bosses
+        //Patch: Changes Death damage
         [HarmonyPrefix, HarmonyPatch(typeof(DeathTrinket), "Use")]
         static bool DeathTrinket_Use(DeathTrinket __instance, int _index)
         {
@@ -1185,14 +1186,41 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (list[(int)num] != null && list[(int)num].GetComponent<Enemy>().alive)
                 {
-                    //Reduce damage
-                    float damage = list[(int)num].boss ? 3f : list[(int)num].getHealth();
+                    //Change damage
+                    float damage = 5;
+                    list[(int)num].GetComponent<Enemy>().Hurt(damage, Enemy.AttackImmunity.SuperAttack, null, -1);
+                }
+                num += 1;
+            }
+            __instance.app.controller.eventsController.SetEvent(new NextComboEvent());
 
-                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                    {
-                        damage = list[(int)num].getHealth();
-                    }
+            return false;
+        }
 
+        //Patch: Changes Boom number of uses
+        [HarmonyPostfix, HarmonyPatch(typeof(BoomTrinket), MethodType.Constructor)]
+        static void BoomTrinket_Constructor(BoomTrinket __instance)
+        {
+            __instance.uses = 2;
+        }
+
+        //Patch: Changes Boom damage
+        [HarmonyPrefix, HarmonyPatch(typeof(BoomTrinket), "Use")]
+        static bool BoomTrinket_Use(BoomTrinket __instance, int _index)
+        {
+            CollectibleFixes.UseTrinket_Use_Prefix(__instance, currentTrinketIndex);
+            CollectibleFixes.UseTrinket_Use_Base_Method(__instance, currentTrinketIndex);
+            CollectibleFixes.UseTrinket_Use_Postfix(__instance);
+
+            List<Enemy> list = new List<Enemy>();
+            list.AddRange(__instance.app.model.enemies);
+            short num = 0;
+            while ((int)num < list.Count)
+            {
+                if (list[(int)num] != null && list[(int)num].GetComponent<Enemy>().alive)
+                {
+                    //Change damage
+                    float damage = 2;
                     list[(int)num].GetComponent<Enemy>().Hurt(damage, Enemy.AttackImmunity.SuperAttack, null, -1);
                 }
                 num += 1;
@@ -1468,28 +1496,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             }
             return true;
-        }
-
-        //Patch: Changes starting stats and collectibles of characters
-        //Increases the cost of Bum-bo the Dead's Attack Fly
-        //Increases the cost of Bum-bo the Weird's Magic Marker
-        [HarmonyPostfix, HarmonyPatch(typeof(CharacterSheet), "Awake")]
-        static void CharacterSheet_Awake(CharacterSheet __instance)
-        {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return;
-            }
-
-            StartingSpell[] weirdStartingSpells = __instance.bumboList[(int)CharacterSheet.BumboType.TheWeird].startingSpells;
-            for (int i = 0; i < weirdStartingSpells.Length; i++)
-            {
-                StartingSpell weirdStartingSpell = weirdStartingSpells[i];
-                if (weirdStartingSpell.spell == SpellName.MagicMarker)
-                {
-                    weirdStartingSpell.peeCost = 5;
-                }
-            }
         }
 
         //Patch: Spell mana cost text now indicates whether the cost is temporarily modified
