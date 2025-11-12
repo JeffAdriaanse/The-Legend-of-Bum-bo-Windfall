@@ -129,7 +129,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 //Round modifiers
                 case SpellName.LooseChange:
-                    string coins = WindfallPersistentDataController.LoadData().implementBalanceChanges ? OtherChanges.looseChangeCoinGain.ToString() : "1";
+                    string coins = OtherChanges.looseChangeCoinGain.ToString();
                     return bumboRoundModifiers.coinForHurt ? coins : null;
                 case SpellName.Pause:
                     return bumboRoundModifiers.skipEnemyTurns > 0 ? bumboRoundModifiers.skipEnemyTurns.ToString() : null;

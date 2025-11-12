@@ -472,7 +472,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public static void LoadDamageTaken(BumboApplication app)
         {
             if (windfallDoc == null) return;
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) return;
 
             XmlNode damageNode = windfallDoc.SelectSingleNode("/save/damageTaken");
             if (damageNode == null)

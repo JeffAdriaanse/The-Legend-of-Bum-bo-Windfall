@@ -478,14 +478,6 @@ namespace The_Legend_of_Bum_bo_Windfall
                     SpellName.TwentyTwenty,
                     SpellName.WhiteBelt,
                 };
-
-                if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                {
-                    effects.Add(SpellName.BarbedWire);
-                    effects.Add(SpellName.RoidRage);
-                    effects.Remove(SpellName.TheVirus);
-                }
-
                 return effects;
             }
         }

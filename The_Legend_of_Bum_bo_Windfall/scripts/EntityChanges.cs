@@ -197,11 +197,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(PeepsBoss), "Init")]
         static void PeepsBoss_Init(PeepsBoss __instance)
         {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return;
-            }
-
             __instance.turns = 1;
             __instance.app.view.GUICamera.GetComponent<GUISide>().bossHeartView.SetMoves(__instance.turns + 2);
         }
@@ -294,11 +289,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     //Change damage dealt
                     damage = Mathf.Min(damage, 1f);
-
-                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                    {
-                        damage = 0;
-                    }
                 }
                 else if (_immunity == Enemy.AttackImmunity.ReduceSpellDamage)
                 {
@@ -306,11 +296,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                     //Change damage dealt
                     damage = Mathf.Min(damage, 1f);
-
-                    if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                    {
-                        damage = 0;
-                    }
                 }
             }
             bool flag = __instance.app.model.characterSheet.Critical(__instance);

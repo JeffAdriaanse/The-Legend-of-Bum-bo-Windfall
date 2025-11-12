@@ -54,7 +54,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Modify amount of coins granted by Loose Change
             if (_event_path == "bumbo.hurt" && __instance.app.model.characterSheet.bumboRoundModifiers.coinForHurt)
             {
-                int coins = WindfallPersistentDataController.LoadData().implementBalanceChanges ? looseChangeCoinGain : 1;
+                int coins = looseChangeCoinGain;
                 __instance.ModifyCoins(coins);
                 return false;
             }
@@ -65,16 +65,12 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Puzzle), "nextBlock")]
         static bool Puzzle_nextBlock(Puzzle __instance, ref int ___heartCounter)
         {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) return true;
-
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost) ___heartCounter = -1;
             return true;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(TrinketController), "StartingBlocks")]
         static void TrinketController_StartingBlocks(TrinketController __instance, ref int[] __result)
         {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges) return;
-
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
                 if (__result[1] > 0) __result[1]--;

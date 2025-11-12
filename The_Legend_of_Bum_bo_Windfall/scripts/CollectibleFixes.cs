@@ -231,11 +231,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.model.costRefundOverride = true;
             __instance.app.model.costRefundAmount = new short[6];
 
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                __instance.app.model.costRefundAmount = __instance.Cost;
-            }
-
             SpellName spellName = (SpellName)UnityEngine.Random.Range(1, 139);
             while (spellName == SpellName.Metronome || !__instance.app.model.spellModel.spells.ContainsKey(spellName))
             {
@@ -456,14 +451,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if ((__instance.app.model.enemies[enemyCounter].alive || __instance.app.model.enemies[enemyCounter].enemyName == EnemyName.Shit) && !enemies_to_heal.Contains(__instance.app.model.enemies[enemyCounter]) && enemy_to_hurt != __instance.app.model.enemies[enemyCounter])
                 {
-                    if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
-                    {
-                        __instance.app.model.enemies[enemyCounter].AddHealth(1f);
-                    }
-                    else
-                    {
-                        __instance.app.model.enemies[enemyCounter].AddHealth(2f);
-                    }
+                    __instance.app.model.enemies[enemyCounter].AddHealth(1f);
                 }
             }
         }
@@ -494,10 +482,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Changing Lost banned spells
             if (__instance.app.model.characterSheet.bumboType == CharacterSheet.BumboType.TheLost)
             {
-                if (WindfallPersistentDataController.LoadData().implementBalanceChanges)
+                SpellName[] bannedSpells = new SpellName[]
                 {
-                    SpellName[] bannedSpells = new SpellName[]
-                    {
                         //Old
                         SpellName.TheRelic,
                         SpellName.CatPaw,
@@ -510,11 +496,9 @@ namespace The_Legend_of_Bum_bo_Windfall
                         SpellName.Snack,
                         SpellName.MomsLipstick,
                         SpellName.YumHeart
-                    };
-                    returnedList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
-                }
+                };
+                returnedList.RemoveAll((SpellName x) => bannedSpells.Contains(x));
             }
-
             __result = returnedList;
         }
 
@@ -522,11 +506,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(TrinketModel), "validTrinkets", MethodType.Getter)]
         static void TrinketModel_validTrinkets(TrinketModel __instance, ref List<TrinketName> __result)
         {
-            if (!WindfallPersistentDataController.LoadData().implementBalanceChanges)
-            {
-                return;
-            }
-
             List<TrinketName> returnedList = new List<TrinketName>(__result);
 
             //Changing Lost banned trinkets
