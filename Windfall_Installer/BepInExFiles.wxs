@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <StandardDirectory Id="TARGETDIR">
+            <!-- Target installation directory -->
+            <Directory Id="INSTALLDIR" Name="The_Legend_of_Bum-bo_Windfall" ComponentGuidGenerationSeed="847561A8-7DB8-4489-ACE2-30A9E87281F0">
+                    <!-- Root folder files -->
+                <Component Id="BepInExRoot_License">
+                    <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\LICENSE.txt" />
+                </Component>
+                <Component Id="BepInExRoot_Changelog">
+                    <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\changelog.txt" />
+                </Component>
+                <Component Id="BepInExRoot_Doorstop">
+                    <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\doorstop_config.ini" />
+                </Component>
+                <Component Id="BepInExRoot_WinHttp">
+                    <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\winhttp.dll" />
+                </Component>
+
+                <!-- BepInEx folder -->
+                <Directory Id="BepInExDirectory" Name="BepInEx">
+                    <!-- core folder -->
+                    <Directory Id="BepInExCoreDirectory" Name="core">
+                        <Component Id="Core_0Harmony">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\0Harmony.dll" />
+                        </Component>
+                        <Component Id="Core_0Harmony20">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\0Harmony20.dll" />
+                        </Component>
+                        <Component Id="Core_0HarmonyXml">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\0Harmony.xml" />
+                        </Component>
+                        <Component Id="Core_BepInExHarmonyDll">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\BepInEx.Harmony.dll" />
+                        </Component>
+                        <Component Id="Core_BepInExHarmonyXml">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\BepInEx.Harmony.xml" />
+                        </Component>
+                        <Component Id="Core_BepInExPreloaderDll">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\BepInEx.Preloader.dll" />
+                        </Component>
+                        <Component Id="Core_BepInExPreloaderXml">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\BepInEx.Preloader.xml" />
+                        </Component>
+                        <Component Id="Core_BepInExDll">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\BepInEx.dll" />
+                        </Component>
+                        <Component Id="Core_BepInExXml">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\BepInEx.xml" />
+                        </Component>
+                        <Component Id="Core_HarmonyXInteropDll">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\HarmonyXInterop.dll" />
+                        </Component>
+                        <Component Id="Core_MonoCecilDll">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\Mono.Cecil.dll" />
+                        </Component>
+                        <Component Id="Core_MonoCecilMdb">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\Mono.Cecil.Mdb.dll" />
+                        </Component>
+                        <Component Id="Core_MonoCecilPdb">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\Mono.Cecil.Pdb.dll" />
+                        </Component>
+                        <Component Id="Core_MonoCecilRocks">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\Mono.Cecil.Rocks.dll" />
+                        </Component>
+                        <Component Id="Core_MonoModRuntimeDetourDll">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\MonoMod.RuntimeDetour.dll" />
+                        </Component>
+                        <Component Id="Core_MonoModRuntimeDetourXml">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\MonoMod.RuntimeDetour.xml" />
+                        </Component>
+                        <Component Id="Core_MonoModUtilsDll">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\MonoMod.Utils.dll" />
+                        </Component>
+                        <Component Id="Core_MonoModUtilsXml">
+                            <File Source="$(var.ProjectDir)\Files\BepInEx_win_x64_5.4.23.2\BepInEx\core\MonoMod.Utils.xml" />
+                        </Component>
+                    </Directory>
+                </Directory>
+            </Directory>
+        </StandardDirectory>
+
+        <!-- ComponentGroup for Feature reference -->
+        <ComponentGroup Id="BepInExComponents">
+            <ComponentRef Id="BepInExRoot_License" />
+            <ComponentRef Id="BepInExRoot_Changelog" />
+            <ComponentRef Id="BepInExRoot_Doorstop" />
+            <ComponentRef Id="BepInExRoot_WinHttp" />
+
+            <ComponentRef Id="Core_0Harmony" />
+            <ComponentRef Id="Core_0Harmony20" />
+            <ComponentRef Id="Core_0HarmonyXml" />
+            <ComponentRef Id="Core_BepInExHarmonyDll" />
+            <ComponentRef Id="Core_BepInExHarmonyXml" />
+            <ComponentRef Id="Core_BepInExPreloaderDll" />
+            <ComponentRef Id="Core_BepInExPreloaderXml" />
+            <ComponentRef Id="Core_BepInExDll" />
+            <ComponentRef Id="Core_BepInExXml" />
+            <ComponentRef Id="Core_HarmonyXInteropDll" />
+            <ComponentRef Id="Core_MonoCecilDll" />
+            <ComponentRef Id="Core_MonoCecilMdb" />
+            <ComponentRef Id="Core_MonoCecilPdb" />
+            <ComponentRef Id="Core_MonoCecilRocks" />
+            <ComponentRef Id="Core_MonoModRuntimeDetourDll" />
+            <ComponentRef Id="Core_MonoModRuntimeDetourXml" />
+            <ComponentRef Id="Core_MonoModUtilsDll" />
+            <ComponentRef Id="Core_MonoModUtilsXml" />
+        </ComponentGroup>
+                
+    </Fragment>
+</Wix>

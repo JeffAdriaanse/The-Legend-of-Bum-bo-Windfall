@@ -1,0 +1,43 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+    <Package Name="Windfall" Manufacturer="Jeffrey Adriaanse" Version="1.4.0.0" UpgradeCode="69e2801b-39fa-4c50-bbbd-c051fa382938">
+        <MajorUpgrade AllowDowngrades="yes" />
+
+        <!-- Registry search for default target directory TODO: Epic Games platform support -->
+        <Property Id="STEAM_BUMBO_PATH">
+            <RegistrySearch Id="FindSteamBumboPath"
+                            Root="HKLM"
+                            Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1148650"
+                            Name="InstallLocation"
+                            Type="directory" />
+        </Property>
+
+        <Property Id="GOG_BUMBO_PATH">
+            <RegistrySearch Id="FindGOGBumboPath"
+                            Root="HKLM"
+                            Key="SOFTWARE\WOW6432Node\GOG.com\Games\1627302940"
+                            Name="path"
+                            Type="directory" />
+        </Property>
+
+        <SetProperty Action="SetInstallDirSteam" Id="INSTALLDIR" Value="[STEAM_BUMBO_PATH]" After="AppSearch" Condition="STEAM_BUMBO_PATH &lt;&gt; &quot;&quot;" />
+        <SetProperty Action="SetInstallDirGOG" Id="INSTALLDIR" Value="[GOG_BUMBO_PATH]" After="AppSearch" Condition="STEAM_BUMBO_PATH = &quot;&quot; AND GOG_BUMBO_PATH &lt;&gt; &quot;&quot;" />
+
+        <SetProperty Action="SetInstallDirFoundFlag" Id="INSTALLDIRFLAG" Value="true" After="AppSearch" Condition="STEAM_BUMBO_PATH &lt;&gt; &quot;&quot; OR GOG_BUMBO_PATH &lt;&gt; &quot;&quot;" />
+
+        <!-- User interface to select installation path -->
+        <ui:WixUI
+            Id="Windfall_InstallDir"
+            InstallDirectory="INSTALLDIR"
+        />
+        
+        <MediaTemplate EmbedCab="yes" />
+
+        <Feature Id="BepInEx" Title="BepInEx" Level="1">
+            <ComponentGroupRef Id="BepInExComponents" />
+            <Feature Id="Windfall" Title="Windfall" Level="1">
+                <ComponentGroupRef Id="WindfallComponents"/>
+            </Feature>
+        </Feature>
+
+    </Package>
+</Wix>

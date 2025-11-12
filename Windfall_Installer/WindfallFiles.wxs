@@ -1,0 +1,23 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <DirectoryRef Id="BepInExDirectory">
+            <Directory Id="PluginsDirectory" Name="plugins">
+                <Directory Id="WindfallDirectory" Name="The Legend of Bum-bo_Windfall">
+                    <Component Id="TheLegendofBumboWindfall.dll">
+                        <File Source="$(var.ProjectDir)\Files\The Legend of Bum-bo_Windfall.dll" />
+                    </Component>
+                    <Component Id="windfall">
+                        <File Source="$(var.ProjectDir)\Files\windfall" />
+                    </Component>
+                </Directory>
+            </Directory>
+        </DirectoryRef>
+
+        <!-- ComponentGroup for Feature reference -->
+        <ComponentGroup Id="WindfallComponents">
+            <ComponentRef Id="TheLegendofBumboWindfall.dll" />
+            <ComponentRef Id="windfall" />
+        </ComponentGroup>
+        
+    </Fragment>
+</Wix>

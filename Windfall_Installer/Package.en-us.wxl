@@ -1,0 +1,12 @@
+﻿<!--
+This file contains the declaration of all the localizable strings.
+-->
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-US">
+
+    <String Id="WelcomeDlgDescription" Value="The Setup Wizard will install [ProductName] on your computer. It will also install BepInEx, a modding framework that is needed for [ProductName] to work with The Legend of Bum-bo.&#10;&#10;Click Next to continue or Cancel to exit the Setup Wizard." />
+            
+    <String Id="InstallDirLabel" Value="For [ProductName] to work with The Legend of Bum-bo, the files must be installed to the game’s root directory." />
+    <String Id="FoundInstallLabel" Value="The root directory was found automatically and has been filled in for you." />
+    <String Id="MissingInstallLabel" Value="The root directory could not be found automatically. Please click Change... and navigate to the install location of the base game on your computer. It will be the directory that contains the game executable, The Legend of Bum-bo.exe." />
+
+</WixLocalization>
