@@ -364,10 +364,13 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Movement
-                string movesText = "\nActions: " + enemy.turns.ToString();
+                string movesText = "\n" + LocalizationModifier.GetLanguageText("ACTIONS", "Enemies");
+                movesText = movesText.Replace("[value]", enemy.turns.ToString());
 
                 //Damage
-                string damageText = "\nDamage: ";
+                string damageText = "\n" + LocalizationModifier.GetLanguageText("DAMAGE", "Enemies");
+
+                string damageValueText = "1";
                 int damage = 1;
                 if (enemy.berserk || enemy.brieflyBerserk == 1)
                 {
@@ -380,15 +383,17 @@ namespace The_Legend_of_Bum_bo_Windfall
                 switch (damage)
                 {
                     default:
-                        damageText += "1/2 heart";
+                        damageValueText = "1/2";
                         break;
                     case 2:
-                        damageText += "1 heart";
+                        damageValueText = "1";
                         break;
                     case 3:
-                        damageText += "1 + 1/2 heart";
+                        damageValueText = "&lt;nobr&gt;1 + 1/2&lt;nobr&gt;";
                         break;
                 }
+
+                damageText = damageText.Replace("[value]", damageValueText);
 
                 //Enemy names
                 string localizationCategory = enemy is Boss ? "Bosses" : "Enemies";
@@ -399,24 +404,32 @@ namespace The_Legend_of_Bum_bo_Windfall
                 switch (enemy.attackImmunity)
                 {
                     case Enemy.AttackImmunity.ReducePuzzleDamage:
-                        resitanceText = "\nResists puzzle damage";
+                        resitanceText = "\n" + LocalizationModifier.GetLanguageText("PUZZLE_DAMAGE_REDUCTION_ABILITY", "Enemies");
                         break;
                     case Enemy.AttackImmunity.ReduceSpellDamage:
-                        resitanceText = "\nResists spell damage";
+                        resitanceText = "\n" + LocalizationModifier.GetLanguageText("SPELL_DAMAGE_REDUCTION_ABILITY", "Enemies");
                         break;
                 }
+                resitanceText = resitanceText.Replace("[damage]", "1");
 
                 //Invincibility
-                string invincibilityText = WindfallTooltipDescriptions.EnemyIsInvincible(enemy) ? "\nInvulnerable" : string.Empty;
+                string invincibilityText = WindfallTooltipDescriptions.EnemyIsInvincible(enemy) ? "\n" + LocalizationModifier.GetLanguageText("INVULNERABLE_ABILITY", "Enemies") : string.Empty;
 
                 //Damage reduction
                 string damageReductionText = WindfallTooltipDescriptions.EnemyDamageReductionWithValues(enemy);
 
                 //Blocking
-                string blockText = WindfallTooltipDescriptions.EnemyIsBlocking(enemy) ? "\nBlocks the next hit" : string.Empty;
+                string blockText = WindfallTooltipDescriptions.EnemyIsBlocking(enemy) ? "\n" + LocalizationModifier.GetLanguageText("BLOCK_ABILITY", "Enemies") : string.Empty;
 
                 //Enemy descriptions
                 string descriptionText = WindfallTooltipDescriptions.EnemyDisplayDescription(enemy);
+
+                //Champion crowns
+                string championText = string.Empty;
+                if (enemy.championType == Enemy.ChampionType.ManaDrain) championText = "\n" + LocalizationModifier.GetLanguageText("BROWN_CHAMPION_ABILITY", "Enemies");
+                else if (enemy.championType == Enemy.ChampionType.Cursed) championText = "\n" + LocalizationModifier.GetLanguageText("PURPLE_CHAMPION_ABILITY", "Enemies");
+                else if (enemy.championType == Enemy.ChampionType.Regen) championText = "\n" + LocalizationModifier.GetLanguageText("RED_CHAMPION_ABILITY", "Enemies");
+                else if (enemy.championType == Enemy.ChampionType.DeathDamage) championText = "\n" + LocalizationModifier.GetLanguageText("GREEN_CHAMPION_ABILITY", "Enemies");
 
                 //Omit irrelevant tooltip information
                 if (!enemy.alive)
@@ -443,7 +456,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 }
 
                 //Output description
-                displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + invincibilityText + resitanceText + damageReductionText + blockText + descriptionText;
+                displayDescription = "<u>" + enemyNameText + "</u>" + movesText + damageText + invincibilityText + resitanceText + damageReductionText + blockText + descriptionText + championText;
                 return;
             }
         }
