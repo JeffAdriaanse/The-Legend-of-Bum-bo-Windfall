@@ -95,6 +95,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
     public class SpellViewIndicationControllerPatches()
     {
+        //Patch: Update SpellViewIndicators on SetSpell (and adjust collider size)
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), nameof(BumboController.SetSpell))]
         static void BumboController_SetSpell(BumboController __instance, int _spell_index, SpellElement _spell)
         {
@@ -105,6 +106,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (boxCollider != null && boxCollider.size.z > 0.02f) boxCollider.size = new Vector3(boxCollider.size.x, boxCollider.size.y, 0.01f);
 
             WindfallHelper.SpellViewIndicationController.UpdateSpellViewIndicators(spellView);
+        }
+
+        //Patch: Update SpellViewIndicators on IdleEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(IdleEvent), nameof(IdleEvent.Execute))]
+        static void IdleEvent_Execute(IdleEvent __instance)
+        {
+            for (int i = 0; i < WindfallHelper.app.model.characterSheet.spells.Count; i++)
+            {
+                WindfallHelper.SpellViewIndicationController.UpdateSpellViewIndicators(WindfallHelper.app.view.spells[i]);
+            }
+        }
+        //Patch: Update SpellViewIndicators on ChanceToCastSpellEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(ChanceToCastSpellEvent), nameof(ChanceToCastSpellEvent.Execute))]
+        static void ChanceToCastSpellEvent_Execute(IdleEvent __instance)
+        {
+            for (int i = 0; i < WindfallHelper.app.model.characterSheet.spells.Count; i++)
+            {
+                WindfallHelper.SpellViewIndicationController.UpdateSpellViewIndicators(WindfallHelper.app.view.spells[i]);
+            }
         }
     }
 
@@ -257,7 +277,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             get
             {
-                if (SpellView == null || SpellView.SpellObject == null) return false;
+                if (SpellView == null) return false;
                 return SpellView.SpellObject.costOverride;
             }
         }
