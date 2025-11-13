@@ -1157,8 +1157,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(DeathTrinket), "Use")]
         static bool DeathTrinket_Use(DeathTrinket __instance, int _index)
         {
-            CollectibleFixes.UseTrinket_Use_Prefix(__instance, currentTrinketIndex);
-            CollectibleFixes.UseTrinket_Use_Base_Method(__instance, currentTrinketIndex);
+            CollectibleFixes.UseTrinket_Use_Prefix(__instance, _index);
+            CollectibleFixes.UseTrinket_Use_Base_Method(__instance, _index);
             CollectibleFixes.UseTrinket_Use_Postfix(__instance);
 
             List<Enemy> list = new List<Enemy>();
@@ -1190,8 +1190,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(BoomTrinket), "Use")]
         static bool BoomTrinket_Use(BoomTrinket __instance, int _index)
         {
-            CollectibleFixes.UseTrinket_Use_Prefix(__instance, currentTrinketIndex);
-            CollectibleFixes.UseTrinket_Use_Base_Method(__instance, currentTrinketIndex);
+            CollectibleFixes.UseTrinket_Use_Prefix(__instance, _index);
+            CollectibleFixes.UseTrinket_Use_Base_Method(__instance, _index);
             CollectibleFixes.UseTrinket_Use_Postfix(__instance);
 
             List<Enemy> list = new List<Enemy>();
