@@ -293,8 +293,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 if (meshRenderer != null && !meshRenderer.GetComponent<TextMeshPro>())
                 {
-                    if (meshRenderer?.material?.shader != null && DefaultShader != null) meshRenderer.material.shader = DefaultShader;
-                    meshRenderer.material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
+                    foreach (Material material in meshRenderer.materials)
+                    {
+                        if (material?.shader != null && DefaultShader != null) material.shader = DefaultShader;
+                        material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
+                    }
                 }
             }
             return transform;

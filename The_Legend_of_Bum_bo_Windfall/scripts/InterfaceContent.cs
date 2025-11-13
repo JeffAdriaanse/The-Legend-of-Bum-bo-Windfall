@@ -1361,11 +1361,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPostfix, HarmonyPatch(typeof(SelectCharacterView), "Start")]
         static void SelectCharacterView_Start(SelectCharacterView __instance)
         {
-            GameObject characterSelectIndicatorObject = GameObject.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Spell View Indicator"), __instance.transform.parent);
+            GameObject characterSelectIndicatorObject = GameObject.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("SpellViewIndicator"), __instance.transform.parent);
             characterSelectIndicatorObject.name = "Character Select Indicator";
             WindfallHelper.Reskin(characterSelectIndicatorObject, null, null, Windfall.assetBundle.LoadAsset<Texture2D>("Character Select Indicator"));
             WindfallHelper.ReTransform(characterSelectIndicatorObject, Vector3.zero, LocalRotation, new Vector3(CharacterSelectIndicatorLocalScaleMin, CharacterSelectIndicatorLocalScaleMin, CharacterSelectIndicatorLocalScaleMin), string.Empty);
             characterSelectIndicatorObject.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            characterSelectIndicatorObject.GetComponent<MeshRenderer>().material.mainTextureOffset = new Vector2(0.56f, 0.76f);
+            characterSelectIndicatorObject.GetComponent<MeshRenderer>().material.mainTextureScale = new Vector2(1.24f, 1.24f);
+
             UpdateCharacterSelectIndicator(__instance);
         }
 
@@ -1386,6 +1389,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (!__result) return;
             GameObject characterSelectIndicatorObject = __instance.selectCharacterView.transform.parent.Find("Character Select Indicator")?.gameObject;
+            if (characterSelectIndicatorObject == null) return;
 
             Tween localscaleTween = null;
 
