@@ -67,7 +67,7 @@ When playing through Steam, The Legend of Bum-bo stores local save data in the `
 
 When playing with Windfall installed, the mod stores its own save data for mod-specific unlocks and for improving the save and continue feature from the vanilla game. Windfall save data is stored separately from vanilla save data and is not saved to Steam Cloud.
 
-Windfall stores its local save data in the same place the mod is installed to, the `BepInEx/Plugins/The Legend of Bum-bo_Windfall` directory.
+Windfall stores its local save data in the same place the mod is installed to, the `BepInEx/Plugins/The Legend of Bum-bo_Windfall` directory in the game root folder.
 
 ## Additional Information
 The Legend of Bum-bo: Windfall is made for the Steam and GOG versions of the vanilla game, although it most likely works with the Epic Games version as well.
