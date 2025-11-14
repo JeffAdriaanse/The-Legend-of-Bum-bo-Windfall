@@ -45,10 +45,17 @@ To update the mod, repeat steps 3 and 4 with the new mod release.
 To uninstall the mod, remove `The Legend of Bum-bo_Windfall` folder from `BepInEx/Plugins`.
 To uninstall BepInEx, remove the `BepInEx` folder itself.
 
+## Windfall on Linux With Proton
+It is possible to get Windfall working on Linux systems that are running The Legend of Bum-bo through the Proton compatibility layer. However, an extra step is needed to get BepInEx working properly with Proton.
+
+Follow the instructions below:
+
+1. Follow the [Manual Installation](https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall?tab=readme-ov-file#manual-installation) steps as normal.
+2. In Steam, go to The Legend of Bum-bo. Select `Properties → Launch Options` and write `WINEDLLOVERRIDES="winhttp=n,b" %command%` in the launch options.
+3. Run the game through Steam.
+
 ## Additional Information
 The Legend of Bum-bo: Windfall is made for the Steam and GOG versions of the vanilla game, although it most likely works with the Epic Games version as well.
-
-Windfall is made for Windows computers, so the mod might not work if you're using another operating system such as linux/proton.
 
 Text that is added or modified by The Legend of Bum-bo: Windfall is not translated to all languages and will only display in English and Chinese.
 
