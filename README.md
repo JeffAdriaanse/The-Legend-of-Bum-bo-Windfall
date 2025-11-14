@@ -1,5 +1,9 @@
-# The Legend of Bum-bo: Windfall
-The Windfall is a mod for the Legend of Bum-bo that fixes bugs, adds new features, and adjusts game balance.
+<p align="center">
+ <picture>
+  <img src="/assets/Windfall Logo.png" alt="Windfall logo" width="600">
+ </picture>
+</p>
+Windfall is a mod for the Legend of Bum-bo that fixes bugs, adds new features, and adjusts game balance.
 
 To see mod updates and change lists, visit the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
 
@@ -53,6 +57,17 @@ Follow the instructions below:
 1. Follow the [Manual Installation](https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall?tab=readme-ov-file#manual-installation) steps as normal.
 2. In Steam, go to The Legend of Bum-bo. Select `Properties → Launch Options` and write `WINEDLLOVERRIDES="winhttp=n,b" %command%` in the launch options.
 3. Run the game through Steam.
+
+## Game Saves
+Some players have reported in steam discussions([1](https://steamcommunity.com/app/1148650/discussions/0/3845556684657609646/) [2](https://steamcommunity.com/app/1148650/discussions/0/3802777561340047478/)) that the vanilla game might not properly save progression to Steam Cloud, even if cloud saves are enabled.
+
+Unfortunately it does not seem possible to investigate or fix cloud save issues with mods. It is recommended that players who are concerned about losing save progress use other methods to back up their local save data.
+
+When playing through Steam, The Legend of Bum-bo stores local save data in the `%USERPROFILE%\Documents\My Games` directory.
+
+When playing with Windfall installed, the mod stores its own save data for mod-specific unlocks and for improving the save and continue feature from the vanilla game. Windfall save data is stored separately from vanilla save data and is not saved to Steam Cloud.
+
+Windfall stores its local save data in the same place the mod is installed to, the `BepInEx/Plugins/The Legend of Bum-bo_Windfall` directory.
 
 ## Additional Information
 The Legend of Bum-bo: Windfall is made for the Steam and GOG versions of the vanilla game, although it most likely works with the Epic Games version as well.
