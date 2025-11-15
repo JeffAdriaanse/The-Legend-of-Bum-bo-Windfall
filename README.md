@@ -40,13 +40,22 @@ If you already have BepInEx 5.4 installed for The Legend of Bum-bo, skip steps 1
 1. [Click here to download BepInEx.](https://github.com/BepInEx/BepInEx/releases/download/v5.4.21/BepInEx_x64_5.4.21.0.zip)
 2. Extract the contents of `BepInEx_x64_5.4.21.0.zip` into The Legend of Bum-bo root folder. You can find the root folder by clicking `Manage > Browse local files` in the options menu on the game's page in your Steam library.
 3. [Click here to download the latest version of Windfall.](https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall/releases/download/v1.4.0/The.Legend.of.Bum-bo_Windfall.zip)
-4. Extract the contents of `The.Legend.of.Bum-bo_Windfall.zip` into the `BepInEx/Plugins` directory in the game folder. Create the `Plugins` folder if it is not there already. Replace files if prompted.
+4. Extract the contents of `The.Legend.of.Bum-bo_Windfall.zip` into the `BepInEx/plugins` directory in the game folder. Create the `plugins` folder if it is not there already. Replace files if prompted.
 
+The directory structure should end up looking like this:
+```
+The Legend of Bum-Bo/
+└─ BepInEx/
+   └─ plugins/
+      └─ The Legend of Bum-bo_Windfall/
+         ├─ windfall
+         └─ The Legend of Bum-bo_Windfall.dll
+```
 If you are having trouble installing BepInEx, consult the BepInEx [installation guide](https://docs.bepinex.dev/articles/user_guide/installation/index.html).
 
 To update the mod, repeat steps 3 and 4 with the new mod release.
 
-To uninstall the mod, remove `The Legend of Bum-bo_Windfall` folder from `BepInEx/Plugins`.
+To uninstall the mod, remove `The Legend of Bum-bo_Windfall` folder from `BepInEx/plugins`.
 To uninstall BepInEx, remove the `BepInEx` folder itself.
 
 ## Windfall on Linux With Proton
