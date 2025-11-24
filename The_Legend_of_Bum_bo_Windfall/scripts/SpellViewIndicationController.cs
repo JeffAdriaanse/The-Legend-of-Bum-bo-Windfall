@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
-    //TODO: Assets and localization
     public class SpellViewIndicationController : MonoBehaviour
     {
         private static readonly float SPELL_VIEW_INDICATOR_SCALE = 0.045f;
@@ -15,6 +14,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         private static readonly float SPELL_VIEW_INDICATOR_SPACING_X = 0.06f;
         private static readonly Vector3 SPELL_VIEW_INDICATOR_LOCALROTATION = new Vector3(270f, 0f, 0f);
         private static readonly Vector3 SPELL_VIEW_INDICATOR_LOCALSCALE = new Vector3(SPELL_VIEW_INDICATOR_SCALE, SPELL_VIEW_INDICATOR_SCALE, SPELL_VIEW_INDICATOR_SCALE);
+
+        public void UpdateAllSpellViewIndicators()
+        {
+            for (int i = 0; i < WindfallHelper.app.model.characterSheet.spells.Count; i++)
+            {
+                UpdateSpellViewIndicators(WindfallHelper.app.view.spells[i]);
+            }
+        }
 
         public void UpdateSpellViewIndicators(SpellView spellView)
         {
@@ -108,23 +115,31 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.SpellViewIndicationController.UpdateSpellViewIndicators(spellView);
         }
 
+
+
         //Patch: Update SpellViewIndicators on IdleEvent
         [HarmonyPostfix, HarmonyPatch(typeof(IdleEvent), nameof(IdleEvent.Execute))]
         static void IdleEvent_Execute(IdleEvent __instance)
         {
-            for (int i = 0; i < WindfallHelper.app.model.characterSheet.spells.Count; i++)
-            {
-                WindfallHelper.SpellViewIndicationController.UpdateSpellViewIndicators(WindfallHelper.app.view.spells[i]);
-            }
+            WindfallHelper.SpellViewIndicationController.UpdateAllSpellViewIndicators();
         }
         //Patch: Update SpellViewIndicators on ChanceToCastSpellEvent
         [HarmonyPostfix, HarmonyPatch(typeof(ChanceToCastSpellEvent), nameof(ChanceToCastSpellEvent.Execute))]
         static void ChanceToCastSpellEvent_Execute(IdleEvent __instance)
         {
-            for (int i = 0; i < WindfallHelper.app.model.characterSheet.spells.Count; i++)
-            {
-                WindfallHelper.SpellViewIndicationController.UpdateSpellViewIndicators(WindfallHelper.app.view.spells[i]);
-            }
+            WindfallHelper.SpellViewIndicationController.UpdateAllSpellViewIndicators();
+        }
+        //Patch: Update SpellViewIndicators on RoomStartEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(RoomStartEvent), nameof(RoomStartEvent.Execute))]
+        static void RoomStartEvent_Execute(RoomStartEvent __instance)
+        {
+            WindfallHelper.SpellViewIndicationController.UpdateAllSpellViewIndicators();
+        }
+        //Patch: Update SpellViewIndicators on NewRoundEvent
+        [HarmonyPostfix, HarmonyPatch(typeof(NewRoundEvent), nameof(NewRoundEvent.Execute))]
+        static void NewRoundEvent_Execute(NewRoundEvent __instance)
+        {
+            WindfallHelper.SpellViewIndicationController.UpdateAllSpellViewIndicators();
         }
     }
 
