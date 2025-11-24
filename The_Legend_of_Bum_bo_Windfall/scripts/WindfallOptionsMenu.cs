@@ -1,6 +1,7 @@
 ﻿using I2.Loc;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,19 +16,22 @@ namespace The_Legend_of_Bum_bo_Windfall
         private bool antiAliasing;
         private bool motionBlur;
 
-        private int tooltipSize = 1;
+        private int tooltipSize = 0;
+        private int gameSpeed = 0;
 
-        private Sprite toggleActive;
-        private Sprite toggleInactive;
+        private GameObject antialiasingContainer;
+        private GameObject antialiasingContainerSettingText;
+        private GameObject motionBlurContainer;
+        private GameObject motionBlurContainerSettingText;
+        private GameObject tooltipsContainer;
+        private GameObject tooltipsContainerSettingText;
+        private GameObject gameSpeedContainer;
+        private GameObject gameSpeedContainerSettingText;
 
         public void SetUpWindfallOptionsMenu(bool pauseMenu)
         {
             GameObject menuView = transform.parent.gameObject;
             AssetBundle assets = Windfall.assetBundle;
-
-            //Get sprite assets
-            toggleActive = assets.LoadAsset<Sprite>("UI Toggle Active Thick");
-            toggleInactive = assets.LoadAsset<Sprite>("UI Toggle Inactive Thick");
 
             ReorganizeVanillaOptionsMenu(menuView);
 
@@ -50,33 +54,43 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             GameObject header = transform.Find("Header").gameObject;
             GameObject antialiasing = transform.Find("Antialiasing").gameObject;
+            antialiasingContainer = antialiasing.transform.Find("Antialiasing Container").gameObject;
+            antialiasingContainerSettingText = antialiasingContainer.transform.Find("Setting Text").gameObject;
             GameObject motionBlur = transform.Find("Motion Blur").gameObject;
+            motionBlurContainer = motionBlur.transform.Find("Motion Blur Container").gameObject;
+            motionBlurContainerSettingText = motionBlurContainer.transform.Find("Setting Text").gameObject;
             GameObject tooltips = transform.Find("Tooltips").gameObject;
-            GameObject tooltipsSize = tooltips.transform.Find("Size").gameObject;
+            tooltipsContainer = tooltips.transform.Find("Tooltips Container").gameObject;
+            tooltipsContainerSettingText = tooltipsContainer.transform.Find("Setting Text").gameObject;
+            GameObject gameSpeed = transform.Find("Game Speed").gameObject;
+            gameSpeedContainer = gameSpeed.transform.Find("Game Speed Container").gameObject;
+            gameSpeedContainerSettingText = gameSpeedContainer.transform.Find("Setting Text").gameObject;
             GameObject hotkeys = transform.Find("Hotkeys").gameObject;
             GameObject syncAchievements = transform.Find("Sync Achievements").gameObject;
             GameObject save = transform.Find("Save").gameObject;
             GameObject cancel = transform.Find("Cancel").gameObject;
 
-            //Localize header
-            WindfallHelper.LocalizeObject(header, "Menu/WINDFALL_OPTIONS");
-
-            //Localize tooltips
-            WindfallHelper.LocalizeObject(tooltips, "Menu/TOOLTIPS");
 
             //Initialize buttons
-            WindfallHelper.InitializeButton(antialiasing, ToggleAntiAliasing, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-            WindfallHelper.InitializeButton(motionBlur, ToggleMotionBlur, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
-            WindfallHelper.InitializeButton(tooltipsSize, CycleTooltipSize, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeValueList(antialiasingContainer, antialiasingContainerSettingText, CycleAntiAliasing, edmundmcmillen_regular);
+            WindfallHelper.InitializeValueList(motionBlurContainer, motionBlurContainerSettingText, CycleMotionBlur, edmundmcmillen_regular);
+            WindfallHelper.InitializeValueList(tooltipsContainer, tooltipsContainerSettingText, CycleTooltipSize, edmundmcmillen_regular);
+            WindfallHelper.InitializeValueList(gameSpeedContainer, gameSpeedContainerSettingText, CycleGameSpeed, edmundmcmillen_regular);
             WindfallHelper.InitializeButton(hotkeys, hotkeysMenuComponent.OpenHotkeysMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
             WindfallHelper.InitializeButton(syncAchievements, SyncAchievements, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
             WindfallHelper.InitializeButton(save, SaveWindfallOptions, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
             WindfallHelper.InitializeButton(cancel, CloseWindfallOptionsMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
 
-            //Localize buttons
+            //Localize text
+            WindfallHelper.LocalizeObject(header, "Menu/WINDFALL_OPTIONS");
             WindfallHelper.LocalizeObject(antialiasing, "Menu/ANTI_ALIASING");
+            WindfallHelper.LocalizeObject(antialiasingContainerSettingText, null);
             WindfallHelper.LocalizeObject(motionBlur, "Menu/MOTION_BLUR");
-            WindfallHelper.LocalizeObject(tooltipsSize, null);
+            WindfallHelper.LocalizeObject(motionBlurContainerSettingText, null);
+            WindfallHelper.LocalizeObject(tooltips, "Menu/TOOLTIPS");
+            WindfallHelper.LocalizeObject(tooltipsContainerSettingText, null);
+            WindfallHelper.LocalizeObject(gameSpeed, "Menu/GAME_SPEED");
+            WindfallHelper.LocalizeObject(gameSpeedContainerSettingText, null);
             WindfallHelper.LocalizeObject(hotkeys, "Menu/HOTKEYS");
             WindfallHelper.LocalizeObject(syncAchievements, "Menu/SYNC_ACHIEVEMENTS");
             WindfallHelper.LocalizeObject(save, "Menu/OPTIONS_SAVE");
@@ -186,63 +200,119 @@ namespace The_Legend_of_Bum_bo_Windfall
                 optionsMenuPcGamepadMenuController.m_Buttons = buttons.ToArray();
             }
         }
-
-        private void ToggleBalanceChanges()
-        {
-            balanceChanges = !balanceChanges;
-            UpdateButtons();
-        }
-        private void ToggleAntiAliasing()
+        private void CycleAntiAliasing(int cycle)
         {
             antiAliasing = !antiAliasing;
             UpdateButtons();
         }
-        private void ToggleMotionBlur()
+        private void CycleMotionBlur(int cycle)
         {
             motionBlur = !motionBlur;
             UpdateButtons();
         }
-        private void CycleTooltipSize()
+        private void CycleTooltipSize(int cycle)
         {
-            tooltipSize++;
-            if (tooltipSize > 1)
-            {
-                tooltipSize = -2;
-            }
+            //-2: Disabled
+            //-1: Small
+            //0: Medium
+            //1: Large
+            tooltipSize += cycle;
+            if (tooltipSize > 1) tooltipSize = -2;
+            if (tooltipSize < -2) tooltipSize = 1;
             UpdateButtons();
         }
+        private void CycleGameSpeed(int cycle)
+        {
+            //0: 1.0x
+            //1: 1.5x
+            //2: 2.0x
+            //3: 2.5x
+            //4: 3.0x
+            gameSpeed += cycle;
+            if (gameSpeed > 4) gameSpeed = 0;
+            if (gameSpeed < 0) gameSpeed = 4;
+            UpdateButtons();
+        }
+
         private void UpdateButtons()
         {
-            UpdateToggle(transform.Find("Balance Changes")?.Find("Toggle")?.gameObject, balanceChanges);
-            UpdateToggle(transform.Find("Antialiasing")?.Find("Toggle")?.gameObject, antiAliasing);
-            UpdateToggle(transform.Find("Motion Blur")?.Find("Toggle")?.gameObject, motionBlur);
+            Localize antialiasingLocalize = antialiasingContainerSettingText.GetComponent<Localize>();
+            if (antialiasingLocalize != null)
+            {
+                string term = string.Empty;
+                switch (antiAliasing)
+                {
+                    case true:
+                        term = "OPTIONS_ON";
+                        break;
+                    default:
+                        term = "OPTIONS_OFF";
+                        break;
+                }
+                if (term != string.Empty) Localization.SetKey(antialiasingLocalize, eI2Category.Menu, term);
+            }
 
-            Localize tooltipSizeLocalize = transform.Find("Tooltips")?.Find("Size")?.GetComponent<Localize>();
+            Localize motionBlurLocalize = motionBlurContainerSettingText.GetComponent<Localize>();
+            if (motionBlurLocalize != null)
+            {
+                string term = string.Empty;
+                switch (motionBlur)
+                {
+                    case true:
+                        term = "OPTIONS_ON";
+                        break;
+                    default:
+                        term = "OPTIONS_OFF";
+                        break;
+                }
+                if (term != string.Empty) Localization.SetKey(motionBlurLocalize, eI2Category.Menu, term);
+            }
+
+            Localize tooltipSizeLocalize = tooltipsContainerSettingText.GetComponent<Localize>();
             if (tooltipSizeLocalize != null)
             {
+                string term = string.Empty;
                 switch (tooltipSize)
                 {
                     case -2:
-                        Localization.SetKey(tooltipSizeLocalize, eI2Category.Menu, "DISABLED");
+                        term = "DISABLED";
                         break;
                     case -1:
-                        Localization.SetKey(tooltipSizeLocalize, eI2Category.Menu, "SMALL");
+                        term = "SMALL";
                         break;
                     case 0:
-                        Localization.SetKey(tooltipSizeLocalize, eI2Category.Menu, "MEDIUM");
+                        term = "MEDIUM";
                         break;
                     case 1:
-                        Localization.SetKey(tooltipSizeLocalize, eI2Category.Menu, "LARGE");
+                        term = "LARGE";
                         break;
                 }
+                if (term != string.Empty) Localization.SetKey(tooltipSizeLocalize, eI2Category.Menu, term);
             }
-        }
-        private void UpdateToggle(GameObject toggleObject, bool active)
-        {
-            if (toggleObject != null)
+
+            Localize gameSpeedLocalize = gameSpeedContainerSettingText.GetComponent<Localize>();
+            if (gameSpeedLocalize != null)
             {
-                Image toggleImage = toggleObject.GetComponent<Image>();
-                if (toggleImage != null) toggleImage.sprite = active ? toggleActive : toggleInactive;
+                string term = string.Empty;
+                switch (gameSpeed)
+                {
+                    case 0:
+                        term = "1.0X";
+                        break;
+                    case 1:
+                        term = "1.5X";
+                        break;
+                    case 2:
+                        term = "2.0X";
+                        break;
+                    case 3:
+                        term = "2.5X";
+                        break;
+                    case 4:
+                        term = "3.0X";
+                        break;
+                }
+                if (term != string.Empty) Localization.SetKey(gameSpeedLocalize, eI2Category.Menu, term);
             }
         }
 
@@ -280,6 +350,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             windfallPersistentData.antiAliasing = antiAliasing;
             windfallPersistentData.motionBlur = motionBlur;
             windfallPersistentData.tooltipSize = tooltipSize;
+            windfallPersistentData.gameSpeed = gameSpeed;
             WindfallPersistentDataController.SaveData(windfallPersistentData);
 
             GraphicsModifier.UpdateCameras();
@@ -294,8 +365,28 @@ namespace The_Legend_of_Bum_bo_Windfall
             antiAliasing = windfallPersistentData.antiAliasing;
             motionBlur = windfallPersistentData.motionBlur;
             tooltipSize = windfallPersistentData.tooltipSize;
+            gameSpeed = windfallPersistentData.gameSpeed;
 
             UpdateButtons();
         }
+    }
+}
+
+public class WindfallValueListView : BumboValueListView
+{
+    private Action<int> cycleAction;
+    public void SetAction(Action<int> cycleAction)
+    {
+        this.cycleAction = cycleAction;
+    }
+
+    public override void CycleLeft()
+    {
+        cycleAction(-1);
+    }
+
+    public override void CycleRight()
+    {
+        cycleAction(1);
     }
 }

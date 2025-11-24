@@ -25,6 +25,8 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             tooltipSize = 0;
 
+            gameSpeed = 0;
+
             wiseWins = 0;
             wiseMoneyWins = 0;
 
@@ -65,6 +67,8 @@ namespace The_Legend_of_Bum_bo_Windfall
         public bool motionBlur;
 
         public int tooltipSize;
+
+        public int gameSpeed;
 
         //Progression
         public int wiseWins;

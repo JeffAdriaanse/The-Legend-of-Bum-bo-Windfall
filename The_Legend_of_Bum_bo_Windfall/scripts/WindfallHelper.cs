@@ -1,13 +1,16 @@
 ﻿using HarmonyLib;
 using I2.Loc;
 using PathologicalGames;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using The_Legend_of_Bum_bo_Windfall.scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using static GamepadMenuOptionSelection;
 
 namespace The_Legend_of_Bum_bo_Windfall
 {
@@ -180,6 +183,18 @@ namespace The_Legend_of_Bum_bo_Windfall
             set { modifySpellHoverPreviewController = value; }
         }
 
+        //Static reference to Windfall WildActionPointsController
+        private static WildActionPointsController wildActionPointsController;
+        public static WildActionPointsController WildActionPointsController
+        {
+            get
+            {
+                if (wildActionPointsController == null) wildActionPointsController = GameObject.FindObjectOfType<WildActionPointsController>();
+                if (wildActionPointsController == null) wildActionPointsController = CreateWindfallController<WildActionPointsController>();
+                return wildActionPointsController;
+            }
+            set { wildActionPointsController = value; }
+        }
 
         /// <summary>
         ///Creates a GameObject child of BumboController with the given MonoBehaviour component type attached as a new instance. Returns the created MonoBehaviour component.
@@ -285,7 +300,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return defaultShader;
             }
         }
-        public static Transform ResetShader(Transform transform)
+        public static Transform ResetShader(Transform transform, bool setShaderKeywordsForUI = true)
         {
             if (transform == null) return null;
 
@@ -296,7 +311,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     foreach (Material material in meshRenderer.materials)
                     {
                         if (material?.shader != null && DefaultShader != null) material.shader = DefaultShader;
-                        material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
+                        if (setShaderKeywordsForUI) material.shaderKeywords = new string[] { "_GLOSSYREFLECTIONS_OFF", "_SPECULARHIGHLIGHTS_OFF" };
                     }
                 }
             }
@@ -532,8 +547,9 @@ namespace The_Legend_of_Bum_bo_Windfall
 
                 //Choose a random mana to add
                 int manaIndex = UnityEngine.Random.Range(0, manaColors.Count);
+                int randomManaType = (int)manaColors[manaIndex];
+                manaToAdd[randomManaType]++;
                 manaColors.RemoveAt(manaIndex);
-                manaToAdd[manaIndex]++;
             }
 
             app.controller.UpdateMana(manaToAdd, false);
@@ -589,25 +605,67 @@ namespace The_Legend_of_Bum_bo_Windfall
         /// <summary>
         /// Initializes button functionality of the given GameObject.
         /// </summary>
-        /// <param name="gameObject">The GameObject to localize.</param>
-        /// <param name="term">The localization term.</param>
-        /// <param name="localizationFontOverrides">A list of localization font overrides to apply.</param>
-        public static void InitializeButton(GameObject buttonObject, UnityAction unityAction, TMP_FontAsset font, GamepadMenuOptionSelection.eInjectDots eInjectDots)
+        public static void InitializeButton(GameObject buttonObject, UnityAction unityAction, TMP_FontAsset font, GamepadMenuOptionSelection.eInjectDots eInjectDots, bool showSelectionsOnMouseHover = false, GameObject[] selectionObjects = null)
         {
-            ButtonHoverAnimation buttonHoverAnimation = buttonObject.AddComponent<ButtonHoverAnimation>();
+            AddButtonHoverAnimation(buttonObject);
+            AddButton(buttonObject, unityAction);
+            AddGamepadMenuOptionSelection(buttonObject, eInjectDots, selectionObjects, showSelectionsOnMouseHover);
+            LocalizationModifier.ChangeFont(buttonObject.GetComponent<TextMeshProUGUI>(), null, font);
+        }
+
+        public static void AddButtonHoverAnimation(GameObject gameObject)
+        {
+            ButtonHoverAnimation buttonHoverAnimation = gameObject.AddComponent<ButtonHoverAnimation>();
             buttonHoverAnimation.hoverSoundFx = SoundsView.eSound.Menu_ItemHover;
             buttonHoverAnimation.clickSoundFx = SoundsView.eSound.Menu_ItemSelect;
+        }
 
-            Button buttonComponent = buttonObject.GetComponent<Button>();
-            if (buttonComponent == null) buttonComponent = buttonObject.AddComponent<Button>();
-            buttonComponent.onClick.AddListener(unityAction);
+        public static void AddButton(GameObject gameObject, UnityAction buttonAction)
+        {
+            Button buttonComponent = gameObject.GetComponent<Button>();
+            if (buttonComponent == null) buttonComponent = gameObject.AddComponent<Button>();
+            buttonComponent.onClick.AddListener(buttonAction);
+        }
 
-            GamepadMenuOptionSelection gamepadMenuOptionSelection = buttonObject.AddComponent<GamepadMenuOptionSelection>();
+        public static void AddGamepadMenuOptionSelection(GameObject gameObject, GamepadMenuOptionSelection.eInjectDots eInjectDots, GameObject[] selectionObjects = null, bool showSelectionsOnMouseHover = false)
+        {
+            GamepadMenuOptionSelection gamepadMenuOptionSelection = gameObject.AddComponent<GamepadMenuOptionSelection>();
             gamepadMenuOptionSelection.m_InjectDots = eInjectDots;
-            gamepadMenuOptionSelection.m_SelectionObjects = new GameObject[0];
+            gamepadMenuOptionSelection.m_SelectionObjects = selectionObjects;
+            if (gamepadMenuOptionSelection.m_SelectionObjects == null) gamepadMenuOptionSelection.m_SelectionObjects = new GameObject[0];
+            gamepadMenuOptionSelection.m_ShowSelectionsOnHover = showSelectionsOnMouseHover;
+        }
 
-            TextMeshProUGUI textMeshProUGUI = buttonObject.GetComponent<TextMeshProUGUI>();
-            LocalizationModifier.ChangeFont(textMeshProUGUI, null, font);
+        /// <summary>
+        /// Initializes value list functionality of the given GameObject.
+        /// </summary>
+        public static void InitializeValueList(GameObject valueListObject, GameObject settingTextObject, Action<int> valueListaction, TMP_FontAsset font)
+        {
+            //Left and right arrows
+            GameObject leftArrow = valueListObject.transform.Find("UI Arrow Left")?.gameObject;
+            GameObject rightArrow = valueListObject.transform.Find("UI Arrow Right")?.gameObject;
+
+            UnityAction rightButtonAction = () => valueListaction(1);
+            UnityAction leftButtonAction = () => valueListaction(-1);
+
+            AddButton(leftArrow, leftButtonAction);
+            AddButton(rightArrow, rightButtonAction);
+
+            AddButtonHoverAnimation(leftArrow);
+            AddButtonHoverAnimation(rightArrow);
+
+            //Setting text
+            AddButton(settingTextObject, rightButtonAction);
+            LocalizationModifier.ChangeFont(settingTextObject.GetComponent<TextMeshProUGUI>(), null, font);
+
+            //Value list
+            GameObject[] selectionObjects = null;
+            if (leftArrow != null && rightArrow != null) selectionObjects = new GameObject[] { leftArrow, rightArrow };
+
+            AddButtonHoverAnimation(valueListObject);
+            AddGamepadMenuOptionSelection(valueListObject, eInjectDots.None, selectionObjects, true);
+
+            valueListObject.AddComponent<WindfallValueListView>().SetAction(valueListaction);
         }
 
         /// <summary>
@@ -685,7 +743,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             for (int i = 0; i < spellElement.Cost.Length; i++) spellTotalManaCost += spellElement.Cost[i];
             if (includeCostModifier)
             {
-                for (int i = 0; i < spellElement.CostModifier.Length; i++) spellTotalManaCost += spellElement.Cost[i];
+                for (int i = 0; i < spellElement.CostModifier.Length; i++) spellTotalManaCost += spellElement.CostModifier[i];
             }
             return spellTotalManaCost;
         }
