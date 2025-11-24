@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using HarmonyLib;
 using System.Collections.Generic;
+using The_Legend_of_Bum_bo_Windfall.scripts;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -49,6 +50,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             harmony.PatchAll(typeof(SpellViewIndicationController));
             //harmony.PatchAll(typeof(OccultSpirits));
             harmony.PatchAll(typeof(OtherChanges));
+            harmony.PatchAll(typeof(WildActionPointsPatches));
             OtherChanges.PatchAchievementsUnlock();
 
             Logger.LogInfo($"Loaded {modGUID}");
