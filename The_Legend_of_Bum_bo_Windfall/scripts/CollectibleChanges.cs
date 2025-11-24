@@ -573,26 +573,66 @@ namespace The_Legend_of_Bum_bo_Windfall
             __result = 0.15f;
         }
 
+        //Patch: Disables vanilla Feather effect
+        [HarmonyPrefix, HarmonyPatch(typeof(FeatherTrinket), nameof(FeatherTrinket.AtHalfHeart))]
+        static bool FeatherTrinket_AtHalfHeart(FeatherTrinket __instance)
+        {
+            return false;
+        }
+
         //Patch: Allows CurvedHorn effect to stack past 100% and incorporate Luck stat
+        //Also adds modded Feather effect
         [HarmonyPrefix, HarmonyPatch(typeof(TrinketController), "NewRound")]
         static bool TrinketController_NewRound(TrinketController __instance)
         {
             __instance.RemoveCurseOnRoundStart();
             __instance.AtHalfHeart();
 
+            //Feather effect
+            CharacterSheet characterSheet = __instance.app.model.characterSheet;
+            if (characterSheet.hitPoints + characterSheet.soulHearts <= 2f)
+            {
+                for (int i = 0; i < characterSheet.trinkets.Count; i++)
+                {
+                    if (characterSheet.trinkets[i].trinketName == TrinketName.Feather)
+                    {
+                        for (int j = 0; j < __instance.EffectMultiplier(); j++)
+                        {
+                            List<SpellElement> list = new List<SpellElement>();
+                            short num = 0;
+                            while (num < __instance.app.model.characterSheet.spells.Count)
+                            {
+                                if (!__instance.app.model.characterSheet.spells[num].IsReady())
+                                {
+                                    list.Add(__instance.app.model.characterSheet.spells[num]);
+                                }
+                                num += 1;
+                            }
+                            if (list.Count > 0)
+                            {
+                                int index = UnityEngine.Random.Range(0, list.Count);
+                                list[index].CostOverride = true;
+                            }
+                            __instance.app.controller.SetActiveSpells(true, true);
+                        }
+                    }
+                }
+            }
+
+            //CurvedHorn effect
             //Increase effect value
             float effectValue = 0f;
             short trinketCounter = 0;
-            while ((int)trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
+            while (trinketCounter < __instance.app.model.characterSheet.trinkets.Count)
             {
-                if (__instance.app.controller.GetTrinket((int)trinketCounter).trinketName == TrinketName.CurvedHorn)
+                if (__instance.app.controller.GetTrinket(trinketCounter).trinketName == TrinketName.CurvedHorn)
                 {
                     //Chance: 1/3
                     effectValue += 1f/3f;
                 }
                 trinketCounter += 1;
             }
-            effectValue *= (float)__instance.EffectMultiplier();
+            effectValue *= __instance.EffectMultiplier();
             effectValue *= TrinketLuckModifier(__instance.app.model.characterSheet);
 
             int activationCounter = EffectActivationCounter(effectValue);
