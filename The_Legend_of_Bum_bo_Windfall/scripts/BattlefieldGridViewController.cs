@@ -33,7 +33,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 {
                     if (cellIndex >= gridCells.Length) break;
                     gridCells[cellIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridCellView")).AddComponent<BattlefieldGridCellView>();
-                    WindfallHelper.ResetShader(gridCells[cellIndex].transform);
+                    WindfallHelper.ResetShader(gridCells[cellIndex].transform, false);
                     gridCells[cellIndex].Init(new Vector2Int(gridCellIteratorX, gridCellIteratorY));
                     gridCells[cellIndex].gameObject.SetActive(false);
 
@@ -50,7 +50,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                     if (lineIndex >= gridLines.Length) break;
 
                     gridLines[lineIndex] = GameObject.Instantiate((GameObject)Windfall.assetBundle.LoadAsset("GridLineView")).AddComponent<BattlefieldGridLineView>();
-                    WindfallHelper.ResetShader(gridLines[lineIndex].transform);
+                    WindfallHelper.ResetShader(gridLines[lineIndex].transform, false);
                     gridLines[lineIndex].Init(vertical, lineIterator);
                     gridLines[lineIndex].gameObject.SetActive(false);
 
