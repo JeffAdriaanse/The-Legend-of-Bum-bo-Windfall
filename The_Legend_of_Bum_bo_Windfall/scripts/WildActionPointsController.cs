@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace The_Legend_of_Bum_bo_Windfall.scripts
+namespace The_Legend_of_Bum_bo_Windfall
 {
     public class WildActionPointsController : MonoBehaviour
     {

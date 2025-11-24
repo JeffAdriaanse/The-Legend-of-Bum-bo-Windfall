@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using The_Legend_of_Bum_bo_Windfall.scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
