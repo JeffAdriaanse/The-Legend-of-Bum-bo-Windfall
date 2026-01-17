@@ -83,6 +83,26 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
         }
 
+        //Patch: Adds 8 Ball GUI notification
+        [HarmonyPostfix, HarmonyPatch(typeof(Magic8BallSpell), nameof(Magic8BallSpell.CastSpell))]
+        static void Magic8BallSpell_CastSpell(TwentyLbsWeightSpell __instance, bool __result)
+        {
+            if (__result)
+            {
+                __instance.app.controller.GUINotification("ADD_WILD_TO_NEXT_ROW", GUINotificationView.NotifyType.Puzzle, __instance, true);
+            }
+        }
+
+        //Patch: Adds Cat Heart GUI notification
+        [HarmonyPostfix, HarmonyPatch(typeof(CatHeartSpell), nameof(CatHeartSpell.CastSpell))]
+        static void CatHeartSpell_CastSpell(TwentyLbsWeightSpell __instance, bool __result)
+        {
+            if (__result)
+            {
+                __instance.app.controller.GUINotification("ADD_HEART_TILE", GUINotificationView.NotifyType.Puzzle, __instance, true);
+            }
+        }
+
         //Patch: Disables Brown Belt effect upon blocking an attack; this prevents the effect from blocking multiple hits from a multi-attack
         //Also removes brown belt effect if damage is blocked and there isn't going to be a counterattack
         [HarmonyPostfix, HarmonyPatch(typeof(BumboController), "BlockDamage")]
@@ -2371,7 +2391,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             return false;
         }
 
-        private static readonly float BUZZ_SPELLS_TILE_DRAG_TIME = 0.15f;
+        private static float BuzzTileDragTime
+        {
+            get { return 0.15f * WindfallHelper.GameSpeedController.TweenDurationMultiplier; }
+        }
 
         /// <summary>
         /// Replaces <see cref="BuzzDownSpell.AlterTile"/> implementation.
@@ -2382,7 +2405,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.controller.HideNotifications(true);
 
             //Logic
-            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, false, false, BUZZ_SPELLS_TILE_DRAG_TIME);
+            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, false, false, BuzzTileDragTime);
             if (!PuzzleHelper.SetPositions(_block, false)) return false;
 
             //Sound
@@ -2404,7 +2427,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.controller.HideNotifications(true);
 
             //Logic
-            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, true, true, BUZZ_SPELLS_TILE_DRAG_TIME);
+            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, true, true, BuzzTileDragTime);
             if (!PuzzleHelper.SetPositions(_block, true)) return false;
 
             //Sound
@@ -2426,7 +2449,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             __instance.app.controller.HideNotifications(true);
 
             //Logic
-            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, false, true, BUZZ_SPELLS_TILE_DRAG_TIME);
+            PuzzleHelper.DragTilesAlongAxis(_block.position, _block, 1, false, true, BuzzTileDragTime);
             if (!PuzzleHelper.SetPositions(_block, false)) return false;
 
             //Sound
