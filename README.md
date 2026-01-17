@@ -7,7 +7,7 @@ Windfall is a mod for the Legend of Bum-bo that fixes bugs, adds new features, a
 
 To see mod updates and change lists, visit the [Releases](https://github.com/Shpim/The-Legend-of-Bum-bo-Windfall/releases) page.
 
-The Legend of Bum-bo does not have official modding support. This mod requires BepInEx, a modding framework that allows for patching games made in the Unity engine.
+The Legend of Bum-bo does not have official modding support. This mod uses BepInEx, a modding framework that allows for patching games made in the Unity engine.
 
 ## Features
 * A new character, Bum-bo the Wise
@@ -30,6 +30,8 @@ The Legend of Bum-bo does not have official modding support. This mod requires B
 
 Run the installer. Follow the steps and the installer will automatically add Windfall to The Legend of Bum-bo for you.
 
+If you already have an older version of Windfall installed, the installer will update Windfall to the new version.
+
 To uninstall the mod, run the installer again and select 'Remove'.
 
 ## Manual Installation
@@ -46,6 +48,8 @@ The directory structure should end up looking like this:
 ```
 The Legend of Bum-Bo/
 └─ BepInEx/
+   ├─ core/
+   │  └─ ...
    └─ plugins/
       └─ The Legend of Bum-bo_Windfall/
          ├─ windfall
@@ -67,16 +71,22 @@ Follow the instructions below:
 2. In Steam, go to The Legend of Bum-bo. Select `Properties → Launch Options` and write `WINEDLLOVERRIDES="winhttp=n,b" %command%` in the launch options.
 3. Run the game through Steam.
 
-## Game Saves
+## Vanilla Save Data
 Some players have reported in steam discussions([1](https://steamcommunity.com/app/1148650/discussions/0/3845556684657609646/) [2](https://steamcommunity.com/app/1148650/discussions/0/3802777561340047478/)) that the vanilla game might not properly save progression to Steam Cloud, even if cloud saves are enabled.
 
 Unfortunately it does not seem possible to investigate or fix cloud save issues with mods. It is recommended that players who are concerned about losing save progress use other methods to back up their local save data.
 
-When playing through Steam, The Legend of Bum-bo stores local save data in the `%USERPROFILE%\Documents\My Games` directory.
+When playing through Steam, The Legend of Bum-bo stores local save data in the `%USERPROFILE%\Documents\My Games\The Legend of Bum-bo (Steam)` directory. Data is saved to three files:
+- `progression.sav` contains your long-term game progression and unlocks.
+- `setting.sav` contains your menu settings such as music and SFX volume.
+- `state.sav` contains the state of your in-progress run, allowing you to resume where you left off.
 
-When playing with Windfall installed, the mod stores its own save data for mod-specific unlocks and for improving the save and continue feature from the vanilla game. Windfall save data is stored separately from vanilla save data and is not saved to Steam Cloud.
+## Windfall Save Data
+When playing with Windfall installed, the mod stores its own save data. Windfall save data is stored separately from vanilla save data and is not saved to Steam Cloud.
 
-Windfall stores its local save data in the same place the mod is installed to, the `BepInEx/Plugins/The Legend of Bum-bo_Windfall` directory in the game root folder.
+Windfall stores its local save data in the same place the mod is installed to, the `BepInEx/Plugins/The Legend of Bum-bo_Windfall` directory in the game root folder. Data is saved to two files:
+- `windfall.sav` contains your Windfall menu settings, as well as your progression and unlocks for content added by Windfall.
+- `windfallstate.sav` contains some extra data regarding the state of your in-progress run, improving the save and continue feature of the vanilla game.
 
 ## Additional Information
 The Legend of Bum-bo: Windfall is made for the Steam and GOG versions of the vanilla game, although it most likely works with the Epic Games version as well.
