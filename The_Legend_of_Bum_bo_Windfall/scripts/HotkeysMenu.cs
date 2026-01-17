@@ -340,7 +340,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         int m_Index = (int)m_Index_Field?.GetValue(selectable);
                         m_Selection_FieldInfo.SetValue(__instance, m_Index);
                         AccessTools.Method(typeof(GamepadSpellSelector), "apply_selection", new Type[] { typeof(int) }).Invoke(__instance, new object[] { -2147483647 });
-                        //Trigger the spell
+                        //Trigger the trinket
                         InputManager.Instance.ConsumeInput(eInput.Confirm);
                         __instance.Close(false);
                         break;
