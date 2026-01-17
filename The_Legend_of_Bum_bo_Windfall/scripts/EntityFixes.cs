@@ -1,6 +1,7 @@
 ﻿using DG.Tweening;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -401,6 +402,56 @@ namespace The_Legend_of_Bum_bo_Windfall
         static void BackstabberSpell_ForceCritical(BackstabberSpell __instance, Enemy _enemy, ref bool __result)
         {
             if (ObjectDataStorage.GetData<bool>(_enemy, "primed")) __result = true;
+        }
+
+        //Patch: Fixes Suckers reducing mana refund from canceling spells
+        //Also fixes canceling spells with temporarily reduced mana costs refunding more mana than they cost
+        //Skips vanilla mana cost refund and instead invokes EventsController_OnNotification_UpdateMana_Refund() 
+        [HarmonyPatch(typeof(EventsController), nameof(EventsController.OnNotification))]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> EventsController_OnNotification(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var method = AccessTools.Method(typeof(EntityFixes), nameof(EventsController_OnNotification_UpdateMana_Refund));
+
+            var codes = new List<CodeInstruction>(instructions);
+            var matcher = new CodeMatcher(codes, generator);
+
+            // Match start IL pattern
+            matcher.MatchForward(false, new CodeMatch[] { new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BumboModel), nameof(BumboModel.costRefundOverride))), });
+            matcher.ThrowIfInvalid("BumboModel.costRefundOverride pattern not found");
+            int startIndex = matcher.Pos - 3;
+
+            // Match end IL pattern
+            matcher.MatchForward(true, new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(SpellElement), nameof(SpellElement.FullCharge))));
+            matcher.ThrowIfInvalid("SpellElement.FullCharge pattern not found");
+            int endIndex = matcher.Pos;
+
+            //Insert new mana cost refund
+            for (int i = startIndex; i <= endIndex; i++)
+            {
+                if (i == startIndex) codes[i] = new CodeInstruction(OpCodes.Call, method);
+                else codes[i] = new CodeInstruction(OpCodes.Nop);
+            }
+
+            return codes;
+        }
+        private static void EventsController_OnNotification_UpdateMana_Refund()
+        {
+            BumboModel bumboModel = WindfallHelper.app?.model;
+            if (bumboModel == null) return;
+            SpellElement currentSpell = bumboModel.spellModel?.currentSpell;
+            if (currentSpell == null) return;
+
+            if (bumboModel.costRefundOverride && bumboModel.costRefundAmount != null)
+            {
+                bumboModel.costRefundOverride = false;
+                WindfallHelper.RefundMana(WindfallHelper.app, bumboModel.costRefundAmount);
+            }
+            else if (currentSpell != null) //Null check for current spell
+            {
+                WindfallHelper.RefundMana(WindfallHelper.app, currentSpell.Cost.Zip(currentSpell.CostModifier, (x, y) => (short)(x + y)).ToArray());
+                currentSpell.FullCharge();
+            }
         }
 
         public static Dictionary<EnemyName, int> EnemyBaseHealth
