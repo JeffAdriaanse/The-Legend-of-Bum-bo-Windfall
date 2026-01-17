@@ -30,7 +30,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
         public bool displayGamepad;
 
-        public static readonly Color enemyHoverTintColor = new Color(0.6f, 0.6f, 0.6f);
+        public static readonly Color entityHoverTintColor = new Color(0.6f, 0.6f, 0.6f);
 
         public void UpdateDisplayType(bool gamepad)
         {
@@ -336,12 +336,64 @@ namespace The_Legend_of_Bum_bo_Windfall
                 return;
             }
 
-            //Try to find enemy component
-            Enemy enemy = gameObject.GetComponent<Enemy>();
-            if (enemy == null)
+            BloodShieldEffectView bloodShieldEffectView = gameObject.GetComponent<BloodShieldEffectView>();
+            if (bloodShieldEffectView == null) bloodShieldEffectView = ObjectDataStorage.GetData<object>(gameObject, EntityChanges.colliderEntityKey) as BloodShieldEffectView;
+            if (bloodShieldEffectView != null)
             {
-                enemy = ObjectDataStorage.GetData<Enemy>(gameObject, EntityChanges.colliderEnemyKey);
+                displayAtMouse = !displayGamepad;
+
+                if (displayAtMouse)
+                {
+                    displayPosition = Vector3.zero;
+                    displayAnchor = Anchor.TopRight;
+                }
+                else
+                {
+                    displayPosition = bloodShieldEffectView.transform.position - bloodShieldEffectView.transform.right * 0.3f;
+                    displayAnchor = Anchor.Right;
+                }
+
+                //Tint effect
+                ObjectTinter objectTinter = bloodShieldEffectView.GetComponent<ObjectTinter>();
+                if (objectTinter == null) objectTinter = bloodShieldEffectView.gameObject.AddComponent<ObjectTinter>();
+                if (objectTinter != null)
+                {
+                    if (!(bool)AccessTools.Field(typeof(ObjectTinter), "tinted").GetValue(objectTinter)) objectTinter.Tint(entityHoverTintColor);
+                }
+
+                displayDescription = "<u>" + LocalizationModifier.GetLanguageText("BLOOD_SHIELD_EFFECT_NAME", "Enemies") + "</u>\n" + LocalizationModifier.GetLanguageText("BLOOD_SHIELD_EFFECT_ABILITY", "Enemies");
             }
+
+            FogEffectView fogEffectView = gameObject.GetComponent<FogEffectView>();
+            if (fogEffectView == null) fogEffectView = ObjectDataStorage.GetData<object>(gameObject, EntityChanges.colliderEntityKey) as FogEffectView;
+            if (fogEffectView != null)
+            {
+                displayAtMouse = !displayGamepad;
+
+                if (displayAtMouse)
+                {
+                    displayPosition = Vector3.zero;
+                    displayAnchor = Anchor.TopRight;
+                }
+                else
+                {
+                    displayPosition = fogEffectView.transform.position - fogEffectView.transform.right * 0.3f;
+                    displayAnchor = Anchor.Right;
+                }
+
+                //Tint effect
+                ObjectTinter objectTinter = fogEffectView.GetComponent<ObjectTinter>();
+                if (objectTinter == null) objectTinter = fogEffectView.gameObject.AddComponent<ObjectTinter>();
+                if (objectTinter != null)
+                {
+                    if (!(bool)AccessTools.Field(typeof(ObjectTinter), "tinted").GetValue(objectTinter)) objectTinter.Tint(entityHoverTintColor);
+                }
+
+                displayDescription = "<u>" + LocalizationModifier.GetLanguageText("FOG_EFFECT_NAME", "Enemies") + "</u>\n" + LocalizationModifier.GetLanguageText("FOG_EFFECT_ABILITY", "Enemies");
+            }
+
+            Enemy enemy = gameObject.GetComponent<Enemy>();
+            if (enemy == null) enemy = ObjectDataStorage.GetData<object>(gameObject, EntityChanges.colliderEntityKey) as Enemy;
             if (enemy != null)
             {
                 if (enemy is BygoneBoss && !enemy.alive)
@@ -449,10 +501,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 ObjectTinter objectTinter = enemy.objectTinter;
                 if (objectTinter != null)
                 {
-                    if (!(bool)AccessTools.Field(typeof(ObjectTinter), "tinted").GetValue(objectTinter))
-                    {
-                        objectTinter.Tint(enemyHoverTintColor);
-                    }
+                    if (!(bool)AccessTools.Field(typeof(ObjectTinter), "tinted").GetValue(objectTinter)) objectTinter.Tint(entityHoverTintColor);
                 }
 
                 //Output description
@@ -793,7 +842,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             { "BYGONE_GHOST_NAME", new List<string> { "BYGONE_GHOST_ABILITY" } },
             { "DUSK_NAME", new List<string> { "DUSK_ABILITY" } },
             { "GIBS_NAME", new List<string> { "GIBS_ABILITY" } },
-            { "GIZZARDA_NAME", new List<string> { "GIZZARDA_ABILITY" } },
+            { "GIZZARDA_NAME", new List<string> { "GIZZARDA_ABILITY", "GIZZARDA_ABILITY_2" } },
             { "LOAF_NAME", new List<string> { "LOAF_ABILITY" } },
             { "PYRE_NAME", new List<string> { "PYRE_ABILITY" } },
             { "TAINTED_PEEPER_NAME", new List<string> { "TAINTED_PEEPER_ABILITY" } },
@@ -872,10 +921,10 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             //Red bubble shield
-            if (WindfallHelper.app.model.aiModel.battlefieldEffects[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[enemy.position.x, enemy.position.y]].effect == BattlefieldEffect.Effect.Shield)
-            {
-                block = true;
-            }
+            //if (WindfallHelper.app.model.aiModel.battlefieldEffects[WindfallHelper.app.model.aiModel.battlefieldPositionIndex[enemy.position.x, enemy.position.y]].effect == BattlefieldEffect.Effect.Shield)
+            //{
+            //    block = true;
+            //}
 
             return block;
         }

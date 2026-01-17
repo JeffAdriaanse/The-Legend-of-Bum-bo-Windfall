@@ -8,7 +8,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 {
     class EntityChanges
     {
-        public static readonly string colliderEnemyKey = "colliderEnemyKey";
+        public static readonly string colliderEntityKey = "colliderEntityKey";
         static readonly string updatedCollidersKey = "updatedCollidersKey";
         static readonly string[] baseSpriteNames = new string[]
         {
@@ -62,34 +62,55 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Do not apply to TutorialEnemy
             if (__instance is TutorialEnemy) { return; }
 
+            List<string> spriteNames = new List<string>();
+            spriteNames.AddRange(baseSpriteNames);
+            if (EnemySpriteNames.TryGetValue(__instance.GetType(), out string[] enemySpriteNames)) spriteNames.AddRange(enemySpriteNames);
+
+            AddMeshCollidersAndTooltipsToEntity(__instance, spriteNames, colliderEntityKey, __instance);
+        }
+
+        //Adds colliders to green fog meshes
+        [HarmonyPostfix, HarmonyPatch(typeof(FogEffectView), "Start")]
+        static void FogEffectView_Start(FogEffectView __instance)
+        {
+            List<string> spriteNames = new List<string>() { "Fog_Effect", };
+
+            AddMeshCollidersAndTooltipsToEntity(__instance, spriteNames, colliderEntityKey, __instance);
+        }
+
+        //Adds colliders to green fog meshes
+        [HarmonyPostfix, HarmonyPatch(typeof(BloodShieldEffectView), "Start")]
+        static void BloodShieldEffectView_Start(BloodShieldEffectView __instance)
+        {
+            List<string> spriteNames = new List<string>() { "Blood Shield", };
+
+            AddMeshCollidersAndTooltipsToEntity(__instance, spriteNames, colliderEntityKey, __instance);
+        }
+
+        /// <summary>
+        /// For each sprite of the given entity, if spriteNames contains the name of the sprite, MeshCollider and WindfallTooltip components are added to the sprite. Also optionally stores data onto each valid sprite. Note that a 'sprite' is defined as any child GameObject that has a MeshRenderer.
+        /// </summary>
+        /// <param name="entity">The entity to add MeshColliders and WindfallTooltips to.</param>
+        /// <param name="spriteNames">The names of sprites to include.</param>
+        /// <param name="storeDataKey">The key for the stored data. If null, no data will be stored.</param>
+        /// <param name="storeDataObject">The data to store. If null, no data will be stored.</param>
+        private static void AddMeshCollidersAndTooltipsToEntity(MonoBehaviour entity, List<string> spriteNames, string storeDataKey, object storeDataObject)
+        {
             //Don't update colliders if they have already been updated 
-            if (ObjectDataStorage.GetData<bool>(__instance, updatedCollidersKey))
-            {
-                return;
-            };
+            if (ObjectDataStorage.GetData<bool>(entity, updatedCollidersKey)) return;
 
-            Collider[] colliders = __instance.transform.GetComponentsInChildren<Collider>(true);
             //Destroy old colliders
-            foreach (Collider collider in colliders)
-            {
-                UnityEngine.Object.Destroy(collider);
-            }
+            Collider[] colliders = entity.transform.GetComponentsInChildren<Collider>(true);
+            foreach (Collider collider in colliders) UnityEngine.Object.Destroy(collider);
 
+            //Get all MeshRenderers
             List<MeshRenderer> sprites = new List<MeshRenderer>();
-            MeshRenderer[] spriteMeshes = __instance.transform.GetComponentsInChildren<MeshRenderer>(true);
+            MeshRenderer[] spriteMeshes = entity.transform.GetComponentsInChildren<MeshRenderer>(true);
+
             //Add all enemy sprites to sprites list
             foreach (MeshRenderer spriteMesh in spriteMeshes)
             {
-                List<string> spriteNames = new List<string>();
-
-                spriteNames.AddRange(baseSpriteNames);
-
-                if (EnemySpriteNames.TryGetValue(__instance.GetType(), out string[] enemySpriteNames))
-                {
-                    spriteNames.AddRange(enemySpriteNames);
-                }
-
-                //Only add enemy sprites
+                //Only include sprites with given sprite names
                 foreach (string spriteName in spriteNames)
                 {
                     if (spriteMesh.gameObject.name.Contains(spriteName))
@@ -105,10 +126,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             {
                 sprite.gameObject.AddComponent<MeshCollider>();
                 sprite.gameObject.AddComponent<WindfallTooltip>();
-                ObjectDataStorage.StoreData<Enemy>(sprite.gameObject, colliderEnemyKey, __instance);
+
+                //Optionally store data
+                if (storeDataKey != null && storeDataObject != null) ObjectDataStorage.StoreData<object>(sprite.gameObject, storeDataKey, storeDataObject);
             }
 
-            ObjectDataStorage.StoreData<bool>(__instance, updatedCollidersKey, true);
+            ObjectDataStorage.StoreData<bool>(entity, updatedCollidersKey, true);
         }
 
         //Patch: Equalizes the chances between lanes when Loaf is determining where to spawn Corn Dips

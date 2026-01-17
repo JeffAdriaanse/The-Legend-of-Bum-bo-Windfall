@@ -10,12 +10,25 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         public bool displayInitialized = false;
 
-        static Color hiddenTintColor = new Color(0.2f, 0.2f, 0.2f);
+        private float tintShadeValue;
+        private float TintShadeValue
+        {
+            get { return tintShadeValue; }
+            set
+            {
+                tintShadeValue = value;
+                if (tintShadeValue == 0f) objectTinter.NoTint();
+                else objectTinter.Tint(new Color(tintShadeValue, tintShadeValue, tintShadeValue));
+            }
+        }
 
         private static readonly float removalHorizontalOffset = 0.6f;
         private static readonly float hidingHorizontalOffset = 0.3f;
         private static readonly float punchScale = 0.012f;
-        private static readonly float tweenDuration = 0.3f;
+        private float TweenDuration
+        {
+            get { return 0.3f * WindfallHelper.GameSpeedController.TweenDurationMultiplier; }
+        }
 
         public static readonly Vector3 baseDisplayPosition = new Vector3(-0.54f, 0.26f, 1.17f);
         static readonly float displayIndexOffset = 0.2f;
@@ -95,19 +108,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             //return transform.parent.TransformPoint(TargetPosition() + new Vector3(0.04f, -0.01f, 0f));
         }
 
-        public void UpdateTint()
+        float HiddenTintShadeValue()
         {
-            if (objectTinter == null)
-            {
-                return;
-            }
-
-            if (Expanded())
-            {
-                objectTinter.NoTint();
-                return;
-            }
-            objectTinter.Tint(hiddenTintColor);
+            return Expanded() ? 1f : 0.2f;
         }
 
         public void AddModifierAnimation()
@@ -120,9 +123,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             transform.localPosition = RemovalPosition();
 
             movementSequence = DOTween.Sequence();
-            movementSequence.Append(transform.DOLocalMove(TargetPosition(), tweenDuration).SetEase(Ease.InOutQuad));
-
-            UpdateTint();
+            movementSequence.Append(transform.DOLocalMove(TargetPosition(), TweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.Join(DOTween.To(() => TintShadeValue, x => TintShadeValue = x, HiddenTintShadeValue(), TweenDuration).SetEase(Ease.InOutQuad));
         }
 
         public void RemoveModifierAnimation()
@@ -132,7 +134,8 @@ namespace The_Legend_of_Bum_bo_Windfall
                 movementSequence.Kill(false);
             }
 
-            movementSequence.Append(transform.DOLocalMove(RemovalPosition(), tweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.Append(transform.DOLocalMove(RemovalPosition(), TweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.Join(DOTween.To(() => TintShadeValue, x => TintShadeValue = x, HiddenTintShadeValue(), TweenDuration).SetEase(Ease.InOutQuad));
             movementSequence.AppendCallback(delegate
             {
                 UnityEngine.Object.Destroy(gameObject);
@@ -142,10 +145,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         public void MoveModifierAnimation()
         {
             Vector3 targetPosition = TargetPosition();
-            if (targetPosition == Vector3.zero || targetPosition == transform.localPosition)
-            {
-                return;
-            }
+            if (targetPosition == Vector3.zero || targetPosition == transform.localPosition) return;
 
             if (movementSequence != null && movementSequence.IsPlaying())
             {
@@ -153,8 +153,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
             movementSequence = DOTween.Sequence();
 
-            movementSequence.Append(transform.DOLocalMove(targetPosition, tweenDuration).SetEase(Ease.InOutQuad));
-            movementSequence.AppendCallback(delegate { UpdateTint(); });
+            movementSequence.Append(transform.DOLocalMove(targetPosition, TweenDuration).SetEase(Ease.InOutQuad));
+            movementSequence.Join(DOTween.To(() => TintShadeValue, x => TintShadeValue = x, HiddenTintShadeValue(), TweenDuration).SetEase(Ease.InOutQuad));
         }
 
         public void UpdateModifierAnimation()
@@ -165,7 +165,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             updateSequence = DOTween.Sequence();
-            updateSequence.Append(transform.DOPunchScale(new Vector3(punchScale, punchScale, punchScale), tweenDuration, 1, 0));
+            updateSequence.Append(transform.DOPunchScale(new Vector3(punchScale, punchScale, punchScale), TweenDuration, 1, 0));
         }
 
         public string Description()
@@ -337,7 +337,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                         break;
                     case SpellName.BrownBelt:
                         modifierType = CharacterSheet.BumboModifierObject.ModifierType.Room;
-                        modifierCategory = ModifierCategory.Block;
+                        modifierCategory = ModifierCategory.None;
                         valueDisplayType = ValueDisplayType.Hurt;
                         canStack = false;
                         iconObjectName = "ShieldThorns";

@@ -82,7 +82,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             }
 
             DisplayTooltip(tooltipToShow);
-            ClearEnemyTints(tooltipToShow);
+            ClearEntityTints(tooltipToShow);
             DisplayGridView(tooltipToShow);
         }
 
@@ -473,8 +473,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             int linecount = -1;
             if (windfallTooltip != null && windfallTooltip.displayDescription != null)
             {
-                //Remove underline unless the language is English
-                if (LocalizationManager.CurrentLanguage != "English") windfallTooltip.displayDescription = windfallTooltip.displayDescription.Replace("<u>", "").Replace("</u>", "");
+                //Remove underline if the language is Chinese
+                if (LocalizationManager.CurrentLanguage == "Chinese") windfallTooltip.displayDescription = windfallTooltip.displayDescription.Replace("<u>", "").Replace("</u>", "");
 
                 hiddenLabel.SetText(windfallTooltip.displayDescription);
                 hiddenLabel.ForceMeshUpdate();
@@ -612,27 +612,51 @@ namespace The_Legend_of_Bum_bo_Windfall
             return new Vector3(tooltipScale, tooltipScale, tooltipScale * 0.5f);
         }
 
-        private void ClearEnemyTints(WindfallTooltip tooltipToShow)
+        private void ClearEntityTints(WindfallTooltip tooltipToShow)
         {
-            if (WindfallHelper.app?.model?.enemies == null) return;
-
-            foreach (Enemy enemy in WindfallHelper.app.model.enemies)
+            List<Enemy> enemies = WindfallHelper.app?.model?.enemies;
+            if (enemies != null)
             {
-                if (enemy == null) continue;
-
-                ObjectTinter objectTinter = enemy.objectTinter;
-                if (objectTinter == null) continue;
-                if (objectTinter.tintColor != WindfallTooltip.enemyHoverTintColor) continue;
-
-                if (tooltipToShow != null)
+                foreach (Enemy enemy in WindfallHelper.app.model.enemies)
                 {
-                    Enemy tooltipEnemy = tooltipToShow.gameObject.GetComponent<Enemy>();
-                    if (tooltipEnemy == null) tooltipEnemy = ObjectDataStorage.GetData<Enemy>(tooltipToShow.gameObject, EntityChanges.colliderEnemyKey);
-                    if (tooltipEnemy != null && enemy == tooltipEnemy) continue;
-                }
+                    if (enemy == null) continue;
+                    ObjectTinter objectTinter = enemy.objectTinter;
 
-                objectTinter.NoTint();
+                    ClearEntityTint(tooltipToShow, enemy, objectTinter);
+                }
             }
+
+            List<BattlefieldEffect> battleFieldEffects = WindfallHelper.app?.model?.aiModel?.battlefieldEffects;
+            if (battleFieldEffects != null)
+            {
+                foreach (BattlefieldEffect battleFieldEffect in WindfallHelper.app?.model?.aiModel?.battlefieldEffects)
+                {
+                    if (battleFieldEffect?.view == null) continue;
+                    ObjectTinter objectTinter = battleFieldEffect.view.GetComponent<ObjectTinter>();
+
+                    MonoBehaviour entity = battleFieldEffect.view.GetComponent<BloodShieldEffectView>();
+                    if (entity == null) entity = battleFieldEffect.view.GetComponent<FogEffectView>();
+
+                    ClearEntityTint(tooltipToShow, entity, objectTinter);
+                }
+            }
+        }
+
+        private void ClearEntityTint(WindfallTooltip tooltipToShow, MonoBehaviour entity, ObjectTinter objectTinter)
+        {
+            if (objectTinter == null) return;
+            if (objectTinter.tintColor != WindfallTooltip.entityHoverTintColor) return;
+
+            if (tooltipToShow != null)
+            {
+                MonoBehaviour tooltipBehaviour = ObjectDataStorage.GetData<object>(tooltipToShow.gameObject, EntityChanges.colliderEntityKey) as MonoBehaviour;
+                if (tooltipBehaviour == null) tooltipBehaviour = tooltipToShow.gameObject.GetComponent<BloodShieldEffectView>();
+                if (tooltipBehaviour == null) tooltipBehaviour = tooltipToShow.gameObject.GetComponent<FogEffectView>();
+                if (tooltipBehaviour == null) tooltipBehaviour = tooltipToShow.gameObject.GetComponent<Enemy>();
+                if (tooltipBehaviour != null && entity == tooltipBehaviour) return;
+            }
+
+            objectTinter.NoTint();
         }
 
         private void DisplayGridView(WindfallTooltip tooltipToShow)
@@ -645,7 +669,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 Enemy tooltipEnemy = tooltipToShow.gameObject.GetComponent<Enemy>();
                 if (tooltipEnemy == null)
                 {
-                    tooltipEnemy = ObjectDataStorage.GetData<Enemy>(tooltipToShow.gameObject, EntityChanges.colliderEnemyKey);
+                    tooltipEnemy = ObjectDataStorage.GetData<Enemy>(tooltipToShow.gameObject, EntityChanges.colliderEntityKey);
                 }
 
                 if (tooltipEnemy != null)
