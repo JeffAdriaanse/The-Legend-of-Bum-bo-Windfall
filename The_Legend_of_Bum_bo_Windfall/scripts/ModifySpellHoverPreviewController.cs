@@ -62,7 +62,6 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Reset spellView display
             if (modifySpellHoverPreview.OriginalSpell != null) WindfallHelper.app.controller.SetSpell(spellView.spellIndex, modifySpellHoverPreview.OriginalSpell);
-            //modifySpellHoverPreview.originalSpell = null;
 
             modifySpellHoverPreview.previewing = false;
         }
@@ -85,7 +84,6 @@ namespace The_Legend_of_Bum_bo_Windfall
         public Dictionary<object, SpellElement> spellUpgradePreviews = new Dictionary<object, SpellElement>();
         private readonly Color spellViewUpgradePreviewTintColor = new Color(0.75f, 0.75f, 0.75f);
 
-
         private SpellElement originalSpell;
         public SpellElement OriginalSpell
         {
@@ -95,7 +93,7 @@ namespace The_Legend_of_Bum_bo_Windfall
                 //If the spellView SpellObject has changed, the upgrade previews need to be regenerated for the new SpellObject
                 if (value == null || !WindfallHelper.CompareSpells(originalSpell, value, true)) spellUpgradePreviews = new Dictionary<object, SpellElement>();
                 if (value == null) originalSpell = value;
-                else originalSpell = WindfallHelper.CopySpell(value);
+                else originalSpell = value;
             }
         }
 
@@ -373,14 +371,11 @@ namespace The_Legend_of_Bum_bo_Windfall
         [HarmonyPrefix, HarmonyPatch(typeof(Shop), "AddDamagePrick")]
         static bool Shop_AddDamagePrick(Shop __instance, ref List<TrinketName> ___needles)
         {
-            Console.WriteLine("0");
-
             int spellIterator = 0;
             while (spellIterator < __instance.app.model.characterSheet.spells.Count)
             {
                 if (ValidateNeedleEffect(typeof(DamagePrickTrinket), spellIterator))
                 {
-                    Console.WriteLine("1");
                     ___needles.Add(TrinketName.DamagePrick);
                     return false;
                 }
