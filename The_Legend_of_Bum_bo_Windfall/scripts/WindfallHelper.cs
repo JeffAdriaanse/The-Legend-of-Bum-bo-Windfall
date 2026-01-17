@@ -33,6 +33,17 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (_app != null) app = _app;
         }
 
+        //Static reference to vanilla GamblingModel
+        private static GamblingModel gamblingModel;
+        public static GamblingModel GamblingModel
+        {
+            get
+            {
+                if (gamblingModel == null) gamblingModel = GameObject.FindObjectOfType<GamblingModel>();
+                return gamblingModel;
+            }
+        }
+
         //Static reference to vanilla GamepadSpellSelector
         private static GamepadSpellSelector gamepadSpellSelector;
         public static GamepadSpellSelector GamepadSpellSelector
@@ -195,12 +206,25 @@ namespace The_Legend_of_Bum_bo_Windfall
             set { wildActionPointsController = value; }
         }
 
+        //Static reference to Windfall GameSpeedController
+        private static GameSpeedController gameSpeedController;
+        public static GameSpeedController GameSpeedController
+        {
+            get
+            {
+                if (gameSpeedController == null) gameSpeedController = GameObject.FindObjectOfType<GameSpeedController>();
+                if (gameSpeedController == null) gameSpeedController = CreateWindfallController<GameSpeedController>();
+                return gameSpeedController;
+            }
+            set { gameSpeedController = value; }
+        }
+
         /// <summary>
         ///Creates a GameObject child of BumboController with the given MonoBehaviour component type attached as a new instance. Returns the created MonoBehaviour component.
         /// </summary>
         private static T CreateWindfallController<T>() where T : MonoBehaviour
         {
-            BumboController bumboController = app.controller;
+            BumboController bumboController = app?.controller;
             if (bumboController == null) return null;
 
             GameObject gameObject = GameObject.Instantiate(new GameObject(), bumboController.transform);
@@ -789,6 +813,27 @@ namespace The_Legend_of_Bum_bo_Windfall
                 if (ready) spellCategoryObject.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0f, 0f));
                 else spellCategoryObject.GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(0.5f, 0f));
             }
+        }
+
+        /// <summary>
+        /// Acts as a substitute for <see cref="BumboController.UpdateMana(short[], bool)"/> that does not factor Sucker mana reduction.
+        /// </summary>
+        public static void RefundMana(BumboApplication app, short[] manaRefund, bool _update_spells = false)
+        {
+            BumboModel bumboModel = app?.model;
+            BumboView bumboView = app?.view;
+            if (bumboModel == null || bumboView == null) return;
+
+            for (int colorCounter = 0; colorCounter < 6; colorCounter++)
+            {
+                short[] mana = bumboModel.mana;
+                mana[colorCounter] += manaRefund[colorCounter];
+                if (mana[colorCounter] > 9) mana[colorCounter] = 9;
+                if (mana[colorCounter] < 0) mana[colorCounter] = 0;
+                bumboView.manaView.setManaText((ManaType)colorCounter, bumboModel.mana[colorCounter]);
+            }
+
+            if (_update_spells) app?.controller?.SetActiveSpells(false, false);
         }
     }
 

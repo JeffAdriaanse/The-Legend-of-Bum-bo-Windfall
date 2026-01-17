@@ -23,7 +23,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (expansionToggle != null) return;
 
-            string expansionTogglePath = "Toggle";
+            string expansionTogglePath = "Toggle V2";
             if (Windfall.assetBundle.Contains(expansionTogglePath))
             {
                 expansionToggle = WindfallHelper.ResetShader(UnityEngine.Object.Instantiate((GameObject)Windfall.assetBundle.LoadAsset<GameObject>(expansionTogglePath), WindfallHelper.app.view.GUICamera.transform.Find("HUD")).transform).gameObject;
@@ -488,9 +488,12 @@ namespace The_Legend_of_Bum_bo_Windfall
     {
         private Sequence toggleSequence;
         private Sequence displaySequence;
-        private readonly float tweenDuration = 0.3f;
+        private float TweenDuration
+        {
+            get { return 0.15f * WindfallHelper.GameSpeedController.TweenDurationMultiplier; }
+        }
 
-        public readonly Vector3 showingRotation = new Vector3(0f, 0f, 180f);
+        public readonly Vector3 showingRotation = new Vector3(0f, 180f, 0f);
         public readonly Vector3 hidingRotation = new Vector3(0f, 0f, 0f);
 
         public readonly Vector3 showingPosition = new Vector3(-0.73f, 0.41f, 1.15f);
@@ -521,7 +524,7 @@ namespace The_Legend_of_Bum_bo_Windfall
         {
             if (toggleSequence != null && toggleSequence.IsPlaying()) toggleSequence.Kill(true);
             toggleSequence = DOTween.Sequence();
-            toggleSequence.Append(transform.DOLocalRotate(TargetRotation(), tweenDuration).SetEase(Ease.InOutQuad));
+            toggleSequence.Append(transform.DOLocalRotate(TargetRotation(), TweenDuration).SetEase(Ease.InOutQuad));
 
             SoundsView.Instance.PlaySound(SoundsView.eSound.PuzzleSlideIn, SoundsView.eAudioSlot.Default, false);
         }
@@ -545,11 +548,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             if (_active)
             {
                 gameObject.SetActive(true);
-                displaySequence.Append(transform.DOLocalMove(targetPosition, tweenDuration).SetEase(Ease.InOutQuad));
+                displaySequence.Append(transform.DOLocalMove(targetPosition, TweenDuration).SetEase(Ease.InOutQuad));
             }
             else
             {
-                displaySequence.Append(transform.DOLocalMove(targetPosition, tweenDuration).SetEase(Ease.InOutQuad));
+                displaySequence.Append(transform.DOLocalMove(targetPosition, TweenDuration).SetEase(Ease.InOutQuad));
                 displaySequence.AppendCallback(delegate
                 {
                     gameObject.SetActive(false);

@@ -30,7 +30,14 @@ namespace The_Legend_of_Bum_bo_Windfall
         //Electricity iteration count scales with spell damage
         public int ChainDistance() { return WindfallHelper.app.model.characterSheet.getItemDamage() + 1; }
 
-        private readonly float chainAnimationDelay = 0.6f;
+        private static float ChainAnimationDelay
+        {
+            get
+            {
+                return 0.6f * WindfallHelper.GameSpeedController.TweenDurationMultiplier;
+            }
+        }
+
         public override Sequence AttackAnimation()
         {
             //Spell ends attack manually
@@ -64,7 +71,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Attack sequence
             ShockEnemy(currentEnemyChains[currentEnemyChains.Count - 1]);
 
-            DOTween.Sequence().AppendInterval(chainAnimationDelay).AppendCallback(delegate
+            DOTween.Sequence().AppendInterval(ChainAnimationDelay).AppendCallback(delegate
             {
                 ChainElectricity(overallChainedEnemies, currentEnemyChains, 0);
             });
@@ -179,7 +186,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             DOTween.Sequence().AppendCallback(delegate
             {
                 foreach (List<Enemy> enemyChain in nextEnemyChains) ShockEnemy(enemyChain);
-            }).AppendInterval(chainAnimationDelay).AppendCallback(delegate
+            }).AppendInterval(ChainAnimationDelay).AppendCallback(delegate
             {
                 //Recursive method
                 ChainElectricity(overallChainedEnemies, nextEnemyChains, chainIterator + 1);

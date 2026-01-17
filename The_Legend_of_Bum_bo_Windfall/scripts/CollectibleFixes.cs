@@ -670,7 +670,10 @@ namespace The_Legend_of_Bum_bo_Windfall
         static bool AttackFlySpell_EndOfMonsterRound(AttackFlySpell __instance, bool[] ___enemies_to_bother)
         {
             GameObject fly = __instance.app.view.spellAttackView.attackFly;
+
             Sequence sequence = DOTween.Sequence();
+            sequence.timeScale *= WindfallHelper.GameSpeedController.GameSpeedMultiplier;
+
             bool isFinalLane = false;
             int currentLane = -1;
 
@@ -708,14 +711,10 @@ namespace The_Legend_of_Bum_bo_Windfall
                     Enemy enemy = transform.GetComponent<Enemy>();
                     TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendCallback(TweenSettingsExtensions.Append(TweenSettingsExtensions.AppendInterval(TweenSettingsExtensions.AppendCallback(sequence, delegate ()
                     {
-                        //Fly is reset manually because ResetFly method is private
-                        fly.SetActive(true);
-                        float num = (enemy.enemyType != Enemy.EnemyType.Ground) ? 1f : 0.25f;
-                        fly.transform.position = new Vector3((currentLane - 1f) * 1.25f, num, -6f);
+                        AccessTools.Method(typeof(AttackFlySpell), "ResetFly").Invoke(__instance, new object[] { fly, enemy });
                     }), 0.1f), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveZ(fly.transform, enemy.transform.position.z - 0.25f, 0.25f, false), Ease.InQuad)), delegate ()
                     {
-                        //Enemy is hurt manually because HurtEnemies method is private
-                        enemy.Hurt(1f, Enemy.AttackImmunity.ReduceSpellDamage, null, enemy.position.x);
+                        AccessTools.Method(typeof(AttackFlySpell), "HurtEnemies").Invoke(__instance, new object[] { enemy });
                     }), TweenSettingsExtensions.SetEase<Tweener>(ShortcutExtensions.DOMoveZ(fly.transform, -6f, 0.5f, false), Ease.OutQuad));
                 }
             }
