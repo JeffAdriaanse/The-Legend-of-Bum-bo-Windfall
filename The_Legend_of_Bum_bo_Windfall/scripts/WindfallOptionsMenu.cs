@@ -44,6 +44,11 @@ namespace The_Legend_of_Bum_bo_Windfall
             HotkeysMenu hotkeysMenuComponent = hotkeysMenu.AddComponent<HotkeysMenu>();
             hotkeysMenuComponent.SetUpHotkeysMenu(menuView);
 
+            //Set up Windfall credits menu
+            GameObject windfallCreditsMenu = UnityEngine.Object.Instantiate(Windfall.assetBundle.LoadAsset<GameObject>("Credits Menu"), menuView.transform);
+            WindfallCreditsMenu windfallCreditsMenuComponent = windfallCreditsMenu.AddComponent<WindfallCreditsMenu>();
+            windfallCreditsMenuComponent.SetUpWindfallCreditsMenu(menuView);
+
             //Get font asset
             TMP_FontAsset edmundmcmillen_regular = WindfallHelper.GetEdmundMcmillenFont();
 
@@ -66,6 +71,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             gameSpeedContainer = gameSpeed.transform.Find("Game Speed Container").gameObject;
             gameSpeedContainerSettingText = gameSpeedContainer.transform.Find("Setting Text").gameObject;
             GameObject hotkeys = transform.Find("Hotkeys").gameObject;
+            GameObject windfallCredits = transform.Find("Windfall Credits").gameObject;
             GameObject syncAchievements = transform.Find("Sync Achievements").gameObject;
             GameObject save = transform.Find("Save").gameObject;
             GameObject cancel = transform.Find("Cancel").gameObject;
@@ -77,6 +83,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.InitializeValueList(tooltipsContainer, tooltipsContainerSettingText, CycleTooltipSize, edmundmcmillen_regular);
             WindfallHelper.InitializeValueList(gameSpeedContainer, gameSpeedContainerSettingText, CycleGameSpeed, edmundmcmillen_regular);
             WindfallHelper.InitializeButton(hotkeys, hotkeysMenuComponent.OpenHotkeysMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
+            WindfallHelper.InitializeButton(windfallCredits, windfallCreditsMenuComponent.OpenWindfallCreditsMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
             WindfallHelper.InitializeButton(syncAchievements, SyncAchievements, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
             WindfallHelper.InitializeButton(save, SaveWindfallOptions, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
             WindfallHelper.InitializeButton(cancel, CloseWindfallOptionsMenu, edmundmcmillen_regular, GamepadMenuOptionSelection.eInjectDots.Both);
@@ -92,6 +99,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallHelper.LocalizeObject(gameSpeed, "Menu/GAME_SPEED");
             WindfallHelper.LocalizeObject(gameSpeedContainerSettingText, null);
             WindfallHelper.LocalizeObject(hotkeys, "Menu/HOTKEYS");
+            WindfallHelper.LocalizeObject(windfallCredits, "Menu/WINDFALL_CREDITS");
             WindfallHelper.LocalizeObject(syncAchievements, "Menu/SYNC_ACHIEVEMENTS");
             WindfallHelper.LocalizeObject(save, "Menu/OPTIONS_SAVE");
             WindfallHelper.LocalizeObject(cancel, "Menu/OPTIONS_CANCEL");
@@ -354,6 +362,7 @@ namespace The_Legend_of_Bum_bo_Windfall
             WindfallPersistentDataController.SaveData(windfallPersistentData);
 
             GraphicsModifier.UpdateCameras();
+            WindfallHelper.GameSpeedController?.UpdateGameSpeed();
 
             CloseWindfallOptionsMenu();
         }
