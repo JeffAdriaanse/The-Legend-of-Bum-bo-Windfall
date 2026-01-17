@@ -2,6 +2,7 @@
 using I2.Loc;
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace The_Legend_of_Bum_bo_Windfall
@@ -176,6 +177,12 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Localized name text
             GameObject wiseSelectName = wiseSelectParent.transform.Find("Font Name").Find("Text (TMP)").gameObject;
             Localization.SetKey(wiseSelectName.GetComponent<Localize>(), eI2Category.Characters, "WISE_NAME");
+            //Set font override terms
+            List<LocalizationFontOverrides.OverrideEntry> overrideEntries = wiseSelectName.GetComponent<LocalizationFontOverrides>()?.m_Overrides;
+            if (overrideEntries != null)
+            {
+                foreach (LocalizationFontOverrides.OverrideEntry overrideEntry in overrideEntries) overrideEntry.m_Key = "Characters/WISE_NAME";
+            }
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(GamblingController), "Start")]
