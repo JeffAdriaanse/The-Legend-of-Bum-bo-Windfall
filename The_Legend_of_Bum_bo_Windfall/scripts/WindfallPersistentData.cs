@@ -120,6 +120,7 @@ namespace The_Legend_of_Bum_bo_Windfall
 
             //Cache newly generated data
             windfallPersistentData = new WindfallPersistentData();
+            windfallPersistentData.Verify();
             return windfallPersistentData;
         }
 
