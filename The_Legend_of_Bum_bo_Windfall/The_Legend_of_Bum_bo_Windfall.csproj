@@ -4,11 +4,11 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>The Legend of Bum-bo_Windfall</AssemblyName>
     <Description>The Legend of Bum-bo: Windfall is a mod for The Legend of Bum-bo that fixes bugs, adds new features, and adjusts game balance.</Description>
-    <Version>1.4.0.0</Version>
+    <Version>1.5.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <AssemblyVersion>1.4</AssemblyVersion>
-    <FileVersion>1.4.0.0</FileVersion>
+    <AssemblyVersion>1.5</AssemblyVersion>
+    <FileVersion>1.5.0.0</FileVersion>
     <RootNamespace>The_Legend_of_Bum_bo_Windfall</RootNamespace>
     <UseNamespaceFolders>false</UseNamespaceFolders>
   </PropertyGroup>
