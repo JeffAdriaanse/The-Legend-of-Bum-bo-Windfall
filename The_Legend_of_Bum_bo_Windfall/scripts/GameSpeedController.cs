@@ -193,6 +193,9 @@ namespace The_Legend_of_Bum_bo_Windfall
             yield return AccessTools.Method(typeof(QuakeSpell), nameof(QuakeSpell.ExplodeStoneAndPoop));
             yield return AccessTools.Method(typeof(QuakeSpell), nameof(QuakeSpell.DropRock));
 
+            //Miss sign
+            yield return AccessTools.Method(typeof(MissView), nameof(MissView.Show));
+
             //Throw attacks
             yield return AccessTools.Method(typeof(ThrowAttackEvent), nameof(ThrowAttackEvent.Execute));
 
