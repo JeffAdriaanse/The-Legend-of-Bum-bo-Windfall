@@ -220,8 +220,8 @@ namespace The_Legend_of_Bum_bo_Windfall
             //Poop at start
             yield return AccessTools.Method(typeof(PoopAtStartEvent), nameof(PoopAtStartEvent.Execute));
 
-            //Clear matches (ClearPuzzleEvent)
-            yield return AccessTools.Method(typeof(Puzzle), nameof(Puzzle.ClearMatches));
+            //Clear matches (ClearPuzzleEvent) (omitted because it breaks tile animations when they are matching)
+            //yield return AccessTools.Method(typeof(Puzzle), nameof(Puzzle.ClearMatches));
 
             //Move puzzle
             yield return AccessTools.Method(typeof(MovePuzzleEvent), nameof(MovePuzzleEvent.Execute));
