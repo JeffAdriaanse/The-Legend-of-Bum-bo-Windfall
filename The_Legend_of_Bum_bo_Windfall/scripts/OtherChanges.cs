@@ -20,6 +20,13 @@ namespace The_Legend_of_Bum_bo_Windfall
             "BepInEx_ThreadingHelper",
         };
 
+        //Patch: Fixes tweens sometimes causing NullReferenceExceptions during scene loads
+        [HarmonyPostfix, HarmonyPatch(typeof(TitleController), "Start")]
+        static void TitleController_Start(TitleController __instance)
+        {
+            DOTween.useSafeMode = true;
+        }
+
         //Patch: Fixes exiting to menu incorrectly deleting certain gameObjects
         //Also rebalances Loose Change coin gain
         public static readonly int looseChangeCoinGain = 4;
