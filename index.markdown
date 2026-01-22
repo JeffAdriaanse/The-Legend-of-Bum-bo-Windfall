@@ -28,7 +28,7 @@ layout: main-page
 Return to the cardboard world of The Legend of Bum-bo, now enhanced and expanded! Windfall is the largest and most elaborate Bum-bo mod. Experience refreshed gameplay with improvements and fixes throughout the game.<br><br>
 
 <b>Click the link below to install the latest version of Windfall!</b><br>
-<a href="https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall/releases/download/v1.4.0/Windfall_Installer.msi">Windfall 1.4.0 for Windows</a><br><br>
+<a href="https://github.com/JeffAdriaanse/The-Legend-of-Bum-bo-Windfall/releases/download/v1.5.0/Windfall_Installer.msi">Windfall 1.5.0 for Windows</a><br><br>
 
 
 <b>Features:</b>
@@ -46,6 +46,7 @@ Return to the cardboard world of The Legend of Bum-bo, now enhanced and expanded
   <li>Stronger anti-aliasing</li>
   <li>New win streak counter</li>
   <li>Refined user interface</li>
+  <li>Game animation speed setting</li>
   <li>Restored achievements</li>
   <li>And lots of bug fixes!</li>
 </ul>
