@@ -100,7 +100,7 @@ The ability to rewatch cutscenes exists in a debug menu in the vanilla game, Win
 
 Credit to [Yazawa Akio](https://github.com/YazawaAkio) for translating Windfall into Chinese.
 
-Credit to [TheRealFrost](https://steamcommunity.com/profiles/76561199211013728) for translating Windfall into Spanish.
+Credit to [TheRealFrosttt](https://steamcommunity.com/profiles/76561199211013728) for translating Windfall into Spanish.
 
 Credit to [Jasper Flick](https://catlikecoding.com/) for anti-aliasing post processing code used in the mod.
 
