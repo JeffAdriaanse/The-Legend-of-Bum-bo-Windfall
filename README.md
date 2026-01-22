@@ -98,7 +98,7 @@ Starting a new game without finishing your saved game will reset your win streak
 
 The ability to rewatch cutscenes exists in a debug menu in the vanilla game, Windfall just brings the feature to the main menu.
 
-Credit to [YazawaAkiOS](https://github.com/YazawaAkio) for translating Windfall into Chinese.
+Credit to [Yazawa Akio](https://github.com/YazawaAkio) for translating Windfall into Chinese.
 
 Credit to [TheRealFrost](https://steamcommunity.com/profiles/76561199211013728) for translating Windfall into Spanish.
 
