@@ -246,7 +246,6 @@ namespace The_Legend_of_Bum_bo_Windfall
             { SpellName.NailBoard },
             { SpellName.Number1 },
             { SpellName.OrangeBelt }, //Stacking limit
-            { SpellName.PuzzleFlick },
             { SpellName.Rock },
             { SpellName.Stick },
             { SpellName.TheNegative },
